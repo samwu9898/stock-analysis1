@@ -22,14 +22,9 @@
 
 ## 📸 效果预览
 
-### 深色模式
-![深色模式](docs/images/dark-mode.png)
+![个股分析报告示例](docs/images/dark-mode.png)
 
-### 浅色模式
-![浅色模式](docs/images/light-mode.png)
-
-### K线图
-![K线图](docs/images/kline.png)
+*示例：中国长城（000066）深度分析报告 - 包含K线图、产业链SVG、评分系统、弹性测算等完整分析*
 
 ---
 
