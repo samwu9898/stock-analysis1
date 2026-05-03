@@ -265,7 +265,7 @@ python -m pytest tests/
 
 - GitHub: [@mingli30119](https://github.com/mingli30119)
 - Email: longquan830@163.com
-- 公众号: 明立玩AI
+- 公众号 · 抖音 · 小红书：明立玩AI
 
 ---
 
