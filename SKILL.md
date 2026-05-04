@@ -1,3 +1,12 @@
+---
+name: stock-analysis-github
+description: 个股深度研究系统（GitHub开源版），三层架构（数据采集+AI分析+HTML生成），基于AkShare免费数据，生成专业的个股基本面分析HTML报告。包含K线图、财务分析、五维评分、投资建议。当用户说"分析XXX股票"时触发。此版本用于推送到GitHub开源。
+trigger_keywords: ["分析股票", "个股分析", "股票研究", "基本面分析"]
+version: 2.2
+last_updated: 2026-05-01
+variant: github
+---
+
 # 个股深度研究系统（三层架构版）
 
 > 版本：v2.2 | 更新：2026-05-01 | 定位：三层架构 + 强制Step 0-8 + AI手写HTML
