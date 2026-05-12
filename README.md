@@ -30,19 +30,45 @@
 
 ## 🚀 快速开始
 
-### 1. 安装依赖
+### 方式一：作为 Claude Code Skill 调用（推荐）
 
-```bash
-pip install -r requirements.txt
+**直接对话触发：**
+
+```
+用户：分析 600519 股票
+用户：分析贵州茅台
+用户：个股分析 000066
 ```
 
-### 2. 运行分析
+AI 会自动执行完整的三阶段流程：
+1. **Phase 1**：运行 `python stock_full_report.py 600519` 采集数据
+2. **Phase 2**：AI 深度分析，生成 MD 报告
+3. **Phase 3**：AI 手写 HTML，生成可视化报告
+
+**输出文件：**
+- `output/data_600519.json` - 原始数据
+- `output/个股研究-贵州茅台.md` - 分析报告
+- `output/个股研究-贵州茅台.html` - 可视化报告
+
+---
+
+### 方式二：手动运行 Python 脚本
+
+如果只需要数据采集（Phase 1），可以手动运行：
 
 ```bash
+# 1. 安装依赖
+pip install -r requirements.txt
+
+# 2. 运行数据采集
 python stock_full_report.py 000066
 ```
 
-### 3. 查看报告
+**注意：** 手动运行只会生成 `data_000066.json`，不会自动进行 Phase 2/3 的分析和 HTML 生成。完整分析需要使用方式一（Skill 调用）。
+
+---
+
+### 方式三：查看已生成的报告
 
 生成的报告位于 `output/` 目录：
 - `个股研究-中国长城.md` - Markdown分析报告

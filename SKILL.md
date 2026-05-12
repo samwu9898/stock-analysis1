@@ -30,7 +30,7 @@ variant: github
 ### Phase 1: 数据采集（3-5分钟）
 
 ```bash
-cd G:/vibe/my-skills/stock-analysis-competition
+cd G:/vibe/my-skills/stock-analysis-github
 python stock_full_report.py <股票代码>
 ```
 
