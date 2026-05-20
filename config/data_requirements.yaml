@@ -1,0 +1,546 @@
+resource_swing:
+  required_fields:
+  - field_name: financial_metrics.revenue_yoy
+    display_name: 营收增速
+    category: financial
+    importance: high
+    reason: 判断资源价格上涨是否转化为收入增长
+    expected_location:
+    - financial_metrics
+    affects_analysis:
+    - financial_quality
+    - industry_cycle
+  - field_name: financial_metrics.net_profit_yoy
+    display_name: 净利润增速
+    category: financial
+    importance: high
+    reason: 判断利润弹性
+    expected_location:
+    - financial_metrics
+    affects_analysis:
+    - financial_quality
+  - field_name: financial_metrics.deducted_net_profit
+    display_name: 扣非净利润
+    category: financial
+    importance: critical
+    reason: 识别利润是否来自一次性收益
+    expected_location:
+    - financial_metrics
+    affects_analysis:
+    - financial_quality
+    - risk_flags
+  - field_name: financial_metrics.gross_margin
+    display_name: 毛利率
+    category: financial
+    importance: critical
+    reason: 判断商品价格变化是否改善盈利质量
+    expected_location:
+    - financial_metrics
+    affects_analysis:
+    - financial_quality
+    - industry_cycle
+  - field_name: financial_metrics.operating_cashflow
+    display_name: 经营现金流
+    category: financial
+    importance: critical
+    reason: 判断利润质量
+    expected_location:
+    - financial_metrics
+    affects_analysis:
+    - financial_quality
+    - risk_flags
+  - field_name: business_composition.segments
+    display_name: 主营业务构成
+    category: business_composition
+    importance: critical
+    reason: 判断公司到底暴露于哪些资源品种
+    expected_location:
+    - business_composition.segments
+    affects_analysis:
+    - business_summary
+    - key_drivers
+    - industry_cycle
+  - field_name: external.commodity_prices
+    display_name: 相关商品价格
+    category: external_variable
+    importance: high
+    reason: 资源股利润对商品价格高度敏感
+    expected_location:
+    - external.commodity_prices
+    affects_analysis:
+    - industry_cycle
+    - catalysts
+resource_core:
+  required_fields:
+  - field_name: financial_metrics.operating_cashflow
+    display_name: 经营现金流
+    category: financial
+    importance: critical
+    reason: 判断资源龙头现金创造能力
+    expected_location:
+    - financial_metrics
+    affects_analysis:
+    - financial_quality
+  - field_name: financial_metrics.debt_to_asset
+    display_name: 资产负债率
+    category: financial
+    importance: high
+    reason: 判断资本开支和周期下行承压能力
+    expected_location:
+    - financial_metrics
+    affects_analysis:
+    - risk_flags
+  - field_name: financial_metrics.roe
+    display_name: ROE
+    category: financial
+    importance: high
+    reason: 判断长期资本回报质量
+    expected_location:
+    - financial_metrics
+    affects_analysis:
+    - financial_quality
+  - field_name: financial_metrics.net_profit_yoy
+    display_name: 净利润增速
+    category: financial
+    importance: high
+    reason: 判断盈利趋势
+    expected_location:
+    - financial_metrics
+    affects_analysis:
+    - financial_quality
+  - field_name: valuation_metrics.dividend_yield
+    display_name: 股息率
+    category: valuation
+    importance: medium
+    reason: 判断配置属性和分红能力
+    expected_location:
+    - valuation_metrics
+    affects_analysis:
+    - valuation_view
+  - field_name: business_composition.segments
+    display_name: 主营业务构成
+    category: business_composition
+    importance: critical
+    reason: 判断多矿种布局
+    expected_location:
+    - business_composition.segments
+    affects_analysis:
+    - business_summary
+    - key_drivers
+  - field_name: external.commodity_prices
+    display_name: 商品价格组合
+    category: external_variable
+    importance: high
+    reason: 判断资源组合景气度
+    expected_location:
+    - external.commodity_prices
+    affects_analysis:
+    - industry_cycle
+right_trend_growth:
+  required_fields:
+  - field_name: financial_metrics.revenue_yoy
+    display_name: 营收增速
+    category: financial
+    importance: critical
+    reason: 判断高景气是否兑现到收入
+    expected_location:
+    - financial_metrics
+    affects_analysis:
+    - financial_quality
+    - key_drivers
+  - field_name: financial_metrics.net_profit_yoy
+    display_name: 净利润增速
+    category: financial
+    importance: critical
+    reason: 判断成长是否兑现到利润
+    expected_location:
+    - financial_metrics
+    affects_analysis:
+    - financial_quality
+  - field_name: financial_metrics.gross_margin
+    display_name: 毛利率
+    category: financial
+    importance: high
+    reason: 判断竞争格局和产品结构
+    expected_location:
+    - financial_metrics
+    affects_analysis:
+    - financial_quality
+  - field_name: financial_metrics.roe
+    display_name: ROE
+    category: financial
+    importance: medium
+    reason: 判断资本回报
+    expected_location:
+    - financial_metrics
+    affects_analysis:
+    - financial_quality
+  - field_name: valuation_metrics.pe_ttm
+    display_name: PE TTM
+    category: valuation
+    importance: medium
+    reason: 判断估值消化压力
+    expected_location:
+    - valuation_metrics
+    affects_analysis:
+    - valuation_view
+  - field_name: valuation_metrics.market_cap
+    display_name: 市值
+    category: valuation
+    importance: medium
+    reason: 判断成长空间与估值位置
+    expected_location:
+    - valuation_metrics
+    affects_analysis:
+    - valuation_view
+  - field_name: business_composition.segments
+    display_name: 主营业务构成
+    category: business_composition
+    importance: high
+    reason: 判断收入是否来自主线业务
+    expected_location:
+    - business_composition.segments
+    affects_analysis:
+    - business_summary
+    - key_drivers
+  - field_name: latest_news
+    display_name: 最新公告新闻
+    category: news
+    importance: low
+    reason: 辅助验证订单和客户资本开支变化
+    expected_location:
+    - latest_news
+    affects_analysis:
+    - catalysts
+semiconductor_cycle:
+  required_fields:
+  - field_name: financial_metrics.revenue_yoy
+    display_name: 营收增速
+    category: financial
+    importance: high
+    reason: 判断半导体周期和国产替代兑现
+    expected_location:
+    - financial_metrics
+    affects_analysis:
+    - financial_quality
+  - field_name: financial_metrics.gross_margin
+    display_name: 毛利率
+    category: financial
+    importance: critical
+    reason: 判断产品竞争力和周期压力
+    expected_location:
+    - financial_metrics
+    affects_analysis:
+    - financial_quality
+  - field_name: financial_metrics.inventory
+    display_name: 存货
+    category: financial
+    importance: critical
+    reason: 判断库存周期风险
+    expected_location:
+    - financial_metrics
+    affects_analysis:
+    - risk_flags
+  - field_name: financial_metrics.roe
+    display_name: ROE
+    category: financial
+    importance: medium
+    reason: 判断资本回报
+    expected_location:
+    - financial_metrics
+    affects_analysis:
+    - financial_quality
+  - field_name: financial_metrics.operating_cashflow
+    display_name: 经营现金流
+    category: financial
+    importance: high
+    reason: 判断订单和利润质量
+    expected_location:
+    - financial_metrics
+    affects_analysis:
+    - financial_quality
+  - field_name: valuation_metrics.pe_ttm
+    display_name: PE TTM
+    category: valuation
+    importance: medium
+    reason: 判断估值波动压力
+    expected_location:
+    - valuation_metrics
+    affects_analysis:
+    - valuation_view
+  - field_name: business_composition.segments
+    display_name: 主营业务构成
+    category: business_composition
+    importance: high
+    reason: 判断国产替代业务暴露
+    expected_location:
+    - business_composition.segments
+    affects_analysis:
+    - business_summary
+  - field_name: latest_news
+    display_name: 最新公告新闻
+    category: news
+    importance: low
+    reason: 辅助验证订单与产业事件
+    expected_location:
+    - latest_news
+    affects_analysis:
+    - catalysts
+stable_growth:
+  required_fields:
+  - field_name: financial_metrics.operating_cashflow
+    display_name: 经营现金流
+    category: financial
+    importance: critical
+    reason: 判断稳健成长质量
+    expected_location:
+    - financial_metrics
+    affects_analysis:
+    - financial_quality
+  - field_name: financial_metrics.roe
+    display_name: ROE
+    category: financial
+    importance: critical
+    reason: 判断长期资本回报
+    expected_location:
+    - financial_metrics
+    affects_analysis:
+    - financial_quality
+  - field_name: financial_metrics.gross_margin
+    display_name: 毛利率
+    category: financial
+    importance: high
+    reason: 判断订单质量和竞争格局
+    expected_location:
+    - financial_metrics
+    affects_analysis:
+    - financial_quality
+  - field_name: financial_metrics.debt_to_asset
+    display_name: 资产负债率
+    category: financial
+    importance: high
+    reason: 判断资产负债压力
+    expected_location:
+    - financial_metrics
+    affects_analysis:
+    - risk_flags
+  - field_name: financial_metrics.accounts_receivable
+    display_name: 应收账款
+    category: financial
+    importance: high
+    reason: 判断回款质量
+    expected_location:
+    - financial_metrics
+    affects_analysis:
+    - risk_flags
+  - field_name: financial_metrics.revenue_yoy
+    display_name: 营收增速
+    category: financial
+    importance: medium
+    reason: 判断订单兑现节奏
+    expected_location:
+    - financial_metrics
+    affects_analysis:
+    - financial_quality
+  - field_name: business_composition.segments
+    display_name: 主营业务构成
+    category: business_composition
+    importance: high
+    reason: 判断稳健主业占比
+    expected_location:
+    - business_composition.segments
+    affects_analysis:
+    - business_summary
+theme_only:
+  required_fields:
+  - field_name: financial_metrics.deducted_net_profit
+    display_name: 扣非净利润
+    category: financial
+    importance: critical
+    reason: 判断题材是否有利润支撑
+    expected_location:
+    - financial_metrics
+    affects_analysis:
+    - financial_quality
+  - field_name: financial_metrics.operating_cashflow
+    display_name: 经营现金流
+    category: financial
+    importance: critical
+    reason: 判断利润质量
+    expected_location:
+    - financial_metrics
+    affects_analysis:
+    - financial_quality
+  - field_name: financial_metrics.revenue_yoy
+    display_name: 营收增速
+    category: financial
+    importance: medium
+    reason: 判断题材是否兑现到收入
+    expected_location:
+    - financial_metrics
+    affects_analysis:
+    - key_drivers
+  - field_name: financial_metrics.gross_margin
+    display_name: 毛利率
+    category: financial
+    importance: medium
+    reason: 判断业务质量
+    expected_location:
+    - financial_metrics
+    affects_analysis:
+    - financial_quality
+  - field_name: business_composition.segments
+    display_name: 主营业务构成
+    category: business_composition
+    importance: critical
+    reason: 判断题材与主营是否相关
+    expected_location:
+    - business_composition.segments
+    affects_analysis:
+    - business_summary
+  - field_name: latest_news
+    display_name: 最新公告新闻
+    category: news
+    importance: medium
+    reason: 验证题材信息来源
+    expected_location:
+    - latest_news
+    affects_analysis:
+    - catalysts
+advanced_manufacturing_growth:
+  required_fields:
+  - field_name: financial_metrics.revenue_yoy
+    display_name: 营收增速
+    category: financial
+    importance: critical
+    reason: 判断成长是否兑现到收入
+    expected_location:
+    - financial_metrics.revenue_yoy
+    affects_analysis:
+    - financial_quality
+    - industry_cycle
+  - field_name: financial_metrics.net_profit_yoy
+    display_name: 净利润增速
+    category: financial
+    importance: critical
+    reason: 判断成长是否兑现到利润
+    expected_location:
+    - financial_metrics.net_profit_yoy
+    affects_analysis:
+    - financial_quality
+  - field_name: financial_metrics.gross_margin
+    display_name: 毛利率
+    category: financial
+    importance: critical
+    reason: 判断产品结构和盈利能力变化
+    expected_location:
+    - financial_metrics.gross_margin
+    affects_analysis:
+    - financial_quality
+    - industry_cycle
+  - field_name: financial_metrics.operating_cashflow
+    display_name: 经营现金流
+    category: financial
+    importance: high
+    reason: 判断利润兑现质量
+    expected_location:
+    - financial_metrics.operating_cashflow
+    affects_analysis:
+    - financial_quality
+    - risk_flags
+  - field_name: financial_metrics.roe
+    display_name: ROE
+    category: financial
+    importance: high
+    reason: 判断资本回报质量
+    expected_location:
+    - financial_metrics.roe
+    affects_analysis:
+    - financial_quality
+  - field_name: financial_metrics.accounts_receivable
+    display_name: 应收账款
+    category: financial
+    importance: high
+    reason: 判断客户回款和收入质量
+    expected_location:
+    - financial_metrics.accounts_receivable
+    affects_analysis:
+    - risk_flags
+    - financial_quality
+  - field_name: business_composition.segments
+    display_name: 主营业务构成
+    category: business_composition
+    importance: critical
+    reason: 判断传统主业、新能源车、机器人业务真实占比
+    expected_location:
+    - business_composition.segments
+    affects_analysis:
+    - business_summary
+    - key_drivers
+    - industry_cycle
+  - field_name: valuation_metrics.pe_ttm
+    display_name: PE TTM
+    category: valuation
+    importance: medium
+    reason: 判断估值是否已经反映成长预期
+    expected_location:
+    - valuation_metrics.pe_ttm
+    affects_analysis:
+    - valuation_view
+  - field_name: valuation_metrics.market_cap
+    display_name: 市值
+    category: valuation
+    importance: medium
+    reason: 判断市值和成长预期匹配度
+    expected_location:
+    - valuation_metrics.market_cap
+    affects_analysis:
+    - valuation_view
+  - field_name: latest_news
+    display_name: 最新新闻或公告
+    category: news
+    importance: low
+    reason: 辅助识别订单、客户和新业务催化，但不能单独决定结论
+    expected_location:
+    - latest_news
+    affects_analysis:
+    - catalysts
+    - risk_flags
+unknown:
+  required_fields:
+  - field_name: basic_info.industry
+    display_name: 行业
+    category: basic_info
+    importance: critical
+    reason: 分类前必须知道行业
+    expected_location:
+    - basic_info.industry
+    affects_analysis:
+    - business_summary
+  - field_name: basic_info.main_business
+    display_name: 主营业务
+    category: basic_info
+    importance: critical
+    reason: 分类前必须知道主营
+    expected_location:
+    - basic_info.main_business
+    affects_analysis:
+    - business_summary
+  - field_name: financial_metrics
+    display_name: 财务指标
+    category: financial
+    importance: high
+    reason: 判断基本面数据是否可用
+    expected_location:
+    - financial_metrics
+    affects_analysis:
+    - financial_quality
+  - field_name: business_composition.segments
+    display_name: 主营业务构成
+    category: business_composition
+    importance: high
+    reason: 判断收入来源
+    expected_location:
+    - business_composition.segments
+    affects_analysis:
+    - business_summary

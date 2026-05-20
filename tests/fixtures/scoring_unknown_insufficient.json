@@ -1,0 +1,4 @@
+{
+  "unexpected": {"payload": [{"foo": "bar"}]},
+  "note": "sparse unknown scoring fixture"
+}

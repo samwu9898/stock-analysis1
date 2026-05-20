@@ -1,0 +1,10 @@
+{
+  "meta": {"code": "000426", "stock_name": "兴业银锡", "market": "sz", "generated_at": "2026-05-15T10:00:00"},
+  "blocks": {
+    "basic_info": [{"stock_code": "000426", "stock_name": "兴业银锡", "industry": "有色金属", "main_business": "银、锡矿产采选"}],
+    "financial_indicator": [{"period": "2025-12-31", "revenue_yoy": 28.5, "net_profit_yoy": 55.2, "deducted_net_profit": 790000000, "net_profit": 820000000, "gross_margin": 41.2, "roe": 16.5, "operating_cashflow": 900000000}],
+    "valuation": [{"pe_ttm": 22.0, "pb": 2.2, "market_cap": 15000000000}],
+    "business_composition": [{"period": "2025-12-31", "segment_name": "银精矿", "revenue_ratio": 50.0}, {"period": "2025-12-31", "segment_name": "锡精矿", "revenue_ratio": 28.0}],
+    "news": [{"title": "资源品业务保持增长", "summary": "mock"}]
+  }
+}

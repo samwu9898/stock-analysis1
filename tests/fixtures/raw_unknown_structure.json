@@ -1,0 +1,10 @@
+{
+  "unexpected": {
+    "payload": [
+      {
+        "foo": "bar"
+      }
+    ]
+  },
+  "note": "mock unknown structure"
+}

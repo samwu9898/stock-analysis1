@@ -1,0 +1,28 @@
+{
+  "stock_code": "999999",
+  "expected_strategy_type": "theme_only",
+  "allowed_status": [
+    "neutral",
+    "negative",
+    "insufficient_data"
+  ],
+  "max_confidence": "medium",
+  "min_required_risk_flags": [],
+  "must_track_keywords": [
+    "经营现金流",
+    "毛利率",
+    "主营"
+  ],
+  "forbidden_phrases": [
+    "买入",
+    "卖出",
+    "加仓",
+    "减仓",
+    "清仓",
+    "止损",
+    "止盈",
+    "目标价",
+    "满仓",
+    "梭哈"
+  ]
+}

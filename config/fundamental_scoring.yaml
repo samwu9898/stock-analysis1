@@ -1,0 +1,68 @@
+strategy_weights:
+  resource_swing:
+    business_quality: 0.15
+    financial_quality: 0.2
+    industry_cycle: 0.25
+    valuation_reasonableness: 0.1
+    catalyst_strength: 0.1
+    risk_control: 0.1
+    data_quality: 0.1
+  resource_core:
+    business_quality: 0.2
+    financial_quality: 0.2
+    industry_cycle: 0.2
+    valuation_reasonableness: 0.1
+    catalyst_strength: 0.05
+    risk_control: 0.15
+    data_quality: 0.1
+  right_trend_growth:
+    business_quality: 0.2
+    financial_quality: 0.2
+    industry_cycle: 0.2
+    valuation_reasonableness: 0.1
+    catalyst_strength: 0.15
+    risk_control: 0.05
+    data_quality: 0.1
+  semiconductor_cycle:
+    business_quality: 0.2
+    financial_quality: 0.2
+    industry_cycle: 0.2
+    valuation_reasonableness: 0.1
+    catalyst_strength: 0.1
+    risk_control: 0.1
+    data_quality: 0.1
+  stable_growth:
+    business_quality: 0.2
+    financial_quality: 0.25
+    industry_cycle: 0.1
+    valuation_reasonableness: 0.1
+    catalyst_strength: 0.05
+    risk_control: 0.15
+    data_quality: 0.15
+  theme_only:
+    business_quality: 0.1
+    financial_quality: 0.15
+    industry_cycle: 0.1
+    valuation_reasonableness: 0.05
+    catalyst_strength: 0.15
+    risk_control: 0.25
+    data_quality: 0.2
+  unknown:
+    business_quality: 0.1
+    financial_quality: 0.1
+    industry_cycle: 0.1
+    valuation_reasonableness: 0.05
+    catalyst_strength: 0.05
+    risk_control: 0.2
+    data_quality: 0.4
+  advanced_manufacturing_growth:
+    business_quality: 0.2
+    financial_quality: 0.22
+    industry_cycle: 0.15
+    valuation_reasonableness: 0.1
+    catalyst_strength: 0.13
+    risk_control: 0.1
+    data_quality: 0.1
+base_scores:
+  default_dimension_score: 50
+  risk_control_base_score: 70

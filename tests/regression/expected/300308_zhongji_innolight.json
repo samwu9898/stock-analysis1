@@ -1,0 +1,32 @@
+{
+  "stock_code": "300308",
+  "expected_strategy_type": "right_trend_growth",
+  "allowed_status": [
+    "supportive",
+    "neutral"
+  ],
+  "max_confidence": "high",
+  "min_required_risk_flags": [
+    "AI资本开支依赖风险",
+    "订单与客户验证不足"
+  ],
+  "must_track_keywords": [
+    "营收增速",
+    "净利润增速",
+    "毛利率",
+    "客户",
+    "订单"
+  ],
+  "forbidden_phrases": [
+    "买入",
+    "卖出",
+    "加仓",
+    "减仓",
+    "清仓",
+    "止损",
+    "止盈",
+    "目标价",
+    "满仓",
+    "梭哈"
+  ]
+}

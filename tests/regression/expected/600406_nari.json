@@ -1,0 +1,29 @@
+{
+  "stock_code": "600406",
+  "expected_strategy_type": "stable_growth",
+  "allowed_status": [
+    "supportive",
+    "neutral"
+  ],
+  "max_confidence": "high",
+  "min_required_risk_flags": [],
+  "must_track_keywords": [
+    "经营现金流",
+    "ROE",
+    "毛利率",
+    "应收账款",
+    "订单"
+  ],
+  "forbidden_phrases": [
+    "买入",
+    "卖出",
+    "加仓",
+    "减仓",
+    "清仓",
+    "止损",
+    "止盈",
+    "目标价",
+    "满仓",
+    "梭哈"
+  ]
+}

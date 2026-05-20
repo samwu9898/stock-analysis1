@@ -1,0 +1,62 @@
+{
+  "meta": {
+    "code": "300308",
+    "stock_name": "中际旭创",
+    "market": "mock",
+    "generated_at": "2026-05-15T10:00:00",
+    "data_cutoff": "2025-12-31"
+  },
+  "blocks": {
+    "basic_info": [
+      {
+        "stock_code": "300308",
+        "stock_name": "中际旭创",
+        "industry": "光模块 / AI 算力 / 数据中心",
+        "main_business": "高速光模块、AI算力、数据中心互联产品，受客户资本开支和订单影响"
+      }
+    ],
+    "financial_indicator": [
+      {
+        "period": "2025-12-31",
+        "revenue_yoy": 60,
+        "net_profit_yoy": 75,
+        "gross_margin": 35,
+        "roe": 22,
+        "operating_cashflow": 3000000000,
+        "debt_to_asset": 45,
+        "accounts_receivable": 800000000,
+        "deducted_net_profit": 900000000,
+        "net_profit": 1000000000,
+        "inventory": 500000000
+      }
+    ],
+    "valuation": [
+      {
+        "pe_ttm": 55,
+        "pb": 7,
+        "market_cap": 180000000000
+      }
+    ],
+    "business_composition": [
+      {
+        "period": "2025-12-31",
+        "segment_name": "高速光模块",
+        "revenue_ratio": 55
+      },
+      {
+        "period": "2025-12-31",
+        "segment_name": "数据中心互联",
+        "revenue_ratio": 40
+      }
+    ],
+    "news": [
+      {
+        "title": "mock：AI算力订单保持景气",
+        "summary": "客户资本开支、订单持续性和估值消化需要验证",
+        "source": "mock",
+        "publish_time": "2026-01-01",
+        "url": null
+      }
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "meta": {"code": "601899", "stock_name": "紫金矿业", "market": "sh", "generated_at": "2026-05-15T10:00:00"},
+  "blocks": {
+    "basic_info": [{"stock_code": "601899", "stock_name": "紫金矿业", "industry": "全球矿业", "main_business": "多矿种铜金资源龙头，大型矿企，现金流和分红能力较强"}],
+    "financial_indicator": [{"period": "2025-12-31", "revenue": 300000000000, "net_profit": 30000000000, "operating_cashflow": 42000000000}],
+    "business_composition": [{"period": "2025-12-31", "segment_name": "铜矿"}, {"period": "2025-12-31", "segment_name": "金矿"}]
+  }
+}

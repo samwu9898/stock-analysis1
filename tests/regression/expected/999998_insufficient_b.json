@@ -1,0 +1,27 @@
+{
+  "stock_code": "999998",
+  "expected_strategy_type": "unknown",
+  "allowed_status": [
+    "insufficient_data"
+  ],
+  "max_confidence": "low",
+  "max_score": 50,
+  "min_required_risk_flags": [],
+  "must_track_keywords": [
+    "行业",
+    "主营",
+    "财务"
+  ],
+  "forbidden_phrases": [
+    "买入",
+    "卖出",
+    "加仓",
+    "减仓",
+    "清仓",
+    "止损",
+    "止盈",
+    "目标价",
+    "满仓",
+    "梭哈"
+  ]
+}

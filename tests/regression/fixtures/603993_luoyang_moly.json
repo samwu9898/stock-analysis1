@@ -1,0 +1,62 @@
+{
+  "meta": {
+    "code": "603993",
+    "stock_name": "洛阳钼业",
+    "market": "mock",
+    "generated_at": "2026-05-15T10:00:00",
+    "data_cutoff": "2025-12-31"
+  },
+  "blocks": {
+    "basic_info": [
+      {
+        "stock_code": "603993",
+        "stock_name": "洛阳钼业",
+        "industry": "铜 / 钴 / 钼 / 有色资源",
+        "main_business": "铜、钴、钼等多资源品矿业公司，包含海外项目和周期波动风险"
+      }
+    ],
+    "financial_indicator": [
+      {
+        "period": "2025-12-31",
+        "revenue_yoy": 22,
+        "net_profit_yoy": 35,
+        "gross_margin": 26,
+        "roe": 13,
+        "operating_cashflow": 8000000000,
+        "debt_to_asset": 45,
+        "accounts_receivable": 800000000,
+        "deducted_net_profit": 900000000,
+        "net_profit": 1000000000,
+        "inventory": 500000000
+      }
+    ],
+    "valuation": [
+      {
+        "pe_ttm": 24,
+        "pb": 2.8,
+        "market_cap": 180000000000
+      }
+    ],
+    "business_composition": [
+      {
+        "period": "2025-12-31",
+        "segment_name": "铜钴业务",
+        "revenue_ratio": 55
+      },
+      {
+        "period": "2025-12-31",
+        "segment_name": "钼钨业务",
+        "revenue_ratio": 40
+      }
+    ],
+    "news": [
+      {
+        "title": "mock：海外矿山项目推进",
+        "summary": "商品价格和海外项目风险需要跟踪",
+        "source": "mock",
+        "publish_time": "2026-01-01",
+        "url": null
+      }
+    ]
+  }
+}

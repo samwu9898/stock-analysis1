@@ -1,0 +1,50 @@
+{
+  "meta": {
+    "code": "999999",
+    "stock_name": "题材样本A",
+    "market": "mock",
+    "generated_at": "2026-05-15T10:00:00",
+    "data_cutoff": "2025-12-31"
+  },
+  "blocks": {
+    "basic_info": [
+      {
+        "stock_code": "999999",
+        "stock_name": "题材样本A",
+        "industry": "跨界概念 / 热门题材",
+        "main_business": "主营与热门概念关联不清，财务支撑弱，主要依赖题材新闻和互动平台传闻"
+      }
+    ],
+    "financial_indicator": [],
+    "valuation": [
+      {
+        "pe_ttm": 95,
+        "pb": 9,
+        "market_cap": 6000000000
+      }
+    ],
+    "business_composition": [
+      {
+        "period": "2025-12-31",
+        "segment_name": "传统业务",
+        "revenue_ratio": 55
+      }
+    ],
+    "news": [
+      {
+        "title": "mock：互动平台提及人形机器人概念",
+        "summary": "概念和主营相关性待验证",
+        "source": "mock",
+        "publish_time": "2026-01-01",
+        "url": null
+      },
+      {
+        "title": "mock：跨界转型传闻升温",
+        "summary": "缺少订单和业绩验证",
+        "source": "mock",
+        "publish_time": "2026-01-01",
+        "url": null
+      }
+    ]
+  }
+}

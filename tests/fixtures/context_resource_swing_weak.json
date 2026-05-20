@@ -1,0 +1,8 @@
+{
+  "meta": {"code": "000426", "stock_name": "兴业银锡", "market": "sz", "generated_at": "2026-05-15T10:00:00"},
+  "blocks": {
+    "basic_info": [{"stock_code": "000426", "stock_name": "兴业银锡", "industry": "有色金属", "main_business": "银、锡矿产采选"}],
+    "financial_indicator": [{"period": "2025-12-31", "revenue_yoy": 18.5, "net_profit_yoy": 35.2, "gross_margin": 41.2}],
+    "business_composition": [{"period": "2025-12-31", "segment_name": "银精矿", "revenue_ratio": 50.0}]
+  }
+}

@@ -1,0 +1,16 @@
+"000426":
+  stock_name: "\u5174\u4e1a\u94f6\u9521"
+  commodities:
+  - silver
+  - tin
+"601899":
+  stock_name: "\u7d2b\u91d1\u77ff\u4e1a"
+  commodities:
+  - copper
+  - gold
+"603993":
+  stock_name: "\u6d1b\u9633\u94bc\u4e1a"
+  commodities:
+  - copper
+  - cobalt
+  - molybdenum

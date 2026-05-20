@@ -59,3 +59,6 @@ Thumbs.db
 # 测试文件
 test_output/
 *.test.json
+
+.pytest_tmp/
+.pytest_cache/

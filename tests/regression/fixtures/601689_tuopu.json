@@ -1,0 +1,62 @@
+{
+  "meta": {
+    "code": "601689",
+    "stock_name": "拓普集团",
+    "market": "mock",
+    "generated_at": "2026-05-15T10:00:00",
+    "data_cutoff": "2025-12-31"
+  },
+  "blocks": {
+    "basic_info": [
+      {
+        "stock_code": "601689",
+        "stock_name": "拓普集团",
+        "industry": "汽车零部件 / 机器人执行器 / 特斯拉供应链",
+        "main_business": "汽车零部件、智能底盘、机器人执行器相关零部件和新能源车供应链业务"
+      }
+    ],
+    "financial_indicator": [
+      {
+        "period": "2025-12-31",
+        "revenue_yoy": 26,
+        "net_profit_yoy": 28,
+        "gross_margin": 24,
+        "roe": 14,
+        "operating_cashflow": 2500000000,
+        "debt_to_asset": 45,
+        "accounts_receivable": 4300000000,
+        "deducted_net_profit": 900000000,
+        "net_profit": 1000000000,
+        "inventory": 500000000
+      }
+    ],
+    "valuation": [
+      {
+        "pe_ttm": 42,
+        "pb": 5,
+        "market_cap": 110000000000
+      }
+    ],
+    "business_composition": [
+      {
+        "period": "2025-12-31",
+        "segment_name": "汽车零部件",
+        "revenue_ratio": 70
+      },
+      {
+        "period": "2025-12-31",
+        "segment_name": "机器人执行器相关零部件",
+        "note": "mock 待验证"
+      }
+    ],
+    "news": [
+      {
+        "title": "mock：机器人执行器业务仍需订单验证",
+        "summary": "特斯拉供应链和大客户持续性需要验证",
+        "source": "mock",
+        "publish_time": "2026-01-01",
+        "url": null
+      }
+    ]
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "meta": {
+    "code": "601689",
+    "stock_name": "拓普集团",
+    "market": "sh",
+    "generated_at": "2026-05-15T10:00:00"
+  },
+  "blocks": {
+    "basic_info": [
+      {
+        "stock_code": "601689",
+        "stock_name": "拓普集团",
+        "industry": "汽车零部件 / 高端制造",
+        "main_business": "汽车零部件、智能底盘、机器人执行器相关零部件和新能源车供应链业务"
+      }
+    ],
+    "financial_indicator": [
+      {
+        "period": "2025-12-31",
+        "revenue_yoy": 26.0,
+        "net_profit_yoy": 28.0,
+        "gross_margin": 24.0,
+        "roe": 14.0,
+        "operating_cashflow": 2500000000,
+        "accounts_receivable": 4300000000
+      }
+    ],
+    "business_composition": [
+      {
+        "period": "2025-12-31",
+        "segment_name": "汽车零部件",
+        "revenue_ratio": 70.0
+      },
+      {
+        "period": "2025-12-31",
+        "segment_name": "机器人执行器相关零部件",
+        "revenue_ratio": 5.0,
+        "note": "mock 待验证"
+      }
+    ],
+    "news": [
+      {
+        "title": "mock：机器人执行器业务仍需订单验证",
+        "summary": "高端制造和机器人产业链关注度提升"
+      }
+    ]
+  }
+}

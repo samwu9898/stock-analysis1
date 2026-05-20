@@ -1,0 +1,23 @@
+{
+  "meta": {
+    "code": "999998",
+    "stock_name": "数据不足样本B",
+    "market": "mock",
+    "generated_at": "2026-05-15T10:00:00",
+    "data_cutoff": "2025-12-31"
+  },
+  "blocks": {
+    "basic_info": [
+      {
+        "stock_code": "999998",
+        "stock_name": "数据不足样本B",
+        "industry": null,
+        "main_business": null
+      }
+    ],
+    "financial_indicator": [],
+    "valuation": [],
+    "business_composition": [],
+    "news": []
+  }
+}

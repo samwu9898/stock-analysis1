@@ -1,0 +1,10 @@
+{
+  "meta": {"code": "300308", "stock_name": "中际旭创", "market": "sz", "generated_at": "2026-05-15T10:00:00"},
+  "blocks": {
+    "basic_info": [{"stock_code": "300308", "stock_name": "中际旭创", "industry": "光模块", "main_business": "AI算力数据中心光模块"}],
+    "financial_indicator": [{"period": "2025-12-31", "revenue_yoy": 50.0, "net_profit_yoy": 60.0, "roe": 22.0}],
+    "valuation": [{"pe_ttm": 35.0, "market_cap": 200000000000}],
+    "business_composition": [{"period": "2025-12-31", "segment_name": "高速光模块"}],
+    "news": [{"title": "AI算力订单增长", "summary": "mock"}]
+  }
+}

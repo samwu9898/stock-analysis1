@@ -1,0 +1,67 @@
+{
+  "meta": {
+    "code": "600406",
+    "stock_name": "国电南瑞",
+    "market": "mock",
+    "generated_at": "2026-05-15T10:00:00",
+    "data_cutoff": "2025-12-31"
+  },
+  "blocks": {
+    "basic_info": [
+      {
+        "stock_code": "600406",
+        "stock_name": "国电南瑞",
+        "industry": "电网自动化 / 智能电网 / 电力设备",
+        "main_business": "电网自动化、智能电网和电力设备龙头，受电网投资节奏和现金流影响"
+      }
+    ],
+    "financial_indicator": [
+      {
+        "period": "2025-12-31",
+        "revenue_yoy": 14,
+        "net_profit_yoy": 16,
+        "gross_margin": 29,
+        "roe": 16,
+        "operating_cashflow": 5200000000,
+        "debt_to_asset": 35,
+        "accounts_receivable": 6500000000,
+        "deducted_net_profit": 900000000,
+        "net_profit": 1000000000,
+        "inventory": 500000000
+      }
+    ],
+    "valuation": [
+      {
+        "pe_ttm": 28,
+        "pb": 4.1,
+        "market_cap": 160000000000
+      }
+    ],
+    "business_composition": [
+      {
+        "period": "2025-12-31",
+        "segment_name": "电网自动化",
+        "revenue_ratio": 55
+      },
+      {
+        "period": "2025-12-31",
+        "segment_name": "智能电网",
+        "revenue_ratio": 40
+      },
+      {
+        "period": "2025-12-31",
+        "segment_name": "电力设备",
+        "revenue_ratio": 25
+      }
+    ],
+    "news": [
+      {
+        "title": "mock：电网投资节奏平稳",
+        "summary": "现金流和估值稳定性需要跟踪",
+        "source": "mock",
+        "publish_time": "2026-01-01",
+        "url": null
+      }
+    ]
+  }
+}

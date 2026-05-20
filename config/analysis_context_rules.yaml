@@ -1,0 +1,489 @@
+general:
+  readiness_level_caps:
+    insufficient:
+      overall_context_quality: insufficient
+      max_overall_confidence: low
+    weak:
+      overall_context_quality: weak
+      max_overall_confidence: low
+    usable_with_warnings:
+      overall_context_quality: usable
+      max_overall_confidence: medium
+    sufficient:
+      overall_context_quality: strong
+      max_overall_confidence: high
+  classification_confidence_caps:
+    low:
+      max_overall_confidence: low
+    medium:
+      max_overall_confidence: medium
+    high:
+      max_overall_confidence: high
+  unknown_strategy_cap:
+    max_overall_confidence: low
+    overall_context_quality: insufficient
+missing_field_rules:
+  financial_metrics.deducted_net_profit:
+    affected_dimensions:
+    - financial_quality
+    - risk_flags
+    required_risk:
+      risk_name: 扣非净利润数据缺失
+      severity: high
+      reason: 无法判断利润增长是否来自主营业务或一次性收益。
+    prohibited_claims:
+    - claim_type: sustainable_profit_growth
+      prohibited_reason: 缺少扣非净利润，不能断言利润增长具有可持续性。
+      example_forbidden_phrases:
+      - 利润增长质量很高
+      - 主业利润持续改善
+      - 盈利增长可持续
+    scoring_constraints:
+      financial_quality:
+        max_score: 60
+      risk_penalty:
+        max_score: 70
+    analyzer_instructions:
+    - instruction_type: caution
+      instruction: 缺少扣非净利润时，必须提示一次性收益或非经常性损益风险。
+      reason: 利润质量无法验证。
+  financial_metrics.operating_cashflow:
+    affected_dimensions:
+    - financial_quality
+    - risk_flags
+    required_risk:
+      risk_name: 经营现金流数据缺失
+      severity: high
+      reason: 无法判断盈利兑现能力和利润质量。
+    prohibited_claims:
+    - claim_type: cashflow_quality_strong
+      prohibited_reason: 缺少经营现金流，不能断言现金流质量强。
+      example_forbidden_phrases:
+      - 现金流质量良好
+      - 盈利兑现能力强
+      - 经营现金流健康
+    scoring_constraints:
+      financial_quality:
+        max_score: 60
+      risk_control:
+        max_score: 65
+    analyzer_instructions:
+    - instruction_type: must_not_do
+      instruction: 不允许在缺少经营现金流数据时给现金流质量正面结论。
+      reason: 数据不足。
+  financial_metrics.gross_margin:
+    affected_dimensions:
+    - financial_quality
+    - industry_cycle
+    required_risk:
+      risk_name: 毛利率数据缺失
+      severity: medium
+      reason: 无法判断盈利能力变化和产品/周期弹性。
+    prohibited_claims:
+    - claim_type: margin_improvement_confirmed
+      prohibited_reason: 缺少毛利率，不能断言毛利率改善。
+      example_forbidden_phrases:
+      - 毛利率改善明显
+      - 盈利能力持续提升
+      - 产品结构优化带动毛利率上升
+    - claim_type: product_structure_improvement_confirmed
+      prohibited_reason: 缺少毛利率，不能断言产品结构优化或盈利能力改善。
+      example_forbidden_phrases:
+      - 产品结构优化
+      - 盈利能力改善
+    scoring_constraints:
+      financial_quality:
+        max_score: 70
+      industry_cycle:
+        max_score: 75
+    analyzer_instructions:
+    - instruction_type: confidence_limit
+      instruction: 缺少毛利率时，盈利能力相关判断最高只能低到中等置信度。
+      reason: 毛利率数据缺失。
+  financial_metrics.inventory:
+    affected_dimensions:
+    - financial_quality
+    - industry_cycle
+    - risk_flags
+    required_risk:
+      risk_name: 存货数据缺失
+      severity: medium
+      reason: 无法判断库存周期和潜在减值压力。
+    prohibited_claims:
+    - claim_type: inventory_cycle_healthy
+      prohibited_reason: 缺少存货数据，不能断言库存周期健康。
+      example_forbidden_phrases:
+      - 库存周期健康
+      - 存货压力较小
+      - 周期压力已经释放
+    scoring_constraints:
+      industry_cycle:
+        max_score: 70
+      financial_quality:
+        max_score: 75
+    analyzer_instructions:
+    - instruction_type: caution
+      instruction: 半导体和制造业缺少存货数据时，必须提示库存周期判断不完整。
+      reason: 库存是周期判断核心变量。
+  financial_metrics.roe:
+    affected_dimensions:
+    - financial_quality
+    required_risk:
+      risk_name: ROE 数据缺失
+      severity: medium
+      reason: 无法判断资本回报质量。
+    prohibited_claims:
+    - claim_type: capital_return_quality_confirmed
+      prohibited_reason: 缺少 ROE，不能断言资本回报质量高。
+      example_forbidden_phrases:
+      - ROE 水平优秀
+      - 资本回报质量较高
+    scoring_constraints:
+      financial_quality:
+        max_score: 75
+  business_composition.segments:
+    affected_dimensions:
+    - business_summary
+    - industry_cycle
+    - key_drivers
+    required_risk:
+      risk_name: 主营构成数据缺失
+      severity: high
+      reason: 无法判断公司核心业务暴露和收入来源。
+    prohibited_claims:
+    - claim_type: business_exposure_confirmed
+      prohibited_reason: 缺少主营构成，不能断言公司主要受益于某一业务或商品。
+      example_forbidden_phrases:
+      - 公司主要受益于银价上涨
+      - 主营业务高度暴露于AI算力
+      - 业务结构清晰
+    - claim_type: advanced_manufacturing_revenue_confirmed
+      prohibited_reason: 缺少主营构成，不能断言机器人业务或汽车热管理业务已经构成主要收入来源。
+      example_forbidden_phrases:
+      - 机器人业务已经成为主要收入来源
+      - 汽车热管理业务占比明确
+    scoring_constraints:
+      business_quality:
+        max_score: 60
+      industry_cycle:
+        max_score: 60
+    analyzer_instructions:
+    - instruction_type: must_not_do
+      instruction: 缺少主营构成时，不允许断言公司核心收入来源。
+      reason: 业务暴露无法验证。
+  external.commodity_prices:
+    affected_dimensions:
+    - industry_cycle
+    - catalysts
+    required_risk:
+      risk_name: 商品价格数据缺失
+      severity: medium
+      reason: 资源股周期判断不完整。
+    prohibited_claims:
+    - claim_type: commodity_price_benefit_confirmed
+      prohibited_reason: 缺少商品价格数据，不能断言商品价格正向驱动已经确认。
+      example_forbidden_phrases:
+      - 明确受益于银价上涨
+      - 商品价格趋势强劲
+      - 周期上行已经确认
+    scoring_constraints:
+      industry_cycle:
+        max_score: 70
+      catalyst_strength:
+        max_score: 70
+    analyzer_instructions:
+    - instruction_type: caution
+      instruction: 资源股缺少商品价格数据时，周期判断必须降置信度。
+      reason: 外部价格变量缺失。
+  financial_metrics.accounts_receivable:
+    affected_dimensions:
+    - financial_quality
+    - risk_flags
+    required_risk:
+      risk_name: 应收账款数据缺失
+      severity: medium
+      reason: 无法判断客户回款和收入质量。
+    prohibited_claims:
+    - claim_type: receivable_quality_confirmed
+      prohibited_reason: 缺少应收账款，不能断言收入质量良好或回款压力较小。
+      example_forbidden_phrases:
+      - 收入质量良好
+      - 回款压力较小
+    scoring_constraints:
+      risk_control:
+        max_score: 70
+    analyzer_instructions:
+    - instruction_type: caution
+      instruction: 缺少应收账款时，必须提示收入质量验证不足。
+      reason: 客户回款数据缺失。
+strategy_specific_rules:
+  resource_swing:
+    must_include_if_missing:
+    - external.commodity_prices
+    - financial_metrics.deducted_net_profit
+    - financial_metrics.operating_cashflow
+    - business_composition.segments
+    prohibited_if_missing_core:
+    - 不能断言商品价格上涨已经转化为持续业绩
+    - 不能断言利润增长可持续
+    - 不能断言资源暴露结构清晰
+  right_trend_growth:
+    must_include_if_missing:
+    - financial_metrics.revenue_yoy
+    - financial_metrics.net_profit_yoy
+    - financial_metrics.gross_margin
+    - valuation_metrics.pe_ttm
+    prohibited_if_missing_core:
+    - 不能断言高景气已经充分兑现到业绩
+    - 不能断言估值可以被业绩消化
+    - 不能断言毛利率趋势改善
+  semiconductor_cycle:
+    must_include_if_missing:
+    - financial_metrics.gross_margin
+    - financial_metrics.inventory
+    - financial_metrics.operating_cashflow
+    - business_composition.segments
+    prohibited_if_missing_core:
+    - 不能断言库存周期健康
+    - 不能断言国产替代已转化为订单和利润
+    - 不能断言半导体周期已经反转
+  stable_growth:
+    must_include_if_missing:
+    - financial_metrics.operating_cashflow
+    - financial_metrics.roe
+    - financial_metrics.accounts_receivable
+    - financial_metrics.debt_to_asset
+    prohibited_if_missing_core:
+    - 不能断言现金流稳健
+    - 不能断言资本回报质量高
+    - 不能断言订单质量稳定
+  advanced_manufacturing_growth:
+    must_include_if_missing:
+    - business_composition.segments
+    - financial_metrics.gross_margin
+    - financial_metrics.operating_cashflow
+    - financial_metrics.accounts_receivable
+    prohibited_if_missing_core:
+    - 不能断言机器人业务已经形成确定收入贡献
+    - 不能断言新业务已经兑现到利润
+    - 不能断言大客户需求稳定
+    - 不能断言估值已经被业绩充分消化
+    must_include_if_unverified:
+    - robot_business_validation
+    - customer_concentration_validation
+    - new_business_revenue_validation
+unverified_rules:
+  ai_capex_dependency_risk:
+    required_risk:
+      risk_name: AI资本开支依赖风险
+      severity: medium
+      reason: AI算力、光模块、PCB、AI服务器、数据中心或液冷链条对下游云厂商资本开支节奏敏感，需要持续验证需求持续性。
+    prohibited_claims:
+    - claim_type: ai_capex_demand_confirmed
+      prohibited_reason: 缺少客户资本开支和订单持续性验证时，不能断言 AI 资本开支需求已经稳定兑现。
+      example_forbidden_phrases:
+      - AI资本开支需求已经确认
+      - 云厂商需求稳定
+      - AI订单确定增长
+    scoring_constraints:
+      industry_cycle:
+        max_score: 75
+      catalyst_strength:
+        max_score: 70
+      risk_control:
+        max_score: 75
+    analyzer_instructions:
+    - instruction_type: caution
+      instruction: AI算力链条需要跟踪云厂商资本开支、订单持续性和需求节奏，不能只按景气叙事确认兑现。
+      reason: AI资本开支依赖风险。
+  growth_order_customer_validation_risk:
+    required_risk:
+      risk_name: 订单与客户验证不足
+      severity: medium
+      reason: 存在订单、客户、海外客户、云厂商或供应链逻辑，但缺少客户收入占比、订单金额或订单持续性验证字段。
+    prohibited_claims:
+    - claim_type: growth_order_customer_confirmed
+      prohibited_reason: 缺少客户收入占比或订单验证字段，不能断言订单和客户需求已经充分确认。
+      example_forbidden_phrases:
+      - 订单确定增长
+      - 客户需求已经确认
+      - 海外客户需求稳定
+    scoring_constraints:
+      catalyst_strength:
+        max_score: 70
+      risk_control:
+        max_score: 75
+    analyzer_instructions:
+    - instruction_type: caution
+      instruction: 订单、客户收入占比和订单持续性需要验证，不能把供应链逻辑直接写成确定兑现。
+      reason: 订单与客户验证不足。
+  growth_valuation_expectation_risk:
+    required_risk:
+      risk_name: 估值预期消化风险
+      severity: medium
+      reason: 高景气成长股估值可能已经反映部分 AI 算力、PCB、服务器或数据中心成长预期，后续需要业绩增长消化。
+    prohibited_claims: []
+    scoring_constraints:
+      valuation_reasonableness:
+        max_score: 70
+      catalyst_strength:
+        max_score: 75
+    analyzer_instructions:
+    - instruction_type: caution
+      instruction: 估值需要通过后续收入和利润增长消化，不能只依赖高景气预期。
+      reason: 估值预期消化风险。
+  semiconductor_cycle_volatility_risk:
+    required_risk:
+      risk_name: 半导体周期波动风险
+      severity: medium
+      reason: 半导体设备、芯片、存储、晶圆、封测等方向受库存、订单、资本开支和景气周期波动影响，即使数据完整也需要提示周期风险。
+    prohibited_claims:
+    - claim_type: semiconductor_cycle_stable_confirmed
+      prohibited_reason: 半导体行业存在周期波动，不能断言周期风险已经消除。
+      example_forbidden_phrases:
+      - 半导体周期风险已经消除
+      - 库存周期已经完全健康
+    scoring_constraints:
+      industry_cycle:
+        max_score: 75
+      risk_control:
+        max_score: 75
+    analyzer_instructions:
+    - instruction_type: caution
+      instruction: 半导体框架必须提示订单、库存、资本开支和周期波动风险。
+      reason: 半导体周期波动风险。
+  domestic_substitution_validation_risk:
+    required_risk:
+      risk_name: 国产替代兑现验证风险
+      severity: medium
+      reason: 国产替代、半导体设备、芯片、GPU、CPU、存储、集成电路、晶圆、刻蚀、薄膜或封测逻辑需要订单、收入和客户验证。
+    prohibited_claims:
+    - claim_type: domestic_substitution_confirmed
+      prohibited_reason: 缺少订单和收入验证时，不能断言国产替代已经充分转化为业绩。
+      example_forbidden_phrases:
+      - 国产替代已经兑现
+      - 国产替代确定放量
+      - 芯片订单确定增长
+    scoring_constraints:
+      catalyst_strength:
+        max_score: 70
+      industry_cycle:
+        max_score: 75
+      risk_control:
+        max_score: 75
+    analyzer_instructions:
+    - instruction_type: caution
+      instruction: 国产替代逻辑需要订单、收入、客户验证和研发商业化验证。
+      reason: 国产替代兑现验证风险。
+  semiconductor_valuation_volatility_risk:
+    required_risk:
+      risk_name: 半导体估值波动风险
+      severity: medium
+      reason: 半导体成长股估值对周期、国产替代进展、订单和资本开支变化敏感，估值波动需要单独提示。
+    prohibited_claims: []
+    scoring_constraints:
+      valuation_reasonableness:
+        max_score: 70
+      risk_control:
+        max_score: 75
+    analyzer_instructions:
+    - instruction_type: caution
+      instruction: 半导体估值需要结合周期、订单和业绩兑现观察，不能只按成长叙事确认合理性。
+      reason: 半导体估值波动风险。
+  stable_order_timing_risk:
+    required_risk:
+      risk_name: 订单节奏验证风险
+      severity: medium
+      reason: 稳健成长股若依赖海外订单、电网投资、特高压、政策投资、新签订单或项目交付，需要验证订单节奏和交付节奏。
+    prohibited_claims:
+    - claim_type: stable_order_timing_confirmed
+      prohibited_reason: 缺少订单和项目交付验证时，不能断言订单节奏稳定。
+      example_forbidden_phrases:
+      - 订单节奏稳定
+      - 电网投资确定提速
+      - 项目交付确定兑现
+    scoring_constraints:
+      industry_cycle:
+        max_score: 75
+      catalyst_strength:
+        max_score: 70
+    analyzer_instructions:
+    - instruction_type: caution
+      instruction: 稳健成长股需要跟踪新签订单、项目交付和政策投资节奏。
+      reason: 订单节奏验证风险。
+  stable_receivable_cashflow_tracking_risk:
+    required_risk:
+      risk_name: 应收账款与现金流跟踪风险
+      severity: medium
+      reason: 稳健成长股需要持续观察应收账款、回款和经营现金流，避免订单增长与现金流质量背离。
+    prohibited_claims:
+    - claim_type: stable_cash_collection_confirmed
+      prohibited_reason: 缺少应收账款、回款或现金流验证时，不能断言回款质量稳定。
+      example_forbidden_phrases:
+      - 回款质量稳定
+      - 现金流质量已经确认
+    scoring_constraints:
+      risk_control:
+        max_score: 75
+      financial_quality:
+        max_score: 80
+    analyzer_instructions:
+    - instruction_type: caution
+      instruction: 应收账款、回款和经营现金流需要持续跟踪。
+      reason: 应收账款与现金流跟踪风险。
+  robot_business_validation:
+    required_risk:
+      risk_name: 机器人业务兑现验证不足
+      severity: medium
+      reason: 机器人相关业务可能仍处于布局或预期阶段，尚不能确认已经形成稳定收入和利润贡献。
+    prohibited_claims:
+    - claim_type: robot_business_confirmed
+      prohibited_reason: 机器人业务订单和收入未充分验证，不能断言已经确定兑现。
+      example_forbidden_phrases:
+      - 机器人业务已经兑现
+      - 机器人业务成为主要增长来源
+      - 人形机器人收入确定放量
+      - 执行器业务已经形成稳定贡献
+    scoring_constraints:
+      catalyst_strength:
+        max_score: 70
+      business_quality:
+        max_score: 80
+    analyzer_instructions:
+    - instruction_type: caution
+      instruction: 机器人业务仍需订单和收入验证，不能写成确定收入贡献。
+      reason: 机器人业务验证不足。
+  customer_concentration_validation:
+    required_risk:
+      risk_name: 大客户依赖验证不足
+      severity: medium
+      reason: 存在大客户供应链逻辑，但客户收入占比和订单持续性需要进一步验证。
+    prohibited_claims:
+    - claim_type: customer_demand_confirmed
+      prohibited_reason: 缺少客户收入占比和订单数据，不能断言大客户需求稳定。
+      example_forbidden_phrases:
+      - 大客户需求稳定
+      - 特斯拉订单确定增长
+      - 客户需求已经确认
+    scoring_constraints:
+      risk_control:
+        max_score: 75
+      catalyst_strength:
+        max_score: 70
+    analyzer_instructions:
+    - instruction_type: caution
+      instruction: 大客户收入占比和订单持续性需要验证。
+      reason: 客户集中度验证不足。
+  valuation_expectation_risk:
+    required_risk:
+      risk_name: 估值预期消化风险
+      severity: medium
+      reason: 高端制造成长股可能提前反映机器人、新能源车或高端制造成长预期，后续需要业绩兑现验证。
+    prohibited_claims: []
+    scoring_constraints:
+      valuation_reasonableness:
+        max_score: 70
+    analyzer_instructions:
+    - instruction_type: caution
+      instruction: 估值需要业绩增长消化，不能只依赖新业务预期。
+      reason: 估值预期风险。

@@ -1,0 +1,10 @@
+{
+  "meta": {"code": "002371", "stock_name": "北方华创", "market": "sz", "generated_at": "2026-05-15T10:00:00"},
+  "blocks": {
+    "basic_info": [{"stock_code": "002371", "stock_name": "北方华创", "industry": "半导体设备", "main_business": "刻蚀设备、薄膜设备、晶圆制造设备和国产替代"}],
+    "financial_indicator": [{"period": "2025-12-31", "revenue_yoy": 28.0, "gross_margin": 44.0, "roe": 18.0, "operating_cashflow": 2500000000}],
+    "valuation": [{"pe_ttm": 45.0}],
+    "business_composition": [{"period": "2025-12-31", "segment_name": "半导体设备"}],
+    "news": [{"title": "国产替代订单增长", "summary": "mock"}]
+  }
+}

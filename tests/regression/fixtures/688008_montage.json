@@ -1,0 +1,62 @@
+{
+  "meta": {
+    "code": "688008",
+    "stock_name": "澜起科技",
+    "market": "mock",
+    "generated_at": "2026-05-15T10:00:00",
+    "data_cutoff": "2025-12-31"
+  },
+  "blocks": {
+    "basic_info": [
+      {
+        "stock_code": "688008",
+        "stock_name": "澜起科技",
+        "industry": "半导体 / 服务器内存接口 / AI服务器链",
+        "main_business": "半导体服务器内存接口芯片和AI服务器链相关产品，受服务器周期和客户需求影响"
+      }
+    ],
+    "financial_indicator": [
+      {
+        "period": "2025-12-31",
+        "revenue_yoy": 36,
+        "net_profit_yoy": 50,
+        "gross_margin": 57,
+        "roe": 13,
+        "operating_cashflow": 1800000000,
+        "debt_to_asset": 45,
+        "accounts_receivable": 800000000,
+        "deducted_net_profit": 900000000,
+        "net_profit": 1000000000,
+        "inventory": 1200000000
+      }
+    ],
+    "valuation": [
+      {
+        "pe_ttm": 60,
+        "pb": 7,
+        "market_cap": 130000000000
+      }
+    ],
+    "business_composition": [
+      {
+        "period": "2025-12-31",
+        "segment_name": "内存接口芯片",
+        "revenue_ratio": 55
+      },
+      {
+        "period": "2025-12-31",
+        "segment_name": "AI服务器相关芯片",
+        "revenue_ratio": 40
+      }
+    ],
+    "news": [
+      {
+        "title": "mock：服务器内存接口需求恢复",
+        "summary": "服务器周期、客户需求和估值波动需要跟踪",
+        "source": "mock",
+        "publish_time": "2026-01-01",
+        "url": null
+      }
+    ]
+  }
+}

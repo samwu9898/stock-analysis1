@@ -1,0 +1,67 @@
+{
+  "meta": {
+    "code": "002028",
+    "stock_name": "思源电气",
+    "market": "mock",
+    "generated_at": "2026-05-15T10:00:00",
+    "data_cutoff": "2025-12-31"
+  },
+  "blocks": {
+    "basic_info": [
+      {
+        "stock_code": "002028",
+        "stock_name": "思源电气",
+        "industry": "电力设备 / 输配电 / 变压器 / 海外订单",
+        "main_business": "输配电设备、变压器、电力自动化和海外订单相关业务，订单和现金流质量重要"
+      }
+    ],
+    "financial_indicator": [
+      {
+        "period": "2025-12-31",
+        "revenue_yoy": 20,
+        "net_profit_yoy": 24,
+        "gross_margin": 31,
+        "roe": 17,
+        "operating_cashflow": 1800000000,
+        "debt_to_asset": 38,
+        "accounts_receivable": 2400000000,
+        "deducted_net_profit": 900000000,
+        "net_profit": 1000000000,
+        "inventory": 500000000
+      }
+    ],
+    "valuation": [
+      {
+        "pe_ttm": 24,
+        "pb": 3.2,
+        "market_cap": 70000000000
+      }
+    ],
+    "business_composition": [
+      {
+        "period": "2025-12-31",
+        "segment_name": "输配电设备",
+        "revenue_ratio": 55
+      },
+      {
+        "period": "2025-12-31",
+        "segment_name": "变压器",
+        "revenue_ratio": 40
+      },
+      {
+        "period": "2025-12-31",
+        "segment_name": "海外订单",
+        "revenue_ratio": 25
+      }
+    ],
+    "news": [
+      {
+        "title": "mock：海外订单保持增长",
+        "summary": "订单、现金流、毛利率和应收账款需要持续跟踪",
+        "source": "mock",
+        "publish_time": "2026-01-01",
+        "url": null
+      }
+    ]
+  }
+}

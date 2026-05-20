@@ -1,0 +1,35 @@
+{
+  "stock_code": "002050",
+  "expected_strategy_type": "advanced_manufacturing_growth",
+  "allowed_status": [
+    "supportive",
+    "neutral"
+  ],
+  "max_confidence": "medium",
+  "min_required_risk_flags": [
+    "机器人业务兑现验证不足",
+    "大客户依赖验证不足"
+  ],
+  "must_track_keywords": [
+    "机器人",
+    "汽车热管理",
+    "毛利率",
+    "经营现金流",
+    "应收账款"
+  ],
+  "forbidden_phrases": [
+    "机器人业务已经兑现",
+    "人形机器人收入确定放量",
+    "特斯拉订单确定增长",
+    "买入",
+    "卖出",
+    "加仓",
+    "减仓",
+    "清仓",
+    "止损",
+    "止盈",
+    "目标价",
+    "满仓",
+    "梭哈"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "meta": {"code": "002028", "stock_name": "思源电气", "market": "sz", "generated_at": "2026-05-15T10:00:00"},
+  "blocks": {
+    "basic_info": [{"stock_code": "002028", "stock_name": "思源电气", "industry": "电力设备", "main_business": "输配电设备、变压器、智能电网"}],
+    "financial_indicator": [{"period": "2025-12-31", "gross_margin": 31.0, "debt_to_asset": 42.0, "accounts_receivable": 1800000000, "revenue_yoy": 16.0}],
+    "business_composition": [{"period": "2025-12-31", "segment_name": "输配电设备"}]
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "meta": {
+    "code": "601899",
+    "stock_name": "紫金矿业",
+    "market": "sh",
+    "generated_at": "2026-05-15T10:00:00"
+  },
+  "blocks": {
+    "basic_info": [
+      {
+        "stock_code": "601899",
+        "stock_name": "紫金矿业",
+        "industry": "全球矿业",
+        "main_business": "多矿种铜金资源龙头，大型矿企，现金流和分红能力较强"
+      }
+    ],
+    "financial_indicator": [
+      {
+        "period": "2025-12-31",
+        "revenue": 300000000000,
+        "revenue_yoy": 18.0,
+        "net_profit": 30000000000,
+        "net_profit_yoy": 25.0,
+        "gross_margin": 22.0,
+        "roe": 18.0,
+        "operating_cashflow": 42000000000,
+        "debt_to_asset": 52.0
+      }
+    ],
+    "valuation": [
+      {
+        "pe_ttm": 18.0,
+        "pb": 3.0,
+        "dividend_yield": 2.5,
+        "market_cap": 300000000000
+      }
+    ],
+    "business_composition": [
+      {
+        "period": "2025-12-31",
+        "segment_name": "铜矿",
+        "revenue_ratio": 45.0
+      },
+      {
+        "period": "2025-12-31",
+        "segment_name": "金矿",
+        "revenue_ratio": 30.0
+      }
+    ]
+  }
+}

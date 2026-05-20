@@ -1,0 +1,27 @@
+{
+  "meta": {
+    "code": "000426",
+    "stock_name": "兴业银锡",
+    "market": "sz",
+    "generated_at": "2026-05-15T10:00:00",
+    "data_cutoff": "2026-05-14"
+  },
+  "blocks": {
+    "basic_info": [
+      {
+        "stock_code": "000426",
+        "stock_name": "兴业银锡",
+        "industry": "有色金属",
+        "main_business": "银、锡等有色金属采选",
+        "listing_date": "1996-08-28"
+      }
+    ],
+    "news": [
+      {
+        "title": "mock 新闻",
+        "publish_time": "2026-04-20",
+        "source": "mock_news"
+      }
+    ]
+  }
+}

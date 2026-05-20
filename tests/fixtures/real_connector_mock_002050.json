@@ -1,0 +1,79 @@
+{
+  "meta": {
+    "code": "002050",
+    "stock_name": "三花智控",
+    "generated_at": "2026-05-17T10:00:00",
+    "data_cutoff": "2025-12-31",
+    "data_source": "akshare",
+    "connector_version": "real_data_connector.v1",
+    "cache_created_at": "2026-05-17T10:00:00"
+  },
+  "blocks": {
+    "basic_info": [
+      {
+        "stock_code": "002050",
+        "stock_name": "三花智控",
+        "industry": "汽车零部件 / 热管理 / 工业自动化",
+        "main_business": "制冷控制元器件、汽车热管理系统零部件、机器人执行器相关零部件布局",
+        "listing_date": "2005-06-07"
+      }
+    ],
+    "financial_indicator": [
+      {
+        "period": "2025-12-31",
+        "revenue_yoy": 24.5,
+        "net_profit_yoy": 31.2,
+        "deducted_net_profit": 3600000000,
+        "gross_margin": 28.5,
+        "net_margin": 12.1,
+        "roe": 18.2,
+        "operating_cashflow": 4200000000,
+        "debt_to_asset": 48.0,
+        "inventory": 3600000000,
+        "accounts_receivable": 5200000000
+      }
+    ],
+    "valuation": [
+      {
+        "pe_ttm": 45.0,
+        "pb": 5.2,
+        "ps": 3.8,
+        "market_cap": 120000000000,
+        "dividend_yield": null
+      }
+    ],
+    "business_composition": [
+      {
+        "period": "2025-12-31",
+        "segment_name": "制冷空调电器零部件",
+        "revenue": 14400000000,
+        "revenue_ratio": 45.0,
+        "gross_margin": 26.0
+      },
+      {
+        "period": "2025-12-31",
+        "segment_name": "汽车热管理系统零部件",
+        "revenue": 13400000000,
+        "revenue_ratio": 42.0,
+        "gross_margin": 30.0
+      }
+    ],
+    "news": [
+      {
+        "title": "mock: 汽车热管理业务保持增长",
+        "publish_time": "2026-01-15",
+        "source": "mock",
+        "url": null,
+        "summary": "汽车热管理相关订单和收入仍需后续财报验证"
+      }
+    ]
+  },
+  "fetch_status": {
+    "basic_info": {"success": true, "error": null, "missing_fields": []},
+    "financial_indicator": {"success": true, "error": null, "missing_fields": []},
+    "valuation": {"success": true, "error": null, "missing_fields": ["dividend_yield"]},
+    "business_composition": {"success": true, "error": null, "missing_fields": []},
+    "news": {"success": true, "error": null, "missing_fields": ["url"]}
+  },
+  "errors": []
+}

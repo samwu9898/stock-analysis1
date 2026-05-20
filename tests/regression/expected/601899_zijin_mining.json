@@ -1,0 +1,30 @@
+{
+  "stock_code": "601899",
+  "expected_strategy_type": "resource_core",
+  "allowed_status": [
+    "supportive",
+    "neutral"
+  ],
+  "max_confidence": "medium",
+  "min_required_risk_flags": [
+    "商品价格数据缺失"
+  ],
+  "must_track_keywords": [
+    "铜价",
+    "金价",
+    "经营现金流",
+    "资产负债率"
+  ],
+  "forbidden_phrases": [
+    "买入",
+    "卖出",
+    "加仓",
+    "减仓",
+    "清仓",
+    "止损",
+    "止盈",
+    "目标价",
+    "满仓",
+    "梭哈"
+  ]
+}

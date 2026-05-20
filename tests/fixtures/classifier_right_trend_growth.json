@@ -1,0 +1,8 @@
+{
+  "meta": {"code": "300308", "stock_name": "中际旭创", "market": "sz", "generated_at": "2026-05-15T10:00:00"},
+  "blocks": {
+    "basic_info": [{"stock_code": "300308", "stock_name": "中际旭创", "industry": "光模块", "main_business": "AI算力数据中心高速光模块、CPO和云计算客户需求"}],
+    "financial_indicator": [{"period": "2025-12-31", "revenue": 50000000000, "revenue_yoy": 50.0, "net_profit_yoy": 60.0, "gross_margin": 35.0}],
+    "business_composition": [{"period": "2025-12-31", "segment_name": "高速光模块"}]
+  }
+}

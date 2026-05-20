@@ -1,0 +1,30 @@
+{
+  "stock_code": "603993",
+  "expected_strategy_type": "resource_swing",
+  "allowed_status": [
+    "supportive",
+    "neutral",
+    "insufficient_data"
+  ],
+  "max_confidence": "medium",
+  "min_required_risk_flags": [
+    "商品价格数据缺失"
+  ],
+  "must_track_keywords": [
+    "商品价格",
+    "经营现金流",
+    "主营构成"
+  ],
+  "forbidden_phrases": [
+    "买入",
+    "卖出",
+    "加仓",
+    "减仓",
+    "清仓",
+    "止损",
+    "止盈",
+    "目标价",
+    "满仓",
+    "梭哈"
+  ]
+}

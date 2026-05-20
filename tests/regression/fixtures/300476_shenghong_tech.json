@@ -1,0 +1,62 @@
+{
+  "meta": {
+    "code": "300476",
+    "stock_name": "胜宏科技",
+    "market": "mock",
+    "generated_at": "2026-05-15T10:00:00",
+    "data_cutoff": "2025-12-31"
+  },
+  "blocks": {
+    "basic_info": [
+      {
+        "stock_code": "300476",
+        "stock_name": "胜宏科技",
+        "industry": "PCB / AI服务器 / 高速互联",
+        "main_business": "PCB和AI服务器高速互联相关产品，受AI服务器需求、产能和毛利率影响"
+      }
+    ],
+    "financial_indicator": [
+      {
+        "period": "2025-12-31",
+        "revenue_yoy": 42,
+        "net_profit_yoy": 58,
+        "gross_margin": 27,
+        "roe": 17,
+        "operating_cashflow": 1600000000,
+        "debt_to_asset": 45,
+        "accounts_receivable": 800000000,
+        "deducted_net_profit": 900000000,
+        "net_profit": 1000000000,
+        "inventory": 500000000
+      }
+    ],
+    "valuation": [
+      {
+        "pe_ttm": 48,
+        "pb": 5.8,
+        "market_cap": 90000000000
+      }
+    ],
+    "business_composition": [
+      {
+        "period": "2025-12-31",
+        "segment_name": "PCB",
+        "revenue_ratio": 55
+      },
+      {
+        "period": "2025-12-31",
+        "segment_name": "AI服务器高速互联板",
+        "revenue_ratio": 40
+      }
+    ],
+    "news": [
+      {
+        "title": "mock：AI服务器PCB需求提升",
+        "summary": "毛利率、产能释放和估值预期仍需验证",
+        "source": "mock",
+        "publish_time": "2026-01-01",
+        "url": null
+      }
+    ]
+  }
+}

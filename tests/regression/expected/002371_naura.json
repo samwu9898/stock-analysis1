@@ -1,0 +1,32 @@
+{
+  "stock_code": "002371",
+  "expected_strategy_type": "semiconductor_cycle",
+  "allowed_status": [
+    "supportive",
+    "neutral"
+  ],
+  "max_confidence": "high",
+  "min_required_risk_flags": [
+    "半导体周期波动风险",
+    "国产替代兑现验证风险"
+  ],
+  "must_track_keywords": [
+    "订单",
+    "毛利率",
+    "存货",
+    "研发",
+    "经营现金流"
+  ],
+  "forbidden_phrases": [
+    "买入",
+    "卖出",
+    "加仓",
+    "减仓",
+    "清仓",
+    "止损",
+    "止盈",
+    "目标价",
+    "满仓",
+    "梭哈"
+  ]
+}

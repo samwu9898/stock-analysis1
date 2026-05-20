@@ -1,0 +1,68 @@
+{
+  "meta": {
+    "code": "601899",
+    "stock_name": "紫金矿业",
+    "market": "mock",
+    "generated_at": "2026-05-15T10:00:00",
+    "data_cutoff": "2025-12-31"
+  },
+  "blocks": {
+    "basic_info": [
+      {
+        "stock_code": "601899",
+        "stock_name": "紫金矿业",
+        "industry": "铜 / 金 / 多矿种 / 全球矿业",
+        "main_business": "多矿种铜金资源龙头，大型矿企，现金流和分红能力较强，存在海外项目和资本开支变量"
+      }
+    ],
+    "financial_indicator": [
+      {
+        "period": "2025-12-31",
+        "revenue_yoy": 18,
+        "net_profit_yoy": 25,
+        "gross_margin": 22,
+        "roe": 18,
+        "operating_cashflow": 42000000000,
+        "debt_to_asset": 52,
+        "accounts_receivable": 800000000,
+        "deducted_net_profit": 900000000,
+        "net_profit": 1000000000,
+        "inventory": 500000000
+      }
+    ],
+    "valuation": [
+      {
+        "pe_ttm": 18,
+        "pb": 3,
+        "market_cap": 300000000000,
+        "dividend_yield": 2.5
+      }
+    ],
+    "business_composition": [
+      {
+        "period": "2025-12-31",
+        "segment_name": "铜矿",
+        "revenue_ratio": 55
+      },
+      {
+        "period": "2025-12-31",
+        "segment_name": "金矿",
+        "revenue_ratio": 40
+      },
+      {
+        "period": "2025-12-31",
+        "segment_name": "其他矿产",
+        "revenue_ratio": 25
+      }
+    ],
+    "news": [
+      {
+        "title": "mock：全球矿业项目保持推进",
+        "summary": "商品价格组合、资本开支和海外项目仍需跟踪",
+        "source": "mock",
+        "publish_time": "2026-01-01",
+        "url": null
+      }
+    ]
+  }
+}

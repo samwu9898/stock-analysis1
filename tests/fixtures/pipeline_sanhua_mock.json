@@ -1,0 +1,94 @@
+{
+  "meta": {
+    "code": "002050",
+    "stock_name": "三花智控",
+    "market": "sz",
+    "generated_at": "2026-05-15T10:00:00",
+    "data_cutoff": "2025-12-31"
+  },
+  "blocks": {
+    "basic_info": [
+      {
+        "stock_code": "002050",
+        "stock_name": "三花智控",
+        "industry": "汽车零部件 / 热管理 / 工业自动化",
+        "main_business": "制冷控制元器件、汽车热管理系统零部件、机器人执行器相关零部件布局，机器人业务仍为 mock 待验证描述"
+      }
+    ],
+    "financial_indicator": [
+      {
+        "period": "2025-12-31",
+        "revenue": 32000000000,
+        "revenue_yoy": 24.5,
+        "net_profit": 3900000000,
+        "net_profit_yoy": 31.2,
+        "deducted_net_profit": 3600000000,
+        "gross_margin": 28.5,
+        "roe": 18.2,
+        "operating_cashflow": 4200000000,
+        "debt_to_asset": 48.0,
+        "accounts_receivable": 5200000000
+      },
+      {
+        "period": "2024-12-31",
+        "revenue": 25700000000,
+        "revenue_yoy": 18.0,
+        "net_profit": 2970000000,
+        "net_profit_yoy": 22.0,
+        "deducted_net_profit": 2800000000,
+        "gross_margin": 27.2,
+        "roe": 16.5,
+        "operating_cashflow": 3500000000,
+        "debt_to_asset": 50.0,
+        "accounts_receivable": 4700000000
+      }
+    ],
+    "valuation": [
+      {
+        "pe_ttm": 45.0,
+        "pb": 5.2,
+        "market_cap": 120000000000
+      }
+    ],
+    "business_composition": [
+      {
+        "period": "2025-12-31",
+        "segment_name": "制冷空调电器零部件",
+        "revenue_ratio": 45.0
+      },
+      {
+        "period": "2025-12-31",
+        "segment_name": "汽车热管理系统零部件",
+        "revenue_ratio": 42.0
+      },
+      {
+        "period": "2025-12-31",
+        "segment_name": "机器人执行器相关零部件布局",
+        "note": "mock 待验证布局，不提供明确收入占比或订单金额，不作为确定性利润贡献"
+      }
+    ],
+    "news": [
+      {
+        "title": "mock：汽车热管理业务保持增长",
+        "publish_time": "2026-01-15",
+        "source": "mock",
+        "url": null,
+        "summary": "汽车热管理相关订单和收入仍需后续财报验证"
+      },
+      {
+        "title": "mock：机器人执行器零部件布局受到关注",
+        "publish_time": "2026-02-10",
+        "source": "mock",
+        "url": null,
+        "summary": "机器人执行器相关零部件处于 mock 待验证阶段"
+      },
+      {
+        "title": "mock：特斯拉供应链和大客户需求需继续验证",
+        "publish_time": "2026-03-01",
+        "source": "mock",
+        "url": null,
+        "summary": "供应链和液冷描述均为 mock，不作为确定事实"
+      }
+    ]
+  }
+}

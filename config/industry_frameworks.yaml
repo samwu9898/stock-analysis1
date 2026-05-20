@@ -1,0 +1,323 @@
+resource_swing:
+  display_name: 资源弹性股
+  description: 适用于利润对商品价格、产量释放、周期波动高度敏感的有色/贵金属/稀土公司。
+  required_focus:
+  - 商品价格趋势
+  - 产量与资源储量
+  - 成本曲线
+  - 毛利率弹性
+  - 一次性收益识别
+  - 周期顶部风险
+  must_track_indicators:
+  - 对应商品价格
+  - 季度产量
+  - 毛利率
+  - 扣非净利润
+  - 经营现金流
+  - 美元指数
+  key_risks:
+  - 商品价格快速回落
+  - 利润高度依赖周期
+  - 一次性收益误导
+  - 高位资本开支
+  - 海外矿山或政策风险
+  preferred_metrics:
+  - revenue_yoy
+  - net_profit_yoy
+  - deducted_net_profit
+  - gross_margin
+  - operating_cashflow
+  invalidation_focus:
+  - 商品价格趋势反转
+  - 产量释放不及预期
+  - 扣非利润明显弱于归母利润
+  - 现金流与利润背离
+  common_mistakes:
+  - 把商品涨价带来的周期利润当成永久成长
+  - 忽略一次性收益
+  - 只看PE不看商品周期
+  confidence_penalty_missing_fields:
+  - financial_metrics
+  - business_composition
+  - gross_margin
+  - operating_cashflow
+resource_core:
+  display_name: 资源核心底仓
+  description: 适用于多矿种布局、资源储量大、现金流和分红能力较强的大型资源龙头。
+  required_focus:
+  - 多矿种资源布局
+  - 储量与产量
+  - 经营现金流
+  - 资本开支
+  - 分红能力
+  - 商品价格组合
+  must_track_indicators:
+  - 铜价
+  - 金价
+  - 产量
+  - 经营现金流
+  - 资产负债率
+  - 分红率
+  key_risks:
+  - 大宗商品系统性下跌
+  - 海外项目风险
+  - 资本开支过大
+  - 成本上升
+  preferred_metrics:
+  - operating_cashflow
+  - debt_to_asset
+  - roe
+  - net_profit_yoy
+  - dividend_yield
+  invalidation_focus:
+  - 商品价格组合走弱
+  - 现金流恶化
+  - 资本开支失控
+  common_mistakes:
+  - 用小资源股弹性要求资源龙头
+  - 只看短期涨幅忽略长期资源价值
+  confidence_penalty_missing_fields:
+  - financial_metrics
+  - operating_cashflow
+  - debt_to_asset
+  - business_composition
+right_trend_growth:
+  display_name: 高景气趋势成长股
+  description: 适用于AI算力、光模块、PCB、服务器、液冷等高景气成长方向。
+  required_focus:
+  - 行业景气度
+  - 订单增长
+  - 大客户资本开支
+  - 收入增速
+  - 毛利率趋势
+  - 估值消化能力
+  must_track_indicators:
+  - 营收增速
+  - 净利润增速
+  - 毛利率
+  - 客户集中度
+  - 订单或产能
+  - 行业资本开支
+  key_risks:
+  - 高估值回撤
+  - 客户集中度过高
+  - 订单不及预期
+  - 毛利率下滑
+  - 技术路线变化
+  preferred_metrics:
+  - revenue_yoy
+  - net_profit_yoy
+  - gross_margin
+  - roe
+  - valuation_metrics
+  invalidation_focus:
+  - 营收增速下滑
+  - 毛利率恶化
+  - 订单或客户资本开支低于预期
+  - 估值无法被业绩消化
+  common_mistakes:
+  - 用低PE价值框架分析高景气股
+  - 忽略客户集中度
+  - 把题材热度当成订单兑现
+  confidence_penalty_missing_fields:
+  - revenue_yoy
+  - net_profit_yoy
+  - gross_margin
+  - valuation_metrics
+semiconductor_cycle:
+  display_name: 半导体国产替代/周期股
+  description: 适用于半导体设备、芯片、晶圆、存储、国产替代相关公司。
+  required_focus:
+  - 国产替代逻辑
+  - 订单与在手订单
+  - 研发投入
+  - 存货周期
+  - 毛利率波动
+  - 资本开支周期
+  must_track_indicators:
+  - 营收增速
+  - 毛利率
+  - 存货
+  - 研发费用率
+  - 订单
+  - 行业资本开支
+  key_risks:
+  - 估值波动大
+  - 研发投入无法商业化
+  - 存货周期恶化
+  - 下游资本开支下行
+  - 外部限制变化
+  preferred_metrics:
+  - revenue_yoy
+  - gross_margin
+  - inventory
+  - roe
+  - valuation_metrics
+  invalidation_focus:
+  - 订单下滑
+  - 存货大幅增加
+  - 毛利率下降
+  - 国产替代进展不及预期
+  common_mistakes:
+  - 只看国产替代叙事不看订单
+  - 忽略半导体周期性
+  - 把研发投入等同于商业成功
+  confidence_penalty_missing_fields:
+  - financial_metrics
+  - inventory
+  - gross_margin
+  - business_composition
+stable_growth:
+  display_name: 稳健成长股
+  description: 适用于电网设备、电力自动化、订单稳定、现金流相对稳健的公司。
+  required_focus:
+  - 订单稳定性
+  - 现金流质量
+  - ROE
+  - 资产负债率
+  - 政策投资周期
+  - 海外订单
+  must_track_indicators:
+  - 新签订单
+  - 经营现金流
+  - ROE
+  - 资产负债率
+  - 毛利率
+  - 分红能力
+  key_risks:
+  - 订单低于预期
+  - 毛利率下滑
+  - 应收账款增加
+  - 政策投资节奏放缓
+  preferred_metrics:
+  - operating_cashflow
+  - roe
+  - gross_margin
+  - debt_to_asset
+  - revenue_yoy
+  invalidation_focus:
+  - 现金流恶化
+  - 订单下滑
+  - ROE持续下降
+  - 应收账款压力上升
+  common_mistakes:
+  - 用题材股弹性要求稳健成长股
+  - 忽略现金流和订单质量
+  confidence_penalty_missing_fields:
+  - operating_cashflow
+  - roe
+  - debt_to_asset
+  - accounts_receivable
+theme_only:
+  display_name: 题材属性股
+  description: 适用于基本面支撑弱、主要依赖题材或新闻催化的公司。
+  required_focus:
+  - 题材与主营相关性
+  - 财务质量
+  - 利润兑现路径
+  - 新闻真实性
+  - 风险暴露
+  must_track_indicators:
+  - 主营业务相关性
+  - 扣非净利润
+  - 经营现金流
+  - 毛利率
+  - 公告验证
+  key_risks:
+  - 题材无法兑现
+  - 财务质量弱
+  - 主营不相关
+  - 高位情绪退潮
+  preferred_metrics:
+  - deducted_net_profit
+  - operating_cashflow
+  - revenue_yoy
+  - gross_margin
+  invalidation_focus:
+  - 题材与主营无关
+  - 无订单或业绩验证
+  - 财务质量继续恶化
+  common_mistakes:
+  - 把题材新闻当成基本面
+  - 只看短期热度
+  - 忽略业绩兑现
+  confidence_penalty_missing_fields:
+  - financial_metrics
+  - business_composition
+  - operating_cashflow
+advanced_manufacturing_growth:
+  display_name: 高端制造成长股
+  description: 适用于汽车热管理、机器人执行器、工业自动化、精密制造核心零部件、新能源车供应链等高端制造成长公司。
+  required_focus:
+  - 主营业务真实构成
+  - 汽车热管理或机器人业务占比
+  - 订单和客户验证
+  - 大客户依赖
+  - 毛利率趋势
+  - 研发投入和产品迭代
+  - 海外收入和汇率影响
+  - 估值是否提前反映成长预期
+  must_track_indicators:
+  - 营收增速
+  - 净利润增速
+  - 毛利率
+  - 经营现金流
+  - 研发费用率
+  - 应收账款
+  - 大客户收入占比
+  - 汽车热管理业务收入
+  - 机器人相关业务收入或订单
+  key_risks:
+  - 机器人业务兑现慢于预期
+  - 大客户依赖较高
+  - 毛利率下滑
+  - 新业务收入占比过低
+  - 估值提前透支预期
+  - 海外需求或汇率波动
+  preferred_metrics:
+  - revenue_yoy
+  - net_profit_yoy
+  - gross_margin
+  - operating_cashflow
+  - roe
+  - accounts_receivable
+  invalidation_focus:
+  - 营收或利润增速明显放缓
+  - 毛利率持续下滑
+  - 机器人或新业务没有订单和收入验证
+  - 经营现金流与利润背离
+  - 大客户需求低于预期
+  common_mistakes:
+  - 把机器人概念当成已经兑现的主营收入
+  - 忽略传统主业和新业务占比差异
+  - 只看特斯拉或机器人预期，不看财务兑现
+  - 用纯题材股逻辑分析制造业龙头
+  confidence_penalty_missing_fields:
+  - financial_metrics
+  - business_composition
+  - gross_margin
+  - operating_cashflow
+  - accounts_receivable
+unknown:
+  display_name: 未知类型
+  description: 数据不足或无法稳定归类。
+  required_focus:
+  - 补充行业和主营数据
+  - 补充财务数据
+  - 补充业务构成
+  must_track_indicators:
+  - 行业
+  - 主营业务
+  - 财务摘要
+  key_risks:
+  - 数据不足
+  - 分类错误
+  preferred_metrics: []
+  invalidation_focus:
+  - 数据仍无法补充
+  common_mistakes:
+  - 在分类不明时强行分析
+  confidence_penalty_missing_fields:
+  - industry
+  - main_business
+  - financial_metrics
