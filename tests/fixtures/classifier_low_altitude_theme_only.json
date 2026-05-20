@@ -1,0 +1,11 @@
+{
+  "meta": {"code": "999996", "stock_name": "低空题材样本", "generated_at": "2026-05-20T10:00:00"},
+  "blocks": {
+    "basic_info": [
+      {"stock_code": "999996", "stock_name": "低空题材样本", "industry": "汽车零部件", "main_business": "汽车零部件主业，新闻提及低空经济战略合作。"}
+    ],
+    "financial_indicator": [{"period": "2025-12-31", "revenue": 1000000000, "net_profit": 80000000, "gross_margin": 20.0, "operating_cashflow": 90000000}],
+    "business_composition": [{"period": "2025-12-31", "segment_name": "汽车零部件", "revenue_ratio": 0.9}],
+    "news": [{"title": "公司参与低空经济主题交流", "summary": "仅为战略合作和政策试点信息。"}]
+  }
+}

@@ -281,6 +281,18 @@ class FundamentalScoringEngine:
             )
         ):
             score += 8
+        if classification.strategy_type == "low_altitude_economy_infrastructure":
+            if getattr(classification, "sub_type", None):
+                score += 6
+                pos.append(self._ev("classification.sub_type", getattr(classification, "sub_type", None), "low-altitude sub_type routing is available."))
+            low_altitude_missing = {
+                item.field_name
+                for item in readiness.field_readiness
+                if item.field_name.startswith("low_altitude.") and item.status in {"missing", "partial"}
+            }
+            if low_altitude_missing:
+                score -= 8
+                penalties.append("low-altitude sub_type confidence-gating indicators missing")
         if classification.strategy_type == "theme_only":
             score -= 10
         if classification.strategy_type == "unknown":
@@ -341,6 +353,19 @@ class FundamentalScoringEngine:
                 score += 6; pos.append(self._ev("financial_metrics.net_profit_yoy", metric.net_profit_yoy, "利润增长支持高端制造成长观察。", metric.period))
             if metric and metric.gross_margin and metric.gross_margin > 25:
                 score += 5; pos.append(self._ev("financial_metrics.gross_margin", metric.gross_margin, "毛利率可用于观察产品结构和盈利能力。", metric.period))
+        if classification.strategy_type == "low_altitude_economy_infrastructure":
+            subtype = getattr(classification, "sub_type", None)
+            if subtype == "aviation_operations_service":
+                gating = {"low_altitude.fleet_size", "low_altitude.operating_hours", "low_altitude.flight_sorties"} & missing
+            else:
+                gating = {"low_altitude.contract_amount", "low_altitude.project_acceptance_progress", "low_altitude.customer_structure", "low_altitude.platform_dispatch_volume"} & missing
+            if gating:
+                score -= 10
+                penalties.append("low-altitude sub_type operating/contract indicators missing")
+            if metric and metric.operating_cashflow and metric.operating_cashflow > 0:
+                score += 4; pos.append(self._ev("financial_metrics.operating_cashflow", metric.operating_cashflow, "Operating cashflow is available as basic cash-conversion evidence.", metric.period))
+            if metric and metric.gross_margin and metric.gross_margin > 15:
+                score += 3; pos.append(self._ev("financial_metrics.gross_margin", metric.gross_margin, "Gross margin is basic operating-quality evidence, not low-altitude realization proof.", metric.period))
         if classification.strategy_type == "satellite_communication_infrastructure":
             satellite_missing = {
                 "satellite.capacity_utilization_or_lease_rate",
@@ -388,6 +413,9 @@ class FundamentalScoringEngine:
         if classification.strategy_type == "satellite_communication_infrastructure":
             score = min(score, 60)
             penalties.append("PE/PB/PS for satellite communication infrastructure are secondary valuation evidence only")
+        if classification.strategy_type == "low_altitude_economy_infrastructure":
+            score = min(score, 60)
+            penalties.append("PE/PB/PS for low-altitude infrastructure are limited valuation context only")
         return _clamp(score, 20, 95), "估值评分按策略类型保守解释 PE、PB、市值和股息率。", pos, neg, penalties
 
     def _score_catalyst_strength(self, normalized, classification, readiness, context):
@@ -411,6 +439,9 @@ class FundamentalScoringEngine:
         ):
             score += 3
             penalties.append("satellite catalysts require operating-data validation and are capped conservatively")
+        if classification.strategy_type == "low_altitude_economy_infrastructure":
+            score = min(score, 58)
+            penalties.append("low-altitude theme, policy pilot or cooperation does not raise catalyst strength without revenue/contract/customer/operation/acceptance evidence")
         if normalized.latest_news and not normalized.financial_metrics:
             score = min(score, 65); penalties.append("news catalyst without financial validation capped at 65")
         return _clamp(score, 20, 95), "催化强度仅按新闻存在和业务关键词做保守规则评分。", pos, neg, penalties
@@ -503,6 +534,8 @@ class FundamentalScoringEngine:
             caps.append(50)
         if classification.strategy_type == "unknown":
             caps.append(50)
+        if classification.strategy_type == "low_altitude_economy_infrastructure" and context.max_overall_confidence == "low":
+            caps.append(65)
         if context.overall_context_quality == "insufficient":
             caps.append(50)
         return min([score] + caps) if caps else score
@@ -587,6 +620,17 @@ class FundamentalScoringEngine:
                 "带宽资源",
                 "轨位资源",
                 "频段资源",
+            ),
+            "low_altitude_economy_infrastructure": (
+                "\u901a\u822a\u8fd0\u8425",
+                "\u4f4e\u7a7a\u98de\u884c\u670d\u52a1",
+                "\u901a\u822a\u8fd0\u8f93",
+                "\u822a\u7a7a\u5e94\u6025\u6551\u63f4",
+                "\u7a7a\u4e2d\u4ea4\u901a\u7ba1\u7406",
+                "\u7a7a\u7ba1\u7cfb\u7edf",
+                "\u4f4e\u7a7a\u8c03\u5ea6",
+                "\u4f4e\u7a7a\u8fd0\u884c\u5e73\u53f0",
+                "\u6307\u6325\u8c03\u5ea6\u5e73\u53f0",
             ),
         }
         return any(k in text for k in keywords.get(strategy_type, ()))

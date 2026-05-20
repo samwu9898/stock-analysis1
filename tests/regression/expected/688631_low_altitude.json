@@ -1,0 +1,8 @@
+{
+  "stock_code": "688631",
+  "expected_strategy_type": "low_altitude_economy_infrastructure",
+  "allowed_status": ["neutral", "insufficient_data"],
+  "max_confidence": "medium",
+  "max_score": 70,
+  "must_track_keywords": ["low-altitude revenue share", "contract amount", "project acceptance progress"]
+}

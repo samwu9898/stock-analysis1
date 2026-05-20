@@ -86,6 +86,35 @@ def test_satellite_news_only_theme_does_not_classify_as_satellite():
     assert result.strategy_type in {"theme_only", "unknown"}
 
 
+def test_low_altitude_aviation_operations_service_classifies():
+    result = classify_fixture("classifier_low_altitude_000099.json")
+
+    assert result.strategy_type == "low_altitude_economy_infrastructure"
+    assert result.sub_type == "aviation_operations_service"
+    assert result.confidence != "high"
+
+
+def test_low_altitude_airspace_platform_system_classifies():
+    result = classify_fixture("classifier_low_altitude_688631.json")
+
+    assert result.strategy_type == "low_altitude_economy_infrastructure"
+    assert result.sub_type == "airspace_platform_system"
+    assert result.confidence != "high"
+
+
+def test_low_altitude_boundary_negative_does_not_route_to_old_frameworks():
+    result = classify_fixture("classifier_low_altitude_negative_688070.json")
+
+    assert result.strategy_type != "low_altitude_economy_infrastructure"
+    assert result.strategy_type not in {"semiconductor_cycle", "resource_swing"}
+
+
+def test_low_altitude_theme_only_guard():
+    result = classify_fixture("classifier_low_altitude_theme_only.json")
+
+    assert result.strategy_type in {"theme_only", "unknown"}
+
+
 def test_news_only_match_cannot_be_high_confidence():
     normalized = FundamentalDataAdapter().from_file(str(FIXTURES / "classifier_theme_only.json"))
     normalized.basic_info.industry = None

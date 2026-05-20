@@ -1,0 +1,9 @@
+{
+  "meta": {"code": "001696", "stock_name": "宗申动力", "generated_at": "2026-05-20T10:00:00"},
+  "blocks": {
+    "basic_info": [{"stock_code": "001696", "stock_name": "宗申动力", "industry": "机械制造", "main_business": "摩托车发动机、航空发动机和机械零部件。"}],
+    "financial_indicator": [{"period": "2025-12-31", "revenue": 9000000000, "net_profit": 550000000, "gross_margin": 18.0, "operating_cashflow": 600000000}],
+    "business_composition": [{"period": "2025-12-31", "segment_name": "发动机类", "revenue_ratio": 0.7}],
+    "news": []
+  }
+}

@@ -123,6 +123,21 @@ class PromptBuilder:
 - `not_supportive`
 - `insufficient_data`
 
+## Low-altitude economy infrastructure constraints
+
+If strategy_type is `low_altitude_economy_infrastructure`, the report must state:
+
+- sub_type: {stock.get("sub_type") or ""}
+- Low-altitude economy is a sector cluster, not one single industry.
+- This framework covers only infrastructure and operation service.
+- The report must distinguish `aviation_operations_service` from `airspace_platform_system`.
+- Financial metrics explain only base operating quality.
+- Missing low-altitude revenue, contracts, customers, operation volume, or project acceptance is insufficient to judge business realization.
+- Contract liabilities are only a visibility proxy, not real backlog.
+- Policy pilots, demonstration zones and strategic cooperation are not commercial revenue.
+- Drone/eVTOL manufacturing and low-altitude operation service must not be mixed.
+- Auto-parts low-altitude theme exposure must not be routed into infrastructure operation.
+
 ## Evidence Pack
 
 ```json

@@ -186,6 +186,29 @@ class AnalysisContextBuilder:
                 cap = self._min_confidence(cap, "low")
             elif core_gating & missing:
                 cap = self._min_confidence(cap, "medium")
+        if classification.strategy_type == "low_altitude_economy_infrastructure":
+            missing = {
+                item.field_name
+                for item in readiness.field_readiness
+                if item.status in {"missing", "partial"}
+            }
+            subtype = getattr(classification, "sub_type", None)
+            shared = {"low_altitude.revenue_share", "low_altitude.customer_structure"}
+            aviation = {
+                "low_altitude.fleet_size",
+                "low_altitude.operating_hours",
+                "low_altitude.flight_sorties",
+            }
+            airspace = {
+                "low_altitude.contract_amount",
+                "low_altitude.project_acceptance_progress",
+                "low_altitude.customer_structure",
+            }
+            selected = aviation if subtype == "aviation_operations_service" else airspace
+            if shared <= missing or selected <= missing:
+                cap = self._min_confidence(cap, "low")
+            elif shared & missing or selected & missing:
+                cap = self._min_confidence(cap, "medium")
         return quality, cap
 
     def _min_confidence(self, a: str, b: str) -> str:

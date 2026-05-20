@@ -138,6 +138,22 @@ def test_satellite_evidence_pack_generates_industry_must_track_and_data_limitati
     assert "不等同于真实订单或 backlog" in names["合同负债"]["scope_note"]
 
 
+def test_low_altitude_evidence_pack_splits_sub_type_and_keeps_proxy_limits():
+    fundamental = sample_fundamental("low_altitude_economy_infrastructure")
+    fundamental["sub_type"] = "aviation_operations_service"
+    raw = sample_raw()
+
+    pack = EvidencePackBuilder().build(fundamental, raw)
+    names = {item["indicator_name"]: item for item in pack["enhanced_must_track_indicators"]}
+
+    assert pack["stock"]["sub_type"] == "aviation_operations_service"
+    assert "fleet size" in names
+    assert "operating hours" in names
+    assert names["revenue per flight hour"]["current_status"] == "missing / future_data_needed"
+    assert names["EBITDA / EBITDA margin"]["current_status"] == "missing / future_data_needed"
+    assert names["contract liabilities"]["current_status"] == "partial_proxy"
+
+
 def test_confidence_breakdown_and_evidence_classification_are_populated():
     pack = EvidencePackBuilder().build(sample_fundamental(), sample_raw())
 

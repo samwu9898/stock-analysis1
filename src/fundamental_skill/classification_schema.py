@@ -16,6 +16,7 @@ StrategyType = Literal[
     "stable_growth",
     "advanced_manufacturing_growth",
     "satellite_communication_infrastructure",
+    "low_altitude_economy_infrastructure",
     "theme_only",
     "unknown",
 ]
@@ -38,6 +39,7 @@ class StockClassificationResult(StrictBaseModel):
     stock_code: str
     stock_name: str | None = None
     strategy_type: StrategyType
+    sub_type: str | None = None
     confidence: Confidence
     confidence_score: int = Field(ge=0, le=100)
     reasons: list[str] = Field(default_factory=list)

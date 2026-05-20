@@ -538,6 +538,28 @@ strategy_specific_rules:
     - robot_business_validation
     - customer_concentration_validation
     - new_business_revenue_validation
+  low_altitude_economy_infrastructure:
+    must_include_if_missing:
+    - low_altitude.revenue_share
+    - low_altitude.fleet_size
+    - low_altitude.operating_hours
+    - low_altitude.flight_sorties
+    - low_altitude.contract_amount
+    - low_altitude.project_acceptance_progress
+    - low_altitude.customer_structure
+    - low_altitude.platform_dispatch_volume
+    - low_altitude.safety_or_regulatory_event
+    prohibited_if_missing_core:
+    - Low-altitude theme cannot be treated as business realization.
+    - Policy pilot, demonstration zone, strategic cooperation or intent order cannot be treated as commercial revenue.
+    - Contract liabilities are only a visibility proxy and not real backlog.
+    - Drone/eVTOL OEM, aircraft engine, aviation component, auto-parts, airport, finance, military or remote-sensing businesses must not be routed here only because of low-altitude theme.
+    - Missing low-altitude revenue share prevents claiming low-altitude as the core business.
+    - Missing operating hours, flight sorties or platform dispatch volume prevents claims about operating efficiency or stable demand.
+    - Missing customer structure prevents claims about demand stability or collection quality.
+    - Missing project acceptance and collection data prevents claims that projects have realized.
+    - Safety accidents, CAAC penalties, route suspension and airspace control must be explicit risks when present.
+    - Do not mix sub_type metrics.
   satellite_communication_infrastructure:
     must_include_if_missing:
     - satellite.capacity_utilization_or_lease_rate

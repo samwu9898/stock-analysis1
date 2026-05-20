@@ -99,6 +99,7 @@ class FundamentalResultAssembler:
             stock_name=normalized.stock_name,
             analysis_date=_now_date(),
             strategy_type=classification.strategy_type,
+            sub_type=getattr(classification, "sub_type", None),
             status=status,
             confidence=confidence,
             confidence_reason=self._confidence_reason(confidence, readiness, context, scoring, cap_reasons),
@@ -177,6 +178,8 @@ class FundamentalResultAssembler:
         ) and not calibrated_real_data_gap and not self._semiconductor_data_gap_neutral_exception(
             normalized, classification, readiness
         ) and not self._satellite_data_gap_neutral_exception(
+            normalized, classification, readiness
+        ) and not self._low_altitude_data_gap_neutral_exception(
             normalized, classification, readiness
         ):
             return "negative"
@@ -330,6 +333,32 @@ class FundamentalResultAssembler:
         actual_missing = set(readiness.critical_missing_fields + readiness.high_priority_missing_fields)
         return not (core_available & actual_missing)
 
+    def _low_altitude_data_gap_neutral_exception(
+        self,
+        normalized: NormalizedFundamentalInput,
+        classification: StockClassificationResult,
+        readiness: DataReadinessPlan,
+    ) -> bool:
+        if classification.strategy_type != "low_altitude_economy_infrastructure":
+            return False
+        if not normalized.financial_metrics:
+            return False
+        if not normalized.business_composition or not normalized.business_composition.segments:
+            return False
+        if not (normalized.basic_info.industry or normalized.basic_info.main_business):
+            return False
+        core_available = {
+            "basic_info.industry",
+            "basic_info.main_business",
+            "business_composition.segments",
+            "financial_metrics.gross_margin",
+            "financial_metrics.operating_cashflow",
+            "financial_metrics.accounts_receivable",
+            "financial_metrics.contract_liabilities",
+        }
+        actual_missing = set(readiness.critical_missing_fields + readiness.high_priority_missing_fields)
+        return not (core_available & actual_missing)
+
     def _decide_confidence(
         self,
         classification: StockClassificationResult,
@@ -365,6 +394,10 @@ class FundamentalResultAssembler:
         if self._stable_growth_core_missing(classification, readiness, context):
             confidence = _cap_confidence(confidence, "medium")
             if readiness.readiness_level == "weak":
+                confidence = _cap_confidence(confidence, "low")
+        if self._low_altitude_core_gating_missing(classification, readiness, context):
+            confidence = _cap_confidence(confidence, "medium")
+            if context.max_overall_confidence == "low":
                 confidence = _cap_confidence(confidence, "low")
         if self._advanced_manufacturing_medium_risk_count(classification, context) >= 2:
             confidence = _cap_confidence(confidence, "medium")
@@ -457,6 +490,9 @@ class FundamentalResultAssembler:
             drivers.append("合同负债只能作为订单可见度 proxy，capex 只能作为长期资产购建现金支出观察。")
 
         drivers.extend([f"框架关注：{item}" for item in framework.required_focus[:3]])
+        if classification.strategy_type == "low_altitude_economy_infrastructure":
+            drivers.append("Low-altitude economy is a sector cluster; this framework covers only infrastructure and operation service.")
+            drivers.append("Sub_type routing must separate aviation_operations_service from airspace_platform_system; missing operation, contract, customer, acceptance or safety data caps confidence.")
         return list(dict.fromkeys(drivers))[:6]
 
     def _financial_quality(self, normalized, readiness, scoring) -> FinancialQuality:
@@ -644,6 +680,19 @@ class FundamentalResultAssembler:
 
     def _track_indicators(self, classification, framework, readiness) -> list[TrackIndicator]:
         names = list(framework.must_track_indicators)
+        if classification.strategy_type == "low_altitude_economy_infrastructure":
+            names = [
+                "low-altitude revenue share",
+                "accounts receivable",
+                "contract liabilities",
+                "operating cashflow",
+                "customer structure",
+                "safety events / accidents / regulatory penalties",
+            ]
+            if getattr(classification, "sub_type", None) == "aviation_operations_service":
+                names.extend(["fleet size", "operating hours", "flight sorties", "aircraft type mix"])
+            else:
+                names.extend(["contract amount", "project acceptance progress", "platform dispatch volume", "software service revenue share"])
         if classification.strategy_type == "resource_swing":
             names.extend(["对应商品价格", "扣非净利润", "经营现金流", "主营构成"])
         elif classification.strategy_type == "right_trend_growth":
@@ -680,6 +729,22 @@ class FundamentalResultAssembler:
         missing = set(readiness.critical_missing_fields + readiness.high_priority_missing_fields)
         if any(field.startswith("valuation_metrics") for field in missing):
             names.extend(["PE", "PB", "市值", "估值分位"])
+        if classification.strategy_type == "low_altitude_economy_infrastructure":
+            names.extend([
+                "low-altitude revenue share",
+                "customer structure",
+                "accounts receivable",
+                "contract liabilities",
+                "operating cashflow",
+                "low-altitude business gross margin",
+                "safety events / accidents / regulatory penalties",
+                "fleet size",
+                "operating hours",
+                "flight sorties",
+                "contract amount",
+                "project acceptance progress",
+                "platform dispatch volume",
+            ])
         names.extend(readiness.recommended_data_to_collect[:4])
         out = []
         for name in list(dict.fromkeys(names))[:12]:
@@ -960,6 +1025,21 @@ class FundamentalResultAssembler:
             risk.severity == "high" and "数据缺失" in risk.risk_name for risk in context.required_risks
         )
 
+    def _low_altitude_core_gating_missing(self, classification, readiness, context) -> bool:
+        if classification.strategy_type != "low_altitude_economy_infrastructure":
+            return False
+        missing = {
+            item.field_name
+            for item in readiness.field_readiness
+            if item.status in {"missing", "partial"}
+        }
+        shared = {"low_altitude.revenue_share", "low_altitude.customer_structure", "low_altitude.safety_or_regulatory_event"}
+        if getattr(classification, "sub_type", None) == "aviation_operations_service":
+            subtype_fields = {"low_altitude.fleet_size", "low_altitude.operating_hours", "low_altitude.flight_sorties"}
+        else:
+            subtype_fields = {"low_altitude.contract_amount", "low_altitude.project_acceptance_progress", "low_altitude.platform_dispatch_volume"}
+        return bool((shared | subtype_fields) & missing)
+
     def _high_risk_count(self, readiness, context, scoring) -> int:
         names = {risk.risk_name for risk in context.required_risks if risk.severity == "high"}
         names.update(risk.risk_name for risk in scoring.required_risks if risk.severity == "high")
@@ -994,6 +1074,8 @@ def framework_vars(strategy_type: str) -> list[str]:
         return ["订单", "客户验证", "毛利率", "应收账款"]
     if strategy_type == "satellite_communication_infrastructure":
         return ["卫星资源", "转发器 / 带宽容量", "容量利用率 / 出租率", "客户结构", "资产寿命 / 折旧"]
+    if strategy_type == "low_altitude_economy_infrastructure":
+        return ["sub_type", "low-altitude revenue share", "operating volume", "contract acceptance", "customer structure", "safety/regulatory events"]
     return []
 
 

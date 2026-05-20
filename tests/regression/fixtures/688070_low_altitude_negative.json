@@ -1,0 +1,9 @@
+{
+  "meta": {"code": "688070", "stock_name": "纵横股份", "generated_at": "2026-05-20T10:00:00"},
+  "blocks": {
+    "basic_info": [{"stock_code": "688070", "stock_name": "纵横股份", "industry": "无人机制造", "main_business": "工业无人机整机、无人机系统及行业应用服务。"}],
+    "financial_indicator": [{"period": "2025-12-31", "revenue": 500000000, "net_profit": -30000000, "gross_margin": 24.0, "operating_cashflow": -50000000}],
+    "business_composition": [{"period": "2025-12-31", "segment_name": "工业无人机", "revenue_ratio": 0.85}],
+    "news": []
+  }
+}

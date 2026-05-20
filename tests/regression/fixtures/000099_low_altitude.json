@@ -1,0 +1,10 @@
+{
+  "meta": {"code": "000099", "stock_name": "中信海直", "generated_at": "2026-05-20T10:00:00"},
+  "blocks": {
+    "basic_info": [{"stock_code": "000099", "stock_name": "中信海直", "industry": "通航运营服务", "main_business": "通航运营和低空飞行服务，提供通航运输、航空应急救援等服务收入。"}],
+    "financial_indicator": [{"period": "2025-12-31", "revenue": 2000000000, "net_profit": 280000000, "gross_margin": 18.5, "operating_cashflow": 360000000, "accounts_receivable": 260000000, "contract_liabilities": 50000000}],
+    "valuation": [{"period": "2026-05-20", "pe_ttm": 35.0, "pb": 2.0, "market_cap": 18000000000}],
+    "business_composition": [{"period": "2025-12-31", "classification_type": "按行业分类", "segment_name": "通航运输", "revenue_ratio": 0.9913, "gross_margin": 18.5}],
+    "news": []
+  }
+}

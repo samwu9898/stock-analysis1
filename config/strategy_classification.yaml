@@ -197,6 +197,65 @@ satellite_communication_infrastructure:
   - 卫星传输服务
   - 卫星通信服务
   description: 以在轨卫星、轨位、频段、转发器等空间段资产为核心稀缺资源，以带宽、转发器、卫星通信服务变现为主要收入来源的资产密集、牌照/资源驱动、长周期运营型公司。
+low_altitude_economy_infrastructure:
+  examples:
+  - "000099"
+  - "688631"
+  - "CITIC Offshore Helicopter"
+  - "Les Information"
+  keywords:
+  - "general aviation operation"
+  - "low-altitude flight service"
+  - "general aviation transportation"
+  - "aviation emergency rescue"
+  - "air traffic management"
+  - "air traffic control system"
+  - "low-altitude dispatch"
+  - "low-altitude operation platform"
+  positive_logic:
+    aviation_operations_service:
+      primary_any:
+      - "通航运营"
+      - "低空飞行服务"
+      - "通航运输"
+      - "航空应急救援"
+      proof_any:
+      - "收入"
+      - "运营小时"
+      - "飞行架次"
+      - "机队"
+      - "客户合同"
+    airspace_platform_system:
+      primary_any:
+      - "空中交通管理"
+      - "空管系统"
+      - "低空调度"
+      - "低空运行平台"
+      - "指挥调度平台"
+      proof_any:
+      - "合同"
+      - "项目验收"
+      - "客户"
+      - "收入"
+      - "平台交付"
+  negative_keywords:
+  - "无人机整机"
+  - "eVTOL 整机"
+  - "飞行汽车制造"
+  - "航空发动机"
+  - "航空零部件"
+  - "汽车零部件"
+  - "无人机测绘软件"
+  - "遥感软件"
+  - "军工电子"
+  - "民航机场运营商"
+  - "航空租赁"
+  - "航空金融"
+  boundary_rules:
+  - "If low-altitude/general-aviation/airspace revenue share is below 20% and there is no contract, operating asset, or project acceptance support, do not route here."
+  - "If a traditional core business is above 60%, force boundary exclusion."
+  - "If only policy, announcement, cooperation, or news heat appears, default to theme_only or unknown."
+  description: "Low-altitude infrastructure and operation service framework; not a concept-stock, drone OEM, eVTOL OEM, aircraft engine, component, auto-parts theme, or policy-pilot framework."
 unknown:
   examples: []
   keywords: []

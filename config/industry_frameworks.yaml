@@ -376,6 +376,88 @@ satellite_communication_infrastructure:
   - depreciation_amortization
   - satellite_launch_plan
   - satellite_failure_or_insurance_event
+low_altitude_economy_infrastructure:
+  display_name: "Low-altitude economy infrastructure / operation service"
+  description: "Applies to companies whose core business is low-altitude flight operation, general aviation operation service, low-altitude airspace control/dispatch, ground support, city-level low-altitude operation platform, or takeoff/landing/base/route/platform service, and whose business can be verified by revenue, contracts, customers, assets, operating volume, or project acceptance evidence."
+  required_focus:
+  - "sub_type routing: aviation_operations_service vs airspace_platform_system"
+  - "low-altitude/general-aviation/airspace revenue share"
+  - "fleet size, aircraft type mix, fleet age, operating hours, flight sorties"
+  - "contract amount, backlog-like disclosures, project acceptance, customer structure, collection cycle"
+  - "takeoff/landing sites, bases, routes, coverage areas"
+  - "operating qualification, airspace resources, safety events and regulatory penalties"
+  - "low-altitude business gross margin and operating cashflow"
+  - "policy pilot to commercial order evidence and policy dependence"
+  must_track_indicators:
+  - "low-altitude revenue share"
+  - "accounts receivable"
+  - "contract liabilities"
+  - "operating cashflow"
+  - "low-altitude business gross margin"
+  - "customer structure"
+  - "policy pilot to commercial order evidence"
+  - "safety events / accidents / regulatory penalties"
+  - "fleet size"
+  - "aircraft type mix"
+  - "fleet average age"
+  - "operating hours"
+  - "flight sorties"
+  - "revenue per flight hour"
+  - "depreciation and amortization"
+  - "EBITDA / EBITDA margin as future_data_needed only"
+  - "operating qualification / airspace resources"
+  - "takeoff/landing sites / bases / route resources"
+  - "contract amount on hand"
+  - "contract delivery cycle"
+  - "project acceptance progress"
+  - "platform dispatch volume"
+  - "software service revenue share"
+  - "R&D expense ratio"
+  - "customer renewal rate"
+  - "government project dependence"
+  - "project collection cycle"
+  key_risks:
+  - "Low-altitude theme is not business realization evidence."
+  - "Policy pilots and demonstration zones are not commercial revenue."
+  - "Strategic cooperation and intent orders are not contract revenue."
+  - "Contract liabilities are only a visibility proxy and not real backlog."
+  - "Drone/eVTOL OEM and component companies must not be routed here."
+  - "Missing operating hours, flight sorties, platform dispatch, customers, acceptance or collection data caps confidence."
+  - "Safety accidents, CAAC penalties, route suspension and airspace control are major operating risks."
+  - "Government project dependence may reduce revenue stability and collection quality."
+  preferred_metrics:
+  - revenue
+  - net_profit
+  - gross_margin
+  - operating_cashflow
+  - accounts_receivable
+  - contract_liabilities
+  - business_composition
+  - valuation_metrics
+  invalidation_focus:
+  - "Low-altitude/general-aviation/airspace revenue share cannot be confirmed."
+  - "Core operations/airspace platform evidence is absent."
+  - "Customer structure, acceptance, collection, safety or regulatory evidence worsens."
+  - "Traditional manufacturing/core business dominates the revenue mix."
+  common_mistakes:
+  - "Treating low-altitude theme as business realization."
+  - "Treating policy pilot or demonstration zone as commercial revenue."
+  - "Treating strategic cooperation or intent order as contract revenue."
+  - "Treating contract liabilities as backlog."
+  - "Routing drone/eVTOL OEM or aviation components into infrastructure operation."
+  - "Using aviation operation metrics to assess an airspace platform company."
+  - "Using platform contract metrics to assess an aviation operation company."
+  - "Letting resource_swing, semiconductor_cycle, or advanced_manufacturing_growth catch low-altitude theme contamination."
+  confidence_penalty_missing_fields:
+  - low_altitude.revenue_share
+  - low_altitude.fleet_size
+  - low_altitude.operating_hours
+  - low_altitude.flight_sorties
+  - low_altitude.contract_amount
+  - low_altitude.project_acceptance_progress
+  - low_altitude.customer_structure
+  - low_altitude.collection_cycle
+  - low_altitude.safety_or_regulatory_event
 unknown:
   display_name: 未知类型
   description: 数据不足或无法稳定归类。

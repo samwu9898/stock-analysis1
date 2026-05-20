@@ -1,0 +1,9 @@
+{
+  "meta": {"code": "600967", "stock_name": "中航沈飞", "generated_at": "2026-05-20T10:00:00"},
+  "blocks": {
+    "basic_info": [{"stock_code": "600967", "stock_name": "中航沈飞", "industry": "军工", "main_business": "军工主机厂，航空装备研制生产。"}],
+    "financial_indicator": [{"period": "2025-12-31", "revenue": 45000000000, "net_profit": 3000000000, "gross_margin": 12.0, "operating_cashflow": 2500000000}],
+    "business_composition": [{"period": "2025-12-31", "segment_name": "航空装备", "revenue_ratio": 0.95}],
+    "news": []
+  }
+}

@@ -220,6 +220,7 @@ class EvidencePackBuilder:
             "code": fundamental.get("stock_code") or basic_info.get("stock_code") or raw.get("meta", {}).get("code"),
             "name": fundamental.get("stock_name") or basic_info.get("stock_name") or raw.get("meta", {}).get("stock_name"),
             "strategy_type": fundamental.get("strategy_type"),
+            "sub_type": fundamental.get("sub_type"),
             "status": fundamental.get("status"),
             "confidence": fundamental.get("confidence"),
             "fundamental_score": fundamental.get("fundamental_score"),
@@ -251,6 +252,7 @@ class EvidencePackBuilder:
             "unknown_or_missing_evidence": unknown_or_missing_evidence,
             "enhanced_must_track_indicators": self._enhanced_indicators(
                 strategy_type=str(fundamental.get("strategy_type") or "unknown"),
+                sub_type=fundamental.get("sub_type"),
                 financial=financial,
                 valuation=valuation,
                 business=business,
@@ -530,6 +532,7 @@ class EvidencePackBuilder:
     def _enhanced_indicators(
         self,
         strategy_type: str,
+        sub_type: str | None,
         financial: dict[str, Any],
         valuation: dict[str, Any],
         business: list[dict[str, Any]],
@@ -575,6 +578,42 @@ class EvidencePackBuilder:
                 ("资本开支", "capex", "financial_indicator", "industry_cycle", "资本开支用于观察长期资产购建现金支出，不代表需求或产能确定兑现"),
                 ("估值消化能力", "pe_ttm", "valuation", "valuation", "估值消化能力依赖增长兑现和估值水平匹配"),
             ]
+        elif strategy_type == "low_altitude_economy_infrastructure":
+            specs = [
+                ("low-altitude revenue share", "low_altitude_revenue_share", "business_composition", "business_quality", "Revenue share verifies whether low-altitude/general-aviation/airspace business is real business exposure rather than theme wording."),
+                ("accounts receivable", "accounts_receivable", "financial_indicator", "cash_conversion", "Receivables constrain collection quality and customer/project evidence."),
+                ("contract liabilities", "orders_or_contract_liabilities", "financial_indicator", "order_visibility", "Contract liabilities are only a visibility proxy, not real backlog."),
+                ("operating cashflow", "operating_cashflow", "financial_indicator", "cashflow_quality", "Operating cashflow verifies basic cash conversion."),
+                ("low-altitude business gross margin", "low_altitude_gross_margin", "business_composition", "margin_quality", "Segment margin is needed to assess low-altitude business economics; consolidated margin is only partial evidence."),
+                ("customer structure", "customer_structure", "missing", "customer_risk", "Customer structure is required before judging demand stability or collection quality."),
+                ("policy pilot to commercial order evidence", "policy_pilot_to_commercial_order", "missing", "commercialization", "Policy pilot or demonstration-zone evidence cannot be treated as commercial revenue."),
+                ("safety events / accidents / regulatory penalties", "safety_or_regulatory_event", "missing", "event_risk", "Safety accidents, CAAC penalties, route suspension and airspace control must be explicit risks when present."),
+            ]
+            if sub_type == "aviation_operations_service":
+                specs.extend([
+                    ("fleet size", "fleet_size", "missing", "operating_assets", "Fleet size defines aviation operation asset base; v1 does not calculate proxy."),
+                    ("aircraft type mix", "aircraft_type_mix", "missing", "operating_assets", "Aircraft type mix affects service capability and depreciation profile."),
+                    ("fleet average age", "fleet_average_age", "missing", "asset_life", "Fleet age affects safety, maintenance and replacement needs."),
+                    ("operating hours", "operating_hours", "missing", "operating_volume", "Operating hours validate demand and utilization; v1 does not calculate proxy."),
+                    ("flight sorties", "flight_sorties", "missing", "operating_volume", "Flight sorties validate service volume; v1 does not calculate proxy."),
+                    ("revenue per flight hour", "revenue_per_flight_hour", "future_data_needed", "unit_economics", "Future data only; v1 does not calculate proxy."),
+                    ("depreciation and amortization", "depreciation_amortization", "missing", "profit_quality", "Depreciation and amortization help separate asset cost from operating profitability."),
+                    ("EBITDA / EBITDA margin", "ebitda_margin", "future_data_needed", "operating_profitability", "Future data only; v1 does not enter EBITDA scoring."),
+                    ("operating qualification / airspace resources", "operating_qualification_airspace_resources", "missing", "qualification", "Qualifications and airspace resources constrain operation capacity."),
+                    ("takeoff/landing sites / bases / route resources", "sites_bases_routes", "missing", "network_resources", "Sites, bases and route resources define operation network coverage."),
+                ])
+            else:
+                specs.extend([
+                    ("contract amount on hand", "contract_amount", "missing", "order_visibility", "Contract amount is required before judging platform-system realization."),
+                    ("contract delivery cycle", "contract_delivery_cycle", "missing", "delivery_risk", "Delivery cycle affects revenue recognition and execution risk."),
+                    ("project acceptance progress", "project_acceptance_progress", "missing", "realization", "Project acceptance is required before judging delivery realization."),
+                    ("platform dispatch volume", "platform_dispatch_volume", "missing", "operating_volume", "Platform dispatch volume validates actual operation use; v1 does not calculate proxy."),
+                    ("software service revenue share", "software_service_revenue_share", "missing", "business_quality", "Software service revenue share separates recurring/platform service from project delivery."),
+                    ("R&D expense ratio", "r_and_d_expense_ratio", "financial_indicator", "business_quality", "R&D expense ratio observes platform investment but does not prove delivery."),
+                    ("customer renewal rate", "customer_renewal_rate", "missing", "customer_quality", "Renewal rate validates recurring demand."),
+                    ("government project dependence", "government_project_dependence", "missing", "policy_dependence", "Government project dependence must not be treated as stable commercial demand."),
+                    ("project collection cycle", "project_collection_cycle", "missing", "cash_conversion", "Collection cycle validates project cash conversion."),
+                ])
         elif strategy_type == "satellite_communication_infrastructure":
             specs = [
                 ("在轨卫星数量", "in_orbit_satellite_count", "missing", "capacity", "在轨卫星数量定义运营资产基础和服务能力"),
@@ -682,6 +721,10 @@ class EvidencePackBuilder:
             scope_note = "v1 仅作为 must-track 和 data limitation，不进入 scoring。"
         elif field == "free_cashflow":
             scope_note = "自由现金流为经营现金流 - capex 的 derived_observation，仅用于观察资本开支后的现金生成。"
+        if field in {"revenue_per_flight_hour", "platform_dispatch_volume"}:
+            scope_note = "v1 records this as missing/future_data_needed only; no proxy is calculated."
+        elif field in {"low_altitude_revenue_share", "low_altitude_gross_margin"}:
+            scope_note = "Business composition can support segment exposure, but theme words alone are not evidence of business realization."
         return {
             "indicator_name": name,
             "why_it_matters": why,

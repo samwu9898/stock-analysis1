@@ -92,6 +92,103 @@ SATELLITE_STRONG_CORE_KEYWORDS = (
     "卫星通信服务",
 )
 
+LOW_ALTITUDE_STRATEGY = "low_altitude_economy_infrastructure"
+LOW_ALTITUDE_AVIATION_SUBTYPE = "aviation_operations_service"
+LOW_ALTITUDE_AIRSPACE_SUBTYPE = "airspace_platform_system"
+
+LOW_ALTITUDE_AVIATION_PRIMARY = (
+    "\u901a\u822a\u8fd0\u8425",
+    "\u4f4e\u7a7a\u98de\u884c\u670d\u52a1",
+    "\u901a\u822a\u8fd0\u8f93",
+    "\u822a\u7a7a\u5e94\u6025\u6551\u63f4",
+    "general aviation operation",
+    "low-altitude flight service",
+    "general aviation transportation",
+    "aviation emergency rescue",
+)
+LOW_ALTITUDE_AVIATION_PROOF = (
+    "\u6536\u5165",
+    "\u8fd0\u8425\u5c0f\u65f6",
+    "\u98de\u884c\u67b6\u6b21",
+    "\u673a\u961f",
+    "\u5ba2\u6237\u5408\u540c",
+    "revenue",
+    "operating hours",
+    "flight sorties",
+    "fleet",
+    "customer contract",
+)
+LOW_ALTITUDE_AIRSPACE_PRIMARY = (
+    "\u7a7a\u4e2d\u4ea4\u901a\u7ba1\u7406",
+    "\u7a7a\u7ba1\u7cfb\u7edf",
+    "\u4f4e\u7a7a\u8c03\u5ea6",
+    "\u4f4e\u7a7a\u8fd0\u884c\u5e73\u53f0",
+    "\u6307\u6325\u8c03\u5ea6\u5e73\u53f0",
+    "air traffic management",
+    "air traffic control system",
+    "low-altitude dispatch",
+    "low-altitude operation platform",
+    "command dispatch platform",
+)
+LOW_ALTITUDE_AIRSPACE_PROOF = (
+    "\u5408\u540c",
+    "\u9879\u76ee\u9a8c\u6536",
+    "\u5ba2\u6237",
+    "\u6536\u5165",
+    "\u5e73\u53f0\u4ea4\u4ed8",
+    "contract",
+    "project acceptance",
+    "customer",
+    "revenue",
+    "platform delivery",
+)
+LOW_ALTITUDE_RELATED_SEGMENT_KEYWORDS = (
+    "\u4f4e\u7a7a",
+    "\u901a\u822a",
+    "\u901a\u822a\u8fd0\u8f93",
+    "\u901a\u822a\u8fd0\u8425",
+    "\u7a7a\u4e2d\u4ea4\u901a\u7ba1\u7406",
+    "\u7a7a\u7ba1",
+    "\u6307\u6325\u8c03\u5ea6",
+)
+LOW_ALTITUDE_BOUNDARY_KEYWORDS = (
+    "\u65e0\u4eba\u673a",
+    "\u65e0\u4eba\u673a\u6574\u673a",
+    "\u5de5\u4e1a\u65e0\u4eba\u673a",
+    "eVTOL",
+    "evtol",
+    "\u98de\u884c\u6c7d\u8f66",
+    "\u901a\u822a\u98de\u673a\u5236\u9020",
+    "\u98de\u673a\u5236\u9020",
+    "\u822a\u7a7a\u53d1\u52a8\u673a",
+    "\u53d1\u52a8\u673a",
+    "\u822a\u7a7a\u96f6\u90e8\u4ef6",
+    "\u6c7d\u8f66\u96f6\u90e8\u4ef6",
+    "\u9065\u611f",
+    "\u6d4b\u7ed8",
+    "\u519b\u5de5",
+    "\u519b\u5de5\u7535\u5b50",
+    "\u6c11\u822a\u673a\u573a",
+    "\u822a\u7a7a\u79df\u8d41",
+    "\u822a\u7a7a\u91d1\u878d",
+)
+LOW_ALTITUDE_TRADITIONAL_SEGMENT_KEYWORDS = (
+    "\u6c7d\u8f66\u96f6\u90e8\u4ef6",
+    "\u822a\u7a7a\u53d1\u52a8\u673a",
+    "\u53d1\u52a8\u673a",
+    "\u65e0\u4eba\u673a",
+    "\u519b\u5de5",
+    "\u6750\u6599",
+    "\u7535\u6c60",
+    "\u4f20\u611f\u5668",
+    "\u98de\u673a\u5236\u9020",
+    "\u901a\u822a\u98de\u673a\u5236\u9020",
+    "\u9065\u611f",
+    "\u6d4b\u7ed8",
+    "\u822a\u7a7a\u79df\u8d41",
+    "\u6c11\u822a\u673a\u573a",
+)
+
 
 def _safe_json(value: Any, limit: int = 8000) -> str:
     try:
@@ -136,6 +233,10 @@ class StockClassifier:
             )
 
         text_sources = self._collect_text_sources(normalized)
+        low_altitude_result = self._classify_low_altitude(normalized, text_sources, missing_fields, warnings)
+        if low_altitude_result is not None:
+            return low_altitude_result
+
         scores: dict[str, int] = defaultdict(int)
         evidence_by_type: dict[str, list[ClassificationEvidence]] = defaultdict(list)
         matched_source_types: dict[str, set[str]] = defaultdict(set)
@@ -292,6 +393,242 @@ class StockClassifier:
                 text_sources.get("business_composition", ""),
             ]
         )
+
+    def _classify_low_altitude(
+        self,
+        normalized: NormalizedFundamentalInput,
+        text_sources: dict[str, str],
+        missing_fields: list[str],
+        warnings: list[str],
+    ) -> StockClassificationResult | None:
+        core_text = self._core_text(text_sources)
+        all_text = " ".join(text_sources.values())
+        aviation_core = self._has_any(core_text, LOW_ALTITUDE_AVIATION_PRIMARY)
+        aviation_proof = self._has_any(all_text, LOW_ALTITUDE_AVIATION_PROOF)
+        airspace_core = self._has_any(core_text, LOW_ALTITUDE_AIRSPACE_PRIMARY)
+        airspace_proof = self._has_any(all_text, LOW_ALTITUDE_AIRSPACE_PROOF)
+
+        subtype = None
+        rule_name = ""
+        matched_value = ""
+        if airspace_core and airspace_proof:
+            subtype = LOW_ALTITUDE_AIRSPACE_SUBTYPE
+            rule_name = "low_altitude.tier1.airspace_platform_system"
+            matched_value = self._first_hit(core_text, LOW_ALTITUDE_AIRSPACE_PRIMARY) or "airspace_platform_system"
+        elif aviation_core and aviation_proof:
+            subtype = LOW_ALTITUDE_AVIATION_SUBTYPE
+            rule_name = "low_altitude.tier1.aviation_operations_service"
+            matched_value = self._first_hit(core_text, LOW_ALTITUDE_AVIATION_PRIMARY) or "aviation_operations_service"
+
+        positive_share = self._segment_share(normalized, LOW_ALTITUDE_RELATED_SEGMENT_KEYWORDS)
+        traditional_share = self._segment_share(normalized, LOW_ALTITUDE_TRADITIONAL_SEGMENT_KEYWORDS)
+        boundary_hit = self._first_hit(core_text, LOW_ALTITUDE_BOUNDARY_KEYWORDS)
+        if subtype:
+            if traditional_share is not None and traditional_share > 0.60 and not airspace_core:
+                return self._low_altitude_boundary_result(
+                    normalized,
+                    missing_fields,
+                    warnings,
+                    boundary_hit or "traditional core segment >60%",
+                    "traditional_core_segment_boundary_check",
+                )
+            if positive_share is not None and positive_share < 0.20 and not (aviation_proof or airspace_proof):
+                return self._low_altitude_boundary_result(
+                    normalized,
+                    missing_fields,
+                    warnings,
+                    "low altitude related segment share <20%",
+                    "low_altitude_revenue_share_below_threshold",
+                )
+            score = 62 if positive_share is not None and positive_share >= 0.20 else 55
+            if boundary_hit:
+                score = min(score, 58)
+                warnings.append("low_altitude_boundary_keyword_present_confidence_capped")
+            evidence = [
+                ClassificationEvidence(
+                    source_field="core_business_text",
+                    matched_value=matched_value,
+                    matched_rule=rule_name,
+                    weight=45,
+                    explanation="Tier-1 AND logic matched low-altitude infrastructure/service core text plus revenue/contract/asset/operation evidence.",
+                )
+            ]
+            if positive_share is not None:
+                evidence.append(
+                    ClassificationEvidence(
+                        source_field="business_composition",
+                        matched_value=f"related_revenue_share={positive_share:.2%}",
+                        matched_rule="low_altitude.revenue_share_boundary",
+                        weight=17,
+                        explanation="Business composition includes low-altitude/general-aviation/airspace related revenue share.",
+                    )
+                )
+            reasons = [
+                f"classified as {LOW_ALTITUDE_STRATEGY} with sub_type={subtype} by Tier-1 AND logic.",
+                "This framework covers infrastructure/operation service only, not low-altitude concept exposure or aircraft/drone manufacturing.",
+            ]
+            if subtype == LOW_ALTITUDE_AVIATION_SUBTYPE:
+                reasons.append("Aviation operations service requires fleet, operating hours, flight sorties, safety and regulatory evidence before high confidence.")
+            else:
+                reasons.append("Airspace platform system requires contract amount, project acceptance, customer structure and collection evidence before high confidence.")
+            return StockClassificationResult(
+                stock_code=normalized.stock_code,
+                stock_name=normalized.stock_name,
+                strategy_type=LOW_ALTITUDE_STRATEGY,
+                sub_type=subtype,
+                confidence=_score_to_confidence(score, LOW_ALTITUDE_STRATEGY),
+                confidence_score=score,
+                reasons=reasons,
+                evidence=evidence,
+                alternative_types=[],
+                missing_fields=sorted(set(missing_fields)),
+                warnings=sorted(set(warnings)),
+            )
+
+        boundary_reason = boundary_hit
+        if boundary_reason is None and traditional_share is not None and traditional_share > 0.60:
+            boundary_reason = "traditional core segment >60%"
+        if boundary_reason and self._is_low_altitude_boundary_context(core_text, all_text):
+            strategy_type = "theme_only" if self._has_low_altitude_theme(all_text) else "unknown"
+            score = 35 if strategy_type == "theme_only" else 25
+            return self._low_altitude_boundary_result(
+                normalized,
+                missing_fields,
+                warnings,
+                boundary_reason,
+                "low_altitude.boundary_exclusion",
+                strategy_type=strategy_type,
+                score=score,
+            )
+        if self._has_any(core_text, ("\u6469\u6258\u8f66\u53d1\u52a8\u673a", "\u53d1\u52a8\u673a\u53ca\u96f6\u914d\u4ef6", "\u673a\u68b0\u5236\u9020\u4e1a")):
+            return self._low_altitude_boundary_result(
+                normalized,
+                missing_fields,
+                warnings,
+                "engine/mechanical parts boundary exclusion",
+                "low_altitude.engine_mechanical_boundary_exclusion",
+                strategy_type="unknown",
+                score=25,
+            )
+        if self._has_low_altitude_theme(all_text):
+            return StockClassificationResult(
+                stock_code=normalized.stock_code,
+                stock_name=normalized.stock_name,
+                strategy_type="theme_only",
+                confidence="low",
+                confidence_score=35,
+                reasons=[
+                    "Low-altitude theme appeared, but Tier-1 AND evidence for infrastructure/operation service was not met.",
+                    "Defaulted to theme_only instead of applying low-altitude infrastructure framework.",
+                ],
+                evidence=[
+                    ClassificationEvidence(
+                        source_field="text_sources",
+                        matched_value="low-altitude theme without Tier-1 evidence",
+                        matched_rule="low_altitude.theme_only_guard",
+                        weight=20,
+                        explanation="Theme words alone are not operating revenue, contract, asset, operation volume or project acceptance evidence.",
+                    )
+                ],
+                alternative_types=[],
+                missing_fields=sorted(set(missing_fields)),
+                warnings=sorted(set(warnings + ["low_altitude_theme_only_guard_applied"])),
+            )
+        return None
+
+    def _low_altitude_boundary_result(
+        self,
+        normalized: NormalizedFundamentalInput,
+        missing_fields: list[str],
+        warnings: list[str],
+        boundary_reason: str,
+        matched_rule: str,
+        strategy_type: str = "unknown",
+        score: int = 25,
+    ) -> StockClassificationResult:
+        return StockClassificationResult(
+            stock_code=normalized.stock_code,
+            stock_name=normalized.stock_name,
+            strategy_type=strategy_type,
+            confidence=_score_to_confidence(score, strategy_type),
+            confidence_score=score,
+            reasons=[
+                f"Low-altitude boundary exclusion applied: {boundary_reason}.",
+                "The company was not routed into low_altitude_economy_infrastructure because manufacturing, component, airport, finance, military, remote-sensing, or theme-only evidence is outside v1 scope.",
+            ],
+            evidence=[
+                ClassificationEvidence(
+                    source_field="core_business_text",
+                    matched_value=str(boundary_reason),
+                    matched_rule=matched_rule,
+                    weight=20,
+                    explanation="Boundary guard prevents low-altitude theme contamination from falling into unrelated frameworks.",
+                )
+            ],
+            alternative_types=[],
+            missing_fields=sorted(set(missing_fields)),
+            warnings=sorted(set(warnings + ["low_altitude_boundary_exclusion_applied"])),
+        )
+
+    def _has_any(self, text: str, terms: tuple[str, ...]) -> bool:
+        lower = text.lower()
+        return any(term and term.lower() in lower for term in terms)
+
+    def _first_hit(self, text: str, terms: tuple[str, ...]) -> str | None:
+        lower = text.lower()
+        for term in terms:
+            if term and term.lower() in lower:
+                return term
+        return None
+
+    def _has_low_altitude_theme(self, text: str) -> bool:
+        return self._has_any(text, ("\u4f4e\u7a7a\u7ecf\u6d4e", "\u4f4e\u7a7a", "low-altitude economy"))
+
+    def _is_low_altitude_boundary_context(self, core_text: str, all_text: str) -> bool:
+        return self._has_low_altitude_theme(all_text) or self._has_any(
+            core_text,
+            (
+                "\u901a\u822a",
+                "\u65e0\u4eba\u673a",
+                "eVTOL",
+                "evtol",
+                "\u98de\u884c\u6c7d\u8f66",
+                "\u822a\u7a7a\u53d1\u52a8\u673a",
+                "\u822a\u7a7a\u96f6\u90e8\u4ef6",
+                "\u9065\u611f",
+                "\u6d4b\u7ed8",
+                "\u519b\u5de5",
+            ),
+        )
+
+    def _segment_share(
+        self, normalized: NormalizedFundamentalInput, keywords: tuple[str, ...]
+    ) -> float | None:
+        if not normalized.business_composition:
+            return None
+        best: float | None = None
+        for segment in normalized.business_composition.segments:
+            if not isinstance(segment, dict):
+                continue
+            text = _safe_json(segment, limit=2000).lower()
+            if not any(keyword.lower() in text for keyword in keywords):
+                continue
+            value = self._ratio_value(segment.get("revenue_ratio"))
+            if value is None:
+                continue
+            best = value if best is None else max(best, value)
+        return best
+
+    def _ratio_value(self, value: Any) -> float | None:
+        if isinstance(value, dict):
+            value = value.get("raw_value", value.get("value"))
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            return None
+        if number > 1 and number <= 100:
+            number = number / 100
+        return number
 
     def _apply_conflict_rules(self, scores: dict[str, int], text_sources: dict[str, str]) -> dict[str, int]:
         combined_core_text = self._core_text(text_sources)

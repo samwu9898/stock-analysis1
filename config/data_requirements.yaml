@@ -765,6 +765,169 @@ satellite_communication_infrastructure:
     - annual_report
     affects_analysis:
     - risk_flags
+low_altitude_economy_infrastructure:
+  required_fields:
+  - field_name: basic_info.industry
+    display_name: "industry"
+    category: basic_info
+    importance: critical
+    reason: "Required to verify that this is not only a low-altitude theme."
+    expected_location: [basic_info.industry]
+    affects_analysis: [business_summary]
+  - field_name: basic_info.main_business
+    display_name: "main business"
+    category: basic_info
+    importance: critical
+    reason: "Required for boundary checks against drone/eVTOL/component/auto-parts/airport/finance businesses."
+    expected_location: [basic_info.main_business]
+    affects_analysis: [business_summary, risk_flags]
+  - field_name: business_composition.segments
+    display_name: "business composition"
+    category: business_composition
+    importance: critical
+    reason: "Required to confirm low-altitude/general-aviation/airspace revenue share."
+    expected_location: [business_composition.segments]
+    affects_analysis: [business_summary, business_quality]
+  - field_name: financial_metrics.revenue
+    display_name: "revenue"
+    category: financial
+    importance: critical
+    reason: "Basic operating scale evidence."
+    expected_location: [financial_indicator]
+    affects_analysis: [financial_quality]
+  - field_name: financial_metrics.net_profit
+    display_name: "net profit"
+    category: financial
+    importance: high
+    reason: "Profitability context for a conservative v1 view."
+    expected_location: [financial_indicator]
+    affects_analysis: [financial_quality]
+  - field_name: financial_metrics.gross_margin
+    display_name: "gross margin"
+    category: financial
+    importance: high
+    reason: "Low-altitude business margin is preferred; consolidated margin is only partial evidence."
+    expected_location: [financial_indicator, business_composition]
+    affects_analysis: [financial_quality]
+  - field_name: financial_metrics.operating_cashflow
+    display_name: "operating cashflow"
+    category: financial
+    importance: critical
+    reason: "Cash conversion is essential; project and operation evidence is not enough without cashflow context."
+    expected_location: [financial_indicator]
+    affects_analysis: [financial_quality, risk_flags]
+  - field_name: financial_metrics.accounts_receivable
+    display_name: "accounts receivable"
+    category: financial
+    importance: high
+    reason: "Receivables constrain collection quality and customer/project evidence."
+    expected_location: [financial_indicator]
+    affects_analysis: [financial_quality, risk_flags]
+  - field_name: financial_metrics.contract_liabilities
+    display_name: "contract liabilities"
+    category: financial
+    importance: high
+    reason: "Contract liabilities are a partial visibility proxy only, not real backlog."
+    expected_location: [financial_indicator]
+    affects_analysis: [business_quality, risk_flags]
+  - field_name: valuation_metrics.pe_ttm
+    display_name: "PE TTM"
+    category: valuation
+    importance: medium
+    reason: "Existing valuation field for limited valuation context only."
+    expected_location: [valuation]
+    affects_analysis: [valuation_view]
+  - field_name: low_altitude.revenue_share
+    display_name: "low-altitude related revenue share"
+    category: industry
+    importance: high
+    reason: "Confidence gate; missing share prevents high confidence and prevents claiming low-altitude as the core business."
+    expected_location: [business_composition, annual_report]
+    affects_analysis: [business_quality, confidence]
+  - field_name: low_altitude.fleet_size
+    display_name: "fleet size"
+    category: industry
+    importance: high
+    reason: "aviation_operations_service confidence gate; v1 does not calculate proxy."
+    expected_location: [annual_report, announcements]
+    affects_analysis: [business_quality, risk_flags]
+  - field_name: low_altitude.aircraft_type_mix
+    display_name: "aircraft type mix"
+    category: industry
+    importance: high
+    reason: "aviation_operations_service confidence gate; v1 does not calculate proxy."
+    expected_location: [annual_report]
+    affects_analysis: [business_quality]
+  - field_name: low_altitude.operating_hours
+    display_name: "operating hours"
+    category: industry
+    importance: high
+    reason: "aviation_operations_service confidence gate; missing data limits efficiency and demand claims."
+    expected_location: [annual_report, operating_data]
+    affects_analysis: [industry_cycle, confidence]
+  - field_name: low_altitude.flight_sorties
+    display_name: "flight sorties"
+    category: industry
+    importance: high
+    reason: "aviation_operations_service confidence gate; v1 does not calculate proxy."
+    expected_location: [annual_report, operating_data]
+    affects_analysis: [industry_cycle, confidence]
+  - field_name: low_altitude.safety_or_regulatory_event
+    display_name: "safety events / regulatory penalties"
+    category: industry
+    importance: high
+    reason: "Accidents, CAAC penalties, route suspension or airspace control must be explicit risk inputs."
+    expected_location: [announcements, regulator_disclosure]
+    affects_analysis: [risk_flags]
+  - field_name: low_altitude.contract_amount
+    display_name: "contract amount"
+    category: industry
+    importance: high
+    reason: "airspace_platform_system confidence gate; strategic cooperation is not contract revenue."
+    expected_location: [announcements, annual_report]
+    affects_analysis: [business_quality, confidence]
+  - field_name: low_altitude.project_acceptance_progress
+    display_name: "project acceptance progress"
+    category: industry
+    importance: high
+    reason: "airspace_platform_system confidence gate; missing acceptance prevents claiming project realization."
+    expected_location: [annual_report, announcements]
+    affects_analysis: [business_quality, confidence]
+  - field_name: low_altitude.customer_structure
+    display_name: "customer structure"
+    category: industry
+    importance: high
+    reason: "Confidence gate for demand stability, policy dependence and collection quality."
+    expected_location: [annual_report]
+    affects_analysis: [risk_flags, confidence]
+  - field_name: low_altitude.platform_dispatch_volume
+    display_name: "platform dispatch volume"
+    category: industry
+    importance: high
+    reason: "airspace_platform_system confidence gate; v1 does not calculate proxy."
+    expected_location: [operating_data, annual_report]
+    affects_analysis: [industry_cycle, confidence]
+  - field_name: low_altitude.software_service_revenue_share
+    display_name: "software service revenue share"
+    category: industry
+    importance: medium
+    reason: "Preferred for platform-system revenue quality, not a v1 scoring input."
+    expected_location: [business_composition]
+    affects_analysis: [business_quality]
+  - field_name: low_altitude.r_and_d_expense_ratio
+    display_name: "R&D expense ratio"
+    category: industry
+    importance: medium
+    reason: "Preferred platform-system context; R&D does not prove platform delivery."
+    expected_location: [financial_indicator]
+    affects_analysis: [business_quality]
+  - field_name: low_altitude.government_project_dependence
+    display_name: "government project dependence"
+    category: industry
+    importance: high
+    reason: "Policy or government-project dependence must not be treated as stable commercial revenue."
+    expected_location: [annual_report, customer_disclosure]
+    affects_analysis: [risk_flags]
 unknown:
   required_fields:
   - field_name: basic_info.industry

@@ -1,0 +1,18 @@
+{
+  "meta": {"code": "688631", "stock_name": "莱斯信息", "generated_at": "2026-05-20T10:00:00"},
+  "blocks": {
+    "basic_info": [
+      {"stock_code": "688631", "stock_name": "莱斯信息", "industry": "软件和信息技术服务", "main_business": "公司面向民航空中交通管理、空管系统和指挥调度平台提供系统集成、平台交付和客户合同服务。"}
+    ],
+    "financial_indicator": [
+      {"period": "2025-12-31", "revenue": 1600000000, "net_profit": 170000000, "gross_margin": 32.0, "operating_cashflow": 120000000, "accounts_receivable": 520000000, "contract_liabilities": 180000000, "r_and_d_expense_ratio": 0.12}
+    ],
+    "valuation": [
+      {"period": "2026-05-20", "pe_ttm": 48.0, "pb": 4.5, "market_cap": 26000000000}
+    ],
+    "business_composition": [
+      {"period": "2025-12-31", "classification_type": "按产品分类", "segment_name": "民航空中交通管理", "revenue_ratio": 0.5069, "gross_margin": 32.0}
+    ],
+    "news": []
+  }
+}

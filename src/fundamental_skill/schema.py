@@ -46,6 +46,7 @@ StrategyType = Literal[
     "stable_growth",
     "advanced_manufacturing_growth",
     "satellite_communication_infrastructure",
+    "low_altitude_economy_infrastructure",
     "theme_only",
     "unknown",
 ]
@@ -153,6 +154,7 @@ class FundamentalAnalysisResult(SkillBaseModel):
     stock_name: Optional[str] = None
     analysis_date: str
     strategy_type: StrategyType
+    sub_type: Optional[str] = None
     status: Status
     confidence: Confidence
     confidence_reason: str

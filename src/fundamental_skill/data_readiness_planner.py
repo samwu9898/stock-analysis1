@@ -120,6 +120,18 @@ class DataReadinessPlanner:
                 penalty_reasons.append(
                     "卫星通信基础设施 v1：basic_info、financials、business_composition 可用时不因行业专属运营指标缺失直接降为 insufficient。"
                 )
+        if classification.strategy_type == "low_altitude_economy_infrastructure":
+            foundation_available = (
+                bool(normalized.financial_metrics)
+                and normalized.business_composition is not None
+                and bool(normalized.business_composition.segments)
+                and bool(normalized.basic_info.industry or normalized.basic_info.main_business)
+            )
+            if foundation_available and score < 60:
+                score = 60
+                penalty_reasons.append(
+                    "low_altitude_economy_infrastructure v1: basic_info, financials and business_composition are available; missing sub_type operating/contract fields caps confidence but does not by itself force insufficient readiness."
+                )
         score = max(0, min(100, score))
 
         level = self._level_from_score(
@@ -372,6 +384,8 @@ class DataReadinessPlanner:
             return f"补充基础信息：{requirement.display_name}"
         if requirement.category == "news":
             return "补充最新公告或新闻数据"
+        if requirement.category == "industry" and requirement.field_name.startswith("low_altitude."):
+            return f"Collect low-altitude infrastructure/operation evidence: {requirement.display_name}"
         if requirement.category == "industry":
             return f"补充卫星通信行业专属字段：{requirement.display_name}"
         return f"补充字段：{requirement.display_name}"
@@ -468,6 +482,33 @@ class DataReadinessPlanner:
                 caps.append("usable_with_warnings")
             if foundation & missing or financial_metrics_empty:
                 caps.append("weak")
+        if strategy_type == "low_altitude_economy_infrastructure":
+            foundation = {
+                "basic_info.industry",
+                "basic_info.main_business",
+                "business_composition.segments",
+            }
+            shared_gating = {
+                "low_altitude.revenue_share",
+                "low_altitude.customer_structure",
+                "low_altitude.safety_or_regulatory_event",
+            }
+            aviation_gating = {
+                "low_altitude.fleet_size",
+                "low_altitude.aircraft_type_mix",
+                "low_altitude.operating_hours",
+                "low_altitude.flight_sorties",
+            }
+            airspace_gating = {
+                "low_altitude.contract_amount",
+                "low_altitude.project_acceptance_progress",
+                "low_altitude.customer_structure",
+                "low_altitude.platform_dispatch_volume",
+            }
+            if shared_gating & missing or aviation_gating & missing or airspace_gating & missing:
+                caps.append("usable_with_warnings")
+            if foundation & missing or financial_metrics_empty:
+                caps.append("weak")
         for cap in caps:
             level = self._cap_level(level, cap)
         return level
@@ -559,6 +600,12 @@ class DataReadinessPlanner:
             return ["industry_cycle", "catalysts"]
         if "business_composition" in field_name:
             return ["business_summary", "key_drivers"]
+        if field_name.startswith("low_altitude."):
+            if any(key in field_name for key in ("operating_hours", "flight_sorties", "platform_dispatch_volume")):
+                return ["industry_cycle", "risk_flags"]
+            if any(key in field_name for key in ("contract", "acceptance", "customer", "revenue_share")):
+                return ["business_quality", "risk_flags"]
+            return ["risk_flags"]
         return []
 
 
