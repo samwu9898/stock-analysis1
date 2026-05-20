@@ -1,0 +1,10 @@
+{
+  "stock_code": "603259",
+  "expected_strategy_type": "life_science_cxo_services",
+  "expected_sub_type": "integrated_cxo_platform",
+  "allowed_status": ["neutral", "insufficient_data"],
+  "max_confidence": "medium",
+  "max_score": 70,
+  "min_required_risk_flags": ["backlog", "customer"],
+  "must_track_keywords": ["CXO", "contract liabilities", "customer concentration"]
+}

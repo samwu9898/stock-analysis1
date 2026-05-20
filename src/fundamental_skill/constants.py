@@ -14,6 +14,7 @@ STRATEGY_TYPES = (
     "advanced_manufacturing_growth",
     "satellite_communication_infrastructure",
     "low_altitude_economy_infrastructure",
+    "life_science_cxo_services",
     "theme_only",
     "unknown",
 )

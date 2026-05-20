@@ -256,6 +256,81 @@ low_altitude_economy_infrastructure:
   - "If a traditional core business is above 60%, force boundary exclusion."
   - "If only policy, announcement, cooperation, or news heat appears, default to theme_only or unknown."
   description: "Low-altitude infrastructure and operation service framework; not a concept-stock, drone OEM, eVTOL OEM, aircraft engine, component, auto-parts theme, or policy-pilot framework."
+life_science_cxo_services:
+  examples:
+  - "603259"
+  - "300759"
+  - "002821"
+  - "300363"
+  - "300347"
+  - "WuXi AppTec"
+  - "Pharmaron"
+  - "Asymchem"
+  - "Porton"
+  - "Tigermed"
+  keywords:
+  - "CRO"
+  - "CDMO"
+  - "CXO"
+  - "CMC"
+  - "clinical CRO"
+  - "preclinical research"
+  - "drug discovery service"
+  - "pharmaceutical outsourcing"
+  - "contract research organization"
+  - "contract development and manufacturing organization"
+  - "clinical trial service"
+  - "SMO"
+  - "commercial manufacturing service"
+  positive_logic:
+    tier1_and_logic:
+      primary_any:
+      - "CRO"
+      - "CDMO"
+      - "CXO"
+      - "CMC"
+      - "clinical CRO"
+      - "drug discovery service"
+      - "pharmaceutical outsourcing"
+      proof_any:
+      - "revenue share"
+      - "order"
+      - "contract liabilities"
+      - "capacity"
+      - "clinical project"
+      - "main business"
+      - "business composition"
+      not_primary_revenue:
+      - "self-owned innovative drug pipeline"
+      - "innovative drug pipeline"
+  revenue_share_thresholds:
+    direct_candidate: ">=50% CXO/CRO/CDMO/CMC/clinical research/pharmaceutical R&D-production outsourcing service revenue"
+    boundary_check: "30%-50%, do not auto-route without additional business-composition support"
+    default_exclusion: "<30% unless clear transformation and revenue evidence"
+    unknown_when_unconfirmed: "If revenue share cannot be confirmed, keep confidence low or use unknown/theme_only."
+  negative_keywords:
+  - "self-owned innovative drug pipeline"
+  - "API sales"
+  - "formulation sales"
+  - "medical device"
+  - "pharmaceutical distribution"
+  - "TCM"
+  - "consumer healthcare"
+  - "hospital"
+  - "general testing laboratory"
+  - "AI drug discovery software"
+  - "SaaS"
+  - "technology license"
+  boundary_rules:
+  - "Do not route by CRO/CDMO/R&D-cooperation/news wording alone."
+  - "If API sales plus formulation sales exceed 60% and CDMO service revenue cannot be independently confirmed, do not auto-route."
+  - "Medical-device CRO/CDMO, general testing labs, AI drug-discovery software/SaaS, and diversified pharma groups with small CXO units are out of v1 scope."
+  - "If a company has both CXO services and self-owned pipeline, route here only when CXO-related revenue is >=50%, and mark the pipeline as outside this framework."
+  sub_type_routing:
+    integrated_cxo_platform: "drug discovery + preclinical + CMC/CDMO multi-business platform"
+    cdmo_manufacturing_services: "CDMO/CMC/commercial manufacturing outsourcing dominant"
+    clinical_cro_services: "clinical CRO/SMO/data-statistics service dominant"
+  description: "Life-science CRO/CDMO/CXO/CMC outsourcing services framework; not self-owned drug pipeline, ordinary API/formulation manufacturing, medical device, distribution, TCM, consumer healthcare, software-only AI drug discovery, or news-theme framework."
 unknown:
   examples: []
   keywords: []

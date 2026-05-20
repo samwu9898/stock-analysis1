@@ -1,0 +1,10 @@
+{
+  "stock_code": "300363",
+  "expected_strategy_type": "life_science_cxo_services",
+  "expected_sub_type": "cdmo_manufacturing_services",
+  "allowed_status": ["neutral", "insufficient_data"],
+  "max_confidence": "medium",
+  "max_score": 70,
+  "min_required_risk_flags": ["one-off", "CDMO capacity"],
+  "must_track_keywords": ["CXO", "one-off large-order marker", "CDMO capacity utilization"]
+}

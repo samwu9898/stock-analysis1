@@ -482,7 +482,173 @@ missing_field_rules:
     scoring_constraints:
       risk_control:
         max_score: 80
+  life_science_cxo.backlog:
+    affected_dimensions: [business_quality, catalysts, risk_flags]
+    required_risk:
+      risk_name: "life_science_cxo backlog missing"
+      severity: high
+      reason: "Missing real backlog prevents high-confidence order-visibility conclusions; contract liabilities are partial_proxy only."
+    prohibited_claims:
+    - claim_type: cxo_order_visibility_high_confirmed
+      prohibited_reason: "Missing backlog/new orders means order visibility cannot be stated as high."
+      example_forbidden_phrases: ["order visibility is high", "backlog is confirmed by contract liabilities"]
+    scoring_constraints:
+      business_quality: {max_score: 65}
+      catalyst_strength: {max_score: 55}
+    analyzer_instructions:
+    - instruction_type: must_not_do
+      instruction: "Do not treat contract liabilities as real backlog or claim high order visibility without backlog/new-order evidence."
+      reason: "CXO v1 has no external backlog connector."
+  life_science_cxo.new_signed_orders:
+    affected_dimensions: [business_quality, catalysts, risk_flags]
+    required_risk:
+      risk_name: "life_science_cxo new signed orders missing"
+      severity: high
+      reason: "Missing new signed orders prevents order-trend improvement conclusions."
+    prohibited_claims:
+    - claim_type: cxo_order_trend_improved_confirmed
+      prohibited_reason: "Revenue growth or CXO concept cannot prove new-order trend improvement."
+      example_forbidden_phrases: ["orders are recovering", "new orders improved"]
+    scoring_constraints:
+      business_quality: {max_score: 65}
+      catalyst_strength: {max_score: 55}
+  life_science_cxo.customer_concentration:
+    affected_dimensions: [business_quality, risk_flags]
+    required_risk:
+      risk_name: "life_science_cxo customer concentration missing"
+      severity: high
+      reason: "Missing customer concentration prevents stable-demand or low-concentration claims."
+    prohibited_claims:
+    - claim_type: cxo_customer_demand_stable_confirmed
+      prohibited_reason: "Customer demand stability cannot be asserted without customer concentration/structure evidence."
+      example_forbidden_phrases: ["customer demand is stable", "customer structure is diversified"]
+    scoring_constraints:
+      business_quality: {max_score: 65}
+      risk_control: {max_score: 60}
+  life_science_cxo.overseas_revenue_share:
+    affected_dimensions: [risk_flags]
+    required_risk:
+      risk_name: "life_science_cxo overseas exposure missing"
+      severity: high
+      reason: "Missing overseas revenue prevents assessing overseas regulatory, geopolitical and FX exposure."
+    prohibited_claims:
+    - claim_type: cxo_overseas_regulatory_risk_low_confirmed
+      prohibited_reason: "Overseas/geopolitical/Biosecure Act/sanction risk cannot be downplayed without exposure evidence."
+      example_forbidden_phrases: ["overseas regulatory risk is low", "geopolitical exposure is limited"]
+    scoring_constraints:
+      risk_control: {max_score: 60}
+  life_science_cxo.north_america_or_us_revenue_share:
+    affected_dimensions: [risk_flags]
+    required_risk:
+      risk_name: "life_science_cxo U.S. customer exposure missing"
+      severity: high
+      reason: "Missing North America/U.S. split prevents assessing U.S.-customer, Biosecure Act, sanction and geopolitical exposure."
+    prohibited_claims:
+    - claim_type: cxo_us_customer_risk_low_confirmed
+      prohibited_reason: "U.S.-customer risk exposure is not proven by total overseas revenue."
+      example_forbidden_phrases: ["U.S. customer risk is low", "Biosecure Act exposure is limited"]
+    scoring_constraints:
+      risk_control: {max_score: 60}
+  life_science_cxo.cdmo_capacity_utilization:
+    affected_dimensions: [industry_cycle, risk_flags]
+    required_risk:
+      risk_name: "life_science_cxo CDMO capacity utilization missing"
+      severity: high
+      reason: "Missing utilization prevents claims that CDMO capacity is well absorbed."
+    prohibited_claims:
+    - claim_type: cxo_cdmo_capacity_absorption_confirmed
+      prohibited_reason: "Capex, margin or capacity expansion do not prove capacity utilization."
+      example_forbidden_phrases: ["capacity absorption is good", "capex proves future orders"]
+    scoring_constraints:
+      industry_cycle: {max_score: 60}
+      catalyst_strength: {max_score: 55}
+  life_science_cxo.clinical_project_count:
+    affected_dimensions: [industry_cycle, risk_flags]
+    required_risk:
+      risk_name: "life_science_cxo clinical project count missing"
+      severity: high
+      reason: "Missing clinical project count/progress prevents clinical-CRO prosperity or delivery claims."
+    prohibited_claims:
+    - claim_type: cxo_clinical_cro_prosperity_confirmed
+      prohibited_reason: "Clinical CRO activity cannot be inferred without project count/progress."
+      example_forbidden_phrases: ["clinical CRO prosperity is confirmed", "project delivery is strong"]
+    scoring_constraints:
+      industry_cycle: {max_score: 60}
+      catalyst_strength: {max_score: 55}
+  life_science_cxo.geopolitical_regulatory_risk:
+    affected_dimensions: [risk_flags]
+    required_risk:
+      risk_name: "life_science_cxo overseas regulatory/geopolitical risk missing"
+      severity: high
+      reason: "Overseas regulation, Biosecure Act, sanctions and geopolitics must remain explicit risk guards."
+    prohibited_claims:
+    - claim_type: cxo_regulatory_geopolitical_risk_absent_confirmed
+      prohibited_reason: "Absence of risk cannot be asserted without risk disclosure."
+      example_forbidden_phrases: ["no overseas regulatory risk", "no sanction risk"]
+    scoring_constraints:
+      risk_control: {max_score: 60}
+  life_science_cxo.one_off_large_order_risk:
+    affected_dimensions: [risk_flags, business_quality]
+    required_risk:
+      risk_name: "life_science_cxo one-off large-order distortion risk"
+      severity: high
+      reason: "Single product/customer or pandemic-related orders can distort historical revenue base."
+    prohibited_claims:
+    - claim_type: cxo_historical_yoy_trend_clean_confirmed
+      prohibited_reason: "Historical year-on-year growth cannot be used as a strong trend claim when one-off order risk is unverified."
+      example_forbidden_phrases: ["historical growth trend is clean", "year-on-year growth proves demand recovery"]
+    scoring_constraints:
+      business_quality: {max_score: 65}
+      catalyst_strength: {max_score: 55}
+  life_science_cxo.gmp_fda_nmpa_compliance_event:
+    affected_dimensions: [risk_flags]
+    required_risk:
+      risk_name: "life_science_cxo GMP/FDA/NMPA compliance event missing"
+      severity: high
+      reason: "Warning letters, inspections, GMP suspension and remediation must be tracked for CDMO/CRO service risk."
+    prohibited_claims:
+    - claim_type: cxo_compliance_risk_absent_confirmed
+      prohibited_reason: "Compliance risk cannot be called absent without event checks."
+      example_forbidden_phrases: ["no compliance risk", "GMP risk is absent"]
+    scoring_constraints:
+      risk_control: {max_score: 60}
+  life_science_cxo.talent_scientist_loss_risk:
+    affected_dimensions: [risk_flags, business_quality]
+    required_risk:
+      risk_name: "life_science_cxo talent/scientist loss risk missing"
+      severity: medium
+      reason: "Employee, R&D staff or core scientist team declines can create operating risk."
+    prohibited_claims:
+    - claim_type: cxo_talent_base_stable_confirmed
+      prohibited_reason: "Talent base stability cannot be asserted without employee/scientist data."
+      example_forbidden_phrases: ["scientist team is stable", "talent base is improving"]
+    scoring_constraints:
+      business_quality: {max_score: 70}
 strategy_specific_rules:
+  life_science_cxo_services:
+    must_include_if_missing:
+    - life_science_cxo.backlog
+    - life_science_cxo.new_signed_orders
+    - life_science_cxo.customer_concentration
+    - life_science_cxo.overseas_revenue_share
+    - life_science_cxo.north_america_or_us_revenue_share
+    - life_science_cxo.cdmo_capacity_utilization
+    - life_science_cxo.clinical_project_count
+    - life_science_cxo.geopolitical_regulatory_risk
+    - life_science_cxo.one_off_large_order_risk
+    - life_science_cxo.gmp_fda_nmpa_compliance_event
+    prohibited_if_missing_core:
+    - "Do not treat the CXO concept as order recovery."
+    - "Do not treat contract liabilities as real backlog."
+    - "Do not treat capex as capacity utilization improvement or future order realization."
+    - "Do not treat R&D expense ratio as technology-moat confirmation."
+    - "Do not treat revenue growth as direct order-trend improvement."
+    - "Do not claim stable customer demand without customer concentration."
+    - "Do not downplay overseas regulation, geopolitics, Biosecure Act, sanctions or FX risk without exposure evidence."
+    - "Do not claim high order visibility without backlog/new signed orders."
+    - "Do not claim CDMO capacity absorption without utilization data."
+    - "Do not claim clinical CRO prosperity without clinical project count/progress."
+    - "Do not mix CXO outsourcing services with self-owned drug pipelines or ordinary pharma manufacturing."
   resource_swing:
     must_include_if_missing:
     - external.commodity_prices

@@ -25,6 +25,7 @@ EXPECTED_STRATEGY_TYPES = (
     "advanced_manufacturing_growth",
     "satellite_communication_infrastructure",
     "low_altitude_economy_infrastructure",
+    "life_science_cxo_services",
     "theme_only",
     "unknown",
 )
@@ -49,6 +50,7 @@ def test_strategy_type_constants_match_schema_and_configs():
 def test_infrastructure_strategy_types_are_present_without_dropping_existing_types():
     assert "satellite_communication_infrastructure" in STRATEGY_TYPES
     assert "low_altitude_economy_infrastructure" in STRATEGY_TYPES
+    assert "life_science_cxo_services" in STRATEGY_TYPES
 
     for strategy_type in (
         "resource_swing",

@@ -293,6 +293,18 @@ class FundamentalScoringEngine:
             if low_altitude_missing:
                 score -= 8
                 penalties.append("low-altitude sub_type confidence-gating indicators missing")
+        if classification.strategy_type == "life_science_cxo_services":
+            if getattr(classification, "sub_type", None):
+                score += 6
+                pos.append(self._ev("classification.sub_type", getattr(classification, "sub_type", None), "life-science CXO sub_type routing is available."))
+            cxo_missing = {
+                item.field_name
+                for item in readiness.field_readiness
+                if item.field_name.startswith("life_science_cxo.") and item.status in {"missing", "partial"}
+            }
+            if cxo_missing:
+                score -= 8
+                penalties.append("life-science CXO confidence-gating indicators missing")
         if classification.strategy_type == "theme_only":
             score -= 10
         if classification.strategy_type == "unknown":
@@ -366,6 +378,27 @@ class FundamentalScoringEngine:
                 score += 4; pos.append(self._ev("financial_metrics.operating_cashflow", metric.operating_cashflow, "Operating cashflow is available as basic cash-conversion evidence.", metric.period))
             if metric and metric.gross_margin and metric.gross_margin > 15:
                 score += 3; pos.append(self._ev("financial_metrics.gross_margin", metric.gross_margin, "Gross margin is basic operating-quality evidence, not low-altitude realization proof.", metric.period))
+        if classification.strategy_type == "life_science_cxo_services":
+            shared_missing = {
+                "life_science_cxo.backlog",
+                "life_science_cxo.new_signed_orders",
+                "life_science_cxo.customer_concentration",
+                "life_science_cxo.overseas_revenue_share",
+                "life_science_cxo.north_america_or_us_revenue_share",
+            } & missing
+            subtype = getattr(classification, "sub_type", None)
+            subtype_missing: set[str] = set()
+            if subtype == "cdmo_manufacturing_services":
+                subtype_missing = {"life_science_cxo.cdmo_capacity_utilization"} & missing
+            elif subtype == "clinical_cro_services":
+                subtype_missing = {"life_science_cxo.clinical_project_count"} & missing
+            if shared_missing or subtype_missing:
+                score -= 10
+                penalties.append("life-science CXO order/customer/overseas/utilization/project gates missing")
+            if metric and metric.operating_cashflow and metric.operating_cashflow > 0:
+                score += 4; pos.append(self._ev("financial_metrics.operating_cashflow", metric.operating_cashflow, "Operating cashflow is base cash-conversion evidence, not order visibility.", metric.period))
+            if metric and metric.gross_margin and metric.gross_margin > 15:
+                score += 3; pos.append(self._ev("financial_metrics.gross_margin", metric.gross_margin, "Gross margin is base operating-quality evidence; v1 does not infer CDMO utilization from margin.", metric.period))
         if classification.strategy_type == "satellite_communication_infrastructure":
             satellite_missing = {
                 "satellite.capacity_utilization_or_lease_rate",
@@ -416,6 +449,9 @@ class FundamentalScoringEngine:
         if classification.strategy_type == "low_altitude_economy_infrastructure":
             score = min(score, 60)
             penalties.append("PE/PB/PS for low-altitude infrastructure are limited valuation context only")
+        if classification.strategy_type == "life_science_cxo_services":
+            score = min(score, 60)
+            penalties.append("PE/PB/PS for life-science CXO services are limited valuation context only")
         return _clamp(score, 20, 95), "估值评分按策略类型保守解释 PE、PB、市值和股息率。", pos, neg, penalties
 
     def _score_catalyst_strength(self, normalized, classification, readiness, context):
@@ -442,6 +478,9 @@ class FundamentalScoringEngine:
         if classification.strategy_type == "low_altitude_economy_infrastructure":
             score = min(score, 58)
             penalties.append("low-altitude theme, policy pilot or cooperation does not raise catalyst strength without revenue/contract/customer/operation/acceptance evidence")
+        if classification.strategy_type == "life_science_cxo_services":
+            score = min(score, 55)
+            penalties.append("CXO concept, contract liabilities, capex or R&D ratio do not raise catalyst strength without real orders/customer/overseas/utilization/project evidence")
         if normalized.latest_news and not normalized.financial_metrics:
             score = min(score, 65); penalties.append("news catalyst without financial validation capped at 65")
         return _clamp(score, 20, 95), "催化强度仅按新闻存在和业务关键词做保守规则评分。", pos, neg, penalties
@@ -486,6 +525,15 @@ class FundamentalScoringEngine:
                     pos.append(self._ev("financial_metrics.contract_liabilities", metric.contract_liabilities, "合同负债只能作为订单可见度 proxy，不等同真实 backlog。", metric.period))
                 if metric.capex is not None:
                     pos.append(self._ev("financial_metrics.capex", metric.capex, "capex 只表示长期资产购建现金支出，不等同新增容量确定释放。", metric.period))
+            if classification.strategy_type == "life_science_cxo_services":
+                if metric.accounts_receivable is None:
+                    score -= 5; penalties.append("accounts_receivable missing")
+                if metric.contract_liabilities is not None:
+                    pos.append(self._ev("financial_metrics.contract_liabilities", metric.contract_liabilities, "Contract liabilities are partial_proxy only and do not equal real backlog.", metric.period))
+                if metric.capex is not None:
+                    pos.append(self._ev("financial_metrics.capex", metric.capex, "Capex is capacity input observation only, not capacity absorption or future order realization.", metric.period))
+                if metric.r_and_d_expense_ratio is not None:
+                    pos.append(self._ev("financial_metrics.r_and_d_expense_ratio", metric.r_and_d_expense_ratio, "R&D ratio is R&D intensity only, not technology-moat confirmation.", metric.period))
         return _clamp(score, 20, 90), "风险可控度从70分开始，根据上下文风险、准备度和财务稳健性调整。", pos, neg, penalties
 
     def apply_context_constraints(self, dimension: str, raw_score: int, context: AnalysisContext) -> tuple[int, int | None, list[str]]:
@@ -535,6 +583,8 @@ class FundamentalScoringEngine:
         if classification.strategy_type == "unknown":
             caps.append(50)
         if classification.strategy_type == "low_altitude_economy_infrastructure" and context.max_overall_confidence == "low":
+            caps.append(65)
+        if classification.strategy_type == "life_science_cxo_services" and context.max_overall_confidence == "low":
             caps.append(65)
         if context.overall_context_quality == "insufficient":
             caps.append(50)
@@ -586,6 +636,15 @@ class FundamentalScoringEngine:
                 warnings.append("订单和项目交付节奏需要持续验证")
             if "应收账款与现金流跟踪风险" in risk_names:
                 warnings.append("应收账款、回款和经营现金流需要持续跟踪")
+        elif classification.strategy_type == "life_science_cxo_services":
+            if any("backlog" in name or "new signed orders" in name for name in risk_names):
+                warnings.append("Life-science CXO order visibility needs real backlog/new-order evidence; contract liabilities are partial_proxy only.")
+            if any("customer" in name for name in risk_names):
+                warnings.append("Customer concentration and geography remain confidence gates for CXO demand stability.")
+            if any("overseas" in name or "U.S." in name or "geopolitical" in name for name in risk_names):
+                warnings.append("Overseas regulation, Biosecure Act, sanctions, geopolitics and FX risk remain explicit CXO guards.")
+            if any("one-off" in name for name in risk_names):
+                warnings.append("One-off large-order distortion risk prevents strong historical trend claims.")
         return warnings
 
     def _business_text(self, normalized: NormalizedFundamentalInput) -> str:
@@ -631,6 +690,21 @@ class FundamentalScoringEngine:
                 "\u4f4e\u7a7a\u8c03\u5ea6",
                 "\u4f4e\u7a7a\u8fd0\u884c\u5e73\u53f0",
                 "\u6307\u6325\u8c03\u5ea6\u5e73\u53f0",
+            ),
+            "life_science_cxo_services": (
+                "CRO",
+                "CDMO",
+                "CXO",
+                "CMC",
+                "clinical CRO",
+                "drug discovery",
+                "preclinical",
+                "pharmaceutical outsourcing",
+                "\u4e34\u5e8a\u7814\u7a76",
+                "\u4e34\u5e8a CRO",
+                "\u836f\u7269\u53d1\u73b0",
+                "\u533b\u836f\u5916\u5305",
+                "\u5408\u540c\u7814\u7a76",
             ),
         }
         return any(k in text for k in keywords.get(strategy_type, ()))

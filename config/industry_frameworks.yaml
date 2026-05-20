@@ -458,6 +458,92 @@ low_altitude_economy_infrastructure:
   - low_altitude.customer_structure
   - low_altitude.collection_cycle
   - low_altitude.safety_or_regulatory_event
+life_science_cxo_services:
+  display_name: "Life-science CXO services"
+  description: "Applies to companies whose revenue mainly comes from CRO/CDMO/CXO/CMC/clinical research or pharmaceutical R&D-production outsourcing services. The core drivers are outsourced R&D/manufacturing demand, order visibility, customer structure, utilization, delivery, compliance, overseas regulatory exposure and geopolitical risk, not self-owned drug pipeline success."
+  required_focus:
+  - "CXO/CRO/CDMO/CMC/clinical-research outsourcing revenue share and sub_type routing"
+  - "backlog and new signed orders, with contract liabilities treated only as partial_proxy"
+  - "customer concentration, major-customer change, overseas revenue, North America/U.S. exposure and customer geography"
+  - "CDMO capacity utilization, commercial projects, capacity expansion and capex/capacity matching"
+  - "clinical project count, clinical trial/SMO/data-statistics service revenue, acceptance progress and collection cycle"
+  - "GMP/FDA/NMPA compliance, Biosecure Act/sanction/geopolitical risk and FX impact"
+  - "one-off large-order distortion and talent/scientist retention risk"
+  must_track_indicators:
+  - "CXO/CRO/CDMO related revenue share"
+  - "backlog / on-hand orders"
+  - "new signed orders"
+  - "contract liabilities partial_proxy"
+  - "customer concentration"
+  - "overseas revenue share"
+  - "North America / U.S. revenue share"
+  - "gross margin"
+  - "operating cashflow"
+  - "accounts receivable"
+  - "collection cycle"
+  - "capex"
+  - "FX impact"
+  - "overseas regulatory / geopolitical / Biosecure Act / sanction risk"
+  - "project cancellation or delay"
+  - "one-off large-order marker"
+  - "business-segment revenue mix"
+  - "active customers / major-customer change"
+  - "employee count / scientist count / personnel efficiency future_data_needed"
+  - "CDMO orders / capacity utilization / commercial project count"
+  - "GMP/FDA/NMPA compliance event"
+  - "clinical project count / acceptance progress / collection cycle"
+  key_risks:
+  - "CXO concept wording is not order recovery evidence."
+  - "Contract liabilities are partial_proxy only and are not real backlog."
+  - "Capex is capacity input evidence only and is not capacity absorption or future order realization."
+  - "R&D expense ratio is R&D intensity only and is not technology-moat confirmation."
+  - "Revenue growth is not direct evidence of order-trend improvement."
+  - "Missing customer concentration prevents stable-demand claims."
+  - "Missing overseas/U.S. exposure prevents downplaying overseas regulatory, geopolitical, Biosecure Act and sanction risk."
+  - "Missing CDMO utilization prevents capacity-absorption claims."
+  - "Missing clinical project count/progress prevents clinical-CRO prosperity claims."
+  - "Talent/scientist loss, one-off large orders, GMP/FDA/NMPA events and FX effects must be explicit risk guards."
+  preferred_metrics:
+  - revenue
+  - net_profit
+  - gross_margin
+  - operating_cashflow
+  - accounts_receivable
+  - contract_liabilities
+  - r_and_d_expense_ratio
+  - capex
+  - business_composition
+  - valuation_metrics
+  invalidation_focus:
+  - "CXO/CRO/CDMO revenue share cannot be confirmed or falls below threshold."
+  - "Backlog/new orders/customer structure/overseas exposure remain missing or deteriorate."
+  - "CDMO capacity utilization, commercial projects, compliance or large-customer concentration deteriorate."
+  - "Clinical project count, acceptance progress, cancellation/delay or collection quality deteriorates."
+  - "Ordinary API/formulation manufacturing, device, distribution, TCM, consumer healthcare, software or self-owned pipeline becomes dominant."
+  common_mistakes:
+  - "Treating CXO concept as order recovery."
+  - "Treating contract liabilities as backlog."
+  - "Treating capex as capacity absorption."
+  - "Treating R&D expense ratio as technology moat confirmation."
+  - "Treating revenue growth directly as order improvement."
+  - "Routing self-owned drug-pipeline companies into CXO."
+  - "Routing ordinary pharma manufacturing companies into CXO."
+  - "Ignoring overseas regulation, geopolitics, Biosecure Act, sanctions or FX impact."
+  - "Ignoring one-off large-order revenue-base distortion."
+  confidence_penalty_missing_fields:
+  - life_science_cxo.cxo_revenue_share
+  - life_science_cxo.backlog
+  - life_science_cxo.new_signed_orders
+  - life_science_cxo.customer_concentration
+  - life_science_cxo.overseas_revenue_share
+  - life_science_cxo.north_america_or_us_revenue_share
+  - life_science_cxo.cdmo_capacity_utilization
+  - life_science_cxo.clinical_project_count
+  - life_science_cxo.project_cancellation_or_delay
+  - life_science_cxo.collection_cycle
+  - life_science_cxo.geopolitical_regulatory_risk
+  - life_science_cxo.one_off_large_order_risk
+  - life_science_cxo.gmp_fda_nmpa_compliance_event
 unknown:
   display_name: 未知类型
   description: 数据不足或无法稳定归类。

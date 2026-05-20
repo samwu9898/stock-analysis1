@@ -1,0 +1,10 @@
+{
+  "meta": {"code": "300012", "stock_name": "CTI Testing", "generated_at": "2026-05-20T10:00:00"},
+  "blocks": {
+    "basic_info": [{"stock_code": "300012", "stock_name": "CTI Testing", "industry": "general testing laboratory", "main_business": "General inspection and testing laboratory services are the main business, not drug R&D outsourcing services."}],
+    "financial_indicator": [{"period": "2025-12-31", "revenue": 6200000000, "net_profit": 900000000, "gross_margin": 48.0, "operating_cashflow": 1000000000, "accounts_receivable": 850000000}],
+    "valuation": [{"period": "2026-05-20", "pe_ttm": 25.0, "pb": 3.0, "ps": 3.5}],
+    "business_composition": [{"period": "2025-12-31", "classification_type": "by segment", "segment_name": "general inspection and testing services", "revenue_ratio": 0.95, "gross_margin": 48.0}],
+    "news": []
+  }
+}

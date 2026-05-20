@@ -1,0 +1,18 @@
+{
+  "meta": {"code": "002821", "stock_name": "Asymchem", "generated_at": "2026-05-20T10:00:00"},
+  "blocks": {
+    "basic_info": [
+      {"stock_code": "002821", "stock_name": "Asymchem", "industry": "CDMO CMC services", "main_business": "CDMO and CMC pharmaceutical development and commercial manufacturing outsourcing services are the main business revenue."}
+    ],
+    "financial_indicator": [
+      {"period": "2025-12-31", "revenue": 7800000000, "net_profit": 1300000000, "gross_margin": 38.0, "operating_cashflow": 1000000000, "accounts_receivable": 900000000, "contract_liabilities": 420000000, "r_and_d_expense_ratio": 5.2, "capex": 1800000000}
+    ],
+    "valuation": [
+      {"period": "2026-05-20", "pe_ttm": 24.0, "pb": 2.1, "ps": 3.8, "market_cap": 29000000000}
+    ],
+    "business_composition": [
+      {"period": "2025-12-31", "classification_type": "by segment", "segment_name": "CDMO CMC and commercial manufacturing services", "revenue_ratio": 0.83, "gross_margin": 38.0}
+    ],
+    "news": []
+  }
+}

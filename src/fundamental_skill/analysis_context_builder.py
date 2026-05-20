@@ -209,6 +209,29 @@ class AnalysisContextBuilder:
                 cap = self._min_confidence(cap, "low")
             elif shared & missing or selected & missing:
                 cap = self._min_confidence(cap, "medium")
+        if classification.strategy_type == "life_science_cxo_services":
+            missing = {
+                item.field_name
+                for item in readiness.field_readiness
+                if item.status in {"missing", "partial"}
+            }
+            shared = {
+                "life_science_cxo.backlog",
+                "life_science_cxo.new_signed_orders",
+                "life_science_cxo.customer_concentration",
+                "life_science_cxo.overseas_revenue_share",
+                "life_science_cxo.north_america_or_us_revenue_share",
+            }
+            subtype = getattr(classification, "sub_type", None)
+            subtype_gating: set[str] = set()
+            if subtype == "cdmo_manufacturing_services":
+                subtype_gating = {"life_science_cxo.cdmo_capacity_utilization"}
+            elif subtype == "clinical_cro_services":
+                subtype_gating = {"life_science_cxo.clinical_project_count"}
+            if shared <= missing:
+                cap = self._min_confidence(cap, "low")
+            elif shared & missing or subtype_gating & missing:
+                cap = self._min_confidence(cap, "medium")
         return quality, cap
 
     def _min_confidence(self, a: str, b: str) -> str:

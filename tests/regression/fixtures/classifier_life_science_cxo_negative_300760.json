@@ -1,0 +1,10 @@
+{
+  "meta": {"code": "300760", "stock_name": "Mindray Medical", "generated_at": "2026-05-20T10:00:00"},
+  "blocks": {
+    "basic_info": [{"stock_code": "300760", "stock_name": "Mindray Medical", "industry": "medical device", "main_business": "Medical device products are the main business, not drug CRO/CDMO outsourcing services."}],
+    "financial_indicator": [{"period": "2025-12-31", "revenue": 36000000000, "net_profit": 12000000000, "gross_margin": 65.0, "operating_cashflow": 13000000000, "accounts_receivable": 4000000000}],
+    "valuation": [{"period": "2026-05-20", "pe_ttm": 28.0, "pb": 7.0, "ps": 9.0}],
+    "business_composition": [{"period": "2025-12-31", "classification_type": "by segment", "segment_name": "medical device products", "revenue_ratio": 0.97, "gross_margin": 65.0}],
+    "news": []
+  }
+}

@@ -928,6 +928,211 @@ low_altitude_economy_infrastructure:
     reason: "Policy or government-project dependence must not be treated as stable commercial revenue."
     expected_location: [annual_report, customer_disclosure]
     affects_analysis: [risk_flags]
+life_science_cxo_services:
+  required_fields:
+  - field_name: basic_info.industry
+    display_name: "industry"
+    category: basic_info
+    importance: critical
+    reason: "Needed to avoid routing ordinary pharma/device/distribution/testing companies into CXO."
+    expected_location: [basic_info.industry]
+    affects_analysis: [business_summary]
+  - field_name: basic_info.main_business
+    display_name: "main business"
+    category: basic_info
+    importance: critical
+    reason: "Needed to confirm CRO/CDMO/CXO/CMC/clinical-research outsourcing service as core business."
+    expected_location: [basic_info.main_business]
+    affects_analysis: [business_summary]
+  - field_name: business_composition.segments
+    display_name: "business composition"
+    category: business_composition
+    importance: critical
+    reason: "Needed to confirm CXO/CRO/CDMO related revenue share and boundary exclusions."
+    expected_location: [business_composition.segments]
+    affects_analysis: [business_summary, business_quality]
+  - field_name: life_science_cxo.cxo_revenue_share
+    display_name: "CXO/CRO/CDMO related revenue share"
+    category: industry
+    importance: critical
+    reason: "Core classification threshold: >=50% direct candidate, 30%-50% boundary check, <30% default exclusion."
+    expected_location: [business_composition, annual_report]
+    affects_analysis: [business_quality, confidence]
+  - field_name: financial_metrics.revenue
+    display_name: "revenue"
+    category: financial
+    importance: critical
+    reason: "Base operating scale evidence; revenue growth is not order-trend improvement."
+    expected_location: [financial_indicator]
+    affects_analysis: [financial_quality]
+  - field_name: financial_metrics.net_profit
+    display_name: "net profit"
+    category: financial
+    importance: high
+    reason: "Base profitability evidence only."
+    expected_location: [financial_indicator]
+    affects_analysis: [financial_quality]
+  - field_name: financial_metrics.gross_margin
+    display_name: "gross margin"
+    category: financial
+    importance: high
+    reason: "Base margin evidence; v1 does not infer CDMO capacity utilization from margin."
+    expected_location: [financial_indicator]
+    affects_analysis: [financial_quality, industry_cycle]
+  - field_name: financial_metrics.operating_cashflow
+    display_name: "operating cashflow"
+    category: financial
+    importance: high
+    reason: "Cash conversion and collection quality baseline."
+    expected_location: [financial_indicator]
+    affects_analysis: [financial_quality, risk_flags]
+  - field_name: financial_metrics.accounts_receivable
+    display_name: "accounts receivable"
+    category: financial
+    importance: high
+    reason: "Receivables are needed for collection quality and project execution risk."
+    expected_location: [financial_indicator]
+    affects_analysis: [financial_quality, risk_flags]
+  - field_name: financial_metrics.contract_liabilities
+    display_name: "contract liabilities"
+    category: financial
+    importance: medium
+    reason: "Partial order-visibility proxy only; not real backlog."
+    expected_location: [financial_indicator]
+    affects_analysis: [business_quality, confidence]
+  - field_name: financial_metrics.r_and_d_expense_ratio
+    display_name: "R&D expense ratio"
+    category: financial
+    importance: medium
+    reason: "R&D intensity only; not technology-moat confirmation."
+    expected_location: [financial_indicator]
+    affects_analysis: [business_quality]
+  - field_name: financial_metrics.capex
+    display_name: "capex"
+    category: financial
+    importance: medium
+    reason: "Capacity input observation only; not capacity absorption or future order realization."
+    expected_location: [financial_indicator, cashflow_statement]
+    affects_analysis: [industry_cycle, risk_flags]
+  - field_name: valuation_metrics.pe_ttm
+    display_name: "PE TTM"
+    category: valuation
+    importance: medium
+    reason: "Valuation context only; secondary to business and evidence quality."
+    expected_location: [valuation_metrics.pe_ttm]
+    affects_analysis: [valuation_view]
+  - field_name: valuation_metrics.pb
+    display_name: "PB"
+    category: valuation
+    importance: low
+    reason: "Supplementary valuation context."
+    expected_location: [valuation_metrics.pb]
+    affects_analysis: [valuation_view]
+  - field_name: valuation_metrics.ps
+    display_name: "PS"
+    category: valuation
+    importance: low
+    reason: "Supplementary valuation context."
+    expected_location: [valuation_metrics.ps]
+    affects_analysis: [valuation_view]
+  - field_name: life_science_cxo.backlog
+    display_name: "backlog / on-hand orders"
+    category: industry
+    importance: high
+    reason: "Critical confidence gate; contract liabilities are only partial_proxy and do not equal backlog."
+    expected_location: [annual_report, announcements]
+    affects_analysis: [business_quality, catalyst_strength, confidence]
+  - field_name: life_science_cxo.new_signed_orders
+    display_name: "new signed orders"
+    category: industry
+    importance: high
+    reason: "Critical confidence gate for order trend; v1 does not auto-collect external order data."
+    expected_location: [annual_report, announcements]
+    affects_analysis: [business_quality, catalyst_strength, confidence]
+  - field_name: life_science_cxo.customer_concentration
+    display_name: "customer concentration"
+    category: industry
+    importance: high
+    reason: "Missing customer concentration prevents stable-demand claims."
+    expected_location: [annual_report]
+    affects_analysis: [risk_flags, confidence]
+  - field_name: life_science_cxo.overseas_revenue_share
+    display_name: "overseas revenue share"
+    category: industry
+    importance: high
+    reason: "Needed for overseas regulatory, geopolitical and FX risk; not a U.S. exposure proxy by itself."
+    expected_location: [business_composition, annual_report]
+    affects_analysis: [risk_flags, confidence]
+  - field_name: life_science_cxo.north_america_or_us_revenue_share
+    display_name: "North America / U.S. revenue share"
+    category: industry
+    importance: high
+    reason: "Needed for U.S. customer risk exposure; v1 does not calculate proxy automatically."
+    expected_location: [annual_report]
+    affects_analysis: [risk_flags, confidence]
+  - field_name: life_science_cxo.customer_geography
+    display_name: "customer geography"
+    category: industry
+    importance: medium
+    reason: "Needed to separate overseas revenue from U.S.-customer exposure."
+    expected_location: [annual_report]
+    affects_analysis: [risk_flags]
+  - field_name: life_science_cxo.cdmo_capacity_utilization
+    display_name: "CDMO capacity utilization"
+    category: industry
+    importance: high
+    reason: "CDMO confidence gate; v1 does not infer utilization from margin/capex."
+    expected_location: [annual_report, operating_data]
+    affects_analysis: [industry_cycle, confidence]
+  - field_name: life_science_cxo.clinical_project_count
+    display_name: "clinical project count / clinical trial service projects"
+    category: industry
+    importance: high
+    reason: "Clinical CRO confidence gate; missing projects prevents prosperity or delivery claims."
+    expected_location: [annual_report, operating_data]
+    affects_analysis: [industry_cycle, confidence]
+  - field_name: life_science_cxo.project_cancellation_or_delay
+    display_name: "project cancellation or delay"
+    category: industry
+    importance: high
+    reason: "Project cancellation/delay must be explicit risk input."
+    expected_location: [annual_report, announcements]
+    affects_analysis: [risk_flags]
+  - field_name: life_science_cxo.collection_cycle
+    display_name: "collection cycle"
+    category: industry
+    importance: medium
+    reason: "Needed to assess receivables and project cash conversion."
+    expected_location: [annual_report, financial_indicator]
+    affects_analysis: [financial_quality, risk_flags]
+  - field_name: life_science_cxo.geopolitical_regulatory_risk
+    display_name: "geopolitical / overseas regulatory risk exposure"
+    category: industry
+    importance: high
+    reason: "Biosecure Act, sanctions and overseas regulation must not be downplayed."
+    expected_location: [annual_report, risk_disclosure]
+    affects_analysis: [risk_flags]
+  - field_name: life_science_cxo.one_off_large_order_risk
+    display_name: "one-off large-order risk"
+    category: industry
+    importance: high
+    reason: "Single product/customer or pandemic-related orders can distort historical revenue base."
+    expected_location: [annual_report, announcements]
+    affects_analysis: [risk_flags, confidence]
+  - field_name: life_science_cxo.gmp_fda_nmpa_compliance_event
+    display_name: "GMP/FDA/NMPA compliance event"
+    category: industry
+    importance: high
+    reason: "Warning letters, inspection issues, GMP suspension or remediation must be forced into risk."
+    expected_location: [regulator_disclosure, annual_report]
+    affects_analysis: [risk_flags]
+  - field_name: life_science_cxo.talent_scientist_loss_risk
+    display_name: "talent / scientist loss risk"
+    category: industry
+    importance: medium
+    reason: "Employee/scientist decline must be marked as operating risk."
+    expected_location: [annual_report]
+    affects_analysis: [risk_flags]
 unknown:
   required_fields:
   - field_name: basic_info.industry

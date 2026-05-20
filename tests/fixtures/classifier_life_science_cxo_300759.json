@@ -1,0 +1,19 @@
+{
+  "meta": {"code": "300759", "stock_name": "Pharmaron", "generated_at": "2026-05-20T10:00:00"},
+  "blocks": {
+    "basic_info": [
+      {"stock_code": "300759", "stock_name": "Pharmaron", "industry": "life science CRO CDMO services", "main_business": "Integrated CXO platform with CRO drug discovery, preclinical research, clinical services, CMC and CDMO outsourcing revenue."}
+    ],
+    "financial_indicator": [
+      {"period": "2025-12-31", "revenue": 12000000000, "net_profit": 1600000000, "gross_margin": 34.0, "operating_cashflow": 1800000000, "accounts_receivable": 2100000000, "contract_liabilities": 620000000, "r_and_d_expense_ratio": 4.1, "capex": 1300000000}
+    ],
+    "valuation": [
+      {"period": "2026-05-20", "pe_ttm": 28.0, "pb": 2.4, "ps": 3.3, "market_cap": 50000000000}
+    ],
+    "business_composition": [
+      {"period": "2025-12-31", "classification_type": "by segment", "segment_name": "CRO drug discovery and preclinical research services", "revenue_ratio": 0.46, "gross_margin": 36.0},
+      {"period": "2025-12-31", "classification_type": "by segment", "segment_name": "CMC CDMO outsourcing services", "revenue_ratio": 0.30, "gross_margin": 32.0}
+    ],
+    "news": []
+  }
+}

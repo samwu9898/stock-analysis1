@@ -614,6 +614,60 @@ class EvidencePackBuilder:
                     ("government project dependence", "government_project_dependence", "missing", "policy_dependence", "Government project dependence must not be treated as stable commercial demand."),
                     ("project collection cycle", "project_collection_cycle", "missing", "cash_conversion", "Collection cycle validates project cash conversion."),
                 ])
+        elif strategy_type == "life_science_cxo_services":
+            specs = [
+                ("CXO / CRO / CDMO related revenue share", "cxo_revenue_share", "business_composition", "business_quality", "Revenue share is the core routing threshold; it proves business structure, not order quality."),
+                ("backlog / on-hand orders", "cxo_backlog", "future_data_needed", "order_visibility", "Real backlog is required before judging order visibility; v1 does not calculate a proxy."),
+                ("new signed orders", "cxo_new_signed_orders", "future_data_needed", "order_visibility", "New signed orders are required before judging order-trend improvement."),
+                ("contract liabilities partial_proxy", "orders_or_contract_liabilities", "financial_indicator", "order_visibility", "Contract liabilities are a partial_proxy only and do not equal real backlog."),
+                ("customer concentration", "cxo_customer_concentration", "missing", "customer_risk", "Customer concentration is required before claiming stable customer demand."),
+                ("overseas revenue share", "cxo_overseas_revenue_share", "missing", "overseas_risk", "Overseas revenue is needed for regulatory, geopolitical and FX exposure."),
+                ("North America / U.S. revenue share", "cxo_north_america_us_revenue_share", "missing", "us_customer_risk", "North America/U.S. exposure must be explicit; v1 does not calculate proxy."),
+                ("gross margin", "gross_margin", "financial_indicator", "financial_quality", "Gross margin is base operating-quality evidence; it does not prove CDMO utilization."),
+                ("operating cashflow", "operating_cashflow", "financial_indicator", "cash_conversion", "Operating cashflow validates base cash conversion and collection quality."),
+                ("accounts receivable", "accounts_receivable", "financial_indicator", "cash_conversion", "Receivables help assess collection pressure and project cash conversion."),
+                ("collection cycle", "cxo_collection_cycle", "missing", "cash_conversion", "Collection cycle is needed to interpret receivables and service delivery quality."),
+                ("capex", "capex", "financial_indicator", "capacity_input", "Capex is capacity input observation only, not capacity absorption or future order realization."),
+                ("FX impact", "cxo_fx_impact", "missing", "fx_risk", "FX impact must consider both revenue and cost sides when overseas revenue is material."),
+                ("overseas regulatory / geopolitical / Biosecure Act / sanction risk", "cxo_overseas_regulatory_risk", "missing", "regulatory_risk", "Overseas regulatory, Biosecure Act, sanctions and geopolitical risk must remain explicit guards."),
+                ("project cancellation or delay", "cxo_project_cancellation_delay", "missing", "execution_risk", "Project cancellation/delay can affect order conversion and revenue recognition."),
+                ("one-off large-order marker", "cxo_one_off_large_order_marker", "missing", "trend_quality", "Single customer/product or pandemic-related orders can distort historical comparisons."),
+            ]
+            if sub_type == "integrated_cxo_platform":
+                specs.extend([
+                    ("business-segment revenue mix", "cxo_segment_revenue_mix", "business_composition", "business_quality", "Segment mix separates drug discovery, preclinical, CMC/CDMO and clinical exposure."),
+                    ("drug discovery revenue", "cxo_drug_discovery_revenue", "missing", "business_quality", "Drug discovery revenue verifies platform exposure."),
+                    ("preclinical service revenue", "cxo_preclinical_revenue", "missing", "business_quality", "Preclinical revenue verifies integrated platform exposure."),
+                    ("CMC / CDMO revenue", "cxo_cmc_cdmo_revenue", "missing", "business_quality", "CMC/CDMO revenue verifies downstream development/manufacturing exposure."),
+                    ("customer count / active customers", "cxo_active_customers", "missing", "customer_quality", "Active-customer count is needed to assess platform demand breadth."),
+                    ("major customer change", "cxo_major_customer_change", "missing", "customer_risk", "Major-customer changes can alter order visibility and margin quality."),
+                    ("employee count", "cxo_employee_count", "missing", "operating_capacity", "Employee count helps assess operating capacity and possible talent risk."),
+                    ("scientist / R&D staff count", "cxo_scientist_count", "missing", "operating_capacity", "Scientist/R&D staff count is a talent and delivery-capacity input."),
+                    ("personnel efficiency", "cxo_personnel_efficiency", "future_data_needed", "operating_efficiency", "Future data only: CXO revenue per employee/scientist is not calculated in v1."),
+                ])
+            elif sub_type == "cdmo_manufacturing_services":
+                specs.extend([
+                    ("CDMO orders", "cxo_cdmo_orders", "future_data_needed", "order_visibility", "CDMO order evidence is required; v1 does not auto-collect external orders."),
+                    ("CDMO capacity utilization", "cxo_cdmo_capacity_utilization", "future_data_needed", "capacity_absorption", "Utilization is a confidence gate; v1 does not infer it from margin/capex."),
+                    ("commercial project count", "cxo_commercial_project_count", "missing", "project_mix", "Commercial project count helps assess CDMO business maturity."),
+                    ("capacity expansion progress", "cxo_capacity_expansion_progress", "missing", "capacity_input", "Expansion progress is capacity input context, not utilization proof."),
+                    ("unit capacity revenue", "cxo_unit_capacity_revenue", "future_data_needed", "unit_economics", "Future data only; v1 does not calculate proxy."),
+                    ("capex / capacity matching", "cxo_capex_capacity_matching", "missing", "capacity_input", "Matching capex with capacity helps avoid overbuilding assumptions."),
+                    ("major customer concentration", "cxo_major_customer_concentration", "missing", "customer_risk", "Major-customer concentration can amplify volatility."),
+                    ("GMP / FDA / NMPA compliance event", "cxo_gmp_fda_nmpa_event", "missing", "compliance_risk", "Warning letters, inspections, GMP suspension and remediation are forced risks."),
+                    ("upfront / milestone payment structure", "cxo_upfront_milestone_payment", "missing", "cash_conversion", "Payment structure affects order visibility and cash conversion."),
+                    ("one-off large-order marker", "cxo_one_off_large_order_marker", "missing", "trend_quality", "CDMO samples can be distorted by single product/customer orders."),
+                ])
+            elif sub_type == "clinical_cro_services":
+                specs.extend([
+                    ("clinical project count", "cxo_clinical_project_count", "future_data_needed", "operating_volume", "Clinical project count is required before judging clinical CRO prosperity."),
+                    ("clinical trial service revenue", "cxo_clinical_trial_service_revenue", "missing", "business_quality", "Clinical trial service revenue verifies clinical CRO exposure."),
+                    ("SMO / data-statistics revenue", "cxo_smo_data_statistics_revenue", "missing", "business_quality", "SMO/data-statistics revenue separates service mix."),
+                    ("hospital / research-center coverage", "cxo_hospital_research_center_coverage", "missing", "network_resources", "Coverage affects project execution capability."),
+                    ("project acceptance progress", "cxo_project_acceptance_progress", "missing", "realization", "Acceptance progress helps assess delivery and revenue recognition."),
+                    ("project cancellation or delay", "cxo_project_cancellation_delay", "missing", "execution_risk", "Cancellation/delay can impair revenue realization."),
+                    ("project collection cycle", "cxo_project_collection_cycle", "missing", "cash_conversion", "Project collection cycle validates cash conversion."),
+                ])
         elif strategy_type == "satellite_communication_infrastructure":
             specs = [
                 ("在轨卫星数量", "in_orbit_satellite_count", "missing", "capacity", "在轨卫星数量定义运营资产基础和服务能力"),
@@ -725,6 +779,12 @@ class EvidencePackBuilder:
             scope_note = "v1 records this as missing/future_data_needed only; no proxy is calculated."
         elif field in {"low_altitude_revenue_share", "low_altitude_gross_margin"}:
             scope_note = "Business composition can support segment exposure, but theme words alone are not evidence of business realization."
+        elif field == "cxo_revenue_share":
+            scope_note = "Revenue share proves CXO business structure only; it does not prove order quality, backlog, utilization, customer stability or pipeline success."
+        elif field in {"cxo_backlog", "cxo_new_signed_orders", "cxo_cdmo_orders", "cxo_cdmo_capacity_utilization", "cxo_north_america_us_revenue_share"}:
+            scope_note = "v1 records this as missing/future_data_needed only; no backlog, CDMO utilization or U.S.-exposure proxy is calculated."
+        elif field in {"cxo_one_off_large_order_marker", "cxo_overseas_regulatory_risk", "cxo_gmp_fda_nmpa_event"}:
+            scope_note = "Must remain an explicit risk guard when disclosure is missing or uncertain."
         return {
             "indicator_name": name,
             "why_it_matters": why,

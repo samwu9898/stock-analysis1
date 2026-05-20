@@ -1,0 +1,8 @@
+{
+  "stock_code": "000739",
+  "expected_strategy_type": "unknown",
+  "allowed_status": ["insufficient_data"],
+  "max_confidence": "low",
+  "max_score": 50,
+  "must_track_keywords": []
+}

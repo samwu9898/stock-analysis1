@@ -1,0 +1,19 @@
+{
+  "meta": {"code": "300347", "stock_name": "Tigermed", "generated_at": "2026-05-20T10:00:00"},
+  "blocks": {
+    "basic_info": [
+      {"stock_code": "300347", "stock_name": "Tigermed", "industry": "clinical CRO services", "main_business": "Clinical CRO, clinical trial services, SMO and data-statistics services are the main business revenue."}
+    ],
+    "financial_indicator": [
+      {"period": "2025-12-31", "revenue": 7600000000, "net_profit": 1450000000, "gross_margin": 41.0, "operating_cashflow": 1300000000, "accounts_receivable": 1500000000, "contract_liabilities": 360000000, "r_and_d_expense_ratio": 2.8, "capex": 260000000}
+    ],
+    "valuation": [
+      {"period": "2026-05-20", "pe_ttm": 26.0, "pb": 2.3, "ps": 3.5, "market_cap": 40000000000}
+    ],
+    "business_composition": [
+      {"period": "2025-12-31", "classification_type": "by segment", "segment_name": "clinical CRO and clinical trial service revenue", "revenue_ratio": 0.61, "gross_margin": 42.0},
+      {"period": "2025-12-31", "classification_type": "by segment", "segment_name": "SMO and data statistics service revenue", "revenue_ratio": 0.22, "gross_margin": 38.0}
+    ],
+    "news": []
+  }
+}

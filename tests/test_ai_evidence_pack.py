@@ -154,6 +154,28 @@ def test_low_altitude_evidence_pack_splits_sub_type_and_keeps_proxy_limits():
     assert names["contract liabilities"]["current_status"] == "partial_proxy"
 
 
+def test_life_science_cxo_evidence_pack_subtype_and_proxy_limits():
+    fundamental = sample_fundamental("life_science_cxo_services")
+    fundamental["sub_type"] = "cdmo_manufacturing_services"
+    raw = sample_raw()
+    raw["blocks"]["basic_info"][0]["industry"] = "CDMO CMC services"
+    raw["blocks"]["basic_info"][0]["main_business"] = "CDMO CMC manufacturing outsourcing services"
+    raw["blocks"]["business_composition"][0]["segment_name"] = "CDMO CMC manufacturing outsourcing services"
+    raw["blocks"]["business_composition"][0]["revenue_ratio"] = 0.78
+    raw["blocks"]["financial_indicator"][0]["contract_liabilities"] = 210000000
+
+    pack = EvidencePackBuilder().build(fundamental, raw)
+    names = {item["indicator_name"]: item for item in pack["enhanced_must_track_indicators"]}
+
+    assert pack["stock"]["strategy_type"] == "life_science_cxo_services"
+    assert pack["stock"]["sub_type"] == "cdmo_manufacturing_services"
+    assert names["contract liabilities partial_proxy"]["current_status"] == "partial_proxy"
+    assert names["CDMO capacity utilization"]["current_status"] == "missing / future_data_needed"
+    assert names["North America / U.S. revenue share"]["current_status"] == "missing"
+    assert "no backlog, CDMO utilization or U.S.-exposure proxy is calculated" in names["CDMO capacity utilization"]["scope_note"]
+    assert "one-off large-order marker" in names
+
+
 def test_confidence_breakdown_and_evidence_classification_are_populated():
     pack = EvidencePackBuilder().build(sample_fundamental(), sample_raw())
 

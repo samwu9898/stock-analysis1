@@ -138,6 +138,21 @@ If strategy_type is `low_altitude_economy_infrastructure`, the report must state
 - Drone/eVTOL manufacturing and low-altitude operation service must not be mixed.
 - Auto-parts low-altitude theme exposure must not be routed into infrastructure operation.
 
+## Life-science CXO services constraints
+
+If strategy_type is `life_science_cxo_services`, the report must state:
+
+- sub_type: {stock.get("sub_type") or ""}
+- CXO/CRO/CDMO are pharmaceutical R&D/manufacturing outsourcing services, not self-owned innovative drug pipelines.
+- Financial metrics explain only base operating quality.
+- Missing orders, customer structure, overseas exposure, capacity utilization, or clinical project progress is insufficient to judge industry prosperity or business realization.
+- Contract liabilities are only order-visibility partial_proxy, not real backlog.
+- Capex is capacity input observation only and does not prove capacity absorption.
+- R&D ratio is R&D intensity only and does not prove technology moat.
+- Overseas regulation, geopolitics, Biosecure Act, sanctions and FX risk must be explicit.
+- CRO/CDMO must not be mixed with ordinary pharma manufacturing, medical devices, distribution, TCM, consumer healthcare or pipeline-company analysis.
+- If the stock code is 300363 or the evidence mentions Porton, state that it is a high-volatility CDMO sample and historical data may be affected by one-off orders.
+
 ## Evidence Pack
 
 ```json

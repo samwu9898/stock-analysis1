@@ -181,6 +181,8 @@ class FundamentalResultAssembler:
             normalized, classification, readiness
         ) and not self._low_altitude_data_gap_neutral_exception(
             normalized, classification, readiness
+        ) and not self._life_science_cxo_data_gap_neutral_exception(
+            normalized, classification, readiness
         ):
             return "negative"
 
@@ -359,6 +361,35 @@ class FundamentalResultAssembler:
         actual_missing = set(readiness.critical_missing_fields + readiness.high_priority_missing_fields)
         return not (core_available & actual_missing)
 
+    def _life_science_cxo_data_gap_neutral_exception(
+        self,
+        normalized: NormalizedFundamentalInput,
+        classification: StockClassificationResult,
+        readiness: DataReadinessPlan,
+    ) -> bool:
+        if classification.strategy_type != "life_science_cxo_services":
+            return False
+        if not normalized.financial_metrics:
+            return False
+        if not normalized.business_composition or not normalized.business_composition.segments:
+            return False
+        if not (normalized.basic_info.industry or normalized.basic_info.main_business):
+            return False
+        core_available = {
+            "basic_info.industry",
+            "basic_info.main_business",
+            "business_composition.segments",
+            "life_science_cxo.cxo_revenue_share",
+            "financial_metrics.revenue",
+            "financial_metrics.gross_margin",
+            "financial_metrics.operating_cashflow",
+            "financial_metrics.accounts_receivable",
+            "financial_metrics.contract_liabilities",
+            "financial_metrics.capex",
+        }
+        actual_missing = set(readiness.critical_missing_fields + readiness.high_priority_missing_fields)
+        return not (core_available & actual_missing)
+
     def _decide_confidence(
         self,
         classification: StockClassificationResult,
@@ -396,6 +427,10 @@ class FundamentalResultAssembler:
             if readiness.readiness_level == "weak":
                 confidence = _cap_confidence(confidence, "low")
         if self._low_altitude_core_gating_missing(classification, readiness, context):
+            confidence = _cap_confidence(confidence, "medium")
+            if context.max_overall_confidence == "low":
+                confidence = _cap_confidence(confidence, "low")
+        if self._life_science_cxo_core_gating_missing(classification, readiness, context):
             confidence = _cap_confidence(confidence, "medium")
             if context.max_overall_confidence == "low":
                 confidence = _cap_confidence(confidence, "low")
@@ -493,7 +528,13 @@ class FundamentalResultAssembler:
         if classification.strategy_type == "low_altitude_economy_infrastructure":
             drivers.append("Low-altitude economy is a sector cluster; this framework covers only infrastructure and operation service.")
             drivers.append("Sub_type routing must separate aviation_operations_service from airspace_platform_system; missing operation, contract, customer, acceptance or safety data caps confidence.")
-        return list(dict.fromkeys(drivers))[:6]
+        if classification.strategy_type == "life_science_cxo_services":
+            drivers.append("CXO/CRO/CDMO are pharmaceutical R&D/manufacturing outsourcing services, not self-owned innovative drug pipeline valuation.")
+            drivers.append("Backlog, new orders, customer structure, overseas exposure, CDMO utilization and clinical project progress are confidence gates; contract liabilities are partial_proxy only.")
+            if normalized.stock_code.endswith("300363") or normalized.stock_code == "300363":
+                drivers.append("Porton is treated as a high-volatility CDMO sample; historical data may be affected by one-off orders.")
+        max_drivers = 8 if classification.strategy_type == "life_science_cxo_services" else 6
+        return list(dict.fromkeys(drivers))[:max_drivers]
 
     def _financial_quality(self, normalized, readiness, scoring) -> FinancialQuality:
         metric = _latest_metric(normalized)
@@ -583,6 +624,9 @@ class FundamentalResultAssembler:
         elif classification.strategy_type == "satellite_communication_infrastructure":
             position = "unknown" if readiness.readiness_level in {"weak", "insufficient"} else "neutral"
             trend = "行业专属运营数据缺失时，不足以判断商业航天业务兑现、容量利用率或客户需求稳定性。"
+        elif classification.strategy_type == "life_science_cxo_services":
+            position = "unknown" if readiness.readiness_level in {"weak", "insufficient"} else "neutral"
+            trend = "Missing backlog/new orders/customer structure/overseas exposure/CDMO utilization/clinical project evidence is insufficient to judge industry prosperity or business realization."
         elif readiness.readiness_level in {"weak", "insufficient"}:
             position = "unknown"
             trend = "关键数据缺失，周期判断需要降低置信度。"
@@ -676,6 +720,16 @@ class FundamentalResultAssembler:
                     uncertainty="medium",
                 )
             )
+        if classification.strategy_type == "life_science_cxo_services":
+            catalysts = [
+                Catalyst(
+                    name="CXO service demand and order-visibility validation",
+                    catalyst_type="order",
+                    evidence=[_ev("framework", "Requires real backlog/new orders, customer structure, overseas exposure, CDMO utilization or clinical project progress; CXO concept words are not evidence.")],
+                    expected_timeframe=None,
+                    uncertainty="high" if readiness.readiness_level in {"weak", "insufficient", "usable_with_warnings"} else "medium",
+                )
+            ]
         return catalysts[:3]
 
     def _track_indicators(self, classification, framework, readiness) -> list[TrackIndicator]:
@@ -693,6 +747,32 @@ class FundamentalResultAssembler:
                 names.extend(["fleet size", "operating hours", "flight sorties", "aircraft type mix"])
             else:
                 names.extend(["contract amount", "project acceptance progress", "platform dispatch volume", "software service revenue share"])
+        if classification.strategy_type == "life_science_cxo_services":
+            names = [
+                "CXO / CRO / CDMO related revenue share",
+                "backlog / on-hand orders",
+                "new signed orders",
+                "contract liabilities partial_proxy",
+                "customer concentration",
+                "overseas revenue share",
+                "North America / U.S. revenue share",
+                "gross margin",
+                "operating cashflow",
+                "accounts receivable",
+                "collection cycle",
+                "capex",
+                "FX impact",
+                "overseas regulatory / geopolitical / Biosecure Act / sanction risk",
+                "project cancellation or delay",
+                "one-off large-order marker",
+            ]
+            subtype = getattr(classification, "sub_type", None)
+            if subtype == "integrated_cxo_platform":
+                names.extend(["business-segment revenue mix", "drug discovery revenue", "preclinical revenue", "CMC / CDMO revenue", "active customers", "employee/scientist count"])
+            elif subtype == "cdmo_manufacturing_services":
+                names.extend(["CDMO orders", "CDMO capacity utilization", "commercial project count", "capacity expansion progress", "GMP/FDA/NMPA compliance event", "major customer concentration"])
+            elif subtype == "clinical_cro_services":
+                names.extend(["clinical project count", "clinical trial service revenue", "SMO / data-statistics revenue", "project acceptance progress", "project collection cycle"])
         if classification.strategy_type == "resource_swing":
             names.extend(["对应商品价格", "扣非净利润", "经营现金流", "主营构成"])
         elif classification.strategy_type == "right_trend_growth":
@@ -745,9 +825,24 @@ class FundamentalResultAssembler:
                 "project acceptance progress",
                 "platform dispatch volume",
             ])
+        if classification.strategy_type == "life_science_cxo_services":
+            names.extend([
+                "CXO / CRO / CDMO related revenue share",
+                "backlog / on-hand orders",
+                "new signed orders",
+                "contract liabilities partial_proxy",
+                "customer concentration",
+                "overseas revenue share",
+                "North America / U.S. revenue share",
+                "CDMO capacity utilization",
+                "clinical project count",
+                "GMP/FDA/NMPA compliance event",
+                "one-off large-order marker",
+            ])
         names.extend(readiness.recommended_data_to_collect[:4])
         out = []
-        for name in list(dict.fromkeys(names))[:12]:
+        max_items = 25 if classification.strategy_type == "life_science_cxo_services" else 12
+        for name in list(dict.fromkeys(names))[:max_items]:
             out.append(
                 TrackIndicator(
                     name=name,
@@ -804,6 +899,13 @@ class FundamentalResultAssembler:
                 ("机器人或新业务收入和订单无法验证", "机器人相关业务收入或订单数据"),
                 ("大客户需求低于预期", "客户订单或收入占比数据"),
                 ("估值无法被业绩增长消化", "估值与业绩增速对比"),
+            ],
+            "life_science_cxo_services": [
+                ("CXO/CRO/CDMO revenue share cannot be confirmed or drops below the routing threshold", "business composition and segment revenue disclosure"),
+                ("Backlog, new signed orders, customer concentration or overseas exposure deteriorates or remains unavailable", "backlog, new-order, customer and regional disclosure"),
+                ("CDMO utilization, commercial project count, capacity expansion or GMP/FDA/NMPA compliance deteriorates", "CDMO utilization, project, capex and compliance-event data"),
+                ("Clinical project count, acceptance progress, cancellation/delay or collection cycle deteriorates", "clinical project, acceptance, cancellation/delay and receivables/collection data"),
+                ("One-off large-order distortion or major customer concentration invalidates historical trend comparison", "single customer/product/order history and major-customer share"),
             ],
             "satellite_communication_infrastructure": [
                 ("容量利用率或出租率恶化", "容量利用率 / 出租率数据"),
@@ -949,6 +1051,8 @@ class FundamentalResultAssembler:
             reasons.append("现金流或 ROE 数据缺失，稳健性判断需要降置信度")
         if self._satellite_core_gating_missing(classification, readiness, context):
             reasons.append("缺容量利用率、客户结构、卫星寿命或折旧摊销，卫星通信基础设施判断不得高置信度")
+        if self._life_science_cxo_core_gating_missing(classification, readiness, context):
+            reasons.append("Life-science CXO judgement cannot use high confidence while backlog/new orders/customer/overseas exposure/CDMO utilization/clinical project gates are missing.")
         if self._advanced_manufacturing_medium_risk_count(classification, context) >= 2:
             reasons.append("高端制造新业务、大客户或估值验证风险较多")
         if self._structural_medium_risk_count(classification, context) >= 2:
@@ -1040,6 +1144,29 @@ class FundamentalResultAssembler:
             subtype_fields = {"low_altitude.contract_amount", "low_altitude.project_acceptance_progress", "low_altitude.platform_dispatch_volume"}
         return bool((shared | subtype_fields) & missing)
 
+    def _life_science_cxo_core_gating_missing(self, classification, readiness, context) -> bool:
+        if classification.strategy_type != "life_science_cxo_services":
+            return False
+        missing = {
+            item.field_name
+            for item in readiness.field_readiness
+            if item.status in {"missing", "partial"}
+        }
+        shared = {
+            "life_science_cxo.backlog",
+            "life_science_cxo.new_signed_orders",
+            "life_science_cxo.customer_concentration",
+            "life_science_cxo.overseas_revenue_share",
+            "life_science_cxo.north_america_or_us_revenue_share",
+        }
+        subtype = getattr(classification, "sub_type", None)
+        subtype_fields: set[str] = set()
+        if subtype == "cdmo_manufacturing_services":
+            subtype_fields = {"life_science_cxo.cdmo_capacity_utilization"}
+        elif subtype == "clinical_cro_services":
+            subtype_fields = {"life_science_cxo.clinical_project_count"}
+        return bool((shared | subtype_fields) & missing)
+
     def _high_risk_count(self, readiness, context, scoring) -> int:
         names = {risk.risk_name for risk in context.required_risks if risk.severity == "high"}
         names.update(risk.risk_name for risk in scoring.required_risks if risk.severity == "high")
@@ -1076,6 +1203,8 @@ def framework_vars(strategy_type: str) -> list[str]:
         return ["卫星资源", "转发器 / 带宽容量", "容量利用率 / 出租率", "客户结构", "资产寿命 / 折旧"]
     if strategy_type == "low_altitude_economy_infrastructure":
         return ["sub_type", "low-altitude revenue share", "operating volume", "contract acceptance", "customer structure", "safety/regulatory events"]
+    if strategy_type == "life_science_cxo_services":
+        return ["sub_type", "CXO revenue share", "backlog/new orders", "customer concentration", "overseas/U.S. exposure", "CDMO utilization", "clinical project count", "compliance/FX/geopolitics"]
     return []
 
 

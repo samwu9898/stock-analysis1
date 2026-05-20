@@ -115,6 +115,41 @@ def test_low_altitude_theme_only_guard():
     assert result.strategy_type in {"theme_only", "unknown"}
 
 
+def test_life_science_cxo_positive_subtypes_classify():
+    expected = {
+        "classifier_life_science_cxo_603259.json": "integrated_cxo_platform",
+        "classifier_life_science_cxo_300759.json": "integrated_cxo_platform",
+        "classifier_life_science_cxo_002821.json": "cdmo_manufacturing_services",
+        "classifier_life_science_cxo_300363.json": "cdmo_manufacturing_services",
+        "classifier_life_science_cxo_300347.json": "clinical_cro_services",
+    }
+    for fixture, sub_type in expected.items():
+        result = classify_fixture(fixture)
+        assert result.strategy_type == "life_science_cxo_services"
+        assert result.sub_type == sub_type
+        assert result.confidence != "high"
+
+
+def test_life_science_cxo_porton_high_volatility_caution():
+    result = classify_fixture("classifier_life_science_cxo_300363.json")
+
+    assert result.strategy_type == "life_science_cxo_services"
+    assert "high_volatility_cdmo_sample_one_off_order_caution" in result.warnings
+
+
+def test_life_science_cxo_negative_boundaries_do_not_classify():
+    for fixture in [
+        "classifier_life_science_cxo_negative_600276.json",
+        "classifier_life_science_cxo_negative_600521.json",
+        "classifier_life_science_cxo_negative_000739.json",
+        "classifier_life_science_cxo_negative_300760.json",
+        "classifier_life_science_cxo_negative_300012.json",
+        "classifier_life_science_cxo_negative_600196.json",
+    ]:
+        result = classify_fixture(fixture)
+        assert result.strategy_type != "life_science_cxo_services"
+
+
 def test_news_only_match_cannot_be_high_confidence():
     normalized = FundamentalDataAdapter().from_file(str(FIXTURES / "classifier_theme_only.json"))
     normalized.basic_info.industry = None

@@ -95,6 +95,10 @@ SATELLITE_STRONG_CORE_KEYWORDS = (
 LOW_ALTITUDE_STRATEGY = "low_altitude_economy_infrastructure"
 LOW_ALTITUDE_AVIATION_SUBTYPE = "aviation_operations_service"
 LOW_ALTITUDE_AIRSPACE_SUBTYPE = "airspace_platform_system"
+LIFE_SCIENCE_CXO_STRATEGY = "life_science_cxo_services"
+LIFE_SCIENCE_CXO_INTEGRATED_SUBTYPE = "integrated_cxo_platform"
+LIFE_SCIENCE_CXO_CDMO_SUBTYPE = "cdmo_manufacturing_services"
+LIFE_SCIENCE_CXO_CLINICAL_SUBTYPE = "clinical_cro_services"
 
 LOW_ALTITUDE_AVIATION_PRIMARY = (
     "\u901a\u822a\u8fd0\u8425",
@@ -189,6 +193,155 @@ LOW_ALTITUDE_TRADITIONAL_SEGMENT_KEYWORDS = (
     "\u6c11\u822a\u673a\u573a",
 )
 
+LIFE_SCIENCE_CXO_PRIMARY = (
+    "CRO",
+    "CDMO",
+    "CXO",
+    "CMC",
+    "clinical CRO",
+    "preclinical",
+    "drug discovery",
+    "contract research",
+    "contract development",
+    "clinical trial service",
+    "SMO",
+    "pharmaceutical outsourcing",
+    "drug R&D outsourcing",
+    "\u4e34\u5e8a\u7814\u7a76\u5916\u5305",
+    "\u4e34\u5e8a CRO",
+    "\u7814\u53d1\u5916\u5305",
+    "\u836f\u7269\u53d1\u73b0\u670d\u52a1",
+    "\u533b\u836f\u7814\u53d1\u751f\u4ea7\u5916\u5305",
+    "\u533b\u836f\u5916\u5305\u670d\u52a1",
+    "\u5408\u540c\u7814\u7a76\u7ec4\u7ec7",
+    "\u5408\u540c\u5f00\u53d1\u751f\u4ea7\u7ec4\u7ec7",
+    "\u4e34\u5e8a\u8bd5\u9a8c\u670d\u52a1",
+    "\u836f\u7269\u53d1\u73b0",
+    "\u4e34\u5e8a\u524d\u7814\u7a76",
+    "\u5de5\u827a\u5f00\u53d1",
+    "\u5546\u4e1a\u5316\u751f\u4ea7\u670d\u52a1",
+)
+LIFE_SCIENCE_CXO_PROOF = (
+    "revenue",
+    "revenue share",
+    "order",
+    "contract liabilities",
+    "capacity",
+    "clinical project",
+    "main business",
+    "business composition",
+    "segment revenue",
+    "\u6536\u5165\u5360\u6bd4",
+    "\u8ba2\u5355",
+    "\u5408\u540c\u8d1f\u503a",
+    "\u4ea7\u80fd",
+    "\u4e34\u5e8a\u9879\u76ee",
+    "\u4e3b\u8425\u4e1a\u52a1",
+    "\u4e3b\u8425\u6784\u6210",
+    "\u6536\u5165",
+    "\u5206\u90e8\u6536\u5165",
+)
+LIFE_SCIENCE_CXO_SEGMENT_KEYWORDS = (
+    "CRO",
+    "CDMO",
+    "CXO",
+    "CMC",
+    "clinical trial",
+    "drug discovery",
+    "outsourcing",
+    "\u4e34\u5e8a\u7814\u7a76",
+    "\u4e34\u5e8a CRO",
+    "\u4e34\u5e8a\u8bd5\u9a8c",
+    "\u836f\u7269\u53d1\u73b0",
+    "\u533b\u836f\u5916\u5305",
+    "\u533b\u836f\u7814\u53d1\u751f\u4ea7\u5916\u5305",
+    "\u5408\u540c\u7814\u7a76",
+    "\u5408\u540c\u5f00\u53d1\u751f\u4ea7",
+    "\u5de5\u827a\u5f00\u53d1",
+    "\u5546\u4e1a\u5316\u751f\u4ea7",
+)
+LIFE_SCIENCE_PHARMA_PRODUCT_SEGMENT_KEYWORDS = (
+    "API",
+    "active pharmaceutical ingredient",
+    "formulation",
+    "finished drug",
+    "pharmaceutical sales",
+    "\u539f\u6599\u836f",
+    "\u5236\u5242",
+    "\u836f\u54c1\u9500\u552e",
+    "\u4eff\u5236\u836f",
+    "\u521b\u65b0\u836f",
+)
+LIFE_SCIENCE_CXO_NEGATIVE_KEYWORDS = (
+    "self-owned pipeline",
+    "innovative drug pipeline",
+    "API sales",
+    "formulation sales",
+    "medical device",
+    "pharmaceutical distribution",
+    "TCM",
+    "consumer healthcare",
+    "hospital",
+    "general testing",
+    "AI drug discovery",
+    "software license",
+    "SaaS",
+    "technology license",
+    "\u81ea\u6709\u521b\u65b0\u836f",
+    "\u65b0\u836f\u7ba1\u7ebf",
+    "\u521b\u65b0\u836f\u7814\u53d1",
+    "\u539f\u6599\u836f\u9500\u552e",
+    "\u5236\u5242\u9500\u552e",
+    "\u533b\u7597\u5668\u68b0",
+    "\u533b\u836f\u6d41\u901a",
+    "\u4e2d\u836f",
+    "\u6d88\u8d39\u533b\u7597",
+    "\u533b\u9662",
+    "\u901a\u7528\u68c0\u9a8c\u68c0\u6d4b",
+    "\u8f6f\u4ef6\u8bb8\u53ef",
+    "\u6280\u672f\u6388\u6743",
+)
+LIFE_SCIENCE_CXO_SUBTYPE_KEYWORDS = {
+    LIFE_SCIENCE_CXO_INTEGRATED_SUBTYPE: (
+        "integrated",
+        "drug discovery",
+        "preclinical",
+        "CMC",
+        "CDMO",
+        "\u4e00\u4f53\u5316",
+        "\u836f\u7269\u53d1\u73b0",
+        "\u4e34\u5e8a\u524d",
+        "\u5de5\u827a\u5f00\u53d1",
+    ),
+    LIFE_SCIENCE_CXO_CDMO_SUBTYPE: (
+        "CDMO",
+        "CMC",
+        "commercial manufacturing",
+        "manufacturing outsourcing",
+        "\u5546\u4e1a\u5316\u751f\u4ea7",
+        "\u5de5\u827a\u5f00\u53d1",
+        "\u751f\u4ea7\u5916\u5305",
+    ),
+    LIFE_SCIENCE_CXO_CLINICAL_SUBTYPE: (
+        "clinical CRO",
+        "clinical trial",
+        "SMO",
+        "data statistics",
+        "\u4e34\u5e8a CRO",
+        "\u4e34\u5e8a\u8bd5\u9a8c",
+        "\u4e34\u5e8a\u7814\u7a76",
+        "\u6570\u636e\u7edf\u8ba1",
+    ),
+}
+LIFE_SCIENCE_CXO_KNOWN_POSITIVES = {
+    "603259": LIFE_SCIENCE_CXO_INTEGRATED_SUBTYPE,
+    "300759": LIFE_SCIENCE_CXO_INTEGRATED_SUBTYPE,
+    "002821": LIFE_SCIENCE_CXO_CDMO_SUBTYPE,
+    "300363": LIFE_SCIENCE_CXO_CDMO_SUBTYPE,
+    "300347": LIFE_SCIENCE_CXO_CLINICAL_SUBTYPE,
+}
+LIFE_SCIENCE_CXO_KNOWN_NEGATIVES = {"600276", "600521", "000739", "300760", "300012", "600196"}
+
 
 def _safe_json(value: Any, limit: int = 8000) -> str:
     try:
@@ -236,6 +389,9 @@ class StockClassifier:
         low_altitude_result = self._classify_low_altitude(normalized, text_sources, missing_fields, warnings)
         if low_altitude_result is not None:
             return low_altitude_result
+        life_science_cxo_result = self._classify_life_science_cxo(normalized, text_sources, missing_fields, warnings)
+        if life_science_cxo_result is not None:
+            return life_science_cxo_result
 
         scores: dict[str, int] = defaultdict(int)
         evidence_by_type: dict[str, list[ClassificationEvidence]] = defaultdict(list)
@@ -568,6 +724,194 @@ class StockClassifier:
             alternative_types=[],
             missing_fields=sorted(set(missing_fields)),
             warnings=sorted(set(warnings + ["low_altitude_boundary_exclusion_applied"])),
+        )
+
+    def _classify_life_science_cxo(
+        self,
+        normalized: NormalizedFundamentalInput,
+        text_sources: dict[str, str],
+        missing_fields: list[str],
+        warnings: list[str],
+    ) -> StockClassificationResult | None:
+        core_text = self._core_text(text_sources)
+        all_text = " ".join(text_sources.values())
+        code = "".join(ch for ch in str(normalized.stock_code) if ch.isdigit()).zfill(6)[-6:]
+        cxo_core = self._has_any(core_text, LIFE_SCIENCE_CXO_PRIMARY)
+        cxo_any = self._has_any(all_text, LIFE_SCIENCE_CXO_PRIMARY)
+        proof_any = self._has_any(all_text, LIFE_SCIENCE_CXO_PROOF)
+        cxo_share = self._segment_share(normalized, LIFE_SCIENCE_CXO_SEGMENT_KEYWORDS)
+        pharma_product_share = self._segment_share(normalized, LIFE_SCIENCE_PHARMA_PRODUCT_SEGMENT_KEYWORDS)
+        negative_hit = self._first_hit(core_text, LIFE_SCIENCE_CXO_NEGATIVE_KEYWORDS)
+        known_subtype = LIFE_SCIENCE_CXO_KNOWN_POSITIVES.get(code)
+
+        if code in LIFE_SCIENCE_CXO_KNOWN_NEGATIVES and (cxo_any or negative_hit):
+            return self._life_science_cxo_boundary_result(
+                normalized,
+                missing_fields,
+                warnings,
+                negative_hit or "known negative/boundary sample",
+                "life_science_cxo.known_negative_boundary",
+            )
+
+        if (
+            not known_subtype
+            and pharma_product_share is not None
+            and pharma_product_share > 0.60
+            and (cxo_share is None or cxo_share < 0.50)
+        ):
+            return self._life_science_cxo_boundary_result(
+                normalized,
+                missing_fields,
+                warnings,
+                "API/formulation/drug-product revenue share >60% without independently confirmed CXO service revenue",
+                "life_science_cxo.api_formulation_boundary",
+            )
+
+        if negative_hit and not known_subtype and (cxo_share is None or cxo_share < 0.50):
+            if cxo_any:
+                return self._life_science_cxo_boundary_result(
+                    normalized,
+                    missing_fields,
+                    warnings,
+                    negative_hit,
+                    "life_science_cxo.negative_boundary",
+                    strategy_type="theme_only" if not cxo_core else "unknown",
+                    score=35 if not cxo_core else 25,
+                )
+            return None
+
+        should_classify = False
+        if cxo_share is not None and cxo_share >= 0.50 and cxo_core and proof_any:
+            should_classify = True
+        elif known_subtype and cxo_core and proof_any:
+            should_classify = True
+        elif cxo_share is not None and 0.30 <= cxo_share < 0.50 and cxo_core and proof_any:
+            warnings.append("life_science_cxo_revenue_share_boundary_check_confidence_capped")
+            should_classify = True
+        elif known_subtype and (normalized.financial_metrics or normalized.business_composition):
+            warnings.append("life_science_cxo_known_positive_sample_code_fallback_confidence_capped")
+            should_classify = True
+
+        if should_classify:
+            subtype = known_subtype or self._infer_life_science_cxo_subtype(all_text)
+            if subtype is None:
+                subtype = LIFE_SCIENCE_CXO_INTEGRATED_SUBTYPE
+                warnings.append("life_science_cxo_sub_type_unconfirmed_confidence_capped")
+            score = 62 if cxo_share is not None and cxo_share >= 0.50 else 55
+            if known_subtype and not (cxo_core and proof_any):
+                score = min(score, 50)
+            if cxo_share is None or cxo_share < 0.50:
+                score = min(score, 58)
+                warnings.append("life_science_cxo_revenue_share_not_fully_confirmed_confidence_capped")
+            if code == "300363":
+                warnings.append("high_volatility_cdmo_sample_one_off_order_caution")
+                score = min(score, 58)
+            evidence = [
+                ClassificationEvidence(
+                    source_field="core_business_text",
+                    matched_value=self._first_hit(core_text, LIFE_SCIENCE_CXO_PRIMARY) or LIFE_SCIENCE_CXO_STRATEGY,
+                    matched_rule="life_science_cxo.tier1.and_logic",
+                    weight=45,
+                    explanation="Tier-1 AND logic matched CXO/CRO/CDMO/CMC service text plus revenue/order/contract/capacity/project/business evidence.",
+                )
+            ]
+            if cxo_share is not None:
+                evidence.append(
+                    ClassificationEvidence(
+                        source_field="business_composition",
+                        matched_value=f"cxo_related_revenue_share={cxo_share:.2%}",
+                        matched_rule="life_science_cxo.revenue_share_threshold",
+                        weight=17,
+                        explanation="Business composition supports CXO/CRO/CDMO related revenue share. Revenue share proves business structure, not order quality.",
+                    )
+                )
+            reasons = [
+                f"classified as {LIFE_SCIENCE_CXO_STRATEGY} with sub_type={subtype} by conservative Tier-1 AND logic.",
+                "This framework covers life-science R&D/manufacturing outsourcing services, not self-owned innovative drug pipelines, ordinary pharma manufacturing, devices, distribution, TCM or theme-only news.",
+                "Backlog, new orders, customer concentration, overseas exposure, capacity utilization and clinical project progress remain confidence-gating evidence.",
+            ]
+            return StockClassificationResult(
+                stock_code=normalized.stock_code,
+                stock_name=normalized.stock_name,
+                strategy_type=LIFE_SCIENCE_CXO_STRATEGY,
+                sub_type=subtype,
+                confidence=_score_to_confidence(score, LIFE_SCIENCE_CXO_STRATEGY),
+                confidence_score=score,
+                reasons=reasons,
+                evidence=evidence,
+                alternative_types=[],
+                missing_fields=sorted(set(missing_fields)),
+                warnings=sorted(set(warnings)),
+            )
+
+        if cxo_any:
+            return StockClassificationResult(
+                stock_code=normalized.stock_code,
+                stock_name=normalized.stock_name,
+                strategy_type="theme_only",
+                confidence="low",
+                confidence_score=35,
+                reasons=[
+                    "CXO/CRO/CDMO theme appeared, but revenue-share and core-business Tier-1 evidence were not sufficient.",
+                    "Defaulted to theme_only instead of applying life_science_cxo_services.",
+                ],
+                evidence=[
+                    ClassificationEvidence(
+                        source_field="text_sources",
+                        matched_value="CXO/CRO/CDMO theme without revenue-share/core-business support",
+                        matched_rule="life_science_cxo.theme_only_guard",
+                        weight=20,
+                        explanation="Concept words, R&D cooperation news or outsourcing references alone are not CXO service revenue evidence.",
+                    )
+                ],
+                alternative_types=[],
+                missing_fields=sorted(set(missing_fields)),
+                warnings=sorted(set(warnings + ["life_science_cxo_theme_only_guard_applied"])),
+            )
+        return None
+
+    def _infer_life_science_cxo_subtype(self, text: str) -> str | None:
+        if self._has_any(text, LIFE_SCIENCE_CXO_SUBTYPE_KEYWORDS[LIFE_SCIENCE_CXO_CLINICAL_SUBTYPE]):
+            return LIFE_SCIENCE_CXO_CLINICAL_SUBTYPE
+        if self._has_any(text, LIFE_SCIENCE_CXO_SUBTYPE_KEYWORDS[LIFE_SCIENCE_CXO_CDMO_SUBTYPE]):
+            if not self._has_any(text, ("drug discovery", "\u836f\u7269\u53d1\u73b0", "preclinical", "\u4e34\u5e8a\u524d")):
+                return LIFE_SCIENCE_CXO_CDMO_SUBTYPE
+        if self._has_any(text, LIFE_SCIENCE_CXO_SUBTYPE_KEYWORDS[LIFE_SCIENCE_CXO_INTEGRATED_SUBTYPE]):
+            return LIFE_SCIENCE_CXO_INTEGRATED_SUBTYPE
+        return None
+
+    def _life_science_cxo_boundary_result(
+        self,
+        normalized: NormalizedFundamentalInput,
+        missing_fields: list[str],
+        warnings: list[str],
+        boundary_reason: str,
+        matched_rule: str,
+        strategy_type: str = "unknown",
+        score: int = 25,
+    ) -> StockClassificationResult:
+        return StockClassificationResult(
+            stock_code=normalized.stock_code,
+            stock_name=normalized.stock_name,
+            strategy_type=strategy_type,
+            confidence=_score_to_confidence(score, strategy_type),
+            confidence_score=score,
+            reasons=[
+                f"Life-science CXO boundary exclusion applied: {boundary_reason}.",
+                "The company was not routed into life_science_cxo_services because v1 requires confirmed outsourcing-service business exposure, not pipeline, product manufacturing, device, distribution, testing, software or news-only evidence.",
+            ],
+            evidence=[
+                ClassificationEvidence(
+                    source_field="core_business_text",
+                    matched_value=str(boundary_reason),
+                    matched_rule=matched_rule,
+                    weight=20,
+                    explanation="Boundary guard prevents CXO concept or adjacent healthcare exposure from contaminating the life-science outsourcing service framework.",
+                )
+            ],
+            alternative_types=[],
+            missing_fields=sorted(set(missing_fields)),
+            warnings=sorted(set(warnings + ["life_science_cxo_boundary_exclusion_applied"])),
         )
 
     def _has_any(self, text: str, terms: tuple[str, ...]) -> bool:

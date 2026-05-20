@@ -1,0 +1,19 @@
+{
+  "meta": {"code": "603259", "stock_name": "WuXi AppTec", "generated_at": "2026-05-20T10:00:00"},
+  "blocks": {
+    "basic_info": [
+      {"stock_code": "603259", "stock_name": "WuXi AppTec", "industry": "life science CRO CDMO services", "main_business": "Integrated CXO platform providing CRO, drug discovery, preclinical research, CMC and CDMO services as main business revenue."}
+    ],
+    "financial_indicator": [
+      {"period": "2025-12-31", "revenue": 40300000000, "net_profit": 9600000000, "gross_margin": 39.5, "operating_cashflow": 9200000000, "accounts_receivable": 7100000000, "contract_liabilities": 2300000000, "r_and_d_expense_ratio": 3.8, "capex": 4200000000}
+    ],
+    "valuation": [
+      {"period": "2026-05-20", "pe_ttm": 22.0, "pb": 2.7, "ps": 4.0, "market_cap": 180000000000}
+    ],
+    "business_composition": [
+      {"period": "2025-12-31", "classification_type": "by segment", "segment_name": "CRO drug discovery and preclinical services", "revenue_ratio": 0.42, "gross_margin": 41.0},
+      {"period": "2025-12-31", "classification_type": "by segment", "segment_name": "CMC and CDMO services", "revenue_ratio": 0.36, "gross_margin": 38.0}
+    ],
+    "news": []
+  }
+}

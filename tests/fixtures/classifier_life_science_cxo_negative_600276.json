@@ -1,0 +1,16 @@
+{
+  "meta": {"code": "600276", "stock_name": "Hengrui Medicine", "generated_at": "2026-05-20T10:00:00"},
+  "blocks": {
+    "basic_info": [
+      {"stock_code": "600276", "stock_name": "Hengrui Medicine", "industry": "pharmaceutical manufacturing", "main_business": "Innovative drug pipeline, formulation sales and pharmaceutical product revenue are the main business. CRO cooperation news is not main revenue."}
+    ],
+    "financial_indicator": [
+      {"period": "2025-12-31", "revenue": 26000000000, "net_profit": 5200000000, "gross_margin": 84.0, "operating_cashflow": 4600000000, "accounts_receivable": 3100000000, "contract_liabilities": 500000000}
+    ],
+    "valuation": [{"period": "2026-05-20", "pe_ttm": 45.0, "pb": 5.0, "ps": 8.0}],
+    "business_composition": [
+      {"period": "2025-12-31", "classification_type": "by segment", "segment_name": "innovative drug pipeline and formulation sales", "revenue_ratio": 0.92, "gross_margin": 84.0}
+    ],
+    "news": [{"title": "Company signs CRO research cooperation", "summary": "News-only R&D cooperation does not make the company a CXO services company."}]
+  }
+}

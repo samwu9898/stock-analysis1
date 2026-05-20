@@ -1,0 +1,10 @@
+{
+  "stock_code": "300347",
+  "expected_strategy_type": "life_science_cxo_services",
+  "expected_sub_type": "clinical_cro_services",
+  "allowed_status": ["neutral", "insufficient_data"],
+  "max_confidence": "medium",
+  "max_score": 70,
+  "min_required_risk_flags": ["clinical project"],
+  "must_track_keywords": ["CXO", "clinical project count", "contract liabilities"]
+}

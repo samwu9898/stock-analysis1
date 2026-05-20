@@ -1,0 +1,16 @@
+{
+  "meta": {"code": "600521", "stock_name": "Huahai Pharmaceutical", "generated_at": "2026-05-20T10:00:00"},
+  "blocks": {
+    "basic_info": [
+      {"stock_code": "600521", "stock_name": "Huahai Pharmaceutical", "industry": "API and formulation manufacturing", "main_business": "API sales and formulation sales are the main business. CDMO service revenue is small and not independently dominant."}
+    ],
+    "financial_indicator": [{"period": "2025-12-31", "revenue": 9000000000, "net_profit": 900000000, "gross_margin": 58.0, "operating_cashflow": 800000000, "accounts_receivable": 1000000000, "contract_liabilities": 200000000}],
+    "valuation": [{"period": "2026-05-20", "pe_ttm": 24.0, "pb": 2.0, "ps": 2.1}],
+    "business_composition": [
+      {"period": "2025-12-31", "classification_type": "by segment", "segment_name": "API sales", "revenue_ratio": 0.46, "gross_margin": 55.0},
+      {"period": "2025-12-31", "classification_type": "by segment", "segment_name": "formulation sales", "revenue_ratio": 0.33, "gross_margin": 62.0},
+      {"period": "2025-12-31", "classification_type": "by segment", "segment_name": "CDMO services", "revenue_ratio": 0.12, "gross_margin": 40.0}
+    ],
+    "news": []
+  }
+}

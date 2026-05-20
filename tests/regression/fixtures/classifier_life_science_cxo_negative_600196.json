@@ -1,0 +1,10 @@
+{
+  "meta": {"code": "600196", "stock_name": "Fosun Pharma", "generated_at": "2026-05-20T10:00:00"},
+  "blocks": {
+    "basic_info": [{"stock_code": "600196", "stock_name": "Fosun Pharma", "industry": "integrated pharmaceutical group", "main_business": "Diversified pharmaceutical group with drug manufacturing, healthcare and distribution revenue. Small CXO unit is not group main revenue."}],
+    "financial_indicator": [{"period": "2025-12-31", "revenue": 42000000000, "net_profit": 3000000000, "gross_margin": 48.0, "operating_cashflow": 3200000000, "accounts_receivable": 6000000000, "contract_liabilities": 700000000}],
+    "valuation": [{"period": "2026-05-20", "pe_ttm": 26.0, "pb": 1.5, "ps": 1.2}],
+    "business_composition": [{"period": "2025-12-31", "classification_type": "by segment", "segment_name": "pharmaceutical manufacturing and distribution", "revenue_ratio": 0.86, "gross_margin": 48.0}],
+    "news": []
+  }
+}

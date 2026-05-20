@@ -38,6 +38,10 @@ def test_regression_snapshot(fixture_path: Path):
     assert result.strategy_type == expected["expected_strategy_type"], fail_message(
         stock_code, "strategy_type", result.strategy_type, expected["expected_strategy_type"]
     )
+    if "expected_sub_type" in expected:
+        assert result.sub_type == expected["expected_sub_type"], fail_message(
+            stock_code, "sub_type", result.sub_type, expected["expected_sub_type"]
+        )
     assert result.status in expected["allowed_status"], fail_message(
         stock_code, "status", result.status, expected["allowed_status"]
     )

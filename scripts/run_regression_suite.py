@@ -28,6 +28,8 @@ def validate_result_against_expected(result, expected: dict) -> list[str]:
         errors.append(
             f"strategy_type actual={result.strategy_type} expected={expected['expected_strategy_type']}"
         )
+    if "expected_sub_type" in expected and result.sub_type != expected["expected_sub_type"]:
+        errors.append(f"sub_type actual={result.sub_type} expected={expected['expected_sub_type']}")
     if result.status not in expected["allowed_status"]:
         errors.append(f"status actual={result.status} expected one of {expected['allowed_status']}")
     if CONFIDENCE_RANK[result.confidence] > CONFIDENCE_RANK[expected["max_confidence"]]:

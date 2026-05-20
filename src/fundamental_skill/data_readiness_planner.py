@@ -16,7 +16,7 @@ from .external_commodity_price_connector import DEFAULT_EXPOSURE_MAP
 from .framework_selector import FrameworkSelector
 from .raw_schema import NormalizedFundamentalInput
 from .readiness_schema import DataReadinessPlan, FieldReadiness, FieldRequirement
-from .stock_classifier import StockClassifier
+from .stock_classifier import LIFE_SCIENCE_CXO_SEGMENT_KEYWORDS, StockClassifier
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -132,6 +132,18 @@ class DataReadinessPlanner:
                 penalty_reasons.append(
                     "low_altitude_economy_infrastructure v1: basic_info, financials and business_composition are available; missing sub_type operating/contract fields caps confidence but does not by itself force insufficient readiness."
                 )
+        if classification.strategy_type == "life_science_cxo_services":
+            foundation_available = (
+                bool(normalized.financial_metrics)
+                and normalized.business_composition is not None
+                and bool(normalized.business_composition.segments)
+                and bool(normalized.basic_info.industry or normalized.basic_info.main_business)
+            )
+            if foundation_available and score < 60:
+                score = 60
+                penalty_reasons.append(
+                    "life_science_cxo_services v1: basic_info, financials and business_composition are available; missing orders/customer/overseas/utilization/project evidence caps confidence but does not by itself force insufficient readiness."
+                )
         score = max(0, min(100, score))
 
         level = self._level_from_score(
@@ -238,6 +250,8 @@ class DataReadinessPlanner:
                 "financial_metrics[*].contract_liabilities",
                 "缺少真实订单数据，也缺少合同负债 proxy",
             )
+        if field_name.startswith("life_science_cxo."):
+            return self._resolve_life_science_cxo_field(normalized, field_name)
         if field_name.startswith("valuation_metrics."):
             attr = field_name.split(".", 1)[1]
             if normalized.valuation_metrics is None:
@@ -280,6 +294,101 @@ class DataReadinessPlanner:
         if field_name.startswith("external."):
             return "missing", None, field_name, "当前标准化输入尚未包含外部变量数据"
         return "missing", None, field_name, "暂不支持该字段路径"
+
+    def _resolve_life_science_cxo_field(
+        self, normalized: NormalizedFundamentalInput, field_name: str
+    ) -> tuple[str, Any, str | None, str | None]:
+        attr = field_name.split(".", 1)[1]
+        if attr == "cxo_revenue_share":
+            share = self._business_segment_share(normalized, LIFE_SCIENCE_CXO_SEGMENT_KEYWORDS)
+            if share is None:
+                return (
+                    "missing",
+                    None,
+                    "business_composition.segments",
+                    "CXO/CRO/CDMO related revenue share is not independently confirmed; keywords alone do not qualify.",
+                )
+            status = "available" if share >= 0.50 else "partial"
+            reason = None if share >= 0.50 else "CXO-related revenue share is below the direct-candidate threshold and remains boundary evidence."
+            return status, f"{share:.2%}", "business_composition.segments[*].revenue_ratio", reason
+        if attr == "one_off_large_order_risk":
+            digits = "".join(ch for ch in str(normalized.stock_code) if ch.isdigit()).zfill(6)[-6:]
+            if digits == "300363":
+                return (
+                    "partial",
+                    "high-volatility CDMO sample caution",
+                    "classification.stock_code",
+                    "Porton is marked as a high-volatility CDMO sample; historical data may be affected by one-off orders.",
+                )
+        if attr in {"backlog", "new_signed_orders"}:
+            return (
+                "missing",
+                None,
+                f"life_science_cxo.{attr}",
+                "v1 does not auto-collect external order/backlog data; contract liabilities must not be treated as real backlog.",
+            )
+        if attr == "cdmo_capacity_utilization":
+            return (
+                "missing",
+                None,
+                field_name,
+                "v1 does not infer CDMO utilization from gross margin, capex or expansion projects.",
+            )
+        if attr == "north_america_or_us_revenue_share":
+            return (
+                "missing",
+                None,
+                field_name,
+                "v1 does not calculate U.S. customer risk exposure proxy automatically; explicit regional/customer geography disclosure is required.",
+            )
+        future_needed = {
+            "customer_concentration",
+            "overseas_revenue_share",
+            "customer_geography",
+            "clinical_project_count",
+            "project_cancellation_or_delay",
+            "collection_cycle",
+            "geopolitical_regulatory_risk",
+            "gmp_fda_nmpa_compliance_event",
+            "talent_scientist_loss_risk",
+        }
+        if attr in future_needed:
+            return (
+                "missing",
+                None,
+                field_name,
+                "Industry-specific CXO disclosure is missing or not normalized in v1; confidence must be capped.",
+            )
+        return "missing", None, field_name, "Unsupported life-science CXO field in v1."
+
+    def _business_segment_share(
+        self, normalized: NormalizedFundamentalInput, keywords: tuple[str, ...]
+    ) -> float | None:
+        if not normalized.business_composition:
+            return None
+        best: float | None = None
+        for segment in normalized.business_composition.segments:
+            if not isinstance(segment, dict):
+                continue
+            text = str(segment).lower()
+            if not any(keyword.lower() in text for keyword in keywords):
+                continue
+            value = self._ratio_value(segment.get("revenue_ratio"))
+            if value is None:
+                continue
+            best = value if best is None else max(best, value)
+        return best
+
+    def _ratio_value(self, value: Any) -> float | None:
+        if isinstance(value, dict):
+            value = value.get("raw_value", value.get("value"))
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            return None
+        if number > 1 and number <= 100:
+            number = number / 100
+        return number
 
     def _resolve_commodity_prices(
         self, normalized: NormalizedFundamentalInput
@@ -386,6 +495,8 @@ class DataReadinessPlanner:
             return "补充最新公告或新闻数据"
         if requirement.category == "industry" and requirement.field_name.startswith("low_altitude."):
             return f"Collect low-altitude infrastructure/operation evidence: {requirement.display_name}"
+        if requirement.category == "industry" and requirement.field_name.startswith("life_science_cxo."):
+            return f"Collect life-science CXO evidence: {requirement.display_name}"
         if requirement.category == "industry":
             return f"补充卫星通信行业专属字段：{requirement.display_name}"
         return f"补充字段：{requirement.display_name}"
@@ -509,6 +620,28 @@ class DataReadinessPlanner:
                 caps.append("usable_with_warnings")
             if foundation & missing or financial_metrics_empty:
                 caps.append("weak")
+        if strategy_type == "life_science_cxo_services":
+            foundation = {
+                "basic_info.industry",
+                "basic_info.main_business",
+                "business_composition.segments",
+                "life_science_cxo.cxo_revenue_share",
+            }
+            shared_gating = {
+                "life_science_cxo.backlog",
+                "life_science_cxo.new_signed_orders",
+                "life_science_cxo.customer_concentration",
+                "life_science_cxo.overseas_revenue_share",
+                "life_science_cxo.north_america_or_us_revenue_share",
+            }
+            subtype_gating = {
+                "life_science_cxo.cdmo_capacity_utilization",
+                "life_science_cxo.clinical_project_count",
+            }
+            if shared_gating & missing or subtype_gating & missing:
+                caps.append("usable_with_warnings")
+            if foundation & missing or financial_metrics_empty:
+                caps.append("weak")
         for cap in caps:
             level = self._cap_level(level, cap)
         return level
@@ -561,6 +694,21 @@ class DataReadinessPlanner:
                 notes.append("缺卫星寿命、折旧摊销或折旧年限政策时，不得忽略资产老化和利润可比性风险。")
             if "satellite.launch_plan" in missing_names:
                 notes.append("缺卫星发射计划时，不得断言新增容量确定释放。")
+        if strategy_type == "life_science_cxo_services":
+            notes.append("confidence is evidence confidence for the current fundamental_view, not positive strength.")
+            notes.append("CXO/CRO/CDMO are outsourcing services; do not mix them with self-owned drug pipelines or ordinary pharma manufacturing.")
+            if {"life_science_cxo.backlog", "life_science_cxo.new_signed_orders"} & missing_names:
+                notes.append("Missing real backlog/new orders: do not claim high order visibility; contract liabilities are partial_proxy only.")
+            if "life_science_cxo.customer_concentration" in missing_names:
+                notes.append("Missing customer concentration: do not claim customer demand stability.")
+            if {"life_science_cxo.overseas_revenue_share", "life_science_cxo.north_america_or_us_revenue_share"} & missing_names:
+                notes.append("Missing overseas/U.S. exposure: do not downplay overseas regulation, geopolitics, Biosecure Act, sanctions or FX risk.")
+            if "life_science_cxo.cdmo_capacity_utilization" in missing_names:
+                notes.append("Missing CDMO utilization: do not infer utilization from gross margin, capex or expansion projects.")
+            if "life_science_cxo.clinical_project_count" in missing_names:
+                notes.append("Missing clinical project count/progress: do not claim clinical CRO prosperity.")
+            if "life_science_cxo.one_off_large_order_risk" in missing_names:
+                notes.append("One-off large-order risk must be checked; historical year-on-year growth may be distorted.")
         if strategy_type == "unknown":
             notes.append("分类未知时，只能描述数据缺口，不能强行套用行业框架。")
         return notes
@@ -605,6 +753,14 @@ class DataReadinessPlanner:
                 return ["industry_cycle", "risk_flags"]
             if any(key in field_name for key in ("contract", "acceptance", "customer", "revenue_share")):
                 return ["business_quality", "risk_flags"]
+            return ["risk_flags"]
+        if field_name.startswith("life_science_cxo."):
+            if any(key in field_name for key in ("backlog", "new_signed_orders", "cxo_revenue_share")):
+                return ["business_quality", "catalysts", "risk_flags"]
+            if any(key in field_name for key in ("cdmo_capacity_utilization", "clinical_project_count")):
+                return ["industry_cycle", "risk_flags"]
+            if any(key in field_name for key in ("customer", "overseas", "geopolitical", "compliance", "one_off", "talent")):
+                return ["risk_flags", "business_quality"]
             return ["risk_flags"]
         return []
 
