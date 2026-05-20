@@ -1,298 +1,180 @@
-# 📊 个股深度分析系统
+# A 股 Fundamental Skill AI Analyst System
 
-> 基于akshare的A股个股深度研究报告生成工具
-> 
-> 自动获取数据 → 8步深度分析 → 生成专业HTML报告
+> 面向 A 股基本面研究的 deterministic pipeline + AI analyst layer。
+>
+> 本项目已经从早期的 AkShare 个股 HTML 报告生成器，重构为 `fundamental_skill` 基本面 AI 分析系统。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 
----
+## 项目定位
 
-## ✨ 功能特性
+`fundamental_skill` 是 A 股基本面分析 Skill。它负责把公开数据整理为可审计的基本面判断、证据包和 AI 分析提示词，用于研究公司基本面、行业框架、财务质量、估值上下文、风险、催化因素和后续跟踪指标。
 
-- ✅ **自动数据获取** - 基于akshare获取股票数据（K线、财务、新闻等）
-- ✅ **8步分析框架** - 宏观定位、产业链、质量评分、弹性测算、风险分析、估值、对标、跟踪
-- ✅ **专业HTML报告** - 双主题切换、响应式布局、ECharts图表
-- ✅ **真实K线数据** - 含MA5/20/60均线、成交量、技术指标
-- ✅ **产业链可视化** - SVG图表展示上中下游关系
-- ✅ **评分系统** - 5维度质量评分（基本面、产业匹配、弹性、估值、治理）
+它不是交易系统，不是技术面系统，不连接交易账户，也不输出交易建议。系统输出的 `confidence` 表示对当前 `fundamental_view` 的证据置信度，不代表正向强度、上涨概率或投资吸引力。
 
----
+## 当前核心能力
 
-## 📸 效果预览
+- `RealDataConnector v2.3a`：从公开数据源获取 A 股基础信息、财务指标、估值、主营构成、资产负债表字段、研发费用和 capex 等，并保留 source trace。
+- `ExternalCommodityPriceConnector v1.1`：为资源股补充配置化商品价格上下文，区分 domestic primary、fallback、stale、foreign reference 和 readiness eligibility。
+- `FundamentalSkillPipeline`：串联 data adapter、classifier、framework selector、readiness planner、analysis context、scoring engine 和 result assembler。
+- Evidence Pack：把 deterministic pipeline 输出和 raw blocks 压缩成 AI 可消费、可审计的证据包。
+- AI Prompt / AI Report：生成模型可用的基本面分析提示词；当前以 `prompt_only` 工作流为主。
+- Dashboard v2：本地 Streamlit viewer / auditor，用于查看 AI report、prompt、evidence pack、source trace、fundamental JSON 和 raw JSON。
+- Industry Framework Workflow：用标准流程扩展行业框架，避免把单只股票、主题热度或 proxy 当成基本面事实。
 
-![个股分析报告示例](docs/images/dark-mode.png)
+## strategy_type
 
-*示例：中国长城（000066）深度分析报告 - 包含K线图、产业链SVG、评分系统、弹性测算等完整分析*
+当前支持的 `strategy_type`：
 
----
+- `resource_swing`
+- `resource_core`
+- `right_trend_growth`
+- `semiconductor_cycle`
+- `stable_growth`
+- `advanced_manufacturing_growth`
+- `satellite_communication_infrastructure`
+- `low_altitude_economy_infrastructure`
+- `theme_only`
+- `unknown`
 
-## 🚀 快速开始
+## 当前数据覆盖
 
-### 方式一：作为 Claude Code Skill 调用（推荐）
+当前 raw / normalized / evidence 层覆盖或可暴露的主要字段包括：
 
-**直接对话触发：**
+- `basic_info`
+- `financial_indicator`
+- `valuation`
+- `business_composition`
+- `commodity_prices`
+- `inventory`
+- `accounts_receivable`
+- `contract_liabilities`
+- `r_and_d_expense`
+- `r_and_d_expense_ratio`
+- `capex`
 
-```
-用户：分析 600519 股票
-用户：分析贵州茅台
-用户：个股分析 000066
-```
+部分字段依赖公开数据源可用性。缺失字段会进入 missing fields、warnings、data limitations 或 source trace，而不是被系统硬猜。
 
-AI 会自动执行完整的三阶段流程：
-1. **Phase 1**：运行 `python stock_full_report.py 600519` 采集数据
-2. **Phase 2**：AI 深度分析，生成 MD 报告
-3. **Phase 3**：AI 手写 HTML，生成可视化报告
+## 使用方式
 
-**输出文件：**
-- `output/data_600519.json` - 原始数据
-- `output/个股研究-贵州茅台.md` - 分析报告
-- `output/个股研究-贵州茅台.html` - 可视化报告
-
----
-
-### 方式二：手动运行 Python 脚本
-
-如果只需要数据采集（Phase 1），可以手动运行：
+### 1. 创建环境
 
 ```bash
-# 1. 安装依赖
+conda create -n fundamental-skill python=3.10
+conda activate fundamental-skill
 pip install -r requirements.txt
-
-# 2. 运行数据采集
-python stock_full_report.py 000066
 ```
 
-**注意：** 手动运行只会生成 `data_000066.json`，不会自动进行 Phase 2/3 的分析和 HTML 生成。完整分析需要使用方式一（Skill 调用）。
-
----
-
-### 方式三：查看已生成的报告
-
-生成的报告位于 `output/` 目录：
-- `个股研究-中国长城.md` - Markdown分析报告
-- `个股研究-中国长城.html` - HTML可视化报告
-- `data_000066.json` - 原始数据
-
----
-
-## 📁 项目结构
-
-```
-stock-analysis/
-├── main.py                     # 主入口
-├── phase1_data_fetcher.py      # 数据获取
-├── phase2_analyzer.py          # 分析生成
-├── phase3_html_renderer.py     # HTML渲染
-├── requirements.txt            # 依赖包
-├── config.yaml                 # 配置文件
-├── docs/                       # 文档
-│   ├── 设计规范.md
-│   ├── 分析框架.md
-│   └── 使用指南.md
-├── output/                     # 输出目录
-└── README.md
-```
-
----
-
-## 📖 使用指南
-
-### 基础用法
-
-```python
-from main import StockAnalyzer
-
-# 创建分析器
-analyzer = StockAnalyzer()
-
-# 分析单只股票
-analyzer.analyze('600737')
-
-# 批量分析
-analyzer.batch_analyze(['600737', '000858', '600737'])
-```
-
-### 配置说明
-
-编辑 `config.yaml` 自定义配置：
-
-```yaml
-data:
-  cache_dir: "./cache"
-  cache_ttl: 3600
-
-output:
-  html_dir: "./output/html"
-  md_dir: "./output/md"
-
-akshare:
-  timeout: 30
-  retry: 3
-```
-
----
-
-## 🎨 HTML报告特性
-
-### 双主题切换
-- **深色模式**：适合长时间盯盘
-- **浅色模式**：适合打印或明亮环境
-
-### 核心组件
-1. **Hero行情卡片** - 最新价、涨跌幅、关键指标
-2. **结论置顶** - 综合判断、投资建议
-3. **公司画像** - 主营业务、标签、新闻
-4. **主营业务饼图** - ECharts环形图
-5. **关键财务指标** - 营收、净利、毛利率、资产负债率
-6. **K线图** - 双Grid布局、MA均线、成交量
-7. **产业链SVG** - 上中下游可视化
-8. **评分条** - 5维度质量评分
-9. **情景分析** - 悲观/基准/乐观三情景
-10. **风险信号** - 止损条件列表
-
-### 交互功能
-- 导航滚动高亮
-- 平滑滚动定位
-- 图表响应式调整
-- 主题切换时图表重绘
-
----
-
-## 📊 分析框架
-
-### Step 0: 任务锁定
-- 股票基本信息
-- 行业归属
-- 主营业务
-
-### Step 1: 宏观与周期定位
-- 经济阶段判断
-- 行业周期位置
-- 政策方向分析
-
-### Step 2: 产业链深度拆解
-- 上中下游关系
-- 价值链分析
-- 竞争格局
-
-### Step 3: 公司筛选与质量评分
-- 市值门槛
-- 行业地位
-- 业务聚焦度
-- 5维度评分（总分100）
-
-### Step 4: 业绩弹性测算
-- 悲观/基准/乐观三情景
-- 敏感度分析
-- 盈利预测
-
-### Step 5: 风险分析
-- 风险类型识别
-- 影响程度评估
-- 止损信号设定
-
-### Step 6: 估值与买卖时机
-- 短期/中期/长期目标价
-- 盈亏比计算
-- 触发条件
-
-### Step 7: 对标分析
-- 同行业公司对比
-- 增长引擎判断
-- 竞争优势分析
-
-### Step 8: 跟踪计划
-- 关键指标监控
-- 定期复盘计划
-- 综合结论
-
----
-
-## 🔧 技术栈
-
-- **数据获取**: akshare
-- **数据分析**: pandas, numpy
-- **图表渲染**: ECharts 5.5.1
-- **HTML生成**: Python Jinja2
-- **样式设计**: CSS3 (双主题)
-
----
-
-## 📝 数据来源
-
-- **股票数据**: akshare
-- **K线数据**: akshare.stock_zh_a_hist()
-- **财务数据**: akshare.stock_financial_abstract()
-- **新闻数据**: akshare.stock_news_em()
-- **行业信息**: 本地知识库 + MCP搜索（可选）
-
----
-
-## ⚠️ 免责声明
-
-本工具仅供学习研究使用，不构成任何投资建议。
-
-股市有风险，投资需谨慎。使用本工具产生的任何投资决策及其后果，均由使用者自行承担。
-
----
-
-## 🤝 贡献指南
-
-欢迎提交Issue和Pull Request！
-
-### 开发环境
+### 2. 运行测试
 
 ```bash
-# 克隆仓库
-git clone https://github.com/mingli30119/stock-analysis.git
-
-# 安装依赖
-pip install -r requirements.txt
-
-# 运行测试
-python -m pytest tests/
+python -m pytest tests
 ```
 
-### 提交规范
+### 3. 运行 regression suite
 
-- feat: 新功能
-- fix: 修复bug
-- docs: 文档更新
-- style: 代码格式
-- refactor: 重构
-- test: 测试
-- chore: 构建/工具
+```bash
+python scripts/run_regression_suite.py
+```
 
----
+### 4. 运行真实股票 pipeline
 
-## 📄 许可证
+```bash
+python -m src.fundamental_skill.real_stock_runner --code 601698 --output output/fundamental_601698.json --force-refresh
+```
+
+该命令会通过 `RealDataConnector` 生成 raw JSON，并通过 `FundamentalSkillPipeline` 输出结构化基本面结果。
+
+### 5. 生成 AI analyst prompt
+
+```bash
+python -m src.fundamental_skill.ai_analyst.runner --code 601698 --mode prompt_only
+```
+
+`prompt_only` 会读取 `output/fundamental_<code>.json` 和 `output/raw_<code>.json`，生成：
+
+- `output/evidence_pack_<code>.json`
+- `output/ai_prompt_<code>.md`
+
+### 6. 打开 Dashboard v2
+
+```bash
+streamlit run dashboard/fundamental_dashboard.py
+```
+
+Dashboard v2 是本地查看和审计工具，不调用模型 API，不连接账户，不生成交易动作。
+
+## 示例命令
+
+```bash
+python -m src.fundamental_skill.real_stock_runner --code 601698 --output output/fundamental_601698.json --force-refresh
+python -m src.fundamental_skill.ai_analyst.runner --code 601698 --mode prompt_only
+streamlit run dashboard/fundamental_dashboard.py
+```
+
+## 安全边界
+
+系统输出必须遵守以下边界：
+
+- 不输出买入、卖出、加仓、减仓、清仓、止损、止盈、目标价、满仓、梭哈等交易动作或承诺性表达。
+- 不做交易执行。
+- 不做技术面分析，不引入技术指标。
+- 不连接交易账户。
+- `confidence` 不是正向强度，而是对当前 `fundamental_view` 的证据置信度。
+- proxy 不能当事实，例如合同负债只能作为订单可见度 proxy，不能等同真实订单或 backlog。
+- capex 只能表示长期资产购建现金支出，不能直接证明产能释放或未来增长确定性。
+- 研发费用率只能表示研发强度，不能直接证明技术壁垒。
+
+## 开发流程
+
+新增或扩展行业框架时，遵循 `docs/INDUSTRY_FRAMEWORK_DEVELOPMENT_WORKFLOW.md`：
+
+```text
+Out-of-Sample Audit
+-> Design Audit
+-> Optional External Review
+-> Design Revision
+-> Implementation
+-> Acceptance
+-> Commit
+```
+
+核心原则：
+
+- 先观察 out-of-sample 框架缺口，再设计边界。
+- 按商业模式扩展，不按单只股票或热门主题扩展。
+- 实现前明确 required / preferred / optional data、confidence caps、risk guards、must-track indicators 和 regression samples。
+- proxy 必须标注为 proxy，不能被 AI report 当成事实。
+- 文档规划阶段不要求跑测试；代码或行为变更阶段需要跑 `pytest` 和 regression suite。
+
+## 当前限制
+
+- 新闻源仍可能失败，且新闻只能作为公开文本材料或低权重上下文。
+- 部分行业专属数据仍缺失，例如客户结构、项目验收、容量利用率、卫星剩余寿命、运营小时、飞行架次等。
+- AI report 当前以 `prompt_only` 为主；API 模式在 v1 中未实现。
+- 行业框架仍需逐步扩展，现有框架不应被当成所有 A 股公司的完整行业分类体系。
+- `output/`、`data/`、`cache/` 等运行产物和缓存不应提交。
+
+## 文档入口
+
+- `docs/FUNDAMENTAL_SKILL_SPEC.md`：`fundamental_skill` 输出契约、模块边界和 pipeline 说明。
+- `docs/FUNDAMENTAL_AI_ANALYST_LAYER_SPEC.md`：Evidence Pack、AI Prompt、AI Report 和 Dashboard v2 说明。
+- `docs/REAL_DATA_CONNECTOR_AUDIT.md`：真实公开数据连接器版本、字段映射、source trace 和限制。
+- `docs/INDUSTRY_FRAMEWORK_DEVELOPMENT_WORKFLOW.md`：新增行业框架的标准流程。
+- `docs/INDUSTRY_FRAMEWORK_TEMPLATE.md`：行业框架设计模板。
+- `docs/SATELLITE_COMMUNICATION_FRAMEWORK_DESIGN_AUDIT.md`：卫星通信基础设施框架设计审计。
+- `docs/LOW_ALTITUDE_ECONOMY_INFRASTRUCTURE_DESIGN_AUDIT.md`：低空经济基础设施框架设计审计。
+
+## 项目来源
+
+本仓库来源于原始 `stock-analysis` 项目，早期目标是基于 AkShare 生成个股 HTML 深度报告。当前项目已经重构为 A 股 `fundamental_skill` AI analyst system，旧的 HTML 报告生成器、K 线展示和交易式表达不再是项目首页所描述的主线能力。
+
+## 许可证
 
 [MIT License](LICENSE)
 
----
+## 致谢
 
-## 👨‍💻 作者
-
-[@mingli30119](https://github.com/mingli30119) - 明立玩AI
-
----
-
-## 🙏 致谢
-
-- [akshare](https://github.com/akfamily/akshare) - 数据源
-- [ECharts](https://echarts.apache.org/) - 图表库
-- [Claude](https://claude.ai/) - AI辅助开发
-
----
-
-## 📮 联系方式
-
-- GitHub: [@mingli30119](https://github.com/mingli30119)
-- Email: shemingli@126.com
-- 公众号 · 抖音 · 小红书：明立玩AI
-
----
-
-**⭐ 如果这个项目对你有帮助，请给个Star！**
+- [AkShare](https://github.com/akfamily/akshare)：公开数据聚合来源。
+- 原始 `stock-analysis` 项目：提供了早期项目基础。
