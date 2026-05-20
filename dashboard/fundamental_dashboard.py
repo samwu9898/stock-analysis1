@@ -140,7 +140,7 @@ def render_executive_summary(ai_report: dict, fundamental: dict | None, evidence
     cols[4].markdown(badge((fundamental or {}).get("confidence"), str((fundamental or {}).get("confidence"))), unsafe_allow_html=True)
     cols[4].caption("confidence")
     cols[5].metric("score", (fundamental or {}).get("fundamental_score") if (fundamental or {}).get("fundamental_score") is not None else "-")
-    st.write(ai_report.get("executive_summary") or "-")
+    st.write(helpers.clean_ai_report_text(ai_report, "executive_summary", "-") or "-")
 
 
 def render_fundamental_view(ai_report: dict, fundamental: dict | None) -> None:
@@ -153,7 +153,7 @@ def render_fundamental_view(ai_report: dict, fundamental: dict | None) -> None:
     col3.markdown(badge((fundamental or {}).get("confidence"), str((fundamental or {}).get("confidence"))), unsafe_allow_html=True)
     col3.caption("deterministic confidence")
     col4.metric("fundamental_score", (fundamental or {}).get("fundamental_score") if (fundamental or {}).get("fundamental_score") is not None else "-")
-    st.write(ai_report.get("final_summary") or "-")
+    st.write(helpers.clean_ai_report_text(ai_report, "final_summary", "-") or "-")
 
 
 def render_evidence_classification(ai_report: dict) -> None:
@@ -181,7 +181,7 @@ def render_analysis_report(ai_report: dict) -> None:
     ]
     for title, key in sections:
         st.markdown(f"**{title}**")
-        st.write(ai_report.get(key) or "-")
+        st.write(helpers.clean_ai_report_text(ai_report, key, "-") or "-")
 
     st.markdown("**Risk Analysis**")
     show_table(helpers.as_list(ai_report.get("risk_analysis")), "No risk analysis.")
@@ -193,14 +193,19 @@ def render_analysis_report(ai_report: dict) -> None:
 
 def render_safety_status(status: dict[str, Any]) -> None:
     st.subheader("Safety / Schema Status")
-    cols = st.columns(3)
+    cols = st.columns(4)
     cols[0].metric("schema_valid", status.get("schema_valid"))
     cols[1].metric("safety_safe", status.get("safety_safe"))
     cols[2].metric("restricted_terms_count", status.get("restricted_terms_count"))
+    cols[3].metric("report_quality_status", status.get("report_quality_status"))
     if not status.get("schema_valid"):
         st.error(f"Schema errors: {status.get('schema_errors')}")
     if not status.get("safety_safe"):
         st.error(f"Restricted terms detected: {status.get('blocked_terms')}")
+    if status.get("garbled_text_detected"):
+        st.warning("部分 AI 自由文本字段损坏，当前报告使用结构化 evidence fallback 生成。建议重新生成 ai_report JSON。")
+        with st.expander("Garbled Text Findings", expanded=False):
+            st.json(status.get("garbled_text_findings") or [], expanded=False)
 
 
 def render_evidence_pack_viewer(evidence_pack: dict | None) -> None:
@@ -264,13 +269,16 @@ def render_detail(stock_code: str | None) -> None:
     st.subheader("Must Track Indicators")
     show_table(helpers.ai_must_track_rows(ai_report, evidence_pack), "No must-track indicators.")
 
-    if status.get("can_display_body"):
+    if status.get("garbled_text_detected") and bundle.get("ai_report_markdown"):
+        st.subheader("AI Report Markdown Fallback")
+        st.markdown(bundle["ai_report_markdown"])
+    elif status.get("can_display_body"):
         render_analysis_report(ai_report)
         if bundle.get("ai_report_markdown"):
             with st.expander("AI Report Markdown", expanded=False):
                 st.markdown(bundle["ai_report_markdown"])
     else:
-        st.warning("AI report body is hidden because schema or safety checks failed.")
+        st.warning("AI report body is hidden because schema, safety, or quality checks failed.")
 
     render_evidence_pack_viewer(evidence_pack)
     render_raw_data_viewer(fundamental, raw)
