@@ -1,0 +1,10 @@
+{
+  "stock_code": "999997",
+  "expected_strategy_type": "theme_only",
+  "allowed_status": ["neutral", "negative", "insufficient_data"],
+  "max_confidence": "medium",
+  "max_score": 70,
+  "min_required_risk_flags": [],
+  "must_track_keywords": ["主营", "经营现金流", "毛利率"],
+  "forbidden_phrases": ["买入", "卖出", "目标价", "卫星资源利用充分"]
+}

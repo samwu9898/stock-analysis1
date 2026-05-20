@@ -108,6 +108,18 @@ class DataReadinessPlanner:
         if business_critical_missing:
             score -= 10
             penalty_reasons.append("critical 主营构成缺失，额外降低数据准备度。")
+        if classification.strategy_type == "satellite_communication_infrastructure":
+            foundation_available = (
+                bool(normalized.financial_metrics)
+                and normalized.business_composition is not None
+                and bool(normalized.business_composition.segments)
+                and bool(normalized.basic_info.industry or normalized.basic_info.main_business)
+            )
+            if foundation_available and score < 60:
+                score = 60
+                penalty_reasons.append(
+                    "卫星通信基础设施 v1：basic_info、financials、business_composition 可用时不因行业专属运营指标缺失直接降为 insufficient。"
+                )
         score = max(0, min(100, score))
 
         level = self._level_from_score(
@@ -360,6 +372,8 @@ class DataReadinessPlanner:
             return f"补充基础信息：{requirement.display_name}"
         if requirement.category == "news":
             return "补充最新公告或新闻数据"
+        if requirement.category == "industry":
+            return f"补充卫星通信行业专属字段：{requirement.display_name}"
         return f"补充字段：{requirement.display_name}"
 
     def _level_from_score(
@@ -436,6 +450,24 @@ class DataReadinessPlanner:
                 caps.append("usable_with_warnings")
             if core_pair <= missing:
                 caps.append("weak")
+        if strategy_type == "satellite_communication_infrastructure":
+            foundation = {
+                "basic_info.industry",
+                "basic_info.main_business",
+                "business_composition.segments",
+            }
+            confidence_gating = {
+                "satellite.capacity_utilization_or_lease_rate",
+                "satellite.customer_structure_or_concentration",
+                "satellite.design_or_remaining_life",
+                "financial_metrics.depreciation_amortization",
+            }
+            if confidence_gating & missing:
+                caps.append("usable_with_warnings")
+            if confidence_gating <= missing and not (foundation & missing) and not financial_metrics_empty:
+                caps.append("usable_with_warnings")
+            if foundation & missing or financial_metrics_empty:
+                caps.append("weak")
         for cap in caps:
             level = self._cap_level(level, cap)
         return level
@@ -478,6 +510,16 @@ class DataReadinessPlanner:
             notes.append("缺少主营构成时，不能断言公司主要受益于某一业务或商品。")
         if any("gross_margin" in name for name in missing_names):
             notes.append("缺少毛利率时，不能高置信度判断盈利质量改善。")
+        if strategy_type == "satellite_communication_infrastructure":
+            notes.append("confidence 表示当前 fundamental_view 的证据置信度，不等于正向强度。")
+            if "satellite.capacity_utilization_or_lease_rate" in missing_names:
+                notes.append("缺容量利用率 / 出租率时，不得断言卫星资源利用充分。")
+            if "satellite.customer_structure_or_concentration" in missing_names:
+                notes.append("缺客户结构时，不得断言需求稳定或定价能力强。")
+            if "satellite.design_or_remaining_life" in missing_names or "financial_metrics.depreciation_amortization" in missing_names:
+                notes.append("缺卫星寿命、折旧摊销或折旧年限政策时，不得忽略资产老化和利润可比性风险。")
+            if "satellite.launch_plan" in missing_names:
+                notes.append("缺卫星发射计划时，不得断言新增容量确定释放。")
         if strategy_type == "unknown":
             notes.append("分类未知时，只能描述数据缺口，不能强行套用行业框架。")
         return notes

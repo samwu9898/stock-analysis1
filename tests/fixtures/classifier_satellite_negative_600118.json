@@ -1,0 +1,15 @@
+{
+  "meta": {"code": "600118", "stock_name": "中国卫星", "market": "sh", "generated_at": "2026-05-20T10:00:00"},
+  "blocks": {
+    "basic_info": [
+      {
+        "stock_code": "600118",
+        "stock_name": "中国卫星",
+        "industry": "航天装备",
+        "main_business": "卫星制造、整星研制、遥感数据服务和测控地面系统集成"
+      }
+    ],
+    "financial_indicator": [{"period": "2025-12-31", "revenue": 1000000000, "gross_margin": 20.0}],
+    "business_composition": [{"period": "2025-12-31", "segment_name": "卫星制造与遥感服务", "revenue_ratio": 80.0}]
+  }
+}

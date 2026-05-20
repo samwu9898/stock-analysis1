@@ -1,0 +1,21 @@
+{
+  "meta": {"code": "999997", "stock_name": "商业航天题材样本", "market": "mock", "generated_at": "2026-05-20T10:00:00"},
+  "blocks": {
+    "basic_info": [
+      {
+        "stock_code": "999997",
+        "stock_name": "商业航天题材样本",
+        "industry": "传统传媒",
+        "main_business": "普通传媒运营和广告服务"
+      }
+    ],
+    "financial_indicator": [{"period": "2025-12-31", "revenue": 1000000000, "gross_margin": 18.0}],
+    "business_composition": [{"period": "2025-12-31", "segment_name": "传媒广告服务", "revenue_ratio": 100.0}],
+    "news": [
+      {
+        "title": "公司新闻提到商业航天和卫星互联网热点",
+        "summary": "仅新闻提及商业航天，主营业务和收入构成不支持卫星通信基础设施"
+      }
+    ]
+  }
+}

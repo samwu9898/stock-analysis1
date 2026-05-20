@@ -100,7 +100,9 @@ Each enhanced indicator contains:
 - `follow_up_question`
 - `priority`
 
-Strategy-specific indicator templates are used for resource stocks, advanced manufacturing growth, semiconductor cycle, and right-trend growth stocks. Missing data is explicitly marked with `current_status = "missing"` rather than filled with invented values.
+Strategy-specific indicator templates are used for resource stocks, advanced manufacturing growth, semiconductor cycle, right-trend growth stocks, and satellite communication infrastructure. Missing data is explicitly marked with `current_status = "missing"` rather than filled with invented values.
+
+For `satellite_communication_infrastructure`, v1 must-track indicators include satellite resources, transponder / bandwidth capacity, utilization / lease rate, unit bandwidth price, satellite remaining life, contract duration, customer concentration, contract liabilities, accounts receivable, capex, depreciation / amortization, operating cash flow, gross margin, commercial-aerospace new-business revenue, major satellite launch / failure / insurance events, EV/EBITDA, EBITDA margin, free cash flow, and debt / EBITDA. EV/EBITDA, EBITDA margin, and debt / EBITDA are data limitations only in v1 and must not enter scoring.
 
 AI-facing prompts require these indicators to be rendered as a Markdown table with current status, value, priority, reason, and follow-up question.
 

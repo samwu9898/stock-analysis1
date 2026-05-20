@@ -266,6 +266,21 @@ class FundamentalScoringEngine:
             )
         ):
             score += 8
+        if classification.strategy_type == "satellite_communication_infrastructure" and any(
+            k in text
+            for k in (
+                "电信、广播电视和卫星传输服务",
+                "卫星空间段运营",
+                "卫星传输服务",
+                "卫星通信服务",
+                "广播电视和卫星传输服务",
+                "转发器",
+                "带宽资源",
+                "轨位资源",
+                "频段资源",
+            )
+        ):
+            score += 8
         if classification.strategy_type == "theme_only":
             score -= 10
         if classification.strategy_type == "unknown":
@@ -326,6 +341,20 @@ class FundamentalScoringEngine:
                 score += 6; pos.append(self._ev("financial_metrics.net_profit_yoy", metric.net_profit_yoy, "利润增长支持高端制造成长观察。", metric.period))
             if metric and metric.gross_margin and metric.gross_margin > 25:
                 score += 5; pos.append(self._ev("financial_metrics.gross_margin", metric.gross_margin, "毛利率可用于观察产品结构和盈利能力。", metric.period))
+        if classification.strategy_type == "satellite_communication_infrastructure":
+            satellite_missing = {
+                "satellite.capacity_utilization_or_lease_rate",
+                "satellite.customer_structure_or_concentration",
+                "satellite.design_or_remaining_life",
+                "financial_metrics.depreciation_amortization",
+            } & missing
+            if satellite_missing:
+                score -= 10
+                penalties.append("satellite confidence-gating indicators missing")
+            if metric and metric.operating_cashflow and metric.operating_cashflow > 0:
+                score += 5; pos.append(self._ev("financial_metrics.operating_cashflow", metric.operating_cashflow, "经营现金流可用于观察长周期运营现金转换。", metric.period))
+            if metric and metric.gross_margin and metric.gross_margin > 20:
+                score += 4; pos.append(self._ev("financial_metrics.gross_margin", metric.gross_margin, "毛利率可用于观察基础服务盈利能力，但不能替代容量利用率。", metric.period))
         return _clamp(score, 20, 95), "行业周期按分类置信度、准备度和策略关键变量评分。", pos, neg, penalties
 
     def _score_valuation_reasonableness(self, normalized, classification, readiness, context):
@@ -356,6 +385,9 @@ class FundamentalScoringEngine:
             score -= 2; penalties.append("market_cap missing")
         if val.dividend_yield is not None and val.dividend_yield > 2 and classification.strategy_type in {"resource_core", "stable_growth"}:
             score += 5; pos.append(self._ev("valuation_metrics.dividend_yield", val.dividend_yield, "股息率对该策略类型有帮助。"))
+        if classification.strategy_type == "satellite_communication_infrastructure":
+            score = min(score, 60)
+            penalties.append("PE/PB/PS for satellite communication infrastructure are secondary valuation evidence only")
         return _clamp(score, 20, 95), "估值评分按策略类型保守解释 PE、PB、市值和股息率。", pos, neg, penalties
 
     def _score_catalyst_strength(self, normalized, classification, readiness, context):
@@ -374,6 +406,11 @@ class FundamentalScoringEngine:
             k in text for k in ("机器人", "汽车热管理", "订单", "客户", "工业自动化", "执行器")
         ):
             score += 5
+        if classification.strategy_type == "satellite_communication_infrastructure" and any(
+            k in text for k in ("商业航天", "卫星发射", "卫星通信", "卫星传输", "转发器", "带宽")
+        ):
+            score += 3
+            penalties.append("satellite catalysts require operating-data validation and are capped conservatively")
         if normalized.latest_news and not normalized.financial_metrics:
             score = min(score, 65); penalties.append("news catalyst without financial validation capped at 65")
         return _clamp(score, 20, 95), "催化强度仅按新闻存在和业务关键词做保守规则评分。", pos, neg, penalties
@@ -411,6 +448,13 @@ class FundamentalScoringEngine:
                 score += 3
             if classification.strategy_type == "advanced_manufacturing_growth" and metric.accounts_receivable is None:
                 score -= 5; penalties.append("accounts_receivable missing")
+            if classification.strategy_type == "satellite_communication_infrastructure":
+                if metric.accounts_receivable is None:
+                    score -= 5; penalties.append("accounts_receivable missing")
+                if metric.contract_liabilities is not None:
+                    pos.append(self._ev("financial_metrics.contract_liabilities", metric.contract_liabilities, "合同负债只能作为订单可见度 proxy，不等同真实 backlog。", metric.period))
+                if metric.capex is not None:
+                    pos.append(self._ev("financial_metrics.capex", metric.capex, "capex 只表示长期资产购建现金支出，不等同新增容量确定释放。", metric.period))
         return _clamp(score, 20, 90), "风险可控度从70分开始，根据上下文风险、准备度和财务稳健性调整。", pos, neg, penalties
 
     def apply_context_constraints(self, dimension: str, raw_score: int, context: AnalysisContext) -> tuple[int, int | None, list[str]]:
@@ -533,6 +577,16 @@ class FundamentalScoringEngine:
                 "精密制造",
                 "汽车零部件",
                 "高端制造",
+            ),
+            "satellite_communication_infrastructure": (
+                "卫星空间段",
+                "卫星通信",
+                "卫星传输",
+                "广播电视和卫星传输服务",
+                "转发器",
+                "带宽资源",
+                "轨位资源",
+                "频段资源",
             ),
         }
         return any(k in text for k in keywords.get(strategy_type, ()))

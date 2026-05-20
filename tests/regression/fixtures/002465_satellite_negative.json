@@ -1,0 +1,8 @@
+{
+  "meta": {"code": "002465", "stock_name": "海格通信", "market": "sz", "generated_at": "2026-05-20T10:00:00"},
+  "blocks": {
+    "basic_info": [{"stock_code": "002465", "stock_name": "海格通信", "industry": "通信设备制造", "main_business": "军用通信终端、北斗芯片和通信设备制造"}],
+    "financial_indicator": [{"period": "2025-12-31", "revenue": 1000000000, "gross_margin": 28.0}],
+    "business_composition": [{"period": "2025-12-31", "segment_name": "军用通信终端", "revenue_ratio": 70.0}]
+  }
+}

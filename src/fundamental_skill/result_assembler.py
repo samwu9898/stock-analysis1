@@ -176,6 +176,8 @@ class FundamentalResultAssembler:
             or ("financial_quality" in blocked and "business_summary" in restricted_or_blocked)
         ) and not calibrated_real_data_gap and not self._semiconductor_data_gap_neutral_exception(
             normalized, classification, readiness
+        ) and not self._satellite_data_gap_neutral_exception(
+            normalized, classification, readiness
         ):
             return "negative"
 
@@ -301,6 +303,33 @@ class FundamentalResultAssembler:
         )
         return actual_missing <= allowed_missing
 
+    def _satellite_data_gap_neutral_exception(
+        self,
+        normalized: NormalizedFundamentalInput,
+        classification: StockClassificationResult,
+        readiness: DataReadinessPlan,
+    ) -> bool:
+        if classification.strategy_type != "satellite_communication_infrastructure":
+            return False
+        if not normalized.financial_metrics:
+            return False
+        if not normalized.business_composition or not normalized.business_composition.segments:
+            return False
+        if not (normalized.basic_info.industry or normalized.basic_info.main_business):
+            return False
+        core_available = {
+            "basic_info.industry",
+            "basic_info.main_business",
+            "business_composition.segments",
+            "financial_metrics.gross_margin",
+            "financial_metrics.operating_cashflow",
+            "financial_metrics.accounts_receivable",
+            "financial_metrics.contract_liabilities",
+            "financial_metrics.capex",
+        }
+        actual_missing = set(readiness.critical_missing_fields + readiness.high_priority_missing_fields)
+        return not (core_available & actual_missing)
+
     def _decide_confidence(
         self,
         classification: StockClassificationResult,
@@ -423,6 +452,9 @@ class FundamentalResultAssembler:
                 drivers.append("机器人相关业务是重要跟踪变量，但仍需订单和收入验证。")
             else:
                 drivers.append("汽车热管理、机器人执行器和工业自动化业务是高端制造成长框架的核心跟踪项。")
+        if classification.strategy_type == "satellite_communication_infrastructure":
+            drivers.append("卫星资源、轨位/频段、转发器/带宽容量、容量利用率和客户合同结构是卫星通信基础设施框架的核心变量。")
+            drivers.append("合同负债只能作为订单可见度 proxy，capex 只能作为长期资产购建现金支出观察。")
 
         drivers.extend([f"框架关注：{item}" for item in framework.required_focus[:3]])
         return list(dict.fromkeys(drivers))[:6]
@@ -479,6 +511,11 @@ class FundamentalResultAssembler:
             else:
                 level = "reasonable"
             method = "按策略类型保守解释 PE/PB/市值；成长和半导体框架需考虑估值波动。"
+        if classification.strategy_type == "satellite_communication_infrastructure":
+            method = (
+                "PE/PB/PS 对卫星通信基础设施只能作为 secondary valuation evidence；"
+                "估值需要结合资产寿命、折旧、现金流稳定性、容量利用率、客户结构和更新 capex。"
+            )
         return ValuationView(
             valuation_level=level,
             valuation_method=method,
@@ -507,6 +544,9 @@ class FundamentalResultAssembler:
         elif classification.strategy_type == "unknown":
             position = "unknown"
             trend = "分类和数据不足。"
+        elif classification.strategy_type == "satellite_communication_infrastructure":
+            position = "unknown" if readiness.readiness_level in {"weak", "insufficient"} else "neutral"
+            trend = "行业专属运营数据缺失时，不足以判断商业航天业务兑现、容量利用率或客户需求稳定性。"
         elif readiness.readiness_level in {"weak", "insufficient"}:
             position = "unknown"
             trend = "关键数据缺失，周期判断需要降低置信度。"
@@ -623,6 +663,20 @@ class FundamentalResultAssembler:
                 "机器人相关业务收入或订单",
                 "汽车热管理业务收入或订单",
             ])
+        elif classification.strategy_type == "satellite_communication_infrastructure":
+            names.extend([
+                "卫星资源和轨位 / 频段资源",
+                "转发器 / 带宽容量",
+                "容量利用率 / 出租率",
+                "单位带宽价格",
+                "客户结构和合同期限",
+                "卫星剩余寿命",
+                "折旧摊销",
+                "卫星发射计划",
+                "卫星故障 / 保险事件",
+                "合同负债",
+                "capex",
+            ])
         missing = set(readiness.critical_missing_fields + readiness.high_priority_missing_fields)
         if any(field.startswith("valuation_metrics") for field in missing):
             names.extend(["PE", "PB", "市值", "估值分位"])
@@ -685,6 +739,13 @@ class FundamentalResultAssembler:
                 ("机器人或新业务收入和订单无法验证", "机器人相关业务收入或订单数据"),
                 ("大客户需求低于预期", "客户订单或收入占比数据"),
                 ("估值无法被业绩增长消化", "估值与业绩增速对比"),
+            ],
+            "satellite_communication_infrastructure": [
+                ("容量利用率或出租率恶化", "容量利用率 / 出租率数据"),
+                ("客户结构或合同期限恶化", "客户集中度、客户类型和合同期限结构"),
+                ("卫星寿命、折旧或发射计划出现重大不确定性", "卫星剩余寿命、折旧摊销、发射计划和资产减值披露"),
+                ("经营现金流与利润背离", "经营现金流、利润和应收账款数据"),
+                ("商业航天新业务无法兑现", "商业航天新业务收入、订单和现金流证据"),
             ],
         }
         pairs = mapping.get(classification.strategy_type, [("关键数据仍无法补全", "基础信息、财务指标和主营构成")])
@@ -821,6 +882,8 @@ class FundamentalResultAssembler:
             reasons.append("存货数据缺失，半导体周期判断需要降置信度")
         if self._stable_growth_core_missing(classification, readiness, context):
             reasons.append("现金流或 ROE 数据缺失，稳健性判断需要降置信度")
+        if self._satellite_core_gating_missing(classification, readiness, context):
+            reasons.append("缺容量利用率、客户结构、卫星寿命或折旧摊销，卫星通信基础设施判断不得高置信度")
         if self._advanced_manufacturing_medium_risk_count(classification, context) >= 2:
             reasons.append("高端制造新业务、大客户或估值验证风险较多")
         if self._structural_medium_risk_count(classification, context) >= 2:
@@ -876,6 +939,22 @@ class FundamentalResultAssembler:
             or any(risk.risk_name in {"经营现金流数据缺失", "ROE 数据缺失"} for risk in context.required_risks)
         )
 
+    def _satellite_core_gating_missing(self, classification, readiness, context) -> bool:
+        if classification.strategy_type != "satellite_communication_infrastructure":
+            return False
+        missing = {
+            item.field_name
+            for item in readiness.field_readiness
+            if item.status in {"missing", "partial"}
+        }
+        core_gating = {
+            "satellite.capacity_utilization_or_lease_rate",
+            "satellite.customer_structure_or_concentration",
+            "satellite.design_or_remaining_life",
+            "financial_metrics.depreciation_amortization",
+        }
+        return bool(core_gating & missing)
+
     def _has_high_severity_data_missing(self, readiness, context) -> bool:
         return bool(readiness.critical_missing_fields) or any(
             risk.severity == "high" and "数据缺失" in risk.risk_name for risk in context.required_risks
@@ -913,6 +992,8 @@ def framework_vars(strategy_type: str) -> list[str]:
         return ["订单", "现金流", "ROE"]
     if strategy_type == "advanced_manufacturing_growth":
         return ["订单", "客户验证", "毛利率", "应收账款"]
+    if strategy_type == "satellite_communication_infrastructure":
+        return ["卫星资源", "转发器 / 带宽容量", "容量利用率 / 出租率", "客户结构", "资产寿命 / 折旧"]
     return []
 
 

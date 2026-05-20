@@ -506,6 +506,265 @@ advanced_manufacturing_growth:
     affects_analysis:
     - catalysts
     - risk_flags
+satellite_communication_infrastructure:
+  required_fields:
+  - field_name: basic_info.industry
+    display_name: 行业
+    category: basic_info
+    importance: critical
+    reason: 判断是否属于电信、广播电视和卫星传输服务等卫星通信基础设施相关行业
+    expected_location:
+    - basic_info.industry
+    affects_analysis:
+    - business_summary
+    - industry_cycle
+  - field_name: basic_info.main_business
+    display_name: 主营业务
+    category: basic_info
+    importance: critical
+    reason: 判断主营是否为卫星空间段运营、卫星传输服务或卫星通信服务
+    expected_location:
+    - basic_info.main_business
+    affects_analysis:
+    - business_summary
+  - field_name: business_composition.segments
+    display_name: 主营业务构成
+    category: business_composition
+    importance: critical
+    reason: 判断收入结构是否支持卫星传输服务或卫星通信服务框架；该字段不能单独证明容量利用率或客户需求稳定
+    expected_location:
+    - business_composition.segments
+    affects_analysis:
+    - business_summary
+    - key_drivers
+    - industry_cycle
+  - field_name: financial_metrics.revenue
+    display_name: 收入
+    category: financial
+    importance: high
+    reason: 判断基础经营规模
+    expected_location:
+    - financial_metrics.revenue
+    affects_analysis:
+    - financial_quality
+  - field_name: financial_metrics.net_profit
+    display_name: 利润
+    category: financial
+    importance: high
+    reason: 判断基础盈利结果
+    expected_location:
+    - financial_metrics.net_profit
+    affects_analysis:
+    - financial_quality
+  - field_name: financial_metrics.gross_margin
+    display_name: 毛利率
+    category: financial
+    importance: high
+    reason: 判断服务盈利能力和容量经济性，但缺容量利用率时不能单独推断资源利用充分
+    expected_location:
+    - financial_metrics.gross_margin
+    affects_analysis:
+    - financial_quality
+    - industry_cycle
+  - field_name: financial_metrics.operating_cashflow
+    display_name: 经营现金流
+    category: financial
+    importance: high
+    reason: 判断长周期合同和经营利润是否转化为现金
+    expected_location:
+    - financial_metrics.operating_cashflow
+    affects_analysis:
+    - financial_quality
+    - risk_flags
+  - field_name: financial_metrics.accounts_receivable
+    display_name: 应收账款
+    category: financial
+    importance: high
+    reason: 判断客户回款质量和收入质量
+    expected_location:
+    - financial_metrics.accounts_receivable
+    affects_analysis:
+    - financial_quality
+    - risk_flags
+  - field_name: financial_metrics.contract_liabilities
+    display_name: 合同负债
+    category: financial
+    importance: high
+    reason: 只能作为订单可见度 proxy，不等同真实 backlog 或确定订单
+    expected_location:
+    - financial_metrics.contract_liabilities
+    affects_analysis:
+    - business_quality
+    - risk_flags
+  - field_name: financial_metrics.capex
+    display_name: capex
+    category: financial
+    importance: high
+    reason: 只能表示长期资产购建现金支出，不等同新增容量确定释放
+    expected_location:
+    - financial_metrics.capex
+    affects_analysis:
+    - financial_quality
+    - risk_flags
+  - field_name: valuation_metrics.pe_ttm
+    display_name: PE TTM
+    category: valuation
+    importance: medium
+    reason: PE/PB/PS 只能作为 secondary valuation evidence，不足以独立判断估值合理性
+    expected_location:
+    - valuation_metrics.pe_ttm
+    affects_analysis:
+    - valuation_view
+  - field_name: valuation_metrics.pb
+    display_name: PB
+    category: valuation
+    importance: medium
+    reason: PE/PB/PS 只能作为 secondary valuation evidence，不足以独立判断估值合理性
+    expected_location:
+    - valuation_metrics.pb
+    affects_analysis:
+    - valuation_view
+  - field_name: valuation_metrics.ps
+    display_name: PS
+    category: valuation
+    importance: medium
+    reason: PE/PB/PS 只能作为 secondary valuation evidence，不足以独立判断估值合理性
+    expected_location:
+    - valuation_metrics.ps
+    affects_analysis:
+    - valuation_view
+  - field_name: satellite.capacity_utilization_or_lease_rate
+    display_name: 容量利用率 / 出租率
+    category: industry
+    importance: high
+    reason: confidence-gating indicator；缺失时不得断言卫星资源利用充分
+    expected_location:
+    - annual_report
+    - announcements
+    affects_analysis:
+    - industry_cycle
+    - risk_flags
+  - field_name: satellite.transponder_or_bandwidth_capacity
+    display_name: 转发器 / 带宽容量
+    category: industry
+    importance: high
+    reason: confidence-gating indicator；衡量可变现通信容量
+    expected_location:
+    - annual_report
+    - announcements
+    affects_analysis:
+    - industry_cycle
+  - field_name: satellite.unit_bandwidth_price
+    display_name: 单位带宽价格
+    category: industry
+    importance: high
+    reason: confidence-gating indicator；衡量定价和竞争压力
+    expected_location:
+    - annual_report
+    - customer_contracts
+    affects_analysis:
+    - valuation_view
+    - industry_cycle
+  - field_name: satellite.customer_structure_or_concentration
+    display_name: 客户结构 / 客户集中度
+    category: industry
+    importance: high
+    reason: confidence-gating indicator；缺失时不得断言需求稳定或定价能力强
+    expected_location:
+    - annual_report
+    - customer_disclosure
+    affects_analysis:
+    - risk_flags
+  - field_name: satellite.design_or_remaining_life
+    display_name: 卫星设计寿命 / 剩余寿命
+    category: industry
+    importance: high
+    reason: confidence-gating indicator；影响资产老化、替换 capex 和服务连续性
+    expected_location:
+    - annual_report
+    - announcements
+    affects_analysis:
+    - financial_quality
+    - risk_flags
+  - field_name: financial_metrics.depreciation_amortization
+    display_name: 折旧摊销
+    category: financial
+    importance: high
+    reason: confidence-gating indicator；缺失时不得忽略资产老化和利润可比性风险
+    expected_location:
+    - financial_statement_notes
+    affects_analysis:
+    - financial_quality
+    - risk_flags
+  - field_name: satellite.launch_plan
+    display_name: 卫星发射计划
+    category: industry
+    importance: high
+    reason: confidence-gating indicator；缺失时不得断言新增容量确定释放
+    expected_location:
+    - announcements
+    - annual_report
+    affects_analysis:
+    - catalysts
+    - risk_flags
+  - field_name: satellite.failure_or_insurance_event
+    display_name: 卫星故障 / 保险事件
+    category: industry
+    importance: high
+    reason: confidence-gating indicator；若存在异常、索赔或减值必须显式标注
+    expected_location:
+    - announcements
+    - annual_report
+    affects_analysis:
+    - risk_flags
+  - field_name: satellite.in_orbit_satellite_count
+    display_name: 在轨卫星数量
+    category: industry
+    importance: medium
+    reason: preferred indicator；判断运营资产基础
+    expected_location:
+    - annual_report
+    - announcements
+    affects_analysis:
+    - industry_cycle
+  - field_name: satellite.orbital_slot_frequency_resources
+    display_name: 轨位 / 频段资源说明
+    category: industry
+    importance: medium
+    reason: preferred indicator；判断资源壁垒
+    expected_location:
+    - annual_report
+    - licenses
+    affects_analysis:
+    - business_quality
+  - field_name: satellite.contract_duration_structure
+    display_name: 合同期限结构
+    category: industry
+    importance: medium
+    reason: preferred indicator；判断收入可见度和续约风险
+    expected_location:
+    - annual_report
+    - major_contracts
+    affects_analysis:
+    - business_quality
+  - field_name: satellite.overseas_revenue_share
+    display_name: 海外业务占比
+    category: industry
+    importance: low
+    reason: optional/preferred context；判断区域需求和汇率风险
+    expected_location:
+    - business_composition
+    affects_analysis:
+    - risk_flags
+  - field_name: satellite.policy_vs_commercial_customer_mix
+    display_name: 政策性客户 vs 商业客户结构
+    category: industry
+    importance: medium
+    reason: preferred indicator；判断客户行为、定价能力和回款质量
+    expected_location:
+    - annual_report
+    affects_analysis:
+    - risk_flags
 unknown:
   required_fields:
   - field_name: basic_info.industry

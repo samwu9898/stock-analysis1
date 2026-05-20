@@ -1,0 +1,10 @@
+{
+  "stock_code": "600118",
+  "expected_strategy_type": "unknown",
+  "allowed_status": ["insufficient_data", "neutral", "negative"],
+  "max_confidence": "low",
+  "max_score": 60,
+  "min_required_risk_flags": [],
+  "must_track_keywords": ["行业", "主营"],
+  "forbidden_phrases": ["买入", "卖出", "目标价", "卫星资源利用充分"]
+}

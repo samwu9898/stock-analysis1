@@ -15,6 +15,7 @@ StrategyType = Literal[
     "semiconductor_cycle",
     "stable_growth",
     "advanced_manufacturing_growth",
+    "satellite_communication_infrastructure",
     "theme_only",
     "unknown",
 ]

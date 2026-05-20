@@ -42,6 +42,14 @@ FIELD_EXPLANATIONS = {
     "valuation_metrics": "估值数据缺失，估值水平不足以判断",
     "valuation_metrics.dividend_yield": "股息率数据缺失，分红维度不足以判断",
     "dividend_yield": "股息率数据缺失，分红维度不足以判断",
+    "satellite.capacity_utilization_or_lease_rate": "容量利用率 / 出租率缺失，不得断言卫星资源利用充分",
+    "satellite.transponder_or_bandwidth_capacity": "转发器 / 带宽容量缺失，可变现通信容量不足以判断",
+    "satellite.unit_bandwidth_price": "单位带宽价格缺失，定价趋势和竞争压力不足以判断",
+    "satellite.customer_structure_or_concentration": "客户结构 / 客户集中度缺失，不得断言需求稳定或定价能力强",
+    "satellite.design_or_remaining_life": "卫星设计寿命 / 剩余寿命缺失，资产老化和替换 capex 风险不足以判断",
+    "financial_metrics.depreciation_amortization": "折旧摊销缺失，卫星资产寿命、折旧压力和利润可比性不足以判断",
+    "satellite.launch_plan": "卫星发射计划缺失，不得断言新增容量确定释放",
+    "satellite.failure_or_insurance_event": "卫星故障 / 保险事件信息缺失，重大资产事件风险需要继续核查",
 }
 
 
@@ -567,6 +575,28 @@ class EvidencePackBuilder:
                 ("资本开支", "capex", "financial_indicator", "industry_cycle", "资本开支用于观察长期资产购建现金支出，不代表需求或产能确定兑现"),
                 ("估值消化能力", "pe_ttm", "valuation", "valuation", "估值消化能力依赖增长兑现和估值水平匹配"),
             ]
+        elif strategy_type == "satellite_communication_infrastructure":
+            specs = [
+                ("在轨卫星数量", "in_orbit_satellite_count", "missing", "capacity", "在轨卫星数量定义运营资产基础和服务能力"),
+                ("转发器 / 带宽容量", "transponder_or_bandwidth_capacity", "missing", "revenue_capacity", "转发器和带宽容量衡量可变现通信容量"),
+                ("容量利用率 / 出租率", "capacity_utilization_or_lease_rate", "missing", "operating_efficiency", "容量利用率区分可用容量和实际变现容量"),
+                ("单位带宽价格", "unit_bandwidth_price", "missing", "pricing_power", "单位带宽价格反映定价趋势和竞争压力"),
+                ("卫星剩余寿命", "satellite_remaining_life", "missing", "asset_life", "剩余寿命影响资产老化、替换需求和服务连续性"),
+                ("合同期限结构", "contract_duration_structure", "missing", "revenue_visibility", "合同期限结构影响收入可见度和续约风险"),
+                ("客户集中度", "customer_concentration", "missing", "customer_risk", "客户集中度用于判断需求稳定性和回款风险"),
+                ("合同负债", "orders_or_contract_liabilities", "financial_indicator", "order_visibility", "合同负债可作为订单可见度 proxy，但不等同于真实订单或 backlog"),
+                ("应收账款", "accounts_receivable", "financial_indicator", "cash_conversion", "应收账款影响回款质量和现金转换"),
+                ("capex", "capex", "financial_indicator", "reinvestment_need", "capex 表示长期资产购建现金支出，不等同新增容量确定释放"),
+                ("折旧摊销", "depreciation_amortization", "missing", "profit_quality", "折旧摊销反映资产消耗和利润可比性"),
+                ("经营现金流", "operating_cashflow", "financial_indicator", "cashflow_stability", "经营现金流验证长周期合同是否转化为现金"),
+                ("毛利率", "gross_margin", "financial_indicator", "margin_quality", "毛利率观察基础服务盈利能力，但不能替代容量利用率"),
+                ("商业航天新业务收入", "commercial_aerospace_new_business_revenue", "missing", "growth_realization", "新业务收入用于区分主题热度和业绩兑现"),
+                ("重大卫星发射 / 故障 / 保险事件", "major_satellite_launch_failure_insurance_event", "missing", "event_risk", "重大事件可能改变容量、服务连续性、保险收益或减值风险"),
+                ("EV/EBITDA", "ev_ebitda", "future_data_needed", "valuation_context", "资产密集运营商可参考 EV/EBITDA，但 v1 不进入 scoring"),
+                ("EBITDA margin", "ebitda_margin", "future_data_needed", "operating_profitability", "EBITDA margin 可辅助拆分折旧影响，但 v1 不进入 scoring"),
+                ("自由现金流 = 经营现金流 - capex", "free_cashflow", "derived", "cashflow_quality", "自由现金流观察资本开支后的现金生成"),
+                ("债务 / EBITDA", "debt_to_ebitda", "future_data_needed", "leverage_risk", "债务 / EBITDA 可辅助判断杠杆压力，但 v1 不进入 scoring"),
+            ]
         else:
             specs = [
                 ("收入增速", "revenue_yoy", "financial_indicator", "financial_quality", "收入增速是基础经营趋势证据"),
@@ -624,9 +654,20 @@ class EvidencePackBuilder:
                 for item in commodities
             ] or None
             source_date = max([str(item.get("date")) for item in commodities if item.get("date")] or [None])
+        elif source == "derived":
+            if field == "free_cashflow":
+                ocf = financial.get("operating_cashflow")
+                capex = financial.get("capex")
+                if isinstance(ocf, (int, float)) and isinstance(capex, (int, float)):
+                    value = ocf - capex
+                    source_date = financial.get("period")
 
         related_risk = self._related_risk(name, dimension, risk_flags)
-        if field == "orders_or_contract_liabilities" and value not in (None, "", []):
+        if source == "future_data_needed":
+            status = "missing / future_data_needed"
+        elif source == "derived" and value not in (None, "", []):
+            status = "derived_observation"
+        elif field == "orders_or_contract_liabilities" and value not in (None, "", []):
             status = "partial_proxy"
         else:
             status = "available" if value not in (None, "", []) else "missing"
@@ -637,6 +678,10 @@ class EvidencePackBuilder:
             scope_note = "研发费用率用于观察研发强度，不代表技术壁垒已确认。"
         elif field == "capex":
             scope_note = "capex 为购建固定资产、无形资产和其他长期资产支付现金，不代表产能确定释放。"
+        elif field in {"ev_ebitda", "ebitda_margin", "debt_to_ebitda"}:
+            scope_note = "v1 仅作为 must-track 和 data limitation，不进入 scoring。"
+        elif field == "free_cashflow":
+            scope_note = "自由现金流为经营现金流 - capex 的 derived_observation，仅用于观察资本开支后的现金生成。"
         return {
             "indicator_name": name,
             "why_it_matters": why,

@@ -63,6 +63,29 @@ def test_unknown_fixture_classifies_unknown():
     assert result.confidence == "low"
 
 
+def test_satellite_communication_infrastructure_fixture_classifies():
+    result = classify_fixture("classifier_satellite_601698.json")
+
+    assert result.strategy_type == "satellite_communication_infrastructure"
+
+
+def test_satellite_negative_boundary_fixtures_do_not_classify_as_satellite():
+    for fixture in [
+        "classifier_satellite_negative_600118.json",
+        "classifier_satellite_negative_002465.json",
+        "classifier_satellite_negative_688066.json",
+        "classifier_satellite_negative_002895.json",
+    ]:
+        result = classify_fixture(fixture)
+        assert result.strategy_type != "satellite_communication_infrastructure"
+
+
+def test_satellite_news_only_theme_does_not_classify_as_satellite():
+    result = classify_fixture("classifier_satellite_news_only_theme.json")
+
+    assert result.strategy_type in {"theme_only", "unknown"}
+
+
 def test_news_only_match_cannot_be_high_confidence():
     normalized = FundamentalDataAdapter().from_file(str(FIXTURES / "classifier_theme_only.json"))
     normalized.basic_info.industry = None

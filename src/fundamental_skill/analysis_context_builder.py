@@ -170,6 +170,22 @@ class AnalysisContextBuilder:
             unknown = general.get("unknown_strategy_cap", {})
             cap = self._min_confidence(cap, unknown.get("max_overall_confidence", "low"))
             quality = unknown.get("overall_context_quality", "insufficient")
+        if classification.strategy_type == "satellite_communication_infrastructure":
+            missing = {
+                item.field_name
+                for item in readiness.field_readiness
+                if item.status in {"missing", "partial"}
+            }
+            core_gating = {
+                "satellite.capacity_utilization_or_lease_rate",
+                "satellite.customer_structure_or_concentration",
+                "satellite.design_or_remaining_life",
+                "financial_metrics.depreciation_amortization",
+            }
+            if core_gating <= missing:
+                cap = self._min_confidence(cap, "low")
+            elif core_gating & missing:
+                cap = self._min_confidence(cap, "medium")
         return quality, cap
 
     def _min_confidence(self, a: str, b: str) -> str:

@@ -114,6 +114,30 @@ def test_must_have_audit_counts_v23a_rd_capex_as_available():
     assert capex_row["coverage_status"] == "available"
 
 
+def test_satellite_evidence_pack_generates_industry_must_track_and_data_limitations():
+    fundamental = sample_fundamental("satellite_communication_infrastructure")
+    raw = sample_raw()
+    raw["blocks"]["basic_info"][0]["stock_code"] = "601698"
+    raw["blocks"]["basic_info"][0]["stock_name"] = "中国卫通"
+    raw["blocks"]["basic_info"][0]["industry"] = "电信、广播电视和卫星传输服务"
+    raw["blocks"]["basic_info"][0]["main_business"] = "卫星空间段运营及相关应用服务"
+    raw["blocks"]["business_composition"][0]["segment_name"] = "广播电视和卫星传输服务"
+    raw["blocks"]["financial_indicator"][0]["operating_cashflow"] = 900000000
+    raw["blocks"]["financial_indicator"][0]["capex"] = 229152931.6
+
+    pack = EvidencePackBuilder().build(fundamental, raw)
+    names = {item["indicator_name"]: item for item in pack["enhanced_must_track_indicators"]}
+
+    assert {"在轨卫星数量", "转发器 / 带宽容量", "容量利用率 / 出租率", "客户集中度"}.issubset(names)
+    assert names["EV/EBITDA"]["current_status"] == "missing / future_data_needed"
+    assert names["EBITDA margin"]["current_status"] == "missing / future_data_needed"
+    assert names["债务 / EBITDA"]["current_status"] == "missing / future_data_needed"
+    assert names["自由现金流 = 经营现金流 - capex"]["current_status"] == "derived_observation"
+    assert names["自由现金流 = 经营现金流 - capex"]["current_value"] == 670847068.4
+    assert names["合同负债"]["current_status"] == "partial_proxy"
+    assert "不等同于真实订单或 backlog" in names["合同负债"]["scope_note"]
+
+
 def test_confidence_breakdown_and_evidence_classification_are_populated():
     pack = EvidencePackBuilder().build(sample_fundamental(), sample_raw())
 

@@ -298,6 +298,84 @@ advanced_manufacturing_growth:
   - gross_margin
   - operating_cashflow
   - accounts_receivable
+satellite_communication_infrastructure:
+  display_name: 卫星通信基础设施
+  description: 适用于以在轨卫星、轨位、频段、转发器等空间段资产为核心稀缺资源，以带宽、转发器和卫星通信服务变现为主要收入来源的资产密集、牌照/资源驱动、长周期运营型公司。
+  required_focus:
+  - 卫星资源和轨位 / 频段资源
+  - 转发器 / 带宽容量
+  - 容量利用率 / 出租率
+  - 单位带宽价格
+  - 客户结构和合同期限
+  - 广电、海洋、航空、应急、政府 / 央企客户
+  - 资产寿命和折旧压力
+  - capex / 卫星发射周期
+  - 应收账款和回款质量
+  - 合同负债作为订单可见度 proxy
+  - 经营现金流稳定性
+  - 商业航天新业务兑现
+  - 政策和牌照壁垒
+  must_track_indicators:
+  - 在轨卫星数量
+  - 转发器 / 带宽容量
+  - 容量利用率 / 出租率
+  - 单位带宽价格
+  - 卫星剩余寿命
+  - 合同期限结构
+  - 客户集中度
+  - 合同负债
+  - 应收账款
+  - capex
+  - 折旧摊销
+  - 经营现金流
+  - 毛利率
+  - 商业航天新业务收入
+  - 重大卫星发射 / 故障 / 保险事件
+  - EV/EBITDA
+  - EBITDA margin
+  - 自由现金流
+  - 债务 / EBITDA
+  key_risks:
+  - 容量利用率 / 出租率缺失导致资源利用判断不足
+  - 客户结构和合同期限缺失导致需求稳定性判断不足
+  - 卫星寿命、折旧政策和发射周期影响利润与现金流
+  - 合同负债仅为订单可见度 proxy，不等同真实 backlog
+  - capex 仅代表长期资产购建现金支出，不等同新增容量确定释放
+  - 商业航天主题、政策热度或新闻热度不等同业绩兑现
+  - 卫星故障、保险索赔或资产减值可能显著影响资产质量
+  preferred_metrics:
+  - revenue
+  - net_profit
+  - gross_margin
+  - operating_cashflow
+  - accounts_receivable
+  - contract_liabilities
+  - capex
+  - valuation_metrics
+  invalidation_focus:
+  - 容量利用率或出租率恶化
+  - 关键客户或合同期限结构恶化
+  - 卫星剩余寿命、折旧或发射计划出现重大不确定性
+  - 经营现金流与利润背离
+  - 应收账款和回款质量恶化
+  - 商业航天新业务缺少收入和现金流兑现
+  - 发生重大卫星发射、故障、保险或减值事件
+  common_mistakes:
+  - 把商业航天主题当成业绩兑现
+  - 把合同负债当成 backlog
+  - 用 PE/PB/PS 单独判断估值
+  - 忽略卫星寿命 / 折旧 / 发射周期
+  - 缺容量利用率时断言资源利用充分
+  - 缺客户结构时断言需求稳定
+  confidence_penalty_missing_fields:
+  - capacity_utilization_or_lease_rate
+  - transponder_or_bandwidth_capacity
+  - unit_bandwidth_price
+  - customer_structure_or_concentration
+  - satellite_design_or_remaining_life
+  - depreciation_amortization
+  - satellite_launch_plan
+  - satellite_failure_or_insurance_event
 unknown:
   display_name: 未知类型
   description: 数据不足或无法稳定归类。

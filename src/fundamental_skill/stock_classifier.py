@@ -56,8 +56,41 @@ CORE_TIEBREAKERS = {
         "关节模组",
         "高端制造",
     ),
+    "satellite_communication_infrastructure": (
+        "电信、广播电视和卫星传输服务",
+        "卫星空间段运营",
+        "卫星传输服务",
+        "卫星通信服务",
+        "广播电视和卫星传输服务",
+        "转发器",
+        "带宽资源",
+        "轨位资源",
+        "频段资源",
+    ),
     "stable_growth": ("电网", "变压器", "特高压", "输配电", "电网自动化"),
 }
+
+SATELLITE_NEGATIVE_KEYWORDS = (
+    "遥感数据服务",
+    "遥感软件",
+    "测控地面系统集成",
+    "卫星制造",
+    "整星研制",
+    "火箭制造",
+    "导航芯片",
+    "北斗芯片",
+    "军工电子终端",
+    "通信设备制造",
+    "低空经济",
+    "无人机",
+)
+
+SATELLITE_STRONG_CORE_KEYWORDS = (
+    "电信、广播电视和卫星传输服务",
+    "卫星空间段运营",
+    "卫星传输服务",
+    "卫星通信服务",
+)
 
 
 def _safe_json(value: Any, limit: int = 8000) -> str:
@@ -162,6 +195,20 @@ class StockClassifier:
             )
 
         scores = self._apply_conflict_rules(scores, text_sources)
+        scores = defaultdict(int, {key: value for key, value in scores.items() if value > 0})
+        if not scores:
+            return StockClassificationResult(
+                stock_code=normalized.stock_code,
+                stock_name=normalized.stock_name,
+                strategy_type="unknown",
+                confidence="low",
+                confidence_score=25,
+                reasons=["规则关键词命中不足，分类为 unknown。"],
+                evidence=[],
+                alternative_types=[],
+                missing_fields=sorted(set(missing_fields)),
+                warnings=warnings,
+            )
         sorted_scores = sorted(scores.items(), key=lambda item: item[1], reverse=True)
         selected_type, raw_score = sorted_scores[0]
         alternative_types = [
@@ -176,6 +223,12 @@ class StockClassifier:
 
         if selected_type == "theme_only" and not normalized.financial_metrics:
             confidence_score = min(max(confidence_score, 50), 74)
+
+        if selected_type == "satellite_communication_infrastructure":
+            core_text = self._core_text(text_sources)
+            if not any(term in core_text for term in SATELLITE_STRONG_CORE_KEYWORDS):
+                confidence_score = min(confidence_score, 74)
+                warnings.append("satellite_core_business_not_strongly_confirmed_confidence_capped")
 
         confidence = _score_to_confidence(confidence_score, selected_type)
         reasons = [
@@ -230,10 +283,18 @@ class StockClassifier:
         has_text_news = bool(normalized.latest_news)
         return not has_identity and not has_business and not has_text_news
 
-    def _apply_conflict_rules(self, scores: dict[str, int], text_sources: dict[str, str]) -> dict[str, int]:
-        combined_core_text = " ".join(
-            [text_sources.get("stock_name", ""), text_sources.get("main_business", ""), text_sources.get("industry", "")]
+    def _core_text(self, text_sources: dict[str, str]) -> str:
+        return " ".join(
+            [
+                text_sources.get("stock_name", ""),
+                text_sources.get("main_business", ""),
+                text_sources.get("industry", ""),
+                text_sources.get("business_composition", ""),
+            ]
         )
+
+    def _apply_conflict_rules(self, scores: dict[str, int], text_sources: dict[str, str]) -> dict[str, int]:
+        combined_core_text = self._core_text(text_sources)
         all_text = " ".join(text_sources.values())
 
         if "紫金矿业" in all_text:
@@ -253,6 +314,12 @@ class StockClassifier:
             if any(term in all_text for term in CORE_TIEBREAKERS["right_trend_growth"]):
                 scores["right_trend_growth"] += 25
 
+        if scores.get("semiconductor_cycle", 0) and any(
+            term in combined_core_text
+            for term in ("通信设备制造", "军用通信终端", "导航芯片", "北斗芯片", "军工电子终端")
+        ):
+            scores["semiconductor_cycle"] = 0
+
         if scores.get("right_trend_growth", 0) and scores.get("advanced_manufacturing_growth", 0):
             if any(term in all_text for term in CORE_TIEBREAKERS["advanced_manufacturing_growth"]):
                 scores["advanced_manufacturing_growth"] += 40
@@ -270,6 +337,17 @@ class StockClassifier:
                 scores["stable_growth"] += 35
             if any(term in all_text for term in CORE_TIEBREAKERS["advanced_manufacturing_growth"]):
                 scores["advanced_manufacturing_growth"] += 40
+
+        if scores.get("satellite_communication_infrastructure", 0):
+            core_negative_hits = [term for term in SATELLITE_NEGATIVE_KEYWORDS if term in combined_core_text]
+            if core_negative_hits:
+                scores["satellite_communication_infrastructure"] = 0
+                if any(term in all_text for term in ("概念", "题材", "互动平台", "商业航天")):
+                    scores["theme_only"] += 20
+            elif any(term in combined_core_text for term in SATELLITE_STRONG_CORE_KEYWORDS):
+                scores["satellite_communication_infrastructure"] += 45
+            elif "中国卫通" in combined_core_text:
+                scores["satellite_communication_infrastructure"] += 45
 
         return scores
 

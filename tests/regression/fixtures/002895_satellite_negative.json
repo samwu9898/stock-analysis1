@@ -1,0 +1,8 @@
+{
+  "meta": {"code": "002895", "stock_name": "中科星图", "market": "sz", "generated_at": "2026-05-20T10:00:00"},
+  "blocks": {
+    "basic_info": [{"stock_code": "002895", "stock_name": "中科星图", "industry": "软件和信息技术服务", "main_business": "遥感数据软件、数字地球产品和空间信息应用"}],
+    "financial_indicator": [{"period": "2025-12-31", "revenue": 1000000000, "gross_margin": 50.0}],
+    "business_composition": [{"period": "2025-12-31", "segment_name": "遥感数据软件", "revenue_ratio": 85.0}]
+  }
+}

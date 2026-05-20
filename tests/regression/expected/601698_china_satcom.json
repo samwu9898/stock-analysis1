@@ -1,0 +1,37 @@
+{
+  "stock_code": "601698",
+  "expected_strategy_type": "satellite_communication_infrastructure",
+  "allowed_status": [
+    "neutral",
+    "insufficient_data"
+  ],
+  "max_confidence": "low",
+  "max_score": 70,
+  "min_required_risk_flags": [
+    "容量利用率",
+    "客户结构",
+    "卫星设计寿命",
+    "折旧"
+  ],
+  "must_track_keywords": [
+    "容量利用率",
+    "客户集中度",
+    "合同负债",
+    "capex"
+  ],
+  "forbidden_phrases": [
+    "买入",
+    "卖出",
+    "加仓",
+    "减仓",
+    "清仓",
+    "止损",
+    "止盈",
+    "目标价",
+    "满仓",
+    "梭哈",
+    "卫星资源利用充分",
+    "需求稳定",
+    "新增容量确定释放"
+  ]
+}

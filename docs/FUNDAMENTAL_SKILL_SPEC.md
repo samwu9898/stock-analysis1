@@ -64,6 +64,7 @@
 - `right_trend_growth`：高景气趋势成长股，强调行业趋势、收入增长和利润兑现。
 - `semiconductor_cycle`：半导体国产替代/周期股，强调库存周期、国产替代、订单和资本开支。
 - `stable_growth`：稳健成长，强调稳定收入、现金流、ROE 和治理质量。
+- `satellite_communication_infrastructure`：卫星通信基础设施，强调在轨卫星、轨位/频段、转发器/带宽资源、容量利用率、客户合同、资产寿命、折旧和现金流稳定性。
 - `theme_only`：题材属性强但基本面支撑弱。
 - `unknown`：无法分类。
 

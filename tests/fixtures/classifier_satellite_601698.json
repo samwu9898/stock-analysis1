@@ -1,0 +1,50 @@
+{
+  "meta": {
+    "code": "601698",
+    "stock_name": "中国卫通",
+    "market": "sh",
+    "generated_at": "2026-05-20T10:00:00",
+    "data_cutoff": "2025-12-31"
+  },
+  "blocks": {
+    "basic_info": [
+      {
+        "stock_code": "601698",
+        "stock_name": "中国卫通",
+        "industry": "电信、广播电视和卫星传输服务",
+        "main_business": "卫星空间段运营及相关应用服务"
+      }
+    ],
+    "financial_indicator": [
+      {
+        "period": "2025-12-31",
+        "revenue": 2800000000,
+        "net_profit": 520000000,
+        "gross_margin": 35.0,
+        "operating_cashflow": 900000000,
+        "accounts_receivable": 300000000,
+        "contract_liabilities": 120000000,
+        "capex": 650000000
+      }
+    ],
+    "valuation": [
+      {
+        "period": "2026-05-20",
+        "pe_ttm": 42.0,
+        "pb": 2.1,
+        "ps": 7.5,
+        "market_cap": 70000000000
+      }
+    ],
+    "business_composition": [
+      {
+        "period": "2025-12-31",
+        "classification_type": "按行业分类",
+        "segment_name": "广播电视和卫星传输服务",
+        "revenue_ratio": 100.0,
+        "gross_margin": 35.0
+      }
+    ],
+    "news": []
+  }
+}

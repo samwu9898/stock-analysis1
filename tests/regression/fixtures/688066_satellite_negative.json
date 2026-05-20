@@ -1,0 +1,8 @@
+{
+  "meta": {"code": "688066", "stock_name": "航天宏图", "market": "sh", "generated_at": "2026-05-20T10:00:00"},
+  "blocks": {
+    "basic_info": [{"stock_code": "688066", "stock_name": "航天宏图", "industry": "软件和信息技术服务", "main_business": "遥感软件、遥感数据服务和空间信息应用服务"}],
+    "financial_indicator": [{"period": "2025-12-31", "revenue": 1000000000, "gross_margin": 45.0}],
+    "business_composition": [{"period": "2025-12-31", "segment_name": "遥感软件与数据服务", "revenue_ratio": 90.0}]
+  }
+}

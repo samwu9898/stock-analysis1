@@ -216,6 +216,272 @@ missing_field_rules:
     - instruction_type: caution
       instruction: 缺少应收账款时，必须提示收入质量验证不足。
       reason: 客户回款数据缺失。
+  financial_metrics.contract_liabilities:
+    affected_dimensions:
+    - business_quality
+    - risk_flags
+    required_risk:
+      risk_name: 合同负债数据缺失
+      severity: medium
+      reason: 缺少合同负债，订单可见度 proxy 不足；即使可用也不等同真实 backlog。
+    prohibited_claims:
+    - claim_type: contract_liabilities_as_backlog
+      prohibited_reason: 合同负债只能作为订单可见度 proxy，不能等同真实 backlog 或确定订单。
+      example_forbidden_phrases:
+      - 合同负债等同在手订单
+      - backlog 已确认
+      - 订单确定兑现
+    scoring_constraints:
+      business_quality:
+        max_score: 75
+      risk_control:
+        max_score: 75
+    analyzer_instructions:
+    - instruction_type: caution
+      instruction: 合同负债只能作为订单可见度 proxy，不得写成真实 backlog。
+      reason: 合同负债解释范围有限。
+  financial_metrics.capex:
+    affected_dimensions:
+    - financial_quality
+    - risk_flags
+    required_risk:
+      risk_name: capex 数据缺失
+      severity: medium
+      reason: 缺少长期资产购建现金支出，无法判断卫星发射周期和资产更新压力。
+    prohibited_claims:
+    - claim_type: capex_capacity_release_confirmed
+      prohibited_reason: capex 只能表示长期资产购建现金支出，不等同新增容量确定释放。
+      example_forbidden_phrases:
+      - 新增容量确定释放
+      - capex 已证明产能释放
+      - 资产投入必然带来增长
+    scoring_constraints:
+      financial_quality:
+        max_score: 75
+      risk_control:
+        max_score: 75
+    analyzer_instructions:
+    - instruction_type: caution
+      instruction: capex 只能作为长期资产购建现金支出，不得等同新增容量确定释放。
+      reason: 卫星发射、投运和收入确认仍需验证。
+  financial_metrics.depreciation_amortization:
+    affected_dimensions:
+    - financial_quality
+    - risk_flags
+    required_risk:
+      risk_name: 卫星折旧摊销数据缺失
+      severity: medium
+      reason: 缺少折旧摊销和寿命数据，无法核实资产老化、利润可比性和折旧年限会计政策风险。
+    prohibited_claims:
+    - claim_type: satellite_margin_peer_comparison_confirmed
+      prohibited_reason: 未核实卫星折旧年限和资产寿命会计政策时，不能跨公司比较利润率。
+      example_forbidden_phrases:
+      - 利润率明显优于同业
+      - 折旧压力较小
+      - 资产老化风险可忽略
+    scoring_constraints:
+      financial_quality:
+        max_score: 75
+      risk_control:
+        max_score: 75
+    analyzer_instructions:
+    - instruction_type: caution
+      instruction: 未核实卫星折旧年限和资产寿命会计政策时，不得跨公司比较利润率。
+      reason: 折旧政策会影响利润可比性。
+  satellite.capacity_utilization_or_lease_rate:
+    affected_dimensions:
+    - industry_cycle
+    - risk_flags
+    required_risk:
+      risk_name: 容量利用率 / 出租率缺失
+      severity: high
+      reason: 缺容量利用率 / 出租率时，不得断言卫星资源利用充分。
+    prohibited_claims:
+    - claim_type: satellite_capacity_utilization_confirmed
+      prohibited_reason: 缺容量利用率 / 出租率时，不能断言卫星资源利用充分。
+      example_forbidden_phrases:
+      - 卫星资源利用充分
+      - 出租率稳定
+      - 容量消化良好
+    scoring_constraints:
+      industry_cycle:
+        max_score: 60
+      risk_control:
+        max_score: 70
+    analyzer_instructions:
+    - instruction_type: must_not_do
+      instruction: 缺容量利用率 / 出租率时，不得断言卫星资源利用充分。
+      reason: 核心运营指标缺失。
+  satellite.transponder_or_bandwidth_capacity:
+    affected_dimensions:
+    - industry_cycle
+    required_risk:
+      risk_name: 转发器 / 带宽容量缺失
+      severity: medium
+      reason: 缺少可变现通信容量，无法判断收入容量基础。
+    prohibited_claims:
+    - claim_type: satellite_capacity_base_confirmed
+      prohibited_reason: 缺转发器 / 带宽容量时，不能断言容量基础充分。
+      example_forbidden_phrases:
+      - 带宽容量充足
+      - 转发器资源充足
+    scoring_constraints:
+      industry_cycle:
+        max_score: 70
+  satellite.unit_bandwidth_price:
+    affected_dimensions:
+    - valuation_view
+    - industry_cycle
+    required_risk:
+      risk_name: 单位带宽价格缺失
+      severity: medium
+      reason: 缺少单位带宽价格，无法判断定价趋势和竞争压力。
+    prohibited_claims:
+    - claim_type: satellite_pricing_power_confirmed
+      prohibited_reason: 缺单位带宽价格时，不能断言定价能力强。
+      example_forbidden_phrases:
+      - 定价能力强
+      - 带宽价格稳定
+    scoring_constraints:
+      valuation_reasonableness:
+        max_score: 70
+      industry_cycle:
+        max_score: 70
+  satellite.customer_structure_or_concentration:
+    affected_dimensions:
+    - risk_flags
+    - business_summary
+    required_risk:
+      risk_name: 客户结构 / 客户集中度缺失
+      severity: high
+      reason: 缺客户结构时，不得断言需求稳定或定价能力强。
+    prohibited_claims:
+    - claim_type: satellite_customer_demand_stable_confirmed
+      prohibited_reason: 缺客户结构时，不能断言需求稳定或定价能力强。
+      example_forbidden_phrases:
+      - 需求稳定
+      - 客户需求稳定
+      - 定价能力强
+    scoring_constraints:
+      business_quality:
+        max_score: 70
+      risk_control:
+        max_score: 65
+    analyzer_instructions:
+    - instruction_type: must_not_do
+      instruction: 缺客户结构时，不得断言需求稳定或定价能力强。
+      reason: 客户结构和合同期限是卫星通信运营商核心验证项。
+  satellite.design_or_remaining_life:
+    affected_dimensions:
+    - financial_quality
+    - risk_flags
+    required_risk:
+      risk_name: 卫星设计寿命 / 剩余寿命缺失
+      severity: high
+      reason: 缺少卫星寿命数据，无法判断资产老化、替换 capex 和服务连续性风险。
+    prohibited_claims:
+    - claim_type: satellite_asset_life_confirmed
+      prohibited_reason: 缺卫星寿命数据时，不能忽略资产老化风险。
+      example_forbidden_phrases:
+      - 资产寿命风险较小
+      - 卫星资产稳定
+      - 折旧压力可控
+    scoring_constraints:
+      financial_quality:
+        max_score: 70
+      risk_control:
+        max_score: 65
+  satellite.launch_plan:
+    affected_dimensions:
+    - catalysts
+    - risk_flags
+    required_risk:
+      risk_name: 卫星发射计划缺失
+      severity: medium
+      reason: 缺发射计划时，不能断言新增容量确定释放。
+    prohibited_claims:
+    - claim_type: satellite_new_capacity_confirmed
+      prohibited_reason: 缺发射计划时，不能断言新增容量确定释放。
+      example_forbidden_phrases:
+      - 新增容量确定释放
+      - 发射计划确定带来增长
+    scoring_constraints:
+      catalyst_strength:
+        max_score: 65
+      risk_control:
+        max_score: 75
+  satellite.failure_or_insurance_event:
+    affected_dimensions:
+    - risk_flags
+    required_risk:
+      risk_name: 卫星故障 / 保险事件披露缺失
+      severity: medium
+      reason: 若公开材料出现卫星异常、在轨故障、保险索赔、资产减值，应显式标注，不得用正常经营数据覆盖。
+    prohibited_claims:
+    - claim_type: satellite_event_risk_absent_confirmed
+      prohibited_reason: 缺少故障 / 保险事件检查时，不能断言没有重大卫星事件风险。
+      example_forbidden_phrases:
+      - 无重大卫星故障风险
+      - 保险风险可以忽略
+    scoring_constraints:
+      risk_control:
+        max_score: 75
+  satellite.in_orbit_satellite_count:
+    affected_dimensions:
+    - industry_cycle
+    required_risk:
+      risk_name: 在轨卫星数量缺失
+      severity: medium
+      reason: 缺少在轨卫星数量，运营资产基础不足以判断。
+    prohibited_claims: []
+    scoring_constraints:
+      industry_cycle:
+        max_score: 75
+  satellite.orbital_slot_frequency_resources:
+    affected_dimensions:
+    - business_summary
+    required_risk:
+      risk_name: 轨位 / 频段资源说明缺失
+      severity: medium
+      reason: 缺少轨位 / 频段资源说明，资源壁垒不足以判断。
+    prohibited_claims: []
+    scoring_constraints:
+      business_quality:
+        max_score: 75
+  satellite.contract_duration_structure:
+    affected_dimensions:
+    - business_summary
+    - risk_flags
+    required_risk:
+      risk_name: 合同期限结构缺失
+      severity: medium
+      reason: 缺少合同期限结构，收入可见度和续约风险不足以判断。
+    prohibited_claims: []
+    scoring_constraints:
+      business_quality:
+        max_score: 75
+  satellite.policy_vs_commercial_customer_mix:
+    affected_dimensions:
+    - risk_flags
+    required_risk:
+      risk_name: 政策性客户 vs 商业客户结构缺失
+      severity: medium
+      reason: 缺少政策性客户和商业客户结构，需求稳定性、回款质量和定价能力不足以判断。
+    prohibited_claims: []
+    scoring_constraints:
+      risk_control:
+        max_score: 75
+  satellite.overseas_revenue_share:
+    affected_dimensions:
+    - risk_flags
+    required_risk:
+      risk_name: 海外业务占比缺失
+      severity: low
+      reason: 缺少海外业务占比，区域需求和汇率风险信息不完整。
+    prohibited_claims: []
+    scoring_constraints:
+      risk_control:
+        max_score: 80
 strategy_specific_rules:
   resource_swing:
     must_include_if_missing:
@@ -272,6 +538,20 @@ strategy_specific_rules:
     - robot_business_validation
     - customer_concentration_validation
     - new_business_revenue_validation
+  satellite_communication_infrastructure:
+    must_include_if_missing:
+    - satellite.capacity_utilization_or_lease_rate
+    - satellite.customer_structure_or_concentration
+    - satellite.design_or_remaining_life
+    - financial_metrics.depreciation_amortization
+    - satellite.launch_plan
+    prohibited_if_missing_core:
+    - 不能断言卫星资源利用充分
+    - 不能断言需求稳定或定价能力强
+    - 不能忽略卫星寿命、折旧和资产老化风险
+    - 不能断言新增容量确定释放
+    - 不能把商业航天主题、政策热度或新闻热度等同业绩兑现
+    - 不能把 PE/PB/PS 单独作为估值充分依据
 unverified_rules:
   ai_capex_dependency_risk:
     required_risk:
