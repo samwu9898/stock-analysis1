@@ -16,6 +16,10 @@ def test_prompt_builder_generates_prompt_with_required_limits():
     assert "enhanced_must_track_indicators" in prompt
     assert "Markdown 报告中使用表格" in prompt
     assert "display_value" in prompt
+    assert "analyst_summary" in prompt
+    assert "trader_summary" not in prompt
+    assert "action_hint_for_trader" not in prompt
+    assert "交易员 Agent" not in prompt
 
 
 def test_prompt_policy_terms_are_allowed_only_as_policy_context():

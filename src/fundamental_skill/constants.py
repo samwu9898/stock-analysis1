@@ -69,7 +69,9 @@ PROHIBITED_TRADING_TERMS = (
 )
 
 ALLOWED_TRADER_ACTION_HINTS = (
-    "需要交易员重新评估",
+    "需要后续分析层复核",
     "需要暂停基本面支持判断",
     "需要更新基本面分析",
+    # Deprecated v1 compatibility value accepted for historical JSON only.
+    "需要交易员重新评估",
 )

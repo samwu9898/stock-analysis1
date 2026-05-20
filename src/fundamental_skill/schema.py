@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import Any, Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from .constants import ALLOWED_TRADER_ACTION_HINTS
 
@@ -102,14 +102,29 @@ class TrackIndicator(SkillBaseModel):
 class InvalidationCondition(SkillBaseModel):
     condition: str
     evidence_needed: str
-    action_hint_for_trader: str
+    downstream_review_hint: str = Field(
+        description="Recommended neutral downstream review hint for follow-up analysis layers."
+    )
+    action_hint_for_trader: str = Field(
+        description="Deprecated; retained for backward compatibility with historical JSON."
+    )
 
-    @field_validator("action_hint_for_trader")
+    @model_validator(mode="before")
+    @classmethod
+    def mirror_review_hint_aliases(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if not data.get("downstream_review_hint") and data.get("action_hint_for_trader"):
+                data["downstream_review_hint"] = data["action_hint_for_trader"]
+            if not data.get("action_hint_for_trader") and data.get("downstream_review_hint"):
+                data["action_hint_for_trader"] = data["downstream_review_hint"]
+        return data
+
+    @field_validator("downstream_review_hint", "action_hint_for_trader")
     @classmethod
     def action_hint_must_be_allowed(cls, value: str) -> str:
         if value not in ALLOWED_TRADER_ACTION_HINTS:
             allowed = ", ".join(ALLOWED_TRADER_ACTION_HINTS)
-            raise ValueError(f"action_hint_for_trader must be one of: {allowed}")
+            raise ValueError(f"review hint must be one of: {allowed}")
         return value
 
 
@@ -171,13 +186,28 @@ class FundamentalAnalysisResult(SkillBaseModel):
     invalidation_conditions: list[InvalidationCondition] = Field(default_factory=list)
     thesis_check: ThesisCheck
     suitable_strategy_type: str
-    trader_summary: str
+    analyst_summary: str = Field(
+        description="Recommended neutral fundamental analyst summary for downstream review."
+    )
+    trader_summary: str = Field(
+        description="Deprecated; retained for backward compatibility with historical JSON."
+    )
     data_sources: list[DataSource] = Field(default_factory=list)
     data_timestamp: str
     missing_fields: list[str] = Field(default_factory=list)
     valid_until: Optional[str] = None
     refresh_triggers: list[str] = Field(default_factory=list)
     raw_data_path: Optional[str] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def mirror_summary_aliases(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if not data.get("analyst_summary") and data.get("trader_summary"):
+                data["analyst_summary"] = data["trader_summary"]
+            if not data.get("trader_summary") and data.get("analyst_summary"):
+                data["trader_summary"] = data["analyst_summary"]
+        return data
 
     @field_validator("schema_version")
     @classmethod

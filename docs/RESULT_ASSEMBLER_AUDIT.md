@@ -1,5 +1,16 @@
 # Result Assembler Audit
 
+## Neutral Naming Compatibility v1
+
+`FundamentalResultAssembler` now fills neutral alias fields while preserving old public fields:
+
+- `analyst_summary` is recommended for new readers and user-facing display.
+- `downstream_review_hint` is recommended for invalidation-condition follow-up review.
+- `trader_summary` is deprecated but retained for backward compatibility.
+- `action_hint_for_trader` is deprecated but retained for backward compatibility.
+
+During v1, the assembler writes both summary fields with the same neutral text, and writes both review-hint fields with the same neutral value. Newly assembled user-visible text must use neutral wording such as "进入后续综合评估", "需要后续分析层复核", "后续模块评估", or "后续基本面复核". This does not change scoring, status, confidence, invalidation logic, regression expectations, or safety boundaries. The project still does not implement `trader_skill`, does not implement `technical_skill`, does not connect to trading accounts, and does not output trading advice.
+
 ## 1. 定位
 
 `FundamentalResultAssembler` 是 `fundamental_skill` 的最终结构化输出层，负责把前序 deterministic pipeline 的中间产物装配为 `FundamentalAnalysisResult`。

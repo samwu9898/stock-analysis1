@@ -49,10 +49,22 @@ def validate_result_against_expected(result, expected: dict) -> list[str]:
 
     key_driver_text = " ".join(result.key_drivers)
     for phrase in expected.get("forbidden_phrases", []):
+        if phrase in result.analyst_summary:
+            errors.append(f"forbidden phrase in analyst_summary: {phrase}")
         if phrase in result.trader_summary:
             errors.append(f"forbidden phrase in trader_summary: {phrase}")
         if phrase in key_driver_text:
             errors.append(f"forbidden phrase in key_drivers: {phrase}")
+
+    if result.analyst_summary != result.trader_summary:
+        errors.append("analyst_summary and trader_summary should match during neutral naming v1")
+    if "交易员" in result.analyst_summary or "交易员" in result.trader_summary:
+        errors.append("summary contains legacy trader-facing wording")
+    for idx, condition in enumerate(result.invalidation_conditions):
+        if condition.downstream_review_hint != condition.action_hint_for_trader:
+            errors.append(f"invalidation condition {idx} neutral and legacy hints differ")
+        if "交易员" in condition.downstream_review_hint or "交易员" in condition.action_hint_for_trader:
+            errors.append(f"invalidation condition {idx} contains legacy trader-facing wording")
 
     terms = validate_no_trading_instruction(result.model_dump_json())
     if terms:

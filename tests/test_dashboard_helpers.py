@@ -19,6 +19,8 @@ def sample_fundamental() -> dict:
         "status": "supportive",
         "confidence": "high",
         "fundamental_score": 76,
+        "analyst_summary": "new neutral summary",
+        "trader_summary": "legacy summary",
         "analysis_date": "2026-05-18",
         "risk_flags": [
             {
@@ -39,6 +41,14 @@ def sample_fundamental() -> dict:
         "missing_fields": ["field.a"],
         "financial_quality": {"score": 60},
         "valuation_view": {"valuation_level": "reasonable", "score": 50},
+        "invalidation_conditions": [
+            {
+                "condition": "condition",
+                "evidence_needed": "evidence",
+                "downstream_review_hint": "需要后续分析层复核",
+                "action_hint_for_trader": "需要后续分析层复核",
+            }
+        ],
     }
 
 
@@ -208,7 +218,28 @@ def test_scan_fundamental_results_loads_output_files(tmp_path):
 
     assert len(rows) == 1
     assert rows[0]["stock_code"] == "000426"
+    assert rows[0]["analyst_summary"] == "new neutral summary"
     assert rows[0]["risk_flags_count"] == 1
+
+
+def test_dashboard_helpers_prefer_neutral_alias_and_fallback_to_legacy():
+    payload = sample_fundamental()
+
+    assert helpers.fundamental_analyst_summary(payload) == "new neutral summary"
+    assert helpers.invalidation_condition_rows(payload)[0]["downstream_review_hint"] == "需要后续分析层复核"
+
+    payload.pop("analyst_summary")
+    payload["trader_summary"] = "基本面支持交给交易员进一步评估。"
+    payload["invalidation_conditions"] = [
+        {
+            "condition": "condition",
+            "evidence_needed": "evidence",
+            "action_hint_for_trader": "需要交易员重新评估",
+        }
+    ]
+
+    assert helpers.fundamental_analyst_summary(payload) == "基本面支持进入后续综合评估。"
+    assert helpers.invalidation_condition_rows(payload)[0]["downstream_review_hint"] == "需要后续分析层复核"
 
 
 def test_missing_file_does_not_crash(tmp_path):

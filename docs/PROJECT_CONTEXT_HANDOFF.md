@@ -158,6 +158,17 @@ Interpretation boundaries:
 - R&D ratio is not confirmation of a technology barrier.
 - Theme heat is not fundamental realization.
 
+### Neutral Naming Compatibility v1
+
+The `fundamental.v1` public schema keeps backward compatibility while adding neutral aliases:
+
+- `analyst_summary` is the recommended summary field for AI and Dashboard display.
+- `downstream_review_hint` is the recommended invalidation-condition review hint.
+- `trader_summary` is deprecated but retained for backward compatibility with historical JSON.
+- `action_hint_for_trader` is deprecated but retained for backward compatibility with historical JSON.
+
+New deterministic outputs fill both new and old fields with the same neutral text. AI evidence packs, prompts, and Dashboard helpers prefer the neutral fields and fall back to legacy fields only for old files. This project still does not implement `trader_skill`, does not implement `technical_skill`, does not connect to trading accounts, and does not output trading advice.
+
 ## 11. Industry Framework Extension Workflow
 
 Follow `docs/INDUSTRY_FRAMEWORK_DEVELOPMENT_WORKFLOW.md`:

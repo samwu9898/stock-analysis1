@@ -63,12 +63,24 @@ def test_regression_snapshot(fixture_path: Path):
 
     key_driver_text = " ".join(result.key_drivers)
     for phrase in expected.get("forbidden_phrases", []):
+        assert phrase not in result.analyst_summary, fail_message(
+            stock_code, "analyst_summary forbidden phrase", result.analyst_summary, phrase
+        )
         assert phrase not in result.trader_summary, fail_message(
             stock_code, "trader_summary forbidden phrase", result.trader_summary, phrase
         )
         assert phrase not in key_driver_text, fail_message(
             stock_code, "key_drivers forbidden phrase", key_driver_text, phrase
         )
+    assert result.analyst_summary == result.trader_summary, fail_message(
+        stock_code, "summary alias", result.analyst_summary, result.trader_summary
+    )
+    assert "交易员" not in result.analyst_summary
+    assert "交易员" not in result.trader_summary
+    for condition in result.invalidation_conditions:
+        assert condition.downstream_review_hint == condition.action_hint_for_trader
+        assert "交易员" not in condition.downstream_review_hint
+        assert "交易员" not in condition.action_hint_for_trader
 
     dumped = result.model_dump_json()
     assert validate_no_trading_instruction(dumped) == [], fail_message(

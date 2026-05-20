@@ -9,12 +9,21 @@ def sample_fundamental(strategy_type="resource_swing"):
         "status": "supportive",
         "confidence": "high",
         "fundamental_score": 76,
+        "analyst_summary": "基本面支持进入后续综合评估。",
+        "trader_summary": "基本面支持进入后续综合评估。",
         "missing_fields": ["financial_metrics.accounts_receivable"],
         "risk_flags": [
             {"name": "数据缺口风险", "severity": "medium", "monitor_method": "继续验证缺失字段", "evidence": []}
         ],
         "must_track_indicators": [],
-        "invalidation_conditions": [{"condition": "商品价格证据失效", "evidence_needed": "补充价格数据"}],
+        "invalidation_conditions": [
+            {
+                "condition": "商品价格证据失效",
+                "evidence_needed": "补充价格数据",
+                "downstream_review_hint": "需要后续分析层复核",
+                "action_hint_for_trader": "需要后续分析层复核",
+            }
+        ],
     }
 
 

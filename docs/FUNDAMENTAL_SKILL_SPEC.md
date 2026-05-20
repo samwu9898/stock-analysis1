@@ -1,14 +1,27 @@
 # fundamental_skill 输出规范
 
+## Neutral Naming Compatibility v1
+
+`FundamentalAnalysisResult` now includes neutral aliases while preserving the existing public schema contract:
+
+- `analyst_summary` is the recommended neutral fundamental-analysis summary.
+- `downstream_review_hint` is the recommended neutral follow-up review hint inside `invalidation_conditions`.
+- `trader_summary` is deprecated but retained for backward compatibility with historical JSON.
+- `action_hint_for_trader` is deprecated but retained for backward compatibility with historical JSON.
+
+New v1 outputs mirror `analyst_summary` to `trader_summary`, and `downstream_review_hint` to `action_hint_for_trader`, using neutral user-visible wording. AI layer and Dashboard display should prefer the new fields and use old fields only as fallback for legacy files.
+
+Current project boundaries remain unchanged: this project does not implement `trader_skill`, does not implement `technical_skill`, does not connect to trading accounts, and does not output trading advice.
+
 ## 1. 定位
 
-`fundamental_skill` 是 A 股交易决策 Copilot 中的基本面分析员。它只负责判断公司基本面、行业景气、财务质量、估值、风险、催化和后续跟踪指标。
+`fundamental_skill` 是 A 股基本面分析 Skill。它只负责判断公司基本面、行业景气、财务质量、估值、风险、催化和后续跟踪指标。
 
-它不判断买卖点，不输出交易指令，不给仓位建议，不给目标价，不负责最终交易纪律。它的输出对象是后续的 `trader_skill`，用于帮助交易员 Agent 决定是否需要结合技术面继续评估。
+它不判断买卖点，不输出交易指令，不给仓位建议，不给目标价，不负责最终交易纪律。它的输出对象是后续综合评估层；当前项目不实现 `trader_skill`，也不引入技术面继续评估。
 
 `fundamental_skill` 只能表达基本面状态：
 
-- `supportive`：基本面支持继续跟踪或交给交易员进一步评估。
+- `supportive`：基本面支持继续跟踪或进入后续综合评估。
 - `neutral`：基本面没有明显否定，但支持力度不足。
 - `negative`：基本面不支持。
 - `insufficient_data`：数据不足，不能下判断。
@@ -17,7 +30,7 @@
 
 - `fundamental_skill`：基本面分析员，输出结构化 JSON，覆盖公司基本面、行业、财务、估值、风险、催化和跟踪项。
 - `technical_skill`：技术面分析员，后续开发，负责趋势、量价、形态、波动和技术风险。
-- `trader_skill`：交易员决策模块，后续开发，读取基本面和技术面的结构化输出，执行最终交易纪律判断。
+- `trader_skill`：不在当前项目实现；未来若单独设计，必须另行定义边界和接口。
 
 本规范只覆盖 `fundamental_skill`。
 
@@ -28,7 +41,7 @@
 - `stock_name`：股票名称，可为空。
 - `analysis_date`：分析日期。
 - `strategy_type`：基本面适配的策略类型。
-- `status`：基本面是否支持交易员进一步评估。
+- `status`：基本面是否支持后续模块评估。
 - `confidence`：结论置信度。
 - `confidence_reason`：置信度理由。
 - `fundamental_score`：基本面评分，0-100。
@@ -43,7 +56,8 @@
 - `invalidation_conditions`：基本面判断失效条件，只能提示重新评估、暂停支持判断或更新分析。
 - `thesis_check`：对用户假设的验证情况。
 - `suitable_strategy_type`：适配的策略描述，不是交易指令。
-- `trader_summary`：给交易员 Agent 的简短基本面摘要，不得包含交易动作。
+- `analyst_summary`：推荐字段，中性的简短基本面摘要，不得包含交易动作。
+- `trader_summary`：deprecated，保留用于 backward compatibility；新展示层不应优先使用。
 - `data_sources`：数据来源、抓取时间、周期、成功状态和错误。
 - `data_timestamp`：本次结构化输出对应的数据时间戳。
 - `missing_fields`：缺失字段列表。
@@ -166,7 +180,8 @@
     {
       "condition": "资源品价格持续弱于基本面假设",
       "evidence_needed": "连续多个观察周期价格与库存数据恶化",
-      "action_hint_for_trader": "需要交易员重新评估"
+      "downstream_review_hint": "需要后续分析层复核",
+      "action_hint_for_trader": "需要后续分析层复核"
     }
   ],
   "thesis_check": {
@@ -530,15 +545,15 @@ python -m src.fundamental_skill.scoring_engine \
 
 `FundamentalResultAssembler` 是 `fundamental_skill` 的最终结构化输出装配层。它消费 `NormalizedFundamentalInput`、`StockClassificationResult`、`FundamentalFramework`、`DataReadinessPlan`、`AnalysisContext` 和 `FundamentalScoringResult`，并输出第一阶段定义的 `FundamentalAnalysisResult`。
 
-该结果供后续 `trader_skill` 使用，但仍然不是交易建议，也不包含技术面判断。
+该结果供后续综合评估层使用，但仍然不是交易建议，也不包含技术面判断。当前项目不实现 `trader_skill`。
 
 ### 13.2 FundamentalAnalysisResult 的用途
 
-`FundamentalAnalysisResult` 回答的是“基本面材料是否支持交给后续交易员 Agent 继续评估”。它包含公司业务摘要、财务质量、估值视角、行业周期、风险、催化、跟踪指标、证伪条件、数据来源、缺失字段和置信度。
+`FundamentalAnalysisResult` 回答的是“基本面材料是否支持进入后续综合评估”。它包含公司业务摘要、财务质量、估值视角、行业周期、风险、催化、跟踪指标、证伪条件、数据来源、缺失字段和置信度。
 
 ### 13.3 status 含义
 
-- `supportive`：基本面支持进入交易员 Agent 后续评估。
+- `supportive`：基本面支持进入后续综合评估。
 - `neutral`：基本面没有明显否定，但支持力度不足。
 - `negative`：基本面不支持继续评估，或风险明显高于逻辑。
 - `insufficient_data`：数据不足，不能可靠判断。

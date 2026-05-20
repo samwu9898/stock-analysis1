@@ -162,6 +162,44 @@ def _display(metric: Any) -> Any:
     return metric
 
 
+def _neutralize_legacy_review_text(value: Any) -> Any:
+    if not isinstance(value, str):
+        return value
+    replacements = {
+        "进入交易员 Agent 后续评估": "进入后续综合评估",
+        "需要交易员重新评估": "需要后续分析层复核",
+        "交给交易员进一步评估": "进入后续综合评估",
+        "交易员进一步评估": "后续模块评估",
+        "交易员 Agent": "后续分析层",
+    }
+    for old, new in replacements.items():
+        value = value.replace(old, new)
+    return value
+
+
+def _analyst_summary(fundamental: dict[str, Any]) -> Any:
+    return _neutralize_legacy_review_text(
+        fundamental.get("analyst_summary") or fundamental.get("trader_summary")
+    )
+
+
+def _normalized_invalidation_conditions(fundamental: dict[str, Any]) -> list[dict[str, Any]]:
+    rows = []
+    for item in _as_list(fundamental.get("invalidation_conditions")):
+        if not isinstance(item, dict):
+            continue
+        hint = _neutralize_legacy_review_text(
+            item.get("downstream_review_hint") or item.get("action_hint_for_trader")
+        )
+        row = {
+            "condition": item.get("condition"),
+            "evidence_needed": item.get("evidence_needed"),
+            "downstream_review_hint": hint,
+        }
+        rows.append(row)
+    return rows
+
+
 class EvidencePackBuilder:
     """Compress raw and fundamental JSON into an AI-consumable evidence pack."""
 
@@ -232,6 +270,7 @@ class EvidencePackBuilder:
                 "status": fundamental.get("status"),
                 "confidence": fundamental.get("confidence"),
                 "score": fundamental.get("fundamental_score"),
+                "analyst_summary": _analyst_summary(fundamental),
                 "missing_fields": [
                     {"field": field, "explanation": explain_missing_field(str(field))}
                     for field in missing_fields
@@ -259,7 +298,7 @@ class EvidencePackBuilder:
                 commodities=commodities,
                 risk_flags=risk_flags,
             ),
-            "invalidation_conditions": fundamental.get("invalidation_conditions") or [],
+            "invalidation_conditions": _normalized_invalidation_conditions(fundamental),
             "missing_fields": [
                 {"field": field, "explanation": explain_missing_field(str(field))}
                 for field in missing_fields

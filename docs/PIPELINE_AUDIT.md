@@ -1,5 +1,16 @@
 # Pipeline Facade Audit
 
+## Neutral Naming Compatibility v1
+
+The pipeline continues to orchestrate the same deterministic fundamental modules, but the public `FundamentalAnalysisResult` now includes neutral aliases:
+
+- `analyst_summary` is preferred by AI and Dashboard layers.
+- `downstream_review_hint` is preferred by AI and Dashboard layers.
+- `trader_summary` is deprecated but retained for backward compatibility.
+- `action_hint_for_trader` is deprecated but retained for backward compatibility.
+
+This compatibility migration mirrors values, preserves historical JSON readers, and avoids new user-visible "交易员 Agent" style wording in freshly assembled results. It does not change classification, readiness, scoring, status, confidence, or regression logic except for added neutral-field checks. The project still does not implement `trader_skill`, does not implement `technical_skill`, does not connect to trading accounts, and does not output trading advice.
+
 ## 1. 作用
 
 `FundamentalSkillPipeline` 是 `fundamental_skill` 的统一入口，用于把 raw JSON 一次性转换为最终 `FundamentalAnalysisResult`。

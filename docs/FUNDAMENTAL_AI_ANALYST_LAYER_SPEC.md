@@ -83,6 +83,17 @@ The evidence pack classifies evidence into:
 
 Each item records the evidence name, value, why it matters, affected dimension, source, and confidence effect. This is meant to make the AI report more audit-friendly and less template-like.
 
+### 3.4 Neutral Naming Compatibility v1
+
+The evidence pack and prompt use neutral handoff names:
+
+- `analyst_summary` is the recommended summary field.
+- `downstream_review_hint` is the recommended invalidation-condition review hint.
+- `trader_summary` is deprecated but retained in the source schema for backward compatibility.
+- `action_hint_for_trader` is deprecated but retained in the source schema for backward compatibility.
+
+When reading historical JSON that only has legacy fields, the builder falls back from `trader_summary` to `analyst_summary` and from `action_hint_for_trader` to `downstream_review_hint`. Prompt construction must not primarily expose the deprecated field names. This remains a fundamental-analysis layer only: no `trader_skill`, no `technical_skill`, no trading-account connection, and no trading advice.
+
 ## 4. Enhanced Must-Track Indicators
 
 The v1 layer adds `enhanced_must_track_indicators` because the dashboard-era indicators are not enough for AI analysis.

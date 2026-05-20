@@ -14,7 +14,7 @@ from src.fundamental_skill.validators import assert_valid_result, validate_no_tr
 
 FIXTURES = Path(__file__).parent / "fixtures"
 PROHIBITED_TERMS = ["买入", "卖出", "加仓", "减仓", "清仓", "止损", "止盈", "目标价", "满仓", "梭哈"]
-ALLOWED_ACTION_HINTS = {"需要交易员重新评估", "需要暂停基本面支持判断", "需要更新基本面分析"}
+ALLOWED_ACTION_HINTS = {"需要后续分析层复核", "需要暂停基本面支持判断", "需要更新基本面分析"}
 
 
 def build_result(name: str):
@@ -46,6 +46,10 @@ def test_resource_swing_good_assembles_valid_result():
     assert 0 <= result.fundamental_score <= 100
     assert result.risk_flags
     assert result.must_track_indicators
+    assert result.analyst_summary
+    assert result.trader_summary == result.analyst_summary
+    assert "交易员" not in result.analyst_summary
+    assert "交易员" not in result.trader_summary
     assert_valid_result(result)
 
 
@@ -165,7 +169,12 @@ def test_invalidation_action_hints_are_allowed_and_safe():
     *_, result = build_result("result_resource_swing_good.json")
 
     for condition in result.invalidation_conditions:
+        assert condition.downstream_review_hint in ALLOWED_ACTION_HINTS
         assert condition.action_hint_for_trader in ALLOWED_ACTION_HINTS
+        assert condition.action_hint_for_trader == condition.downstream_review_hint
+        assert "交易员" not in condition.downstream_review_hint
+        assert "交易员" not in condition.action_hint_for_trader
+        assert validate_no_trading_instruction(condition.downstream_review_hint) == []
         assert validate_no_trading_instruction(condition.action_hint_for_trader) == []
 
 

@@ -193,6 +193,7 @@ def summary_row(payload: dict[str, Any], source_path: str | Path | None = None) 
         "status": payload.get("status"),
         "confidence": payload.get("confidence"),
         "fundamental_score": payload.get("fundamental_score"),
+        "analyst_summary": fundamental_analyst_summary(payload),
         "risk_flags_count": len(risk_flags),
         "must_track_indicators_count": len(indicators),
         "missing_fields_count": len(missing_fields),
@@ -204,6 +205,43 @@ def summary_row(payload: dict[str, Any], source_path: str | Path | None = None) 
         ),
         "path": str(source_path) if source_path else None,
     }
+
+
+def neutralize_legacy_review_text(value: Any) -> Any:
+    if not isinstance(value, str):
+        return value
+    replacements = {
+        "进入交易员 Agent 后续评估": "进入后续综合评估",
+        "需要交易员重新评估": "需要后续分析层复核",
+        "交给交易员进一步评估": "进入后续综合评估",
+        "交易员进一步评估": "后续模块评估",
+        "交易员 Agent": "后续分析层",
+    }
+    for old, new in replacements.items():
+        value = value.replace(old, new)
+    return value
+
+
+def fundamental_analyst_summary(fundamental: dict[str, Any] | None) -> str | None:
+    value = (fundamental or {}).get("analyst_summary") or (fundamental or {}).get("trader_summary")
+    return neutralize_legacy_review_text(value)
+
+
+def invalidation_condition_rows(fundamental: dict[str, Any] | None) -> list[dict[str, Any]]:
+    rows = []
+    for item in as_list((fundamental or {}).get("invalidation_conditions")):
+        if not isinstance(item, dict):
+            continue
+        rows.append(
+            {
+                "condition": item.get("condition"),
+                "evidence_needed": item.get("evidence_needed"),
+                "downstream_review_hint": neutralize_legacy_review_text(
+                    item.get("downstream_review_hint") or item.get("action_hint_for_trader")
+                ),
+            }
+        )
+    return rows
 
 
 def ai_report_summary_row(payload: dict[str, Any], source_path: str | Path | None = None) -> dict[str, Any]:

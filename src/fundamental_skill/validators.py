@@ -26,20 +26,22 @@ def validate_result(result: FundamentalAnalysisResult) -> list[str]:
     """Validate final fundamental_skill output semantics."""
     errors: list[str] = []
 
-    summary_terms = validate_no_trading_instruction(result.trader_summary)
-    if summary_terms:
-        errors.append(
-            "trader_summary contains prohibited trading instruction terms: "
-            + ", ".join(summary_terms)
-        )
+    for field_name in ("analyst_summary", "trader_summary"):
+        summary_terms = validate_no_trading_instruction(getattr(result, field_name))
+        if summary_terms:
+            errors.append(
+                f"{field_name} contains prohibited trading instruction terms: "
+                + ", ".join(summary_terms)
+            )
 
     for idx, condition in enumerate(result.invalidation_conditions):
-        terms = validate_no_trading_instruction(condition.action_hint_for_trader)
-        if terms:
-            errors.append(
-                f"invalidation_conditions[{idx}].action_hint_for_trader contains "
-                f"prohibited terms: {', '.join(terms)}"
-            )
+        for field_name in ("downstream_review_hint", "action_hint_for_trader"):
+            terms = validate_no_trading_instruction(getattr(condition, field_name))
+            if terms:
+                errors.append(
+                    f"invalidation_conditions[{idx}].{field_name} contains "
+                    f"prohibited terms: {', '.join(terms)}"
+                )
 
     if result.confidence == "low":
         if not result.missing_fields and not result.confidence_reason.strip():
@@ -61,10 +63,10 @@ def validate_result(result: FundamentalAnalysisResult) -> list[str]:
 
     has_high_risk = any(risk.severity == "high" for risk in result.risk_flags)
     if has_high_risk:
-        summary = result.trader_summary
+        summary = result.analyst_summary
         if "高风险" not in summary and "需要重新评估" not in summary:
             errors.append(
-                "high severity risk_flags require trader_summary to mention "
+                "high severity risk_flags require analyst_summary to mention "
                 "高风险 or 需要重新评估"
             )
 

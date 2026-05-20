@@ -94,6 +94,9 @@ class FundamentalResultAssembler:
         cap_reasons = self._confidence_cap_reasons(classification, readiness, context)
         fundamental_score = self._fundamental_score(status, confidence, classification, scoring)
 
+        analyst_summary = self._analyst_summary(
+            status, confidence, classification, framework, readiness, context, cap_reasons
+        )
         result = FundamentalAnalysisResult(
             stock_code=normalized.stock_code,
             stock_name=normalized.stock_name,
@@ -115,9 +118,8 @@ class FundamentalResultAssembler:
             invalidation_conditions=self._invalidation_conditions(classification),
             thesis_check=self._thesis_check(user_thesis, normalized),
             suitable_strategy_type=framework.display_name,
-            trader_summary=self._trader_summary(
-                status, confidence, classification, framework, readiness, context, cap_reasons
-            ),
+            analyst_summary=analyst_summary,
+            trader_summary=analyst_summary,
             data_sources=normalized.data_sources,
             data_timestamp=normalized.generated_at,
             missing_fields=sorted(
@@ -920,7 +922,8 @@ class FundamentalResultAssembler:
             InvalidationCondition(
                 condition=condition,
                 evidence_needed=evidence,
-                action_hint_for_trader="需要交易员重新评估",
+                downstream_review_hint="需要后续分析层复核",
+                action_hint_for_trader="需要后续分析层复核",
             )
             for condition, evidence in pairs[:4]
         ]
@@ -950,7 +953,7 @@ class FundamentalResultAssembler:
             missing_evidence=[] if supporting else ["缺少可直接验证用户假设的数据"],
         )
 
-    def _trader_summary(
+    def _analyst_summary(
         self,
         status,
         confidence,
@@ -961,7 +964,7 @@ class FundamentalResultAssembler:
         cap_reasons: list[str],
     ) -> str:
         status_meaning = {
-            "supportive": "基本面支持进入交易员 Agent 后续评估",
+            "supportive": "基本面支持进入后续综合评估",
             "neutral": "基本面没有明显否定，但支持力度不足",
             "negative": "基本面不支持继续评估，或风险明显高于逻辑",
             "insufficient_data": "数据不足，不能可靠判断",
@@ -1009,6 +1012,21 @@ class FundamentalResultAssembler:
             f"基本面状态为 {status}，含义是：{status_meaning}；置信度 {confidence}。"
             f"strategy_type 为 {classification.strategy_type}，公司属于{framework.display_name}。"
             f"主要限制因素：{limitation_text}。{risk_prefix}主要风险包括：{risks}。"
+        )
+
+    def _trader_summary(
+        self,
+        status,
+        confidence,
+        classification,
+        framework,
+        readiness,
+        context,
+        cap_reasons: list[str],
+    ) -> str:
+        """Deprecated compatibility wrapper; use _analyst_summary for new code."""
+        return self._analyst_summary(
+            status, confidence, classification, framework, readiness, context, cap_reasons
         )
 
     def _trend(self, value, label) -> str | None:

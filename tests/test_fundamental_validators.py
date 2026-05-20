@@ -92,6 +92,14 @@ def test_validate_result_blocks_trading_advice_in_trader_summary():
     assert any("trader_summary" in error for error in errors)
 
 
+def test_validate_result_blocks_trading_advice_in_analyst_summary():
+    result = sample_result(analyst_summary="基本面很好，建议买入。", trader_summary="基本面中性摘要。")
+
+    errors = validate_result(result)
+
+    assert any("analyst_summary" in error for error in errors)
+
+
 def test_insufficient_data_score_over_50_is_invalid():
     result = sample_result(status="insufficient_data", fundamental_score=60)
 
@@ -125,6 +133,7 @@ def test_validate_result_catches_action_hint_if_model_construct_bypasses_schema(
     invalid_condition = InvalidationCondition.model_construct(
         condition="核心假设失效",
         evidence_needed="关键数据恶化",
+        downstream_review_hint="需要清仓或止损",
         action_hint_for_trader="需要清仓或止损",
     )
     result = sample_result(invalidation_conditions=[invalid_condition])
@@ -132,6 +141,37 @@ def test_validate_result_catches_action_hint_if_model_construct_bypasses_schema(
     errors = validate_result(result)
 
     assert any("action_hint_for_trader" in error for error in errors)
+
+
+def test_validate_result_catches_downstream_review_hint_if_model_construct_bypasses_schema():
+    invalid_condition = InvalidationCondition.model_construct(
+        condition="核心假设失效",
+        evidence_needed="关键数据恶化",
+        downstream_review_hint="需要清仓或止损",
+        action_hint_for_trader="需要后续分析层复核",
+    )
+    result = sample_result(invalidation_conditions=[invalid_condition])
+
+    errors = validate_result(result)
+
+    assert any("downstream_review_hint" in error for error in errors)
+
+
+def test_trader_field_name_does_not_trigger_validator_error():
+    result = sample_result(
+        analyst_summary="基本面摘要，不含动作建议。",
+        trader_summary="基本面摘要，不含动作建议。",
+        invalidation_conditions=[
+            InvalidationCondition(
+                condition="核心假设失效",
+                evidence_needed="关键数据恶化",
+                downstream_review_hint="需要后续分析层复核",
+                action_hint_for_trader="需要后续分析层复核",
+            )
+        ],
+    )
+
+    assert validate_result(result) == []
 
 
 def test_high_risk_requires_warning_in_trader_summary():

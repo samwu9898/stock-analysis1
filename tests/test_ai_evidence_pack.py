@@ -15,7 +15,29 @@ def test_build_evidence_pack_from_dicts():
     assert pack["stock"]["code"] == "000426"
     assert pack["financial_metrics"]["gross_margin"]["display_value"] == "40.00%"
     assert pack["confidence_basis"]["risk_flags_count"] == 1
+    assert pack["confidence_basis"]["analyst_summary"] == "基本面支持进入后续综合评估。"
+    assert "trader_summary" not in pack["confidence_basis"]
+    assert pack["invalidation_conditions"][0]["downstream_review_hint"] == "需要后续分析层复核"
+    assert "action_hint_for_trader" not in pack["invalidation_conditions"][0]
     assert pack["source_trace_summary"][0]["trace_count"] >= 1
+
+
+def test_evidence_pack_falls_back_from_legacy_fields_with_neutral_text():
+    fundamental = sample_fundamental()
+    fundamental.pop("analyst_summary")
+    fundamental["trader_summary"] = "基本面支持交给交易员进一步评估。"
+    fundamental["invalidation_conditions"] = [
+        {
+            "condition": "商品价格证据失效",
+            "evidence_needed": "补充价格数据",
+            "action_hint_for_trader": "需要交易员重新评估",
+        }
+    ]
+
+    pack = EvidencePackBuilder().build(fundamental, sample_raw())
+
+    assert pack["confidence_basis"]["analyst_summary"] == "基本面支持进入后续综合评估。"
+    assert pack["invalidation_conditions"][0]["downstream_review_hint"] == "需要后续分析层复核"
 
 
 def test_missing_raw_file_has_clear_error(tmp_path):

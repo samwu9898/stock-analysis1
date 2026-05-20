@@ -87,7 +87,28 @@ def test_fundamental_analysis_result_can_be_constructed():
     result = sample_result()
 
     assert result.schema_version == "fundamental.v1"
+    assert result.analyst_summary == result.trader_summary
+    assert result.invalidation_conditions[0].downstream_review_hint == (
+        result.invalidation_conditions[0].action_hint_for_trader
+    )
     assert result.model_dump_json()
+
+
+def test_new_neutral_alias_fields_are_public_schema_contract():
+    result_fields = FundamentalAnalysisResult.model_fields
+    condition_fields = InvalidationCondition.model_fields
+
+    assert "analyst_summary" in result_fields
+    assert "trader_summary" in result_fields
+    assert "downstream_review_hint" in condition_fields
+    assert "action_hint_for_trader" in condition_fields
+
+
+def test_historical_old_field_payload_fills_neutral_aliases():
+    result = sample_result()
+
+    assert result.analyst_summary == "基本面支持交给交易员进一步评估。"
+    assert result.invalidation_conditions[0].downstream_review_hint == "需要交易员重新评估"
 
 
 def test_fundamental_score_over_100_raises():

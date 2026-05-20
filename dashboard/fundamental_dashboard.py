@@ -225,6 +225,11 @@ def render_evidence_pack_viewer(evidence_pack: dict | None) -> None:
 def render_raw_data_viewer(fundamental: dict | None, raw: dict | None) -> None:
     with st.expander("Evidence / Raw Data", expanded=False):
         st.markdown("**Legacy Fundamental Tables**")
+        summary = helpers.fundamental_analyst_summary(fundamental)
+        if summary:
+            st.markdown("**Analyst Summary**")
+            st.write(summary)
+        show_table(helpers.invalidation_condition_rows(fundamental), "No invalidation conditions.")
         show_table(helpers.risk_flag_rows(fundamental), "No risk flags.")
         show_table(helpers.must_track_indicator_rows(fundamental), "No deterministic must-track indicators.")
         show_table([helpers.financial_quality_row(fundamental, raw)], "No financial quality data.")
