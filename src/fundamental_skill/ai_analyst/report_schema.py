@@ -7,7 +7,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
-from .safety import check_text_safety
+from .safety import check_text_safety, detect_garbled_text
 
 
 FundamentalView = Literal[
@@ -55,18 +55,26 @@ def validate_ai_report(payload: dict[str, Any]) -> dict[str, Any]:
     try:
         model = AIReportModel.model_validate(payload)
     except ValidationError as exc:
+        quality = detect_garbled_text(payload)
         return {
             "valid": False,
             "schema_errors": exc.errors(),
             "safety": check_text_safety(payload, allow_policy_context=False),
+            "quality": quality,
+            "report_quality_status": quality["status"],
+            "warnings": quality["warnings"],
             "report": None,
         }
 
     dumped = model.model_dump()
     safety = check_text_safety(dumped, allow_policy_context=False)
+    quality = detect_garbled_text(dumped)
     return {
         "valid": safety["safe"],
         "schema_errors": [],
         "safety": safety,
+        "quality": quality,
+        "report_quality_status": quality["status"],
+        "warnings": quality["warnings"],
         "report": dumped,
     }

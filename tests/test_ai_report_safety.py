@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from src.fundamental_skill.ai_analyst.report_schema import validate_ai_report
-from src.fundamental_skill.ai_analyst.safety import check_text_safety
+from src.fundamental_skill.ai_analyst.safety import check_text_safety, detect_garbled_text
 
 
 def valid_report():
@@ -33,6 +33,7 @@ def test_report_schema_accepts_valid_view():
 
     assert result["valid"] is True
     assert result["schema_errors"] == []
+    assert result["report_quality_status"] == "ok"
 
 
 def test_report_schema_rejects_invalid_view():
@@ -50,3 +51,33 @@ def test_safety_detects_forbidden_terms_in_report_body():
 
     assert result["safe"] is False
     assert "买入" in result["blocked_terms"]
+
+
+def test_detects_garbled_question_mark_ai_report_text():
+    report = valid_report()
+    report["executive_summary"] = "????????????????????"
+
+    quality = detect_garbled_text(report)
+    validation = validate_ai_report(report)
+
+    assert quality["garbled_text_detected"] is True
+    assert quality["status"] == "garbled_text_detected"
+    assert validation["schema_errors"] == []
+    assert validation["report_quality_status"] == "garbled_text_detected"
+    assert validation["warnings"]
+
+
+def test_normal_chinese_report_is_not_garbled():
+    quality = detect_garbled_text(valid_report())
+
+    assert quality["garbled_text_detected"] is False
+    assert quality["findings"] == []
+
+
+def test_single_english_question_mark_is_not_garbled():
+    report = valid_report()
+    report["executive_summary"] = "What changed this quarter? Revenue evidence is still limited."
+
+    quality = detect_garbled_text(report)
+
+    assert quality["garbled_text_detected"] is False

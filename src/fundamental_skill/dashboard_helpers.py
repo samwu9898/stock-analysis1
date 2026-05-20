@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from .ai_analyst.report_schema import validate_ai_report
-from .ai_analyst.safety import check_text_safety
+from .ai_analyst.safety import check_text_safety, detect_garbled_text, is_garbled_text
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -207,11 +207,14 @@ def summary_row(payload: dict[str, Any], source_path: str | Path | None = None) 
 
 
 def ai_report_summary_row(payload: dict[str, Any], source_path: str | Path | None = None) -> dict[str, Any]:
+    quality = detect_garbled_text(payload)
     return {
         "stock_code": payload.get("stock_code") or code_from_path(source_path, prefix="ai_report_"),
         "stock_name": payload.get("stock_name"),
         "fundamental_view": payload.get("fundamental_view"),
-        "executive_summary": payload.get("executive_summary"),
+        "executive_summary": clean_ai_report_text(payload, "executive_summary"),
+        "report_quality_status": quality["status"],
+        "garbled_text_detected": quality["garbled_text_detected"],
         "confidence_breakdown_count": len(as_list(payload.get("confidence_breakdown"))),
         "supporting_evidence_count": len(as_list(payload.get("supporting_evidence"))),
         "limiting_evidence_count": len(as_list(payload.get("limiting_evidence"))),
@@ -309,15 +312,21 @@ def ai_report_status(
             "safety_safe": True,
             "restricted_terms_count": 0,
             "violations": [],
+            "report_quality_status": "missing",
+            "garbled_text_detected": False,
+            "quality_warnings": [],
+            "garbled_text_findings": [],
             "can_display_body": False,
         }
     schema = validate_ai_report(ai_report)
     json_safety = schema.get("safety", {})
     md_safety = check_text_safety(ai_report_markdown or "", allow_policy_context=False)
+    quality = schema.get("quality") or detect_garbled_text(ai_report)
     blocked_terms = sorted(set(as_list(json_safety.get("blocked_terms")) + as_list(md_safety.get("blocked_terms"))))
     violations = as_list(json_safety.get("violations")) + as_list(md_safety.get("violations"))
     schema_valid = bool(schema.get("valid")) and not schema.get("schema_errors")
     safety_safe = bool(json_safety.get("safe", True)) and bool(md_safety.get("safe", True))
+    garbled = bool(quality.get("garbled_text_detected"))
     return {
         "schema_valid": schema_valid,
         "schema_errors": schema.get("schema_errors", []),
@@ -325,8 +334,19 @@ def ai_report_status(
         "restricted_terms_count": len(blocked_terms),
         "blocked_terms": blocked_terms,
         "violations": violations,
-        "can_display_body": schema_valid and safety_safe,
+        "report_quality_status": quality.get("status", "ok"),
+        "garbled_text_detected": garbled,
+        "quality_warnings": as_list(quality.get("warnings")),
+        "garbled_text_findings": as_list(quality.get("findings")),
+        "can_display_body": schema_valid and safety_safe and not garbled,
     }
+
+
+def clean_ai_report_text(ai_report: dict[str, Any] | None, field: str, fallback: str | None = None) -> str | None:
+    value = (ai_report or {}).get(field)
+    if value in (None, "") or is_garbled_text(value):
+        return fallback
+    return str(value)
 
 
 def evidence_pack_summary(evidence_pack: dict[str, Any] | None) -> dict[str, Any]:

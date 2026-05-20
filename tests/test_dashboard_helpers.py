@@ -314,6 +314,8 @@ def test_ai_report_status_schema_and_safety():
     assert status["schema_valid"] is True
     assert status["safety_safe"] is True
     assert status["restricted_terms_count"] == 0
+    assert status["report_quality_status"] == "ok"
+    assert status["garbled_text_detected"] is False
     assert status["can_display_body"] is True
 
 
@@ -326,6 +328,21 @@ def test_ai_report_status_detects_safety_violation():
     assert status["safety_safe"] is False
     assert status["restricted_terms_count"] == 1
     assert status["can_display_body"] is False
+
+
+def test_ai_report_status_detects_garbled_text_warning():
+    report = sample_ai_report()
+    report["executive_summary"] = "????????????????????"
+
+    status = helpers.ai_report_status(report, "clean markdown")
+
+    assert status["schema_valid"] is True
+    assert status["safety_safe"] is True
+    assert status["report_quality_status"] == "garbled_text_detected"
+    assert status["garbled_text_detected"] is True
+    assert status["quality_warnings"]
+    assert status["can_display_body"] is False
+    assert helpers.clean_ai_report_text(report, "executive_summary", "fallback") == "fallback"
 
 
 def test_scan_available_stocks_prefers_ai_report(tmp_path):
