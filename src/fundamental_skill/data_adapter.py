@@ -303,6 +303,9 @@ class FundamentalDataAdapter:
                 inventory=_to_float(_get_any(row, ("inventory", "存货"))),
                 accounts_receivable=_to_float(_get_any(row, ("accounts_receivable", "应收账款"))),
                 contract_liabilities=_to_float(_get_any(row, ("contract_liabilities", "合同负债"))),
+                r_and_d_expense=_to_float(_get_any(row, ("r_and_d_expense", "研发费用"))),
+                r_and_d_expense_ratio=_to_float(_get_any(row, ("r_and_d_expense_ratio", "研发费用率"))),
+                capex=_to_float(_get_any(row, ("capex", "资本开支"))),
             )
             if any(value is not None for key, value in metric.model_dump().items() if key != "period"):
                 metrics.append(metric)

@@ -251,3 +251,32 @@ Field-level `source_trace` now records `field_name`, `value`, `source_function`,
 `contract_liabilities` is only an order-visibility proxy. Its scope note is: `合同负债可作为订单可见度 proxy，但不等同于真实订单或 backlog。`
 
 v2.2a still does not connect R&D expense, R&D expense ratio, capex, capex ratio, customer concentration, new-business orders, domestic-substitution revenue, production/unit cost, cobalt price, or molybdenum price. R&D and Capex require a separate Source Expansion Probe before connector integration.
+
+## RealDataConnector v2.3a Update
+
+`RealDataConnector` has moved to `real_data_connector.v2.3a` for a narrow R&D / Capex financial-statement integration. v2.3a only adds three fields to `blocks.financial_indicator`:
+
+- `r_and_d_expense`
+- `r_and_d_expense_ratio`
+- `capex`
+
+All three are sourced from `stock_financial_report_sina` statement tables:
+
+- `r_and_d_expense` comes from the profit-statement column `研发费用`.
+- `r_and_d_expense_ratio` is derived as `r_and_d_expense / revenue * 100` only when `研发费用` and profit-statement revenue share the same `source_period`.
+- `capex` comes from the cash-flow statement column `购建固定资产、无形资产和其他长期资产所支付的现金`.
+
+v2.3a does not connect `capex_ratio`, `depreciation_amortization`, customer concentration, new-business orders, domestic-substitution revenue, production/unit cost, technical indicators, `technical_skill`, or `trader_skill`.
+
+Trace and confidence rules:
+
+- `period_confidence=high` when `source_period` is a recognizable report date such as `20260331`; otherwise `source_period="unknown"` and `period_confidence=low`.
+- Amount fields use `unit="raw_statement_unit"` and `unit_confidence=low`.
+- `r_and_d_expense_ratio` uses `unit="%"` and `unit_confidence=high`.
+- All three fields are marked `cumulative_or_single_quarter="cumulative"` as reported by the statement rows.
+- Every field records `source_trace` with field name, value, source function, source column or row, source period, confidence fields, unit fields, statement type, derived flag, derivation method, and scope note.
+
+Interpretation limits:
+
+- R&D expense and R&D expense ratio can describe research-investment amount and intensity, but they do not confirm technology barriers, product success, or commercialization.
+- Capex can describe cash paid to purchase or construct long-term assets, but it does not confirm capacity release, project success, or future growth certainty.

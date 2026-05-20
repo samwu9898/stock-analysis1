@@ -21,7 +21,7 @@ from .external_commodity_price_connector import ExternalCommodityPriceConnector
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CACHE_DIR = PROJECT_ROOT / "cache" / "real_data"
-CONNECTOR_VERSION = "real_data_connector.v2.2a"
+CONNECTOR_VERSION = "real_data_connector.v2.3a"
 BLOCK_NAMES = ("basic_info", "financial_indicator", "valuation", "business_composition", "news")
 
 
@@ -240,7 +240,7 @@ class RealDataConnector:
         raw["meta"]["cache_hit"] = False
         raw["meta"]["cache_path"] = str(cache_path)
 
-        if raw["errors"] and cache_path.exists():
+        if self._should_fallback_to_cache(raw["errors"]) and cache_path.exists():
             cached = self._read_cache(cache_path)
             if cached is not None:
                 cached.setdefault("errors", []).extend(raw["errors"])
@@ -253,6 +253,9 @@ class RealDataConnector:
         self._write_json(cache_path, raw)
         self._write_output(raw, output_path)
         return raw
+
+    def _should_fallback_to_cache(self, errors: list[str]) -> bool:
+        return any(not str(error).startswith("news:") for error in errors)
 
     def _load_akshare(self):
         try:
@@ -290,7 +293,17 @@ class RealDataConnector:
         payload = ak.stock_financial_abstract(symbol=code)
         metrics = self._parse_financial_abstract(payload)
         self._merge_sina_balance_sheet_fields(metrics, code, ak)
+        self._merge_sina_rd_capex_fields(metrics, code, ak)
         return metrics
+
+    def _call_sina_statement(self, code: str, ak: Any, statement_name: str) -> Any:
+        try:
+            return ak.stock_financial_report_sina(stock=_prefixed_symbol(code), symbol=statement_name)
+        except TypeError:
+            try:
+                return ak.stock_financial_report_sina(stock=code, symbol=statement_name)
+            except TypeError:
+                return ak.stock_financial_report_sina(code, statement_name)
 
     def _parse_financial_abstract(self, payload: Any) -> list[dict[str, Any]]:
         rows = _records(payload)
@@ -382,6 +395,192 @@ class RealDataConnector:
                 value_confidence=item.get("value_confidence"),
                 scope_note=item.get("scope_note"),
             )
+
+    def _merge_sina_rd_capex_fields(self, metrics: list[dict[str, Any]], code: str, ak: Any) -> None:
+        if not metrics:
+            metrics.append({})
+        metric = metrics[0]
+
+        profit_values: dict[str, dict[str, Any]] = {}
+        try:
+            profit_payload = self._call_sina_statement(code, ak, "利润表")
+            profit_values = self._parse_sina_profit_sheet_fields(profit_payload)
+        except Exception as exc:
+            self._warn("financial_indicator", f"stock_financial_report_sina profit_sheet failed: {exc}")
+
+        r_and_d = profit_values.get("r_and_d_expense")
+        revenue = profit_values.get("revenue")
+        if r_and_d:
+            metric["r_and_d_expense"] = r_and_d.get("value")
+            if metric.get("period") in (None, "", "unknown") and r_and_d.get("source_period") != "unknown":
+                metric["period"] = r_and_d.get("source_period")
+            if r_and_d.get("value") is not None:
+                self._add_financial_statement_trace("r_and_d_expense", r_and_d, "profit_sheet", derived=False)
+
+        if r_and_d and revenue:
+            if r_and_d.get("source_period") == revenue.get("source_period") and r_and_d.get("source_period") != "unknown":
+                ratio = _ratio_percent(_safe_float(r_and_d.get("value")), _safe_float(revenue.get("value")))
+                if ratio is not None:
+                    ratio_item = {
+                        "value": ratio,
+                        "source_column_or_row": r_and_d.get("source_column_or_row"),
+                        "source_period": r_and_d.get("source_period"),
+                        "period_confidence": r_and_d.get("period_confidence"),
+                        "value_confidence": "medium",
+                        "unit": "%",
+                        "unit_confidence": "high",
+                        "cumulative_or_single_quarter": "cumulative",
+                        "scope_note": self._rd_capex_scope_note("r_and_d_expense_ratio"),
+                    }
+                    method = "r_and_d_expense / revenue * 100, same source_period only"
+                    metric["r_and_d_expense_ratio"] = ratio
+                    self._add_financial_statement_trace(
+                        "r_and_d_expense_ratio",
+                        ratio_item,
+                        "profit_sheet",
+                        derived=True,
+                        derivation_method=method,
+                    )
+            else:
+                self._warn(
+                    "financial_indicator",
+                    "r_and_d_expense_ratio not derived because r_and_d_expense and revenue source_period differ",
+                )
+        elif r_and_d:
+            self._warn("financial_indicator", "r_and_d_expense_ratio not derived because revenue is missing from profit sheet")
+
+        try:
+            cashflow_payload = self._call_sina_statement(code, ak, "现金流量表")
+            cashflow_values = self._parse_sina_cashflow_sheet_fields(cashflow_payload)
+        except Exception as exc:
+            self._warn("financial_indicator", f"stock_financial_report_sina cash_flow_sheet failed: {exc}")
+            cashflow_values = {}
+
+        capex = cashflow_values.get("capex")
+        if capex:
+            metric["capex"] = capex.get("value")
+            if metric.get("period") in (None, "", "unknown") and capex.get("source_period") != "unknown":
+                metric["period"] = capex.get("source_period")
+            if capex.get("value") is not None:
+                self._add_financial_statement_trace("capex", capex, "cash_flow_sheet", derived=False)
+
+    def _add_financial_statement_trace(
+        self,
+        field_name: str,
+        item: dict[str, Any],
+        statement_type: str,
+        derived: bool,
+        derivation_method: str | None = None,
+    ) -> None:
+        self._add_trace(
+            "financial_indicator",
+            field_name,
+            "stock_financial_report_sina",
+            item.get("source_column_or_row"),
+            item.get("source_period"),
+            item.get("value"),
+            derived,
+            derivation_method,
+            source_column=item.get("source_column_or_row"),
+            source_column_or_row=item.get("source_column_or_row"),
+            source_function="stock_financial_report_sina",
+            statement_type=statement_type,
+            period_confidence=item.get("period_confidence"),
+            value_confidence=item.get("value_confidence"),
+            unit=item.get("unit"),
+            unit_confidence=item.get("unit_confidence"),
+            cumulative_or_single_quarter=item.get("cumulative_or_single_quarter"),
+            scope_note=item.get("scope_note"),
+        )
+
+    def _parse_sina_profit_sheet_fields(self, payload: Any) -> dict[str, dict[str, Any]]:
+        rows = _records(payload)
+        if not rows:
+            self._warn("financial_indicator", "stock_financial_report_sina profit_sheet returned no rows")
+            return {}
+        columns = [str(col) for col in getattr(payload, "columns", rows[0].keys())]
+        out: dict[str, dict[str, Any]] = {}
+        rd = self._first_statement_amount(rows, columns, ("研发费用",))
+        revenue = self._first_statement_amount(rows, columns, ("营业总收入", "营业收入"))
+        if rd:
+            rd["scope_note"] = self._rd_capex_scope_note("r_and_d_expense")
+            out["r_and_d_expense"] = rd
+        else:
+            self._warn("financial_indicator", "r_and_d_expense: stock_financial_report_sina missing profit-sheet column")
+        if revenue:
+            out["revenue"] = revenue
+        else:
+            self._warn("financial_indicator", "r_and_d_expense_ratio: stock_financial_report_sina profit-sheet revenue missing")
+        return out
+
+    def _parse_sina_cashflow_sheet_fields(self, payload: Any) -> dict[str, dict[str, Any]]:
+        rows = _records(payload)
+        if not rows:
+            self._warn("financial_indicator", "stock_financial_report_sina cash_flow_sheet returned no rows")
+            return {}
+        columns = [str(col) for col in getattr(payload, "columns", rows[0].keys())]
+        capex = self._first_statement_amount(
+            rows,
+            columns,
+            (
+                "购建固定资产、无形资产和其他长期资产所支付的现金",
+                "购建固定资产、无形资产和其他长期资产支付的现金",
+                "购建固定资产、无形资产和其他长期资产支付现金",
+            ),
+        )
+        if capex:
+            capex["scope_note"] = self._rd_capex_scope_note("capex")
+            return {"capex": capex}
+        self._warn("financial_indicator", "capex: stock_financial_report_sina missing cash-flow long-term-asset cash-paid column")
+        return {}
+
+    def _first_statement_amount(
+        self,
+        rows: list[dict[str, Any]],
+        columns: list[str],
+        source_columns: tuple[str, ...],
+    ) -> dict[str, Any] | None:
+        source_column = next((column for column in source_columns if column in columns or column in rows[0]), None)
+        if source_column is None:
+            return None
+        selected_row = None
+        selected_value = None
+        for row in rows:
+            value = _safe_float(row.get(source_column))
+            if value is not None:
+                selected_row = row
+                selected_value = value
+                break
+        if selected_row is None:
+            return None
+        source_period, period_confidence = self._statement_source_period(selected_row)
+        return {
+            "value": selected_value,
+            "source_column_or_row": source_column,
+            "source_period": source_period,
+            "period_confidence": period_confidence,
+            "value_confidence": "medium",
+            "unit": "raw_statement_unit",
+            "unit_confidence": "low",
+            "cumulative_or_single_quarter": "cumulative",
+        }
+
+    def _statement_source_period(self, row: dict[str, Any]) -> tuple[str, str]:
+        source_period = str(row.get("报告日") or row.get("报告日期") or row.get("报告期") or "")
+        if re.fullmatch(r"(?:19|20)\d{6}", source_period):
+            return source_period, "high"
+        if re.fullmatch(r"(?:19|20)\d{2}-\d{2}-\d{2}", source_period):
+            return source_period, "high"
+        return "unknown", "low"
+
+    def _rd_capex_scope_note(self, field_name: str) -> str:
+        if field_name == "r_and_d_expense":
+            return "研发费用为利润表费用金额字段，不等同于研发人员数量、研发项目数量或技术壁垒。"
+        if field_name == "r_and_d_expense_ratio":
+            return "研发费用率由研发费用除以同报告期营业收入派生，用于观察研发强度，不等同于技术壁垒已确认。"
+        if field_name == "capex":
+            return "capex 为购建固定资产、无形资产和其他长期资产支付现金，不等同于产能确定释放或未来增长确定性。"
+        return ""
 
     def _parse_sina_balance_sheet_fields(self, payload: Any) -> dict[str, dict[str, Any]]:
         rows = _records(payload)
@@ -750,6 +949,9 @@ class RealDataConnector:
         statement_type: str | None = None,
         period_confidence: str | None = None,
         value_confidence: str | None = None,
+        unit: str | None = None,
+        unit_confidence: str | None = None,
+        cumulative_or_single_quarter: str | None = None,
         scope_note: str | None = None,
     ) -> None:
         trace = {
@@ -777,6 +979,12 @@ class RealDataConnector:
             trace["period_confidence"] = period_confidence
         if value_confidence is not None:
             trace["value_confidence"] = value_confidence
+        if unit is not None:
+            trace["unit"] = unit
+        if unit_confidence is not None:
+            trace["unit_confidence"] = unit_confidence
+        if cumulative_or_single_quarter is not None:
+            trace["cumulative_or_single_quarter"] = cumulative_or_single_quarter
         if scope_note is not None:
             trace["scope_note"] = scope_note
         self._source_traces.setdefault(block_name, []).append(trace)
@@ -844,6 +1052,9 @@ class RealDataConnector:
                 "inventory",
                 "accounts_receivable",
                 "contract_liabilities",
+                "r_and_d_expense",
+                "r_and_d_expense_ratio",
+                "capex",
             ],
             "valuation": ["pe_ttm", "pb", "ps", "market_cap", "dividend_yield"],
             "business_composition": ["segment_name", "revenue", "revenue_ratio", "gross_margin"],

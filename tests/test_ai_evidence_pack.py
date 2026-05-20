@@ -3,6 +3,7 @@
 import pytest
 
 from src.fundamental_skill.ai_analyst.evidence_pack import EvidencePackBuilder, explain_missing_field
+from scripts.audit_must_have_indicator_coverage import build_row
 
 from tests.ai_test_fixtures import sample_fundamental, sample_raw
 
@@ -62,9 +63,11 @@ def test_semiconductor_generates_inventory_order_rd_items():
     pack = EvidencePackBuilder().build(sample_fundamental("semiconductor_cycle"), sample_raw())
     names = {item["indicator_name"]: item for item in pack["enhanced_must_track_indicators"]}
 
-    assert {"存货", "订单 / 合同负债", "研发投入"}.issubset(names)
+    assert {"存货", "订单 / 合同负债", "研发费用率", "资本开支"}.issubset(names)
     assert names["订单 / 合同负债"]["current_status"] == "partial_proxy"
     assert names["订单 / 合同负债"]["scope_note"] == "合同负债可作为订单可见度 proxy，但不等同于真实订单或 backlog。"
+    assert names["研发费用率"]["current_status"] == "available"
+    assert names["资本开支"]["current_status"] == "available"
 
 
 def test_ratio_fields_get_display_values_and_unit_assumptions():
@@ -80,6 +83,35 @@ def test_ratio_fields_get_display_values_and_unit_assumptions():
     assert pack["business_composition"][0]["revenue_ratio"]["display_value"] == "59.93%"
     assert "unit_assumption" in pack["financial_metrics"]["revenue_yoy"]
     assert "unit_assumption" in pack["financial_metrics"]["net_profit_yoy"]
+
+
+def test_v23a_evidence_pack_reads_rd_capex_fields_and_keeps_exclusions():
+    pack = EvidencePackBuilder().build(sample_fundamental("advanced_manufacturing_growth"), sample_raw())
+    financial = pack["financial_metrics"]
+    names = {item["indicator_name"]: item for item in pack["enhanced_must_track_indicators"]}
+
+    assert financial["r_and_d_expense"] == 17755979.09
+    assert financial["r_and_d_expense_ratio"]["raw_value"] == 0.8336652584671204
+    assert financial["r_and_d_expense_ratio"]["display_value"] == "0.83%"
+    assert financial["r_and_d_expense_ratio"]["unit_confidence"] == "high"
+    assert financial["capex"] == 229152931.6
+    assert "capex_ratio" not in financial
+    assert "depreciation_amortization" not in financial
+    assert names["研发费用率"]["current_status"] == "available"
+    assert names["新业务收入或订单"]["current_status"] == "missing"
+    assert names["大客户收入占比"]["current_status"] == "missing"
+    assert not any(item["evidence_name"] == "研发费用率" for item in pack["unknown_or_missing_evidence"])
+
+
+def test_must_have_audit_counts_v23a_rd_capex_as_available():
+    fundamental = sample_fundamental("semiconductor_cycle")
+    pack = EvidencePackBuilder().build(fundamental, sample_raw())
+
+    rd_row = build_row(pack, fundamental, "研发费用率")
+    capex_row = build_row(pack, fundamental, "资本开支")
+
+    assert rd_row["coverage_status"] == "available"
+    assert capex_row["coverage_status"] == "available"
 
 
 def test_confidence_breakdown_and_evidence_classification_are_populated():

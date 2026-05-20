@@ -173,4 +173,21 @@ After `RealDataConnector v2.2a`, the evidence pack can surface these additional 
 
 The fields are sourced from `stock_financial_report_sina(indicator="资产负债表")`, with period binding from `报告日`. `inventory` and `accounts_receivable` can clear working-capital missing indicators when their values are present. `contract_liabilities` can only be shown as an order-visibility proxy and must keep the scope note that it is not real orders or backlog.
 
-The AI analyst layer must continue marking R&D expense, R&D expense ratio, capex, capex ratio, customer concentration, new-business orders, domestic-substitution revenue, production/unit cost, cobalt price, and molybdenum price as missing or outside scope until separate source-expansion work is completed.
+The AI analyst layer must continue marking capex ratio, customer concentration, new-business orders, domestic-substitution revenue, production/unit cost, cobalt price, and molybdenum price as missing or outside scope until separate source-expansion work is completed.
+
+## 11. Evidence Pack v2.3a Field Note
+
+After `RealDataConnector v2.3a`, the evidence pack can surface three additional `financial_metrics` fields when present in raw JSON:
+
+- `r_and_d_expense`
+- `r_and_d_expense_ratio`
+- `capex`
+
+The fields are sourced from `stock_financial_report_sina`. Amount fields keep `unit="raw_statement_unit"` and `unit_confidence=low`; `r_and_d_expense_ratio` keeps `unit="%"` and `unit_confidence=high`. All three are cumulative as reported.
+
+The AI analyst layer must not over-interpret these fields:
+
+- R&D expense ratio can improve the current status of R&D-intensity indicators, but it represents R&D intensity only and does not confirm a technology barrier.
+- Capex can improve capital-expenditure observation items, but it represents long-term-asset purchase/construction cash outflow only and does not confirm capacity release.
+
+The layer still does not surface or infer `capex_ratio`, `depreciation_amortization`, customer concentration, new-business orders, domestic-substitution revenue, production/unit cost, technical indicators, `technical_skill`, or `trader_skill`.

@@ -33,6 +33,9 @@ def sample_raw():
                     "inventory": 500000000,
                     "accounts_receivable": 600000000,
                     "contract_liabilities": 70000000,
+                    "r_and_d_expense": 17755979.09,
+                    "r_and_d_expense_ratio": 0.8336652584671204,
+                    "capex": 229152931.6,
                 }
             ],
             "valuation": [{"period": "2026-05-18", "pe_ttm": 22.0, "pb": 2.2, "market_cap": 15000000000}],

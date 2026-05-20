@@ -84,7 +84,7 @@ def test_fetch_to_raw_json_shape_and_output_path(tmp_path):
 
     assert set(raw) >= {"meta", "blocks", "fetch_status", "errors"}
     assert raw["meta"]["code"] == "002050"
-    assert raw["meta"]["connector_version"] == "real_data_connector.v2.2a"
+    assert raw["meta"]["connector_version"] == "real_data_connector.v2.3a"
     for block_name in ["basic_info", "financial_indicator", "valuation", "business_composition", "news"]:
         assert block_name in raw["blocks"]
         assert block_name in raw["fetch_status"]
@@ -156,11 +156,15 @@ class FakeAkshare:
         self,
         financial_frame: pd.DataFrame | None = None,
         balance_frame: pd.DataFrame | None = None,
+        profit_frame: pd.DataFrame | None = None,
+        cashflow_frame: pd.DataFrame | None = None,
         valuation_frame: pd.DataFrame | None = None,
         business_frame: pd.DataFrame | None = None,
     ) -> None:
         self.financial_frame = financial_frame if financial_frame is not None else _financial_abstract_frame()
         self.balance_frame = balance_frame if balance_frame is not None else _sina_balance_sheet_frame()
+        self.profit_frame = profit_frame if profit_frame is not None else _sina_profit_sheet_frame()
+        self.cashflow_frame = cashflow_frame if cashflow_frame is not None else _sina_cashflow_sheet_frame()
         self.valuation_frame = valuation_frame if valuation_frame is not None else _valuation_frame()
         self.business_frame = business_frame if business_frame is not None else _business_composition_frame()
 
@@ -183,7 +187,14 @@ class FakeAkshare:
         return self.financial_frame
 
     def stock_financial_report_sina(self, stock=None, symbol=None, indicator=None):
-        assert (indicator or symbol) == "资产负债表"
+        statement = indicator or symbol
+        if statement == "资产负债表":
+            return self.balance_frame
+        if statement == "利润表":
+            return self.profit_frame
+        if statement == "现金流量表":
+            return self.cashflow_frame
+        assert statement == "资产负债表"
         return self.balance_frame
 
     def stock_value_em(self, symbol: str):
@@ -231,6 +242,8 @@ class AkshareConnector(RealDataConnector):
         cache_dir: Path,
         financial_frame: pd.DataFrame | None = None,
         balance_frame: pd.DataFrame | None = None,
+        profit_frame: pd.DataFrame | None = None,
+        cashflow_frame: pd.DataFrame | None = None,
         valuation_frame: pd.DataFrame | None = None,
         business_frame: pd.DataFrame | None = None,
     ) -> None:
@@ -238,6 +251,8 @@ class AkshareConnector(RealDataConnector):
         self.fake_ak = FakeAkshare(
             financial_frame=financial_frame,
             balance_frame=balance_frame,
+            profit_frame=profit_frame,
+            cashflow_frame=cashflow_frame,
             valuation_frame=valuation_frame,
             business_frame=business_frame,
         )
@@ -288,6 +303,34 @@ def _sina_balance_sheet_frame(report_date: str | None = "20260331") -> pd.DataFr
         "应收账款周转天数": 70.0,
     }
     return pd.DataFrame([row])
+
+
+def _sina_profit_sheet_frame(report_date: str | None = "20260331", revenue_report_date: str | None = "20260331") -> pd.DataFrame:
+    return pd.DataFrame(
+        [
+            {
+                "报告日": report_date,
+                "研发费用": 367461670.95,
+                "营业总收入": None,
+            },
+            {
+                "报告日": revenue_report_date,
+                "研发费用": None,
+                "营业总收入": 7773000000.0,
+            },
+        ]
+    )
+
+
+def _sina_cashflow_sheet_frame(report_date: str | None = "20260331") -> pd.DataFrame:
+    return pd.DataFrame(
+        [
+            {
+                "报告日": report_date,
+                "购建固定资产、无形资产和其他长期资产所支付的现金": 521898492.14,
+            }
+        ]
+    )
 
 
 def _valuation_frame(include_pe: bool = True) -> pd.DataFrame:
@@ -451,6 +494,71 @@ def test_v22a_unrecognizable_sina_report_period_does_not_crash(tmp_path):
     inventory_trace = next(item for item in traces if item["field_name"] == "inventory")
     assert inventory_trace["source_period"] == "unknown"
     assert inventory_trace["period_confidence"] == "low"
+
+
+def test_v23a_maps_rd_expense_capex_and_rd_ratio_source_trace(tmp_path):
+    raw = AkshareConnector(tmp_path / "cache").fetch_to_raw_json("002050", force_refresh=True)
+    metric = raw["blocks"]["financial_indicator"][0]
+    traces = raw["fetch_status"]["financial_indicator"]["source_trace"]
+
+    assert metric["r_and_d_expense"] == 367461670.95
+    assert metric["r_and_d_expense_ratio"] == 367461670.95 / 7773000000.0 * 100
+    assert metric["capex"] == 521898492.14
+    assert "capex_ratio" not in metric
+    assert "depreciation_amortization" not in metric
+
+    rd_trace = next(item for item in traces if item["field_name"] == "r_and_d_expense")
+    ratio_trace = next(item for item in traces if item["field_name"] == "r_and_d_expense_ratio")
+    capex_trace = next(item for item in traces if item["field_name"] == "capex")
+
+    assert rd_trace["source_function"] == "stock_financial_report_sina"
+    assert rd_trace["source_column_or_row"] == "研发费用"
+    assert rd_trace["source_period"] == "20260331"
+    assert rd_trace["period_confidence"] == "high"
+    assert rd_trace["value_confidence"] == "medium"
+    assert rd_trace["unit"] == "raw_statement_unit"
+    assert rd_trace["unit_confidence"] == "low"
+    assert rd_trace["cumulative_or_single_quarter"] == "cumulative"
+    assert rd_trace["statement_type"] == "profit_sheet"
+    assert rd_trace["derived"] is False
+
+    assert ratio_trace["unit"] == "%"
+    assert ratio_trace["unit_confidence"] == "high"
+    assert ratio_trace["derived"] is True
+    assert ratio_trace["derivation_method"] == "r_and_d_expense / revenue * 100, same source_period only"
+    assert ratio_trace["cumulative_or_single_quarter"] == "cumulative"
+
+    assert capex_trace["source_column_or_row"] == "购建固定资产、无形资产和其他长期资产所支付的现金"
+    assert capex_trace["statement_type"] == "cash_flow_sheet"
+    assert capex_trace["unit_confidence"] == "low"
+    assert capex_trace["cumulative_or_single_quarter"] == "cumulative"
+
+
+def test_v23a_different_period_does_not_derive_rd_ratio(tmp_path):
+    raw = AkshareConnector(
+        tmp_path / "cache",
+        profit_frame=_sina_profit_sheet_frame(report_date="20260331", revenue_report_date="20251231"),
+    ).fetch_to_raw_json("002050", force_refresh=True)
+    metric = raw["blocks"]["financial_indicator"][0]
+
+    assert metric["r_and_d_expense"] == 367461670.95
+    assert "r_and_d_expense_ratio" not in metric
+    assert any("r_and_d_expense_ratio not derived" in warning for warning in raw["fetch_status"]["financial_indicator"]["warnings"])
+
+
+def test_v23a_scope_notes_do_not_contain_trading_terms(tmp_path):
+    raw = AkshareConnector(tmp_path / "cache").fetch_to_raw_json("002050", force_refresh=True)
+    traces = raw["fetch_status"]["financial_indicator"]["source_trace"]
+    scoped = [
+        trace["scope_note"]
+        for trace in traces
+        if trace.get("field_name") in {"r_and_d_expense", "r_and_d_expense_ratio", "capex"}
+    ]
+
+    assert scoped
+    for note in scoped:
+        for term in TRADE_TERMS:
+            assert term not in note
 
 
 def test_v22a_does_not_use_turnover_columns_as_amount_fields(tmp_path):

@@ -269,6 +269,8 @@ def build_row(evidence: dict[str, Any], fundamental: dict[str, Any], indicator: 
         "资产负债率": "debt_to_asset",
         "存货": "inventory",
         "应收账款": "accounts_receivable",
+        "研发费用率": "r_and_d_expense_ratio",
+        "资本开支": "capex",
     }
     if indicator in financial_map:
         key = financial_map[indicator]
@@ -384,8 +386,6 @@ def build_row(evidence: dict[str, Any], fundamental: dict[str, Any], indicator: 
             reason = "no order backlog or contract liability field in evidence pack"
 
     elif indicator in {
-        "研发费用率",
-        "资本开支",
         "大客户收入占比",
         "订单持续性",
         "客户资本开支",

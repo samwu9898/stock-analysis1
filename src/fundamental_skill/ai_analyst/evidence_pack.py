@@ -21,6 +21,7 @@ RATIO_FIELDS = {
     "profit_ratio",
     "revenue_yoy",
     "net_profit_yoy",
+    "r_and_d_expense_ratio",
 }
 YOY_FIELDS = {"revenue_yoy", "net_profit_yoy"}
 
@@ -130,8 +131,11 @@ def normalize_metric(name: str, value: Any) -> Any:
                 "unit": "%",
                 "unit_confidence": "low",
             }
-        percent_value = raw * 100 if -1 <= raw <= 1 else raw
-        confidence = "medium" if name not in YOY_FIELDS else "low"
+        # Connector v2.3a derives R&D intensity as ``expense / revenue * 100``.
+        # Keep that percent-point value intact; other ratio fields may still
+        # arrive as decimals from source tables.
+        percent_value = raw if name == "r_and_d_expense_ratio" else (raw * 100 if -1 <= raw <= 1 else raw)
+        confidence = "high" if name == "r_and_d_expense_ratio" else ("medium" if name not in YOY_FIELDS else "low")
         out = {
             "name": name,
             "raw_value": value,
@@ -202,7 +206,7 @@ class EvidencePackBuilder:
         )
         supporting_evidence = self._supporting_evidence(financial, valuation, business)
         limiting_evidence = self._limiting_evidence(financial, valuation, risk_flags)
-        unknown_or_missing_evidence = self._unknown_or_missing_evidence(missing_fields)
+        unknown_or_missing_evidence = self._unknown_or_missing_evidence(missing_fields, financial)
 
         stock = {
             "code": fundamental.get("stock_code") or basic_info.get("stock_code") or raw.get("meta", {}).get("code"),
@@ -348,7 +352,7 @@ class EvidencePackBuilder:
             {
                 "dimension": "growth_validation",
                 "level": "weak" if any(field in missing_set for field in ("accounts_receivable", "financial_metrics.accounts_receivable")) else "medium",
-                "reason": "新业务收入或订单、大客户收入占比、研发费用率未在 evidence pack 中提供，成长兑现不足以判断。",
+                "reason": "新业务收入或订单、大客户收入占比等高判断字段仍需验证；研发费用率只代表研发强度，不代表技术壁垒已确认。",
             },
             {
                 "dimension": "risk_identifiability",
@@ -459,7 +463,7 @@ class EvidencePackBuilder:
             )
         return evidence
 
-    def _unknown_or_missing_evidence(self, missing_fields: list[str]) -> list[dict[str, Any]]:
+    def _unknown_or_missing_evidence(self, missing_fields: list[str], financial: dict[str, Any] | None = None) -> list[dict[str, Any]]:
         rows = [
             {
                 "evidence_name": str(field),
@@ -476,6 +480,8 @@ class EvidencePackBuilder:
             ("大客户收入占比", "不能判断客户集中度和订单持续性。", "risk_identifiability"),
             ("研发费用率", "不能判断新业务壁垒和持续成长投入强度。", "growth_validation"),
         ]
+        if financial and financial.get("r_and_d_expense_ratio") not in (None, "", []):
+            required_unknowns = [item for item in required_unknowns if item[0] != "研发费用率"]
         for name, why, dimension in required_unknowns:
             rows.append(
                 {
@@ -528,7 +534,7 @@ class EvidencePackBuilder:
                 ("主营矿种收入占比", "business_mix", "business_composition", "business_quality", "矿种收入占比决定商品价格变化对公司业绩的传导强度"),
                 ("毛利率", "gross_margin", "financial_indicator", "financial_quality", "毛利率体现价格、成本和资源禀赋共同作用"),
                 ("经营现金流", "operating_cashflow", "financial_indicator", "financial_quality", "经营现金流验证利润质量和周期韧性"),
-                ("资本开支或产量成本", "capex_or_unit_cost", "missing", "risk_control", "产量、成本和资本开支决定资源项目兑现质量"),
+                ("资本开支", "capex", "financial_indicator", "risk_control", "资本开支用于观察长期资产购建现金支出，不代表产能确定释放"),
             ]
         elif strategy_type == "advanced_manufacturing_growth":
             specs = [
@@ -539,7 +545,7 @@ class EvidencePackBuilder:
                 ("应收账款", "accounts_receivable", "financial_indicator", "financial_quality", "应收账款影响收入质量和回款压力判断"),
                 ("存货", "inventory", "financial_indicator", "financial_quality", "存货影响制造业库存周期、备货和减值压力判断"),
                 ("经营现金流", "operating_cashflow", "financial_indicator", "financial_quality", "经营现金流用于验证利润含金量"),
-                ("研发费用率", "rd_expense_ratio", "missing", "business_quality", "研发投入影响新业务壁垒和持续成长能力"),
+                ("研发费用率", "r_and_d_expense_ratio", "financial_indicator", "business_quality", "研发费用率用于观察研发强度，不代表技术壁垒已确认"),
             ]
         elif strategy_type == "semiconductor_cycle":
             specs = [
@@ -547,8 +553,8 @@ class EvidencePackBuilder:
                 ("订单 / 合同负债", "orders_or_contract_liabilities", "financial_indicator", "business_quality", "合同负债可作为订单可见度 proxy，但不等同于真实订单或 backlog"),
                 ("毛利率", "gross_margin", "financial_indicator", "financial_quality", "毛利率反映产品结构、竞争和周期压力"),
                 ("国产替代收入", "domestic_substitution_revenue", "missing", "business_quality", "国产替代收入验证叙事兑现程度"),
-                ("研发投入", "rd_investment", "missing", "business_quality", "研发投入影响产品迭代和壁垒"),
-                ("资本开支周期", "capex_cycle", "missing", "industry_cycle", "资本开支周期影响设备和材料需求"),
+                ("研发费用率", "r_and_d_expense_ratio", "financial_indicator", "business_quality", "研发费用率用于观察研发强度，不代表技术壁垒已确认"),
+                ("资本开支", "capex", "financial_indicator", "industry_cycle", "资本开支用于观察长期资产购建现金支出，不代表产能确定释放"),
             ]
         elif strategy_type == "right_trend_growth":
             specs = [
@@ -556,7 +562,9 @@ class EvidencePackBuilder:
                 ("净利润增速", "net_profit_yoy", "financial_indicator", "financial_quality", "净利润增速验证成长质量和经营杠杆"),
                 ("毛利率", "gross_margin", "financial_indicator", "financial_quality", "毛利率验证竞争格局和产品结构"),
                 ("订单持续性 / 合同负债", "orders_or_contract_liabilities", "financial_indicator", "business_quality", "合同负债可作为订单可见度 proxy，但不等同于真实订单或 backlog"),
+                ("研发费用率", "r_and_d_expense_ratio", "financial_indicator", "business_quality", "研发费用率用于观察研发强度，不代表技术壁垒已确认"),
                 ("客户资本开支", "customer_capex", "missing", "industry_cycle", "客户资本开支影响需求景气度"),
+                ("资本开支", "capex", "financial_indicator", "industry_cycle", "资本开支用于观察长期资产购建现金支出，不代表需求或产能确定兑现"),
                 ("估值消化能力", "pe_ttm", "valuation", "valuation", "估值消化能力依赖增长兑现和估值水平匹配"),
             ]
         else:
@@ -625,6 +633,10 @@ class EvidencePackBuilder:
         scope_note = None
         if field == "orders_or_contract_liabilities":
             scope_note = "合同负债可作为订单可见度 proxy，但不等同于真实订单或 backlog。"
+        elif field == "r_and_d_expense_ratio":
+            scope_note = "研发费用率用于观察研发强度，不代表技术壁垒已确认。"
+        elif field == "capex":
+            scope_note = "capex 为购建固定资产、无形资产和其他长期资产支付现金，不代表产能确定释放。"
         return {
             "indicator_name": name,
             "why_it_matters": why,

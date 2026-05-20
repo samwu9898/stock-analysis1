@@ -874,3 +874,26 @@ All three come from `stock_financial_report_sina(indicator="资产负债表")`; 
 `contract_liabilities` may improve order-visibility discussion only as a proxy. It must not be described as real orders, order backlog, or confirmed future revenue.
 
 The connector still does not add R&D expense, R&D expense ratio, capex, capex ratio, customer concentration, new-business orders, domestic-substitution revenue, production/unit cost, cobalt price, or molybdenum price. R&D and Capex need a separate Source Expansion Probe before any deterministic integration.
+
+## RealDataConnector v2.3a Boundary
+
+`RealDataConnector v2.3a` adds only three source-traced statement fields to `financial_metrics`:
+
+- `r_and_d_expense`
+- `r_and_d_expense_ratio`
+- `capex`
+
+The source is `stock_financial_report_sina`:
+
+- `r_and_d_expense` maps from the profit-statement `研发费用` amount.
+- `r_and_d_expense_ratio` is derived only from same-report-period `r_and_d_expense` and revenue.
+- `capex` maps from the cash-flow statement long-term-asset purchase/construction cash-paid line.
+
+`capex_ratio` and `depreciation_amortization` remain unconnected. Customer concentration, new-business orders, domestic-substitution revenue, production or unit cost, technical indicators, `technical_skill`, and `trader_skill` also remain outside this connector version.
+
+Trace fields preserve `period_confidence`, `value_confidence`, `unit`, `unit_confidence`, `cumulative_or_single_quarter`, `statement_type`, `derived`, `derivation_method`, and `scope_note`. Amount fields keep `unit_confidence=low`; the R&D ratio keeps `unit_confidence=high`; all three fields are treated as cumulative as reported.
+
+Interpretation guardrails:
+
+- R&D expense ratio represents R&D intensity only; it does not confirm a technology barrier.
+- Capex represents cash paid for long-term assets only; it does not confirm capacity release or future growth certainty.

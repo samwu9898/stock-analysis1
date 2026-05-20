@@ -51,6 +51,9 @@ class FinancialMetricInput(StrictBaseModel):
     inventory: float | None = None
     accounts_receivable: float | None = None
     contract_liabilities: float | None = None
+    r_and_d_expense: float | None = None
+    r_and_d_expense_ratio: float | None = None
+    capex: float | None = None
 
 
 class ValuationMetricInput(StrictBaseModel):
