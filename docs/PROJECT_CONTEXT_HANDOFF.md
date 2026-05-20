@@ -77,6 +77,7 @@ stock_code
 - `advanced_manufacturing_growth`
 - `satellite_communication_infrastructure`
 - `low_altitude_economy_infrastructure`
+- `life_science_cxo_services`
 - `theme_only`
 - `unknown`
 
@@ -108,6 +109,7 @@ Missing data must be recorded as missing, warnings, source-trace gaps, or data l
 - `advanced_manufacturing_growth`: for auto thermal management, robotics actuators, industrial automation, precision manufacturing, and new-energy-vehicle supply-chain growth. Representative samples include `002050`, `601689`. Main boundary: robot/new-business exposure must be verified by revenue, orders, customers, and segment data.
 - `satellite_communication_infrastructure`: completed. Applies to asset-intensive, license/resource-driven satellite communication infrastructure operators that monetize in-orbit satellites, orbital/frequency resources, transponders, bandwidth, or satellite communication services. Representative sample: `601698`. Negative samples include `600118`, `002465`, `688066`, `002895`, and a news-only satellite sample. Main boundary: excludes satellite manufacturing, terminals, remote sensing, data software, military electronics, rockets, drones, and generic communication equipment.
 - `low_altitude_economy_infrastructure`: completed. Applies only to low-altitude infrastructure / operation service business models, not broad concept exposure. Representative positive samples include `000099` and `688631`. Negative samples include `688070`, `002085`, `001696`, `600967`, and `002895`. Main boundary: drone OEMs, eVTOL OEMs, aircraft engines, components, auto parts, airports, aviation leasing, remote sensing, defense, policy-only, announcement-only, or theme-only companies must not be routed here.
+- `life_science_cxo_services`: completed. Applies to CRO / CDMO / CXO / CMC / clinical research or pharmaceutical R&D-production outsourcing service business models. Representative positive samples include `603259`, `300759`, `002821`, `300363`, and `300347`. Negative samples include `000739`, `300012`, `300760`, `600196`, `600276`, and `600521`. Main boundary: excludes self-owned drug-pipeline companies, ordinary API / formulation manufacturing, medical devices, distribution, TCM, consumer healthcare, software-only AI drug discovery, general testing labs, and news-only CXO wording.
 - `theme_only`: for companies with thematic exposure but weak or unverified fundamental support. Representative sample: `999999_theme_a`. Main boundary: do not treat theme popularity, news heat, or policy language as realized business.
 - `unknown`: for insufficient or unstable classification evidence. Representative sample: `999998_insufficient_b`. Main boundary: do not force a framework when industry, main business, financials, or business composition are not enough.
 
@@ -115,6 +117,12 @@ The `low_altitude_economy_infrastructure` framework includes these `sub_type` va
 
 - `aviation_operations_service`
 - `airspace_platform_system`
+
+The `life_science_cxo_services` framework includes these `sub_type` values:
+
+- `integrated_cxo_platform`
+- `cdmo_manufacturing_services`
+- `clinical_cro_services`
 
 ## 8. Current Testing System
 
@@ -191,12 +199,12 @@ Do not add a new industry framework only because one stock is popular or difficu
 - Many industry-specific operating data fields are still missing or not stably obtainable.
 - AI report generation is currently mainly `prompt_only`; API mode is not the primary implemented workflow.
 - `output/`, `data/`, and `cache/` are runtime artifacts and should not be committed.
-- Some industries remain uncovered, including CXO, banks, medical devices, AI data-center infrastructure, and intelligent driving.
+- Some industries remain uncovered, including banks, medical devices, AI data-center infrastructure, and intelligent driving. CXO is covered by `life_science_cxo_services` but still has conservative public-data limits.
 
 ## 13. Suggested Next Steps
 
 - Keep `README.md` and `docs/PROJECT_CONTEXT_HANDOFF.md` synchronized after major project changes.
-- A reasonable next framework design target is `life_science_cxo_services` or `ai_datacenter_power_cooling_infrastructure`, starting with Out-of-Sample Audit.
+- A reasonable next framework design target is `ai_datacenter_power_cooling_infrastructure`, starting with Out-of-Sample Audit.
 - Do not rush into `technical_skill` or `trader_skill`.
 - Do not blindly add more fields without source stability, interpretation rules, and regression coverage.
 - Every new industry framework must follow the documented workflow.

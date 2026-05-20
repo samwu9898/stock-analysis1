@@ -35,6 +35,7 @@
 - `advanced_manufacturing_growth`
 - `satellite_communication_infrastructure`
 - `low_altitude_economy_infrastructure`
+- `life_science_cxo_services`
 - `theme_only`
 - `unknown`
 
@@ -126,6 +127,17 @@ streamlit run dashboard/fundamental_dashboard.py
 - capex 只能表示长期资产购建现金支出，不能直接证明产能释放或未来增长确定性。
 - 研发费用率只能表示研发强度，不能直接证明技术壁垒。
 
+## Neutral Naming Compatibility v1
+
+`fundamental.v1` 当前已完成中性命名迁移，同时保留历史 JSON 的兼容字段：
+
+- `analyst_summary` 是推荐的基本面分析摘要字段。
+- `downstream_review_hint` 是推荐的后续复核提示字段。
+- `trader_summary` 已 deprecated，仅为 backward compatibility 保留。
+- `action_hint_for_trader` 已 deprecated，仅为 backward compatibility 保留。
+
+AI layer 和 Dashboard 优先使用 `analyst_summary` / `downstream_review_hint`，仅在读取旧文件时回退到 legacy 字段。当前项目仍不实现 `trader_skill`，不连接交易账户，不输出交易建议。
+
 ## 开发流程
 
 新增或扩展行业框架时，遵循 `docs/INDUSTRY_FRAMEWORK_DEVELOPMENT_WORKFLOW.md`：
@@ -165,6 +177,7 @@ Out-of-Sample Audit
 - `docs/INDUSTRY_FRAMEWORK_TEMPLATE.md`：行业框架设计模板。
 - `docs/SATELLITE_COMMUNICATION_FRAMEWORK_DESIGN_AUDIT.md`：卫星通信基础设施框架设计审计。
 - `docs/LOW_ALTITUDE_ECONOMY_INFRASTRUCTURE_DESIGN_AUDIT.md`：低空经济基础设施框架设计审计。
+- `docs/LIFE_SCIENCE_CXO_SERVICES_DESIGN_AUDIT.md`：生命科学 CXO 服务框架设计审计。
 
 ## 项目来源
 
