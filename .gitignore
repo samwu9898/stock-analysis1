@@ -61,4 +61,5 @@ test_output/
 *.test.json
 
 .pytest_tmp/
-.pytest_cache/
+.pytest_cache/.pytest_tmp*/
+data/
