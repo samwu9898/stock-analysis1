@@ -12,6 +12,8 @@ STRATEGY_TYPES = (
     "semiconductor_cycle",
     "stable_growth",
     "advanced_manufacturing_growth",
+    "satellite_communication_infrastructure",
+    "low_altitude_economy_infrastructure",
     "theme_only",
     "unknown",
 )
