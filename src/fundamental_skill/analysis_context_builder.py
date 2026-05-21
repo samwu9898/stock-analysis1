@@ -232,6 +232,48 @@ class AnalysisContextBuilder:
                 cap = self._min_confidence(cap, "low")
             elif shared & missing or subtype_gating & missing:
                 cap = self._min_confidence(cap, "medium")
+        if classification.strategy_type == "ai_datacenter_infrastructure":
+            missing = {
+                item.field_name
+                for item in readiness.field_readiness
+                if item.status in {"missing", "partial"}
+            }
+            shared = {
+                "ai_datacenter.revenue_share",
+                "ai_datacenter.customer_revenue_share",
+                "ai_datacenter.customer_concentration",
+                "ai_datacenter.orders_or_backlog",
+                "ai_datacenter.delivery_cycle",
+            }
+            subtype = getattr(classification, "sub_type", None)
+            subtype_gating: set[str] = set()
+            if subtype == "datacenter_operator":
+                subtype_gating = {
+                    "ai_datacenter.cabinet_count",
+                    "ai_datacenter.mw_scale",
+                    "ai_datacenter.rack_up_or_utilization",
+                    "ai_datacenter.pue",
+                    "ai_datacenter.power_quota_energy_policy",
+                    "financial_metrics.depreciation_amortization",
+                }
+            elif subtype == "power_ups_infrastructure":
+                subtype_gating = {
+                    "ai_datacenter.power_ups_revenue_share",
+                    "ai_datacenter.power_ups_orders",
+                    "ai_datacenter.storage_pv_revenue_share",
+                }
+            elif subtype == "cooling_liquid_cooling_infrastructure":
+                subtype_gating = {
+                    "ai_datacenter.cooling_revenue_share",
+                    "ai_datacenter.liquid_cooling_revenue_share",
+                    "ai_datacenter.liquid_cooling_customer_validation",
+                    "ai_datacenter.liquid_cooling_batch_orders",
+                    "ai_datacenter.ordinary_hvac_revenue_share",
+                }
+            if "ai_datacenter.revenue_share" in missing or shared <= missing:
+                cap = self._min_confidence(cap, "low")
+            elif shared & missing or subtype_gating & missing:
+                cap = self._min_confidence(cap, "medium")
         return quality, cap
 
     def _min_confidence(self, a: str, b: str) -> str:

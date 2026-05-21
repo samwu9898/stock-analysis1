@@ -1,0 +1,7 @@
+{
+  "stock_code": "002230",
+  "expected_strategy_type": "right_trend_growth",
+  "allowed_status": ["neutral", "insufficient_data"],
+  "max_confidence": "medium",
+  "forbidden_phrases": ["买入", "卖出", "加仓", "减仓", "清仓", "止损", "止盈", "目标价"]
+}

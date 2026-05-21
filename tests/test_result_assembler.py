@@ -13,12 +13,26 @@ from src.fundamental_skill.validators import assert_valid_result, validate_no_tr
 
 
 FIXTURES = Path(__file__).parent / "fixtures"
+REGRESSION_FIXTURES = Path(__file__).parent / "regression" / "fixtures"
 PROHIBITED_TERMS = ["买入", "卖出", "加仓", "减仓", "清仓", "止损", "止盈", "目标价", "满仓", "梭哈"]
 ALLOWED_ACTION_HINTS = {"需要后续分析层复核", "需要暂停基本面支持判断", "需要更新基本面分析"}
 
 
 def build_result(name: str):
     normalized = FundamentalDataAdapter().from_file(str(FIXTURES / name))
+    classification = StockClassifier().classify(normalized)
+    framework = FrameworkSelector().select(classification)
+    readiness = DataReadinessPlanner().plan(normalized, classification, framework)
+    context = AnalysisContextBuilder().build(normalized, classification, framework, readiness)
+    scoring = FundamentalScoringEngine().score(normalized, classification, framework, readiness, context)
+    result = FundamentalResultAssembler().assemble(
+        normalized, classification, framework, readiness, context, scoring
+    )
+    return normalized, classification, framework, readiness, context, scoring, result
+
+
+def build_regression_result(name: str):
+    normalized = FundamentalDataAdapter().from_file(str(REGRESSION_FIXTURES / name))
     classification = StockClassifier().classify(normalized)
     framework = FrameworkSelector().select(classification)
     readiness = DataReadinessPlanner().plan(normalized, classification, framework)
@@ -176,6 +190,67 @@ def test_invalidation_action_hints_are_allowed_and_safe():
         assert "交易员" not in condition.action_hint_for_trader
         assert validate_no_trading_instruction(condition.downstream_review_hint) == []
         assert validate_no_trading_instruction(condition.action_hint_for_trader) == []
+
+
+def test_ai_datacenter_subtype_risk_flags_do_not_mix_other_subtype_gates():
+    cases = [
+        (
+            "classifier_ai_datacenter_300442.json",
+            "datacenter_operator",
+            ["power/UPS", "UPS/distribution", "storage/PV", "liquid-cooling", "ordinary-HVAC", "卫星"],
+        ),
+        (
+            "classifier_ai_datacenter_002335.json",
+            "power_ups_infrastructure",
+            ["cabinet count", "MW scale", "rack-up", "PUE", "liquid-cooling", "ordinary-HVAC"],
+        ),
+        (
+            "classifier_ai_datacenter_002837.json",
+            "cooling_liquid_cooling_infrastructure",
+            ["cabinet count", "MW scale", "rack-up", "PUE", "power/UPS", "UPS/distribution"],
+        ),
+    ]
+    for fixture, expected_sub_type, forbidden_terms in cases:
+        *_, result = build_regression_result(fixture)
+        risk_text = " ".join(risk.name for risk in result.risk_flags)
+
+        assert result.strategy_type == "ai_datacenter_infrastructure"
+        assert result.sub_type == expected_sub_type
+        for term in forbidden_terms:
+            assert term not in risk_text
+
+
+def test_ai_datacenter_boundary_fixtures_are_capped_to_insufficient_low():
+    for fixture in [
+        "classifier_ai_datacenter_002335.json",
+        "classifier_ai_datacenter_002518.json",
+        "classifier_ai_datacenter_301018.json",
+    ]:
+        _, classification, _, readiness, context, scoring, result = build_regression_result(fixture)
+
+        assert classification.strategy_type == "ai_datacenter_infrastructure"
+        assert any("boundary" in warning for warning in classification.warnings)
+        assert readiness.readiness_level == "insufficient"
+        assert context.max_overall_confidence == "low"
+        assert scoring.score_confidence == "low"
+        assert result.status == "insufficient_data"
+        assert result.confidence == "low"
+
+
+def test_ai_datacenter_non_boundary_samples_are_not_boundary_capped():
+    for fixture in [
+        "classifier_ai_datacenter_300442.json",
+        "classifier_ai_datacenter_002837.json",
+    ]:
+        _, classification, _, readiness, context, scoring, result = build_regression_result(fixture)
+
+        assert classification.strategy_type == "ai_datacenter_infrastructure"
+        assert not any("boundary_confidence_capped" in warning for warning in classification.warnings)
+        assert readiness.readiness_level != "insufficient"
+        assert context.max_overall_confidence == "medium"
+        assert scoring.score_confidence == "medium"
+        assert result.status == "neutral"
+        assert result.confidence == "medium"
 
 
 def test_all_result_outputs_exclude_trading_instruction_terms():

@@ -1,0 +1,27 @@
+{
+  "meta": {"code": "002518", "stock_name": "KSTAR", "generated_at": "2026-05-21T00:00:00"},
+  "blocks": {
+    "basic_info": [{
+      "stock_code": "002518",
+      "stock_name": "KSTAR",
+      "industry": "data center UPS and power infrastructure with photovoltaic boundary",
+      "main_business": "data center UPS, uninterruptible power and distribution revenue with customer contract evidence; photovoltaic and energy storage business must be separated"
+    }],
+    "financial_indicator": [{
+      "period": "2025-12-31",
+      "revenue": 6200000000,
+      "net_profit": 450000000,
+      "gross_margin": 23,
+      "operating_cashflow": 260000000,
+      "accounts_receivable": 1000000000,
+      "contract_liabilities": 240000000,
+      "capex": 420000000,
+      "inventory": 880000000
+    }],
+    "valuation": [{"pe_ttm": 30, "pb": 3.5, "market_cap": 26000000000}],
+    "business_composition": [
+      {"period": "2025-12-31", "segment_name": "data center UPS power infrastructure revenue", "revenue_ratio": 30},
+      {"period": "2025-12-31", "segment_name": "photovoltaic and energy storage revenue", "revenue_ratio": 48}
+    ]
+  }
+}

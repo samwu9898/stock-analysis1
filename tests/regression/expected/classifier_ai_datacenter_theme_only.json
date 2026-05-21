@@ -1,0 +1,8 @@
+{
+  "stock_code": "999996",
+  "expected_strategy_type": "theme_only",
+  "allowed_status": ["neutral", "insufficient_data"],
+  "max_confidence": "low",
+  "must_track_keywords": ["营收增速"],
+  "forbidden_phrases": ["买入", "卖出", "加仓", "减仓", "清仓", "止损", "止盈", "目标价"]
+}

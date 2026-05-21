@@ -524,6 +524,14 @@ Each must-track item should be represented in the evidence pack with `why_it_mat
 
 Confidence represents evidence confidence in the current `fundamental_view`. It does not mean positive strength or investment attractiveness.
 
+Score-semantics clarification:
+
+- The AI datacenter boundary cap applies to `readiness_score`, not directly to final `fundamental_score`.
+- Boundary samples that lack structured real order, customer, delivery, or sub-type revenue validation should have `readiness_score <= 39`, `readiness_level=insufficient`, and `confidence=low`.
+- Final `fundamental_score` is still produced by the normal weighted scoring and result-assembly flow.
+- When final `status=insufficient_data`, the final `fundamental_score` is capped by the general insufficient-data rule at `<= 50`.
+- Therefore a boundary sample can correctly end with final `fundamental_score` in the 41-47 range when `status=insufficient_data` and `confidence=low`; this is not a violation of the `readiness_score <= 39` boundary cap.
+
 General rules:
 
 - Only `basic_info` plus financials: `max_confidence = low`.

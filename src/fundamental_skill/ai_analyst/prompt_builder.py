@@ -6,7 +6,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from .safety import FORBIDDEN_TERMS, check_text_safety
+from .safety import check_text_safety
 
 
 class PromptBuilder:
@@ -33,7 +33,6 @@ class PromptBuilder:
             "source_trace_summary": evidence_pack.get("source_trace_summary", []),
         }
         evidence_json = json.dumps(compact_pack, ensure_ascii=False, indent=2, default=str)
-        forbidden = "、".join(FORBIDDEN_TERMS)
         prompt = f"""# A股基本面分析员任务
 
 你是 A 股基本面分析员。请只基于下面 evidence pack 做专业基本面分析，输出结构化 JSON 报告。
@@ -51,8 +50,8 @@ class PromptBuilder:
 - 不得编造 evidence pack 没有的数据。
 - 对缺失数据必须明确说明“缺失数据不足以判断”。
 - 不得输出交易建议。
-- 不得输出目标价格、仓位或账户动作。
-- 禁止词列表：{forbidden}。
+- 不得输出价格目标、资金配置或账户动作。
+- 不得输出任何具体交易动作词、仓位语句、价格目标或风控执行指令。
 - 不得引入技术面分析、技术指标、图形形态或成交量判断。
 - 不得把 supportive / neutral / negative 解释为任何执行动作。
 
@@ -152,6 +151,24 @@ If strategy_type is `life_science_cxo_services`, the report must state:
 - Overseas regulation, geopolitics, Biosecure Act, sanctions and FX risk must be explicit.
 - CRO/CDMO must not be mixed with ordinary pharma manufacturing, medical devices, distribution, TCM, consumer healthcare or pipeline-company analysis.
 - If the stock code is 300363 or the evidence mentions Porton, state that it is a high-volatility CDMO sample and historical data may be affected by one-off orders.
+
+## AI datacenter infrastructure constraints
+
+If strategy_type is `ai_datacenter_infrastructure`, the report must state:
+
+- sub_type: {stock.get("sub_type") or ""}
+- AI datacenter infrastructure is not a generic AI compute-chain framework.
+- IDC operation, power/UPS infrastructure, and cooling/liquid-cooling infrastructure are different business models and must not use each other's indicators.
+- Financial metrics explain only base operating quality.
+- Missing datacenter revenue, orders, customers, delivery, utilization or PUE is insufficient to judge business realization.
+- Contract liabilities are order-visibility partial_proxy only, not real backlog.
+- Capex is capacity/infrastructure input observation only and does not prove capacity release or revenue certainty.
+- Customer capital-expenditure expectations are not company revenue.
+- PCB, optical modules, servers and chips must not be mixed with infrastructure operation or core facility support.
+- Power/UPS business must be separated from storage/photovoltaic business.
+- Liquid cooling / precision thermal control must be separated from ordinary industrial HVAC.
+- Liquid-cooling certification or POC testing is not a batch order.
+- Do not calculate or infer PUE, utilization, liquid-cooling revenue share or backlog proxies from incomplete evidence.
 
 ## Evidence Pack
 

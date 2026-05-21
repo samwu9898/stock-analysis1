@@ -4,6 +4,7 @@ from pathlib import Path
 
 from src.fundamental_skill.data_adapter import FundamentalDataAdapter
 from src.fundamental_skill.data_readiness_planner import DataReadinessPlanner
+from src.fundamental_skill.classification_schema import StockClassificationResult
 from src.fundamental_skill.framework_selector import FrameworkSelector
 from src.fundamental_skill.readiness_schema import FieldRequirement
 from src.fundamental_skill.stock_classifier import StockClassifier
@@ -16,6 +17,80 @@ FIXTURES = Path(__file__).parent / "fixtures"
 def build_plan(name: str):
     normalized = FundamentalDataAdapter().from_file(str(FIXTURES / name))
     classification = StockClassifier().classify(normalized)
+    framework = FrameworkSelector().select(classification)
+    return DataReadinessPlanner().plan(normalized, classification, framework)
+
+
+def build_ai_datacenter_plan(sub_type: str | None, warnings: list[str] | None = None):
+    normalized = FundamentalDataAdapter().from_dict(
+        {
+            "meta": {
+                "code": "999001",
+                "stock_name": "AI Datacenter Subtype Fixture",
+                "generated_at": "2026-05-21T00:00:00",
+            },
+            "blocks": {
+                "basic_info": [
+                    {
+                        "stock_code": "999001",
+                        "stock_name": "AI Datacenter Subtype Fixture",
+                        "industry": "AI datacenter infrastructure",
+                        "main_business": "IDC AIDC data center UPS power liquid cooling infrastructure",
+                    }
+                ],
+                "financial_indicator": [
+                    {
+                        "period": "2025-12-31",
+                        "revenue": 1000000000,
+                        "net_profit": 100000000,
+                        "gross_margin": 30,
+                        "operating_cashflow": 80000000,
+                        "accounts_receivable": 50000000,
+                        "contract_liabilities": 30000000,
+                        "capex": 120000000,
+                        "inventory": 40000000,
+                    }
+                ],
+                "valuation": [{"pe_ttm": 25, "pb": 3, "ps": 5}],
+                "business_composition": [
+                    {
+                        "period": "2025-12-31",
+                        "segment_name": "IDC AIDC data center operation revenue",
+                        "revenue_ratio": 50,
+                    },
+                    {
+                        "period": "2025-12-31",
+                        "segment_name": "datacenter UPS power infrastructure revenue",
+                        "revenue_ratio": 30,
+                    },
+                    {
+                        "period": "2025-12-31",
+                        "segment_name": "datacenter liquid cooling precision thermal revenue",
+                        "revenue_ratio": 20,
+                    },
+                    {
+                        "period": "2025-12-31",
+                        "segment_name": "energy storage photovoltaic boundary revenue",
+                        "revenue_ratio": 10,
+                    },
+                    {
+                        "period": "2025-12-31",
+                        "segment_name": "ordinary HVAC industrial air conditioning boundary revenue",
+                        "revenue_ratio": 15,
+                    },
+                ],
+            },
+        }
+    )
+    classification = StockClassificationResult(
+        stock_code="999001",
+        stock_name="AI Datacenter Subtype Fixture",
+        strategy_type="ai_datacenter_infrastructure",
+        sub_type=sub_type,
+        confidence="medium",
+        confidence_score=60,
+        warnings=warnings or [],
+    )
     framework = FrameworkSelector().select(classification)
     return DataReadinessPlanner().plan(normalized, classification, framework)
 
@@ -166,3 +241,118 @@ def test_all_fixture_plans_contain_no_trading_instruction_terms():
     ]
     for name in names:
         assert validate_no_trading_instruction(build_plan(name).model_dump_json()) == []
+
+
+def test_ai_datacenter_operator_readiness_excludes_power_and_cooling_fields():
+    plan = build_ai_datacenter_plan("datacenter_operator")
+    fields = {item.field_name for item in plan.field_readiness}
+    missing = set(plan.critical_missing_fields + plan.high_priority_missing_fields)
+
+    assert "ai_datacenter.customer_revenue_share" in fields
+    assert "ai_datacenter.orders_or_backlog" in fields
+    assert "financial_metrics.capex" in fields
+    assert "ai_datacenter.cabinet_count" in fields
+    assert "ai_datacenter.pue" in fields
+    for field in {
+        "ai_datacenter.power_ups_revenue_share",
+        "ai_datacenter.power_ups_orders",
+        "ai_datacenter.storage_pv_revenue_share",
+        "ai_datacenter.cooling_revenue_share",
+        "ai_datacenter.liquid_cooling_revenue_share",
+        "ai_datacenter.liquid_cooling_customer_validation",
+        "ai_datacenter.liquid_cooling_batch_orders",
+        "ai_datacenter.ordinary_hvac_revenue_share",
+    }:
+        assert field not in fields
+        assert field not in missing
+
+
+def test_ai_datacenter_power_readiness_excludes_operator_and_cooling_fields():
+    plan = build_ai_datacenter_plan("power_ups_infrastructure")
+    fields = {item.field_name for item in plan.field_readiness}
+    missing = set(plan.critical_missing_fields + plan.high_priority_missing_fields)
+
+    assert "ai_datacenter.customer_revenue_share" in fields
+    assert "ai_datacenter.orders_or_backlog" in fields
+    assert "ai_datacenter.power_ups_revenue_share" in fields
+    assert "ai_datacenter.storage_pv_revenue_share" in fields
+    for field in {
+        "ai_datacenter.cabinet_count",
+        "ai_datacenter.mw_scale",
+        "ai_datacenter.rack_up_or_utilization",
+        "ai_datacenter.pue",
+        "ai_datacenter.power_quota_energy_policy",
+        "financial_metrics.depreciation_amortization",
+        "ai_datacenter.cooling_revenue_share",
+        "ai_datacenter.liquid_cooling_revenue_share",
+        "ai_datacenter.liquid_cooling_customer_validation",
+        "ai_datacenter.liquid_cooling_batch_orders",
+        "ai_datacenter.ordinary_hvac_revenue_share",
+    }:
+        assert field not in fields
+        assert field not in missing
+
+
+def test_ai_datacenter_cooling_readiness_excludes_operator_and_power_fields():
+    plan = build_ai_datacenter_plan("cooling_liquid_cooling_infrastructure")
+    fields = {item.field_name for item in plan.field_readiness}
+    missing = set(plan.critical_missing_fields + plan.high_priority_missing_fields)
+
+    assert "ai_datacenter.customer_revenue_share" in fields
+    assert "ai_datacenter.orders_or_backlog" in fields
+    assert "ai_datacenter.cooling_revenue_share" in fields
+    assert "ai_datacenter.liquid_cooling_revenue_share" in fields
+    for field in {
+        "ai_datacenter.cabinet_count",
+        "ai_datacenter.mw_scale",
+        "ai_datacenter.rack_up_or_utilization",
+        "ai_datacenter.pue",
+        "ai_datacenter.power_quota_energy_policy",
+        "financial_metrics.depreciation_amortization",
+        "ai_datacenter.power_ups_revenue_share",
+        "ai_datacenter.power_ups_orders",
+        "ai_datacenter.storage_pv_revenue_share",
+    }:
+        assert field not in fields
+        assert field not in missing
+
+
+def test_ai_datacenter_empty_subtype_is_conservative_and_does_not_crash():
+    plan = build_ai_datacenter_plan(None)
+    fields = {item.field_name for item in plan.field_readiness}
+
+    assert plan.strategy_type == "ai_datacenter_infrastructure"
+    assert "ai_datacenter.cabinet_count" in fields
+    assert "ai_datacenter.power_ups_revenue_share" in fields
+    assert "ai_datacenter.cooling_revenue_share" in fields
+
+
+def test_ai_datacenter_power_storage_pv_boundary_missing_core_evidence_is_insufficient():
+    plan = build_ai_datacenter_plan(
+        "power_ups_infrastructure",
+        ["ai_datacenter_power_storage_pv_boundary_confidence_capped"],
+    )
+
+    assert plan.readiness_level == "insufficient"
+    assert plan.readiness_score <= 39
+    assert "ai_datacenter.orders_or_backlog" in plan.high_priority_missing_fields
+    assert any("boundary sample" in reason for reason in plan.confidence_penalty_reasons)
+
+
+def test_ai_datacenter_cooling_hvac_boundary_missing_core_evidence_is_insufficient():
+    plan = build_ai_datacenter_plan(
+        "cooling_liquid_cooling_infrastructure",
+        ["ai_datacenter_cooling_hvac_boundary_confidence_capped"],
+    )
+
+    assert plan.readiness_level == "insufficient"
+    assert plan.readiness_score <= 39
+    assert "ai_datacenter.liquid_cooling_customer_validation" in plan.high_priority_missing_fields
+    assert any("boundary sample" in reason for reason in plan.confidence_penalty_reasons)
+
+
+def test_ai_datacenter_non_boundary_fixture_keeps_readiness_floor():
+    plan = build_ai_datacenter_plan("power_ups_infrastructure")
+
+    assert plan.readiness_level == "usable_with_warnings"
+    assert plan.readiness_score >= 60

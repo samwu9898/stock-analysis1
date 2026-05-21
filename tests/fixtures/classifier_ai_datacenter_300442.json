@@ -1,0 +1,28 @@
+{
+  "meta": {"code": "300442", "stock_name": "Range Intelligent Computing", "generated_at": "2026-05-21T00:00:00"},
+  "blocks": {
+    "basic_info": [{
+      "stock_code": "300442",
+      "stock_name": "Range Intelligent Computing",
+      "industry": "IDC / AIDC data center operation service",
+      "main_business": "IDC and AIDC data center operation services with cabinet, MW, PUE, customer contract and revenue evidence"
+    }],
+    "financial_indicator": [{
+      "period": "2025-12-31",
+      "revenue": 5000000000,
+      "net_profit": 900000000,
+      "gross_margin": 32,
+      "operating_cashflow": 1100000000,
+      "accounts_receivable": 500000000,
+      "contract_liabilities": 120000000,
+      "capex": 1800000000,
+      "inventory": 100000000
+    }],
+    "valuation": [{"pe_ttm": 35, "pb": 4, "market_cap": 60000000000}],
+    "business_composition": [{
+      "period": "2025-12-31",
+      "segment_name": "IDC AIDC data center operation revenue",
+      "revenue_ratio": 85
+    }]
+  }
+}

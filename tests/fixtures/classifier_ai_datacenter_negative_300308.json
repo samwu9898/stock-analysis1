@@ -1,0 +1,9 @@
+{
+  "meta": {"code": "300308", "stock_name": "Zhongji Innolight", "generated_at": "2026-05-21T00:00:00"},
+  "blocks": {
+    "basic_info": [{"stock_code": "300308", "stock_name": "Zhongji Innolight", "industry": "optical module / CPO / AI data center interconnect", "main_business": "optical module revenue for AI data center customers, not IDC operation, UPS or cooling infrastructure"}],
+    "financial_indicator": [{"period": "2025-12-31", "revenue": 10000000000, "revenue_yoy": 55, "net_profit": 2000000000, "net_profit_yoy": 60, "gross_margin": 35, "operating_cashflow": 2500000000, "accounts_receivable": 800000000, "inventory": 700000000}],
+    "valuation": [{"pe_ttm": 50, "pb": 6, "market_cap": 150000000000}],
+    "business_composition": [{"period": "2025-12-31", "segment_name": "optical module revenue", "revenue_ratio": 90}]
+  }
+}

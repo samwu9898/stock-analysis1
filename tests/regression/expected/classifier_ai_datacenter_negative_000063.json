@@ -1,0 +1,7 @@
+{
+  "stock_code": "000063",
+  "expected_strategy_type": "unknown",
+  "allowed_status": ["insufficient_data"],
+  "max_confidence": "low",
+  "forbidden_phrases": ["买入", "卖出", "加仓", "减仓", "清仓", "止损", "止盈", "目标价"]
+}

@@ -356,6 +356,8 @@ raw data
 
 ### 10.3 readiness_score 和 fundamental_score 的区别
 
+AI datacenter boundary samples make this distinction explicit: the boundary cap applies to `readiness_score` only. If a sample lacks structured real order, customer, delivery, or sub-type revenue validation, `readiness_score` can be capped at `<= 39` and `readiness_level` can become `insufficient`. That does not mean final `fundamental_score` must also be `<= 39`; final `fundamental_score` is produced later by weighted scoring and result assembly.
+
 `readiness_score` 衡量数据准备度，只回答“数据够不够”。它不评价公司好坏，不代表投资价值。
 
 `fundamental_score` 是后续阶段才会实现的基本面评分，用来评价基本面质量。二者不能混用。
@@ -575,6 +577,8 @@ python -m src.fundamental_skill.scoring_engine \
 - high severity 的数据缺失风险存在时，最终置信度不得为 `high`。
 
 ### 13.5 fundamental_score 与交易评分的区别
+
+For final result semantics, do not confuse a readiness cap with a final-score cap. `status=insufficient_data` caps final `fundamental_score` at `<= 50`; it does not inherit every lower upstream `readiness_score` cap. In particular, AI datacenter boundary cases with `readiness_score <= 39` can still have final `fundamental_score` above 39, as long as the final result remains `status=insufficient_data`, `confidence=low`, and `fundamental_score <= 50`.
 
 本阶段的 `fundamental_score` 来自规则型 `weighted_total_score`，表示基本面结构化材料的规则评分。它不是交易评分，不是收益预测，也不是任何交易动作依据。若数据不足、置信度低或分类未知，会进一步封顶。
 

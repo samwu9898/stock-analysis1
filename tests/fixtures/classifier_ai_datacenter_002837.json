@@ -1,0 +1,28 @@
+{
+  "meta": {"code": "002837", "stock_name": "Envicool", "generated_at": "2026-05-21T00:00:00"},
+  "blocks": {
+    "basic_info": [{
+      "stock_code": "002837",
+      "stock_name": "Envicool",
+      "industry": "data center precision thermal control and liquid cooling",
+      "main_business": "data center precision thermal control, liquid cooling, cooling systems, customer delivery and revenue evidence"
+    }],
+    "financial_indicator": [{
+      "period": "2025-12-31",
+      "revenue": 4200000000,
+      "net_profit": 520000000,
+      "gross_margin": 30,
+      "operating_cashflow": 480000000,
+      "accounts_receivable": 650000000,
+      "contract_liabilities": 90000000,
+      "capex": 300000000,
+      "inventory": 700000000
+    }],
+    "valuation": [{"pe_ttm": 42, "pb": 5, "market_cap": 50000000000}],
+    "business_composition": [{
+      "period": "2025-12-31",
+      "segment_name": "data center precision thermal control and liquid cooling revenue",
+      "revenue_ratio": 55
+    }]
+  }
+}

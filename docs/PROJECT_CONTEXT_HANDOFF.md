@@ -173,6 +173,13 @@ Interpretation boundaries:
 - R&D ratio is not confirmation of a technology barrier.
 - Theme heat is not fundamental realization.
 
+AI datacenter score-semantics note:
+
+- For `ai_datacenter_infrastructure` boundary samples, the boundary cap is a `readiness_score` cap, not a direct final `fundamental_score` cap.
+- Missing structured real order, customer, delivery, or sub-type revenue validation can cap `readiness_score` to `<= 39`, force `readiness_level=insufficient`, and keep final confidence at `low`.
+- The final `fundamental_score` still comes from weighted scoring plus result assembly. If final `status=insufficient_data`, the general final-score cap is `<= 50`.
+- Final scores around 41-47 are therefore acceptable for boundary samples such as `002335`, `002518`, and `301018` when `status=insufficient_data` and `confidence=low`.
+
 ### Neutral Naming Compatibility v1
 
 The `fundamental.v1` public schema keeps backward compatibility while adding neutral aliases:

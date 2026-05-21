@@ -16,7 +16,16 @@ from .external_commodity_price_connector import DEFAULT_EXPOSURE_MAP
 from .framework_selector import FrameworkSelector
 from .raw_schema import NormalizedFundamentalInput
 from .readiness_schema import DataReadinessPlan, FieldReadiness, FieldRequirement
-from .stock_classifier import LIFE_SCIENCE_CXO_SEGMENT_KEYWORDS, StockClassifier
+from .stock_classifier import (
+    AI_DATACENTER_COOLING_TERMS,
+    AI_DATACENTER_DATACENTER_TERMS,
+    AI_DATACENTER_OPERATOR_TERMS,
+    AI_DATACENTER_POWER_TERMS,
+    AI_DATACENTER_STORAGE_PV_TERMS,
+    AI_DATACENTER_HVAC_TERMS,
+    LIFE_SCIENCE_CXO_SEGMENT_KEYWORDS,
+    StockClassifier,
+)
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -27,6 +36,103 @@ PARTIAL_PENALTY = {"critical": 9, "high": 5, "medium": 3, "low": 1}
 IMPACT_MISSING = {"critical": "severe", "high": "moderate", "medium": "moderate", "low": "minor"}
 IMPACT_PARTIAL = {"critical": "moderate", "high": "minor", "medium": "minor", "low": "minor"}
 INVALID_VALUES = {None, "", "--", "N/A", "n/a", "NA", "na"}
+
+AI_DATACENTER_SHARED_REQUIREMENT_FIELDS = {
+    "basic_info.industry",
+    "basic_info.main_business",
+    "business_composition.segments",
+    "ai_datacenter.revenue_share",
+    "financial_metrics.revenue",
+    "financial_metrics.net_profit",
+    "financial_metrics.gross_margin",
+    "financial_metrics.operating_cashflow",
+    "financial_metrics.accounts_receivable",
+    "financial_metrics.contract_liabilities",
+    "financial_metrics.capex",
+    "financial_metrics.inventory",
+    "valuation_metrics.pe_ttm",
+    "valuation_metrics.pb",
+    "valuation_metrics.ps",
+    "ai_datacenter.customer_revenue_share",
+    "ai_datacenter.customer_concentration",
+    "ai_datacenter.orders_or_backlog",
+    "ai_datacenter.delivery_cycle",
+    "ai_datacenter.customer_capex_cycle",
+}
+AI_DATACENTER_SUBTYPE_REQUIREMENT_FIELDS = {
+    "datacenter_operator": {
+        "ai_datacenter.cabinet_count",
+        "ai_datacenter.mw_scale",
+        "ai_datacenter.rack_up_or_utilization",
+        "ai_datacenter.pue",
+        "ai_datacenter.power_quota_energy_policy",
+        "ai_datacenter.customer_contract_term",
+        "financial_metrics.depreciation_amortization",
+    },
+    "power_ups_infrastructure": {
+        "ai_datacenter.power_ups_revenue_share",
+        "ai_datacenter.power_ups_orders",
+        "ai_datacenter.storage_pv_revenue_share",
+    },
+    "cooling_liquid_cooling_infrastructure": {
+        "ai_datacenter.cooling_revenue_share",
+        "ai_datacenter.liquid_cooling_revenue_share",
+        "ai_datacenter.liquid_cooling_customer_validation",
+        "ai_datacenter.liquid_cooling_batch_orders",
+        "ai_datacenter.ordinary_hvac_revenue_share",
+    },
+}
+AI_DATACENTER_ALL_SUBTYPE_REQUIREMENT_FIELDS = set().union(
+    *AI_DATACENTER_SUBTYPE_REQUIREMENT_FIELDS.values()
+)
+AI_DATACENTER_BOUNDARY_CAP_WARNINGS = {
+    "ai_datacenter_known_boundary_sample_confidence_capped",
+    "ai_datacenter_power_storage_pv_boundary_confidence_capped",
+    "ai_datacenter_cooling_hvac_boundary_confidence_capped",
+}
+AI_DATACENTER_BOUNDARY_SHARED_CORE_FIELDS = {
+    "ai_datacenter.customer_revenue_share",
+    "ai_datacenter.customer_concentration",
+    "ai_datacenter.orders_or_backlog",
+    "ai_datacenter.delivery_cycle",
+}
+AI_DATACENTER_BOUNDARY_SUBTYPE_CORE_FIELDS = {
+    "power_ups_infrastructure": {
+        "ai_datacenter.power_ups_revenue_share",
+        "ai_datacenter.power_ups_orders",
+    },
+    "cooling_liquid_cooling_infrastructure": {
+        "ai_datacenter.cooling_revenue_share",
+        "ai_datacenter.liquid_cooling_revenue_share",
+        "ai_datacenter.liquid_cooling_customer_validation",
+        "ai_datacenter.liquid_cooling_batch_orders",
+    },
+}
+
+
+def ai_datacenter_boundary_confidence_cap_applies(
+    classification: StockClassificationResult,
+    missing_fields: set[str],
+) -> bool:
+    if classification.strategy_type != "ai_datacenter_infrastructure":
+        return False
+    warnings = set(getattr(classification, "warnings", []) or [])
+    if not (warnings & AI_DATACENTER_BOUNDARY_CAP_WARNINGS):
+        return False
+    subtype = str(getattr(classification, "sub_type", None) or "")
+    if (
+        "ai_datacenter_power_storage_pv_boundary_confidence_capped" in warnings
+        and subtype != "power_ups_infrastructure"
+    ):
+        return False
+    if (
+        "ai_datacenter_cooling_hvac_boundary_confidence_capped" in warnings
+        and subtype != "cooling_liquid_cooling_infrastructure"
+    ):
+        return False
+    core_fields = set(AI_DATACENTER_BOUNDARY_SHARED_CORE_FIELDS)
+    core_fields.update(AI_DATACENTER_BOUNDARY_SUBTYPE_CORE_FIELDS.get(subtype, set()))
+    return bool(core_fields & missing_fields)
 
 
 def _now_iso() -> str:
@@ -57,6 +163,7 @@ class DataReadinessPlanner:
                 "required_fields", []
             )
         ]
+        requirements = self._filter_requirements_for_classification(requirements, classification)
 
         readiness_items = [self._check_requirement(normalized, req) for req in requirements]
         critical_missing = []
@@ -144,6 +251,18 @@ class DataReadinessPlanner:
                 penalty_reasons.append(
                     "life_science_cxo_services v1: basic_info, financials and business_composition are available; missing orders/customer/overseas/utilization/project evidence caps confidence but does not by itself force insufficient readiness."
                 )
+        if classification.strategy_type == "ai_datacenter_infrastructure":
+            foundation_available = (
+                bool(normalized.financial_metrics)
+                and normalized.business_composition is not None
+                and bool(normalized.business_composition.segments)
+                and bool(normalized.basic_info.industry or normalized.basic_info.main_business)
+            )
+            if foundation_available and score < 60:
+                score = 60
+                penalty_reasons.append(
+                    "ai_datacenter_infrastructure v1: basic_info, financials and business_composition are available; missing operating/order/customer/sub_type evidence caps confidence but does not by itself force insufficient readiness."
+                )
         score = max(0, min(100, score))
 
         level = self._level_from_score(
@@ -155,6 +274,17 @@ class DataReadinessPlanner:
             financial_metrics_empty=not normalized.financial_metrics,
             readiness_items=readiness_items,
         )
+        missing_for_boundary_cap = {
+            item.field_name
+            for item in readiness_items
+            if item.status in {"missing", "partial"}
+        }
+        if ai_datacenter_boundary_confidence_cap_applies(classification, missing_for_boundary_cap):
+            score = min(score, 39)
+            level = "insufficient"
+            penalty_reasons.append(
+                "AI datacenter boundary sample lacks structured real order/customer/delivery or sub-type revenue validation; readiness is capped to insufficient and confidence must stay low."
+            )
         blockers = self._build_blockers(readiness_items)
         if not normalized.financial_metrics:
             blockers.insert(0, "财务数据不足：无法完整判断财务质量、利润趋势和风险暴露。")
@@ -190,6 +320,25 @@ class DataReadinessPlanner:
         if "unknown" not in raw:
             raise ValueError("data requirements config must include unknown")
         return raw
+
+    def _filter_requirements_for_classification(
+        self,
+        requirements: list[FieldRequirement],
+        classification: StockClassificationResult,
+    ) -> list[FieldRequirement]:
+        if classification.strategy_type != "ai_datacenter_infrastructure":
+            return requirements
+        sub_type = getattr(classification, "sub_type", None)
+        subtype_fields = AI_DATACENTER_SUBTYPE_REQUIREMENT_FIELDS.get(str(sub_type or ""))
+        if subtype_fields is None:
+            return requirements
+        allowed = AI_DATACENTER_SHARED_REQUIREMENT_FIELDS | subtype_fields
+        return [
+            requirement
+            for requirement in requirements
+            if requirement.field_name not in AI_DATACENTER_ALL_SUBTYPE_REQUIREMENT_FIELDS
+            or requirement.field_name in allowed
+        ]
 
     def _check_requirement(
         self, normalized: NormalizedFundamentalInput, requirement: FieldRequirement
@@ -252,6 +401,8 @@ class DataReadinessPlanner:
             )
         if field_name.startswith("life_science_cxo."):
             return self._resolve_life_science_cxo_field(normalized, field_name)
+        if field_name.startswith("ai_datacenter."):
+            return self._resolve_ai_datacenter_field(normalized, field_name)
         if field_name.startswith("valuation_metrics."):
             attr = field_name.split(".", 1)[1]
             if normalized.valuation_metrics is None:
@@ -360,6 +511,113 @@ class DataReadinessPlanner:
                 "Industry-specific CXO disclosure is missing or not normalized in v1; confidence must be capped.",
             )
         return "missing", None, field_name, "Unsupported life-science CXO field in v1."
+
+    def _resolve_ai_datacenter_field(
+        self, normalized: NormalizedFundamentalInput, field_name: str
+    ) -> tuple[str, Any, str | None, str | None]:
+        attr = field_name.split(".", 1)[1]
+        if attr == "revenue_share":
+            share = self._business_segment_share(
+                normalized,
+                AI_DATACENTER_DATACENTER_TERMS
+                + AI_DATACENTER_OPERATOR_TERMS
+                + AI_DATACENTER_POWER_TERMS
+                + AI_DATACENTER_COOLING_TERMS,
+            )
+            if share is None:
+                return (
+                    "missing",
+                    None,
+                    "business_composition.segments",
+                    "AI datacenter related revenue share is not independently confirmed; theme wording alone does not qualify.",
+                )
+            return "available", f"{share:.2%}", "business_composition.segments[*].revenue_ratio", None
+        if attr == "power_ups_revenue_share":
+            share = self._business_segment_share(normalized, AI_DATACENTER_POWER_TERMS)
+            if share is None:
+                return (
+                    "missing",
+                    None,
+                    "business_composition.segments",
+                    "Datacenter power/UPS revenue share is not independently separated from storage/PV or generic power equipment.",
+                )
+            return "available", f"{share:.2%}", "business_composition.segments[*].revenue_ratio", None
+        if attr == "storage_pv_revenue_share":
+            share = self._business_segment_share(normalized, AI_DATACENTER_STORAGE_PV_TERMS)
+            if share is None:
+                return (
+                    "missing",
+                    None,
+                    "business_composition.segments",
+                    "Storage/PV revenue share is not separated; mixed power businesses must keep this boundary explicit.",
+                )
+            return "available", f"{share:.2%}", "business_composition.segments[*].revenue_ratio", None
+        if attr == "cooling_revenue_share":
+            share = self._business_segment_share(normalized, AI_DATACENTER_COOLING_TERMS)
+            if share is None:
+                return (
+                    "missing",
+                    None,
+                    "business_composition.segments",
+                    "Datacenter cooling revenue share is not independently confirmed; ordinary HVAC cannot be treated as datacenter cooling.",
+                )
+            return "available", f"{share:.2%}", "business_composition.segments[*].revenue_ratio", None
+        if attr == "ordinary_hvac_revenue_share":
+            share = self._business_segment_share(normalized, AI_DATACENTER_HVAC_TERMS)
+            if share is None:
+                return (
+                    "missing",
+                    None,
+                    "business_composition.segments",
+                    "Ordinary HVAC / industrial thermal-control revenue share is not separated; boundary remains unresolved.",
+                )
+            return "available", f"{share:.2%}", "business_composition.segments[*].revenue_ratio", None
+        future_needed = {
+            "customer_revenue_share",
+            "customer_concentration",
+            "orders_or_backlog",
+            "delivery_cycle",
+            "customer_capex_cycle",
+            "cabinet_count",
+            "mw_scale",
+            "rack_up_or_utilization",
+            "pue",
+            "power_quota_energy_policy",
+            "customer_contract_term",
+            "power_ups_orders",
+            "liquid_cooling_revenue_share",
+            "liquid_cooling_customer_validation",
+            "liquid_cooling_batch_orders",
+        }
+        if attr in {"rack_up_or_utilization", "pue"}:
+            return (
+                "missing",
+                None,
+                field_name,
+                "v1 does not calculate rack-up/utilization/PUE proxy; explicit company disclosure is required.",
+            )
+        if attr == "liquid_cooling_revenue_share":
+            return (
+                "missing",
+                None,
+                field_name,
+                "v1 does not calculate liquid-cooling revenue proxy; independent revenue disclosure is required.",
+            )
+        if attr == "orders_or_backlog":
+            return (
+                "missing",
+                None,
+                field_name,
+                "v1 does not synthesize real backlog from contract liabilities; explicit order/backlog evidence is required.",
+            )
+        if attr in future_needed:
+            return (
+                "missing",
+                None,
+                field_name,
+                "Industry-specific AI datacenter disclosure is missing or not normalized in v1; confidence must be capped.",
+            )
+        return "missing", None, field_name, "Unsupported AI datacenter infrastructure field in v1."
 
     def _business_segment_share(
         self, normalized: NormalizedFundamentalInput, keywords: tuple[str, ...]
@@ -497,6 +755,8 @@ class DataReadinessPlanner:
             return f"Collect low-altitude infrastructure/operation evidence: {requirement.display_name}"
         if requirement.category == "industry" and requirement.field_name.startswith("life_science_cxo."):
             return f"Collect life-science CXO evidence: {requirement.display_name}"
+        if requirement.category == "industry" and requirement.field_name.startswith("ai_datacenter."):
+            return f"Collect AI datacenter infrastructure evidence: {requirement.display_name}"
         if requirement.category == "industry":
             return f"补充卫星通信行业专属字段：{requirement.display_name}"
         return f"补充字段：{requirement.display_name}"
@@ -642,6 +902,45 @@ class DataReadinessPlanner:
                 caps.append("usable_with_warnings")
             if foundation & missing or financial_metrics_empty:
                 caps.append("weak")
+        if strategy_type == "ai_datacenter_infrastructure":
+            foundation = {
+                "basic_info.industry",
+                "basic_info.main_business",
+                "business_composition.segments",
+                "ai_datacenter.revenue_share",
+            }
+            shared_gating = {
+                "ai_datacenter.customer_revenue_share",
+                "ai_datacenter.customer_concentration",
+                "ai_datacenter.orders_or_backlog",
+                "ai_datacenter.delivery_cycle",
+                "ai_datacenter.customer_capex_cycle",
+            }
+            operator_gating = {
+                "ai_datacenter.cabinet_count",
+                "ai_datacenter.mw_scale",
+                "ai_datacenter.rack_up_or_utilization",
+                "ai_datacenter.pue",
+                "ai_datacenter.power_quota_energy_policy",
+                "ai_datacenter.customer_contract_term",
+                "financial_metrics.depreciation_amortization",
+            }
+            power_gating = {
+                "ai_datacenter.power_ups_revenue_share",
+                "ai_datacenter.power_ups_orders",
+                "ai_datacenter.storage_pv_revenue_share",
+            }
+            cooling_gating = {
+                "ai_datacenter.cooling_revenue_share",
+                "ai_datacenter.liquid_cooling_revenue_share",
+                "ai_datacenter.liquid_cooling_customer_validation",
+                "ai_datacenter.liquid_cooling_batch_orders",
+                "ai_datacenter.ordinary_hvac_revenue_share",
+            }
+            if shared_gating & missing or operator_gating & missing or power_gating & missing or cooling_gating & missing:
+                caps.append("usable_with_warnings")
+            if foundation & missing or financial_metrics_empty:
+                caps.append("weak")
         for cap in caps:
             level = self._cap_level(level, cap)
         return level
@@ -709,6 +1008,20 @@ class DataReadinessPlanner:
                 notes.append("Missing clinical project count/progress: do not claim clinical CRO prosperity.")
             if "life_science_cxo.one_off_large_order_risk" in missing_names:
                 notes.append("One-off large-order risk must be checked; historical year-on-year growth may be distorted.")
+        if strategy_type == "ai_datacenter_infrastructure":
+            notes.append("confidence is evidence confidence for the current fundamental_view, not positive strength.")
+            notes.append("AI datacenter infrastructure is not a generic AI compute-chain framework; do not mix it with PCB, optical modules, server OEMs or chips.")
+            notes.append("IDC operation, power/UPS infrastructure, and cooling/liquid-cooling infrastructure are different business models; do not mix sub_type metrics.")
+            if {"ai_datacenter.orders_or_backlog", "financial_metrics.contract_liabilities"} & missing_names:
+                notes.append("Missing real orders/backlog: do not claim order realization; contract liabilities are partial_proxy only.")
+            if {"ai_datacenter.revenue_share", "ai_datacenter.customer_revenue_share", "ai_datacenter.customer_concentration"} & missing_names:
+                notes.append("Missing datacenter revenue/customer structure: do not claim business realization or stable customer demand.")
+            if {"ai_datacenter.cabinet_count", "ai_datacenter.mw_scale", "ai_datacenter.rack_up_or_utilization", "ai_datacenter.pue"} & missing_names:
+                notes.append("Missing cabinet/MW/rack-up/PUE: do not judge datacenter operating efficiency and do not calculate proxies.")
+            if {"ai_datacenter.liquid_cooling_revenue_share", "ai_datacenter.liquid_cooling_customer_validation", "ai_datacenter.liquid_cooling_batch_orders"} & missing_names:
+                notes.append("Missing liquid-cooling revenue/customer/batch-order evidence: do not claim liquid cooling has scaled and do not calculate proxy.")
+            if "ai_datacenter.power_ups_revenue_share" in missing_names:
+                notes.append("Missing datacenter power/UPS revenue share: do not mix UPS/power with storage or photovoltaic business.")
         if strategy_type == "unknown":
             notes.append("分类未知时，只能描述数据缺口，不能强行套用行业框架。")
         return notes
@@ -760,6 +1073,14 @@ class DataReadinessPlanner:
             if any(key in field_name for key in ("cdmo_capacity_utilization", "clinical_project_count")):
                 return ["industry_cycle", "risk_flags"]
             if any(key in field_name for key in ("customer", "overseas", "geopolitical", "compliance", "one_off", "talent")):
+                return ["risk_flags", "business_quality"]
+            return ["risk_flags"]
+        if field_name.startswith("ai_datacenter."):
+            if any(key in field_name for key in ("revenue_share", "orders_or_backlog", "power_ups_orders", "liquid_cooling_batch_orders")):
+                return ["business_quality", "catalysts", "risk_flags"]
+            if any(key in field_name for key in ("cabinet", "mw_scale", "rack_up", "utilization", "pue")):
+                return ["industry_cycle", "risk_flags"]
+            if any(key in field_name for key in ("customer", "power_quota", "energy_policy", "storage_pv", "ordinary_hvac")):
                 return ["risk_flags", "business_quality"]
             return ["risk_flags"]
         return []

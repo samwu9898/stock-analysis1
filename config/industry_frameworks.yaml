@@ -544,6 +544,124 @@ life_science_cxo_services:
   - life_science_cxo.geopolitical_regulatory_risk
   - life_science_cxo.one_off_large_order_risk
   - life_science_cxo.gmp_fda_nmpa_compliance_event
+ai_datacenter_infrastructure:
+  display_name: "AI datacenter infrastructure"
+  description: "Applies to IDC/AIDC operation, datacenter power/UPS/distribution, and datacenter cooling/liquid-cooling infrastructure companies whose business can be verified by revenue, orders, customers, assets, cabinets/MW, delivery or operating indicators. It is not a generic AI compute-chain or theme framework."
+  required_focus:
+  - "sub_type routing: datacenter_operator vs power_ups_infrastructure vs cooling_liquid_cooling_infrastructure"
+  - "AI datacenter related revenue share and business composition"
+  - "datacenter customer revenue share, customer concentration, orders/contracts and delivery cycle"
+  - "revenue, profit, gross margin, operating cashflow, accounts receivable, contract liabilities, capex and valuation"
+  - "contract liabilities as partial_proxy only, not real backlog"
+  - "capex as capacity/infrastructure input observation only, not revenue certainty"
+  - "customer capex cycle as demand context only, not company revenue certainty"
+  - "sub_type-specific operating indicators without proxy calculation in v1"
+  must_track_indicators:
+  - "AI datacenter related revenue share"
+  - "datacenter customer revenue share"
+  - "major-customer concentration"
+  - "orders / backlog, usually missing / future_data_needed"
+  - "contract liabilities partial_proxy"
+  - "delivery cycle"
+  - "gross margin"
+  - "operating cashflow"
+  - "accounts receivable"
+  - "inventory"
+  - "capex"
+  - "capex conversion cycle"
+  - "construction-in-progress amount and expected completion time"
+  - "historical capex-to-revenue conversion efficiency"
+  - "customer capital-expenditure cycle"
+  - "price-competition risk"
+  - "cabinet count"
+  - "MW scale"
+  - "rack-up rate / utilization"
+  - "PUE"
+  - "average electricity price"
+  - "power cost / revenue"
+  - "revenue per MW"
+  - "revenue per cabinet"
+  - "customer contract term"
+  - "depreciation and amortization"
+  - "EBITDA / EBITDA margin as future_data_needed only"
+  - "energy policy / power quota"
+  - "datacenter power / UPS revenue share"
+  - "UPS / distribution orders"
+  - "storage / photovoltaic revenue share"
+  - "project acceptance and collection cycle"
+  - "datacenter cooling revenue share"
+  - "liquid-cooling revenue share"
+  - "liquid-cooling technology route"
+  - "liquid-cooling certification stage"
+  - "liquid-cooling customer validation"
+  - "liquid-cooling batch orders"
+  - "ordinary HVAC / industrial thermal-control revenue share"
+  key_risks:
+  - "AI datacenter theme exposure is not order realization."
+  - "Customer capex expectations are not company revenue certainty."
+  - "Contract liabilities are partial_proxy only and are not real backlog."
+  - "Capex is capacity/infrastructure input evidence only and is not guaranteed capacity release or revenue."
+  - "IDC operator metrics and equipment-supplier metrics must not be mixed."
+  - "Power/UPS and storage/photovoltaic businesses must not be mixed."
+  - "Liquid cooling / precision thermal control and ordinary industrial HVAC must not be mixed."
+  - "PCB, optical modules, servers and chips must not be routed into this infrastructure framework."
+  - "Customer certification or POC testing is not a batch order."
+  - "Missing rack-up rate, PUE or utilization prevents datacenter operating-efficiency claims."
+  - "Missing liquid-cooling revenue and customer validation prevents liquid-cooling scale-up claims."
+  - "Missing customer structure and orders prevents claims of sufficient business realization."
+  - "Power quota, energy policy and project approval risk must be explicit."
+  - "IDC depreciation policy affects profit comparison; do not rely only on net margin."
+  - "Major-customer concentration and order-cut risk must be explicit."
+  preferred_metrics:
+  - revenue
+  - net_profit
+  - gross_margin
+  - operating_cashflow
+  - accounts_receivable
+  - contract_liabilities
+  - capex
+  - inventory
+  - business_composition
+  - valuation_metrics
+  invalidation_focus:
+  - "Datacenter revenue share, orders, customers, assets, delivery or operating evidence cannot be confirmed."
+  - "Power/UPS revenue cannot be separated from storage/photovoltaic revenue."
+  - "Datacenter cooling or liquid-cooling revenue/customer/order validation remains missing."
+  - "Rack-up rate, PUE, utilization, customer term, energy quota or depreciation evidence remains missing for operators."
+  - "Receivables and operating cashflow diverge from revenue recognition."
+  common_mistakes:
+  - "Treating AI datacenter theme as order realization."
+  - "Treating customer capex expectations as company revenue certainty."
+  - "Treating contract liabilities as backlog."
+  - "Treating capex as confirmed capacity release or confirmed future revenue."
+  - "Mixing IDC operator indicators with equipment supplier indicators."
+  - "Mixing datacenter UPS/power with storage or photovoltaic business."
+  - "Mixing liquid cooling / precision thermal control with ordinary industrial HVAC."
+  - "Routing PCB, optical modules, servers or chips into this infrastructure framework."
+  - "Treating customer certification or POC testing as batch orders."
+  - "Calculating rack-up, utilization, PUE, liquid-cooling revenue share or backlog proxies in v1."
+  confidence_penalty_missing_fields:
+  - ai_datacenter.revenue_share
+  - ai_datacenter.customer_revenue_share
+  - ai_datacenter.customer_concentration
+  - ai_datacenter.orders_or_backlog
+  - ai_datacenter.delivery_cycle
+  - ai_datacenter.customer_capex_cycle
+  - ai_datacenter.cabinet_count
+  - ai_datacenter.mw_scale
+  - ai_datacenter.rack_up_or_utilization
+  - ai_datacenter.pue
+  - ai_datacenter.power_quota_energy_policy
+  - ai_datacenter.customer_contract_term
+  - financial_metrics.depreciation_amortization
+  - ai_datacenter.power_ups_revenue_share
+  - ai_datacenter.power_ups_orders
+  - ai_datacenter.storage_pv_revenue_share
+  - ai_datacenter.cooling_revenue_share
+  - ai_datacenter.liquid_cooling_revenue_share
+  - ai_datacenter.liquid_cooling_customer_validation
+  - ai_datacenter.liquid_cooling_batch_orders
+  - ai_datacenter.ordinary_hvac_revenue_share
 unknown:
   display_name: 未知类型
   description: 数据不足或无法稳定归类。

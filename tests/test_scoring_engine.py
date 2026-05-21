@@ -171,3 +171,28 @@ def test_advanced_manufacturing_risk_guard_constraints_apply():
     assert "机器人业务仍需订单和收入验证" in scoring.scoring_warnings
     assert "大客户收入占比和订单持续性需要验证" in scoring.scoring_warnings
     assert "估值可能已经反映部分成长预期" in scoring.scoring_warnings
+
+
+def test_ai_datacenter_boundary_cap_forces_low_score_confidence():
+    for fixture in [
+        "classifier_ai_datacenter_002335.json",
+        "classifier_ai_datacenter_301018.json",
+    ]:
+        _, classification, _, readiness, context, scoring = build_all(fixture)
+
+        assert classification.strategy_type == "ai_datacenter_infrastructure"
+        assert any("boundary_confidence_capped" in warning for warning in classification.warnings)
+        assert readiness.readiness_level == "insufficient"
+        assert context.max_overall_confidence == "low"
+        assert scoring.score_confidence == "low"
+        assert scoring.weighted_total_score <= 65
+
+
+def test_ai_datacenter_non_boundary_score_confidence_stays_medium():
+    _, classification, _, readiness, context, scoring = build_all("classifier_ai_datacenter_002837.json")
+
+    assert classification.strategy_type == "ai_datacenter_infrastructure"
+    assert not any("boundary_confidence_capped" in warning for warning in classification.warnings)
+    assert readiness.readiness_level == "usable_with_warnings"
+    assert context.max_overall_confidence == "medium"
+    assert scoring.score_confidence == "medium"

@@ -99,6 +99,10 @@ LIFE_SCIENCE_CXO_STRATEGY = "life_science_cxo_services"
 LIFE_SCIENCE_CXO_INTEGRATED_SUBTYPE = "integrated_cxo_platform"
 LIFE_SCIENCE_CXO_CDMO_SUBTYPE = "cdmo_manufacturing_services"
 LIFE_SCIENCE_CXO_CLINICAL_SUBTYPE = "clinical_cro_services"
+AI_DATACENTER_STRATEGY = "ai_datacenter_infrastructure"
+AI_DATACENTER_OPERATOR_SUBTYPE = "datacenter_operator"
+AI_DATACENTER_POWER_SUBTYPE = "power_ups_infrastructure"
+AI_DATACENTER_COOLING_SUBTYPE = "cooling_liquid_cooling_infrastructure"
 
 LOW_ALTITUDE_AVIATION_PRIMARY = (
     "\u901a\u822a\u8fd0\u8425",
@@ -342,6 +346,138 @@ LIFE_SCIENCE_CXO_KNOWN_POSITIVES = {
 }
 LIFE_SCIENCE_CXO_KNOWN_NEGATIVES = {"600276", "600521", "000739", "300760", "300012", "600196"}
 
+AI_DATACENTER_DATACENTER_TERMS = (
+    "data center",
+    "datacenter",
+    "IDC",
+    "AIDC",
+    "\u6570\u636e\u4e2d\u5fc3",
+    "\u667a\u7b97\u4e2d\u5fc3",
+    "\u7b97\u529b\u4e2d\u5fc3",
+)
+AI_DATACENTER_INFRA_TERMS = (
+    "liquid cooling",
+    "precision thermal",
+    "precision cooling",
+    "UPS",
+    "uninterruptible power",
+    "cabinet",
+    "rack-up",
+    "PUE",
+    "MW",
+    "\u6db2\u51b7",
+    "\u7cbe\u5bc6\u6e29\u63a7",
+    "\u7cbe\u5bc6\u7a7a\u8c03",
+    "\u51b7\u5374",
+    "\u4e0d\u95f4\u65ad\u7535\u6e90",
+    "\u673a\u67dc",
+    "\u4e0a\u67b6\u7387",
+    "\u5229\u7528\u7387",
+)
+AI_DATACENTER_PROOF_TERMS = (
+    "revenue",
+    "revenue share",
+    "segment revenue",
+    "order",
+    "contract",
+    "customer",
+    "operation",
+    "delivery",
+    "asset",
+    "\u6536\u5165",
+    "\u6536\u5165\u5360\u6bd4",
+    "\u5206\u90e8\u6536\u5165",
+    "\u8ba2\u5355",
+    "\u5408\u540c",
+    "\u5ba2\u6237",
+    "\u8fd0\u8425",
+    "\u4ea4\u4ed8",
+    "\u8d44\u4ea7",
+)
+AI_DATACENTER_NEGATIVE_TERMS = (
+    "self-built data center",
+    "EPC",
+    "construction",
+    "defense",
+    "military",
+    "optical module",
+    "CPO",
+    "PCB",
+    "server OEM",
+    "server whole machine",
+    "chip",
+    "semiconductor",
+    "\u81ea\u5efa\u6570\u636e\u4e2d\u5fc3",
+    "EPC\u603b\u5305",
+    "\u5efa\u7b51\u65bd\u5de5",
+    "\u519b\u5de5",
+    "\u56fd\u9632",
+    "\u5149\u6a21\u5757",
+    "\u670d\u52a1\u5668\u6574\u673a",
+    "\u82af\u7247",
+    "\u534a\u5bfc\u4f53",
+)
+AI_DATACENTER_OPERATOR_TERMS = (
+    "IDC",
+    "AIDC",
+    "hosting",
+    "colocation",
+    "cabinet",
+    "MW",
+    "rack-up",
+    "PUE",
+    "\u6570\u636e\u4e2d\u5fc3\u8fd0\u8425",
+    "\u673a\u67dc",
+    "\u4e0a\u67b6\u7387",
+    "\u5229\u7528\u7387",
+)
+AI_DATACENTER_POWER_TERMS = (
+    "UPS",
+    "uninterruptible power",
+    "power distribution",
+    "power infrastructure",
+    "\u7535\u6e90",
+    "\u914d\u7535",
+    "\u4f9b\u7535",
+    "\u4e0d\u95f4\u65ad\u7535\u6e90",
+)
+AI_DATACENTER_COOLING_TERMS = (
+    "liquid cooling",
+    "precision thermal",
+    "precision air conditioning",
+    "cooling",
+    "\u6db2\u51b7",
+    "\u7cbe\u5bc6\u6e29\u63a7",
+    "\u7cbe\u5bc6\u7a7a\u8c03",
+    "\u51b7\u5374",
+    "\u6e29\u63a7",
+)
+AI_DATACENTER_STORAGE_PV_TERMS = (
+    "energy storage",
+    "photovoltaic",
+    "PV",
+    "\u50a8\u80fd",
+    "\u5149\u4f0f",
+    "\u65b0\u80fd\u6e90",
+)
+AI_DATACENTER_HVAC_TERMS = (
+    "HVAC",
+    "industrial air conditioning",
+    "\u5de5\u4e1a\u7a7a\u8c03",
+    "\u5546\u7528\u7a7a\u8c03",
+    "\u666e\u901a\u7a7a\u8c03",
+)
+AI_DATACENTER_KNOWN_POSITIVES = {
+    "300442": AI_DATACENTER_OPERATOR_SUBTYPE,
+    "002837": AI_DATACENTER_COOLING_SUBTYPE,
+}
+AI_DATACENTER_KNOWN_BOUNDARIES = {
+    "002335": AI_DATACENTER_POWER_SUBTYPE,
+    "002518": AI_DATACENTER_POWER_SUBTYPE,
+    "301018": AI_DATACENTER_COOLING_SUBTYPE,
+}
+AI_DATACENTER_KNOWN_NEGATIVES = {"300308", "300476", "000063", "002230"}
+
 
 def _safe_json(value: Any, limit: int = 8000) -> str:
     try:
@@ -392,13 +528,16 @@ class StockClassifier:
         life_science_cxo_result = self._classify_life_science_cxo(normalized, text_sources, missing_fields, warnings)
         if life_science_cxo_result is not None:
             return life_science_cxo_result
+        ai_datacenter_result = self._classify_ai_datacenter(normalized, text_sources, missing_fields, warnings)
+        if ai_datacenter_result is not None:
+            return ai_datacenter_result
 
         scores: dict[str, int] = defaultdict(int)
         evidence_by_type: dict[str, list[ClassificationEvidence]] = defaultdict(list)
         matched_source_types: dict[str, set[str]] = defaultdict(set)
 
         for strategy_type, rule in self.rules.items():
-            if strategy_type == "unknown":
+            if strategy_type in {"unknown", AI_DATACENTER_STRATEGY}:
                 continue
             examples = rule.get("examples", []) or []
             keywords = rule.get("keywords", []) or []
@@ -912,6 +1051,232 @@ class StockClassifier:
             alternative_types=[],
             missing_fields=sorted(set(missing_fields)),
             warnings=sorted(set(warnings + ["life_science_cxo_boundary_exclusion_applied"])),
+        )
+
+    def _classify_ai_datacenter(
+        self,
+        normalized: NormalizedFundamentalInput,
+        text_sources: dict[str, str],
+        missing_fields: list[str],
+        warnings: list[str],
+    ) -> StockClassificationResult | None:
+        core_text = self._core_text(text_sources)
+        all_text = " ".join(text_sources.values())
+        code = "".join(ch for ch in str(normalized.stock_code) if ch.isdigit()).zfill(6)[-6:]
+
+        datacenter_any = self._has_any(all_text, AI_DATACENTER_DATACENTER_TERMS)
+        infra_any = self._has_any(all_text, AI_DATACENTER_INFRA_TERMS)
+        proof_any = self._has_any(all_text, AI_DATACENTER_PROOF_TERMS)
+        negative_hit = self._first_hit(core_text, AI_DATACENTER_NEGATIVE_TERMS) or self._first_hit(
+            all_text, AI_DATACENTER_NEGATIVE_TERMS
+        )
+        known_subtype = AI_DATACENTER_KNOWN_POSITIVES.get(code) or AI_DATACENTER_KNOWN_BOUNDARIES.get(code)
+
+        if code in AI_DATACENTER_KNOWN_NEGATIVES and (datacenter_any or infra_any):
+            warnings.append("ai_datacenter_known_negative_exclusion_applied")
+            return None
+        if negative_hit and not known_subtype:
+            if datacenter_any and not any(
+                scores_term in all_text
+                for scores_term in ("revenue", "\u6536\u5165", "order", "\u8ba2\u5355", "customer", "\u5ba2\u6237")
+            ):
+                return StockClassificationResult(
+                    stock_code=normalized.stock_code,
+                    stock_name=normalized.stock_name,
+                    strategy_type="theme_only",
+                    confidence="low",
+                    confidence_score=35,
+                    reasons=[
+                        "AI datacenter wording appeared, but negative supply-chain or self-built/EPC boundary terms prevent routing to ai_datacenter_infrastructure.",
+                        "PCB, optical modules, server OEMs, chips, semiconductors, self-built datacenters and EPC/construction are outside this v1 framework.",
+                    ],
+                    evidence=[
+                        ClassificationEvidence(
+                            source_field="core_business_text",
+                            matched_value=negative_hit,
+                            matched_rule="ai_datacenter.negative_boundary",
+                            weight=20,
+                            explanation="Boundary guard prevents AI datacenter theme wording from absorbing excluded supply-chain or construction models.",
+                        )
+                    ],
+                    alternative_types=[],
+                    missing_fields=sorted(set(missing_fields)),
+                    warnings=sorted(set(warnings + ["ai_datacenter_boundary_exclusion_applied"])),
+                )
+            return None
+
+        revenue_share = self._ai_datacenter_segment_share(normalized)
+        has_specific_evidence = revenue_share is not None or self._has_any(
+            all_text,
+            (
+                "datacenter order",
+                "data center order",
+                "datacenter customer",
+                "data center customer",
+                "customer contract",
+                "IDC asset",
+                "cabinet",
+                "MW",
+                "\u6570\u636e\u4e2d\u5fc3\u8ba2\u5355",
+                "\u6570\u636e\u4e2d\u5fc3\u5ba2\u6237",
+                "\u5ba2\u6237\u5408\u540c",
+                "\u673a\u67dc",
+            ),
+        )
+        tier1 = datacenter_any and infra_any and proof_any and not negative_hit
+        known_with_foundation = (
+            known_subtype is not None
+            and bool(normalized.financial_metrics or normalized.business_composition)
+        )
+
+        if tier1 and (has_specific_evidence or known_subtype is not None):
+            subtype = known_subtype or self._infer_ai_datacenter_subtype(all_text)
+            if subtype is None:
+                warnings.append("ai_datacenter_sub_type_unconfirmed_confidence_capped")
+                return self._ai_datacenter_theme_only_result(
+                    normalized,
+                    missing_fields,
+                    warnings,
+                    "Tier-1 text matched but no formal v1 sub_type could be verified.",
+                )
+            score = 62 if revenue_share is not None else 55
+            if code in AI_DATACENTER_KNOWN_BOUNDARIES:
+                score = min(score, 50)
+                warnings.append("ai_datacenter_known_boundary_sample_confidence_capped")
+            if subtype == AI_DATACENTER_POWER_SUBTYPE and (
+                self._has_any(all_text, AI_DATACENTER_STORAGE_PV_TERMS) or code in {"002335", "002518"}
+            ):
+                score = min(score, 50)
+                warnings.append("ai_datacenter_power_storage_pv_boundary_confidence_capped")
+            if subtype == AI_DATACENTER_COOLING_SUBTYPE and (
+                self._has_any(all_text, AI_DATACENTER_HVAC_TERMS) or code == "301018"
+            ):
+                score = min(score, 55)
+                warnings.append("ai_datacenter_cooling_hvac_boundary_confidence_capped")
+            evidence = [
+                ClassificationEvidence(
+                    source_field="text_sources",
+                    matched_value=self._first_hit(all_text, AI_DATACENTER_DATACENTER_TERMS) or AI_DATACENTER_STRATEGY,
+                    matched_rule="ai_datacenter.tier1.and_logic",
+                    weight=45,
+                    explanation="Tier-1 AND logic matched datacenter + infrastructure metric/product + revenue/order/customer/operation/delivery evidence, with exclusion guard applied.",
+                )
+            ]
+            if revenue_share is not None:
+                evidence.append(
+                    ClassificationEvidence(
+                        source_field="business_composition",
+                        matched_value=f"ai_datacenter_related_revenue_share={revenue_share:.2%}",
+                        matched_rule="ai_datacenter.revenue_share_evidence",
+                        weight=15,
+                        explanation="Business composition supports datacenter-related segment exposure. It does not prove order realization, utilization or customer capex conversion.",
+                    )
+                )
+            return StockClassificationResult(
+                stock_code=normalized.stock_code,
+                stock_name=normalized.stock_name,
+                strategy_type=AI_DATACENTER_STRATEGY,
+                sub_type=subtype,
+                confidence=_score_to_confidence(score, AI_DATACENTER_STRATEGY),
+                confidence_score=score,
+                reasons=[
+                    f"classified as {AI_DATACENTER_STRATEGY} with sub_type={subtype} by conservative Tier-1 AND logic.",
+                    "This framework covers IDC/AIDC operation, datacenter power/UPS/distribution, and datacenter cooling/liquid-cooling infrastructure only.",
+                    "Theme wording, capex, contract liabilities and customer capex expectations are not treated as confirmed order or revenue realization.",
+                ],
+                evidence=evidence,
+                alternative_types=["right_trend_growth"],
+                missing_fields=sorted(set(missing_fields)),
+                warnings=sorted(set(warnings)),
+            )
+
+        if known_with_foundation:
+            subtype = known_subtype
+            score = 50
+            warnings.append("ai_datacenter_known_sample_requires_manual_evidence_confidence_capped")
+            if code in AI_DATACENTER_KNOWN_BOUNDARIES:
+                score = 45
+            return StockClassificationResult(
+                stock_code=normalized.stock_code,
+                stock_name=normalized.stock_name,
+                strategy_type=AI_DATACENTER_STRATEGY,
+                sub_type=subtype,
+                confidence=_score_to_confidence(score, AI_DATACENTER_STRATEGY),
+                confidence_score=score,
+                reasons=[
+                    f"Known v1 ai_datacenter_infrastructure sample routed with sub_type={subtype}, but confidence is capped because full Tier-1 evidence is incomplete.",
+                    "Business composition and sub-type operating/order/customer evidence remain required before stronger conclusions.",
+                ],
+                evidence=[
+                    ClassificationEvidence(
+                        source_field="stock_code",
+                        matched_value=code,
+                        matched_rule="ai_datacenter.known_sample_boundary_fallback",
+                        weight=30,
+                        explanation="Known v1 sample fallback preserves routing while keeping confidence conservative.",
+                    )
+                ],
+                alternative_types=["right_trend_growth"],
+                missing_fields=sorted(set(missing_fields)),
+                warnings=sorted(set(warnings)),
+            )
+
+        if datacenter_any:
+            return self._ai_datacenter_theme_only_result(
+                normalized,
+                missing_fields,
+                warnings,
+                "AI datacenter theme appeared, but Tier-1 AND evidence and confirmable revenue/order/customer/asset/operation proof were not sufficient.",
+            )
+        return None
+
+    def _infer_ai_datacenter_subtype(self, text: str) -> str | None:
+        if self._has_any(text, AI_DATACENTER_POWER_TERMS):
+            return AI_DATACENTER_POWER_SUBTYPE
+        if self._has_any(text, AI_DATACENTER_COOLING_TERMS):
+            return AI_DATACENTER_COOLING_SUBTYPE
+        if self._has_any(text, AI_DATACENTER_OPERATOR_TERMS):
+            return AI_DATACENTER_OPERATOR_SUBTYPE
+        return None
+
+    def _ai_datacenter_segment_share(self, normalized: NormalizedFundamentalInput) -> float | None:
+        return self._segment_share(
+            normalized,
+            AI_DATACENTER_DATACENTER_TERMS
+            + AI_DATACENTER_OPERATOR_TERMS
+            + AI_DATACENTER_POWER_TERMS
+            + AI_DATACENTER_COOLING_TERMS,
+        )
+
+    def _ai_datacenter_theme_only_result(
+        self,
+        normalized: NormalizedFundamentalInput,
+        missing_fields: list[str],
+        warnings: list[str],
+        reason: str,
+    ) -> StockClassificationResult:
+        return StockClassificationResult(
+            stock_code=normalized.stock_code,
+            stock_name=normalized.stock_name,
+            strategy_type="theme_only",
+            confidence="low",
+            confidence_score=35,
+            reasons=[
+                reason,
+                "Defaulted to theme_only instead of applying ai_datacenter_infrastructure; v1 requires datacenter revenue/order/customer/asset/operation evidence.",
+            ],
+            evidence=[
+                ClassificationEvidence(
+                    source_field="text_sources",
+                    matched_value="AI datacenter theme without sufficient v1 evidence",
+                    matched_rule="ai_datacenter.theme_only_guard",
+                    weight=20,
+                    explanation="Theme words alone are not revenue, order, customer, delivery, utilization or operating evidence.",
+                )
+            ],
+            alternative_types=[],
+            missing_fields=sorted(set(missing_fields)),
+            warnings=sorted(set(warnings + ["ai_datacenter_theme_only_guard_applied"])),
         )
 
     def _has_any(self, text: str, terms: tuple[str, ...]) -> bool:

@@ -15,7 +15,10 @@ from .analysis_context_builder import AnalysisContextBuilder
 from .analysis_context_schema import AnalysisContext
 from .classification_schema import FundamentalFramework, StockClassificationResult
 from .data_adapter import FundamentalDataAdapter
-from .data_readiness_planner import DataReadinessPlanner
+from .data_readiness_planner import (
+    DataReadinessPlanner,
+    ai_datacenter_boundary_confidence_cap_applies,
+)
 from .framework_selector import FrameworkSelector
 from .raw_schema import FinancialMetricInput, NormalizedFundamentalInput
 from .readiness_schema import DataReadinessPlan
@@ -149,6 +152,8 @@ class FundamentalResultAssembler:
         calibrated_real_data_gap = self._real_data_calibration_exception(
             normalized, classification, readiness, scoring
         )
+        if self._ai_datacenter_boundary_insufficient_cap(classification, readiness):
+            return "insufficient_data"
         if (
             readiness.readiness_level == "insufficient"
             or context.overall_context_quality == "insufficient"
@@ -184,6 +189,8 @@ class FundamentalResultAssembler:
         ) and not self._low_altitude_data_gap_neutral_exception(
             normalized, classification, readiness
         ) and not self._life_science_cxo_data_gap_neutral_exception(
+            normalized, classification, readiness
+        ) and not self._ai_datacenter_data_gap_neutral_exception(
             normalized, classification, readiness
         ):
             return "negative"
@@ -392,6 +399,35 @@ class FundamentalResultAssembler:
         actual_missing = set(readiness.critical_missing_fields + readiness.high_priority_missing_fields)
         return not (core_available & actual_missing)
 
+    def _ai_datacenter_data_gap_neutral_exception(
+        self,
+        normalized: NormalizedFundamentalInput,
+        classification: StockClassificationResult,
+        readiness: DataReadinessPlan,
+    ) -> bool:
+        if classification.strategy_type != "ai_datacenter_infrastructure":
+            return False
+        if not normalized.financial_metrics:
+            return False
+        if not normalized.business_composition or not normalized.business_composition.segments:
+            return False
+        if not (normalized.basic_info.industry or normalized.basic_info.main_business):
+            return False
+        core_available = {
+            "basic_info.industry",
+            "basic_info.main_business",
+            "business_composition.segments",
+            "ai_datacenter.revenue_share",
+            "financial_metrics.revenue",
+            "financial_metrics.gross_margin",
+            "financial_metrics.operating_cashflow",
+            "financial_metrics.accounts_receivable",
+            "financial_metrics.contract_liabilities",
+            "financial_metrics.capex",
+        }
+        actual_missing = set(readiness.critical_missing_fields + readiness.high_priority_missing_fields)
+        return not (core_available & actual_missing)
+
     def _decide_confidence(
         self,
         classification: StockClassificationResult,
@@ -416,6 +452,8 @@ class FundamentalResultAssembler:
         else:
             confidence = "medium"
 
+        if self._ai_datacenter_boundary_insufficient_cap(classification, readiness):
+            confidence = _cap_confidence(confidence, "low")
         if self._resource_price_missing(classification, readiness, context):
             confidence = _cap_confidence(confidence, "medium")
             if readiness.readiness_level != "sufficient":
@@ -436,6 +474,10 @@ class FundamentalResultAssembler:
             confidence = _cap_confidence(confidence, "medium")
             if context.max_overall_confidence == "low":
                 confidence = _cap_confidence(confidence, "low")
+        if self._ai_datacenter_core_gating_missing(classification, readiness, context):
+            confidence = _cap_confidence(confidence, "medium")
+            if context.max_overall_confidence == "low":
+                confidence = _cap_confidence(confidence, "low")
         if self._advanced_manufacturing_medium_risk_count(classification, context) >= 2:
             confidence = _cap_confidence(confidence, "medium")
         if self._structural_medium_risk_count(classification, context) >= 2:
@@ -448,6 +490,14 @@ class FundamentalResultAssembler:
         ):
             confidence = _cap_confidence(confidence, "medium")
         return confidence
+
+    def _ai_datacenter_boundary_insufficient_cap(self, classification, readiness) -> bool:
+        missing = {
+            item.field_name
+            for item in readiness.field_readiness
+            if item.status in {"missing", "partial"}
+        }
+        return ai_datacenter_boundary_confidence_cap_applies(classification, missing)
 
     def _fundamental_score(self, status: str, confidence: str, classification, scoring) -> int:
         score = scoring.weighted_total_score
@@ -525,6 +575,9 @@ class FundamentalResultAssembler:
         if classification.strategy_type == "satellite_communication_infrastructure":
             drivers.append("卫星资源、轨位/频段、转发器/带宽容量、容量利用率和客户合同结构是卫星通信基础设施框架的核心变量。")
             drivers.append("合同负债只能作为订单可见度 proxy，capex 只能作为长期资产购建现金支出观察。")
+        if classification.strategy_type == "ai_datacenter_infrastructure":
+            drivers.append("AI datacenter infrastructure is not a generic AI compute-chain framework; IDC operation, power/UPS, and cooling/liquid cooling are separate business models.")
+            drivers.append("Datacenter revenue, orders, customers, delivery, utilization/PUE or sub_type evidence are confidence gates; contract liabilities and capex are limited observations only.")
 
         drivers.extend([f"框架关注：{item}" for item in framework.required_focus[:3]])
         if classification.strategy_type == "low_altitude_economy_infrastructure":
@@ -535,7 +588,7 @@ class FundamentalResultAssembler:
             drivers.append("Backlog, new orders, customer structure, overseas exposure, CDMO utilization and clinical project progress are confidence gates; contract liabilities are partial_proxy only.")
             if normalized.stock_code.endswith("300363") or normalized.stock_code == "300363":
                 drivers.append("Porton is treated as a high-volatility CDMO sample; historical data may be affected by one-off orders.")
-        max_drivers = 8 if classification.strategy_type == "life_science_cxo_services" else 6
+        max_drivers = 8 if classification.strategy_type in {"life_science_cxo_services", "ai_datacenter_infrastructure"} else 6
         return list(dict.fromkeys(drivers))[:max_drivers]
 
     def _financial_quality(self, normalized, readiness, scoring) -> FinancialQuality:
@@ -732,6 +785,21 @@ class FundamentalResultAssembler:
                     uncertainty="high" if readiness.readiness_level in {"weak", "insufficient", "usable_with_warnings"} else "medium",
                 )
             ]
+        if classification.strategy_type == "ai_datacenter_infrastructure":
+            catalysts = [
+                Catalyst(
+                    name="AI datacenter infrastructure realization validation",
+                    catalyst_type="order",
+                    evidence=[
+                        _ev(
+                            "framework",
+                            "Requires datacenter revenue, real orders/backlog, customer structure, delivery progress and sub_type operating evidence; theme wording, capex and contract liabilities are insufficient.",
+                        )
+                    ],
+                    expected_timeframe=None,
+                    uncertainty="high" if readiness.readiness_level in {"weak", "insufficient", "usable_with_warnings"} else "medium",
+                )
+            ]
         return catalysts[:3]
 
     def _track_indicators(self, classification, framework, readiness) -> list[TrackIndicator]:
@@ -775,6 +843,32 @@ class FundamentalResultAssembler:
                 names.extend(["CDMO orders", "CDMO capacity utilization", "commercial project count", "capacity expansion progress", "GMP/FDA/NMPA compliance event", "major customer concentration"])
             elif subtype == "clinical_cro_services":
                 names.extend(["clinical project count", "clinical trial service revenue", "SMO / data-statistics revenue", "project acceptance progress", "project collection cycle"])
+        if classification.strategy_type == "ai_datacenter_infrastructure":
+            names = [
+                "AI datacenter related revenue share",
+                "datacenter customer revenue share",
+                "major-customer concentration",
+                "orders / backlog, usually missing / future_data_needed",
+                "contract liabilities partial_proxy",
+                "delivery cycle",
+                "gross margin",
+                "operating cashflow",
+                "accounts receivable",
+                "inventory",
+                "capex",
+                "capex conversion cycle",
+                "construction-in-progress amount and expected completion time",
+                "historical capex-to-revenue conversion efficiency",
+                "customer capital-expenditure cycle",
+                "price-competition risk",
+            ]
+            subtype = getattr(classification, "sub_type", None)
+            if subtype == "datacenter_operator":
+                names.extend(["cabinet count", "MW scale", "rack-up rate / utilization", "PUE", "average electricity price", "power cost / revenue", "revenue per MW", "revenue per cabinet", "customer contract term", "depreciation and amortization", "EBITDA / EBITDA margin future_data_needed", "power quota / energy policy"])
+            elif subtype == "power_ups_infrastructure":
+                names.extend(["datacenter power / UPS revenue share", "UPS / distribution orders", "datacenter customer revenue share", "storage / photovoltaic revenue share", "project delivery cycle", "UPS / distribution gross margin", "project acceptance and collection cycle"])
+            elif subtype == "cooling_liquid_cooling_infrastructure":
+                names.extend(["datacenter cooling revenue share", "liquid-cooling revenue share", "liquid-cooling technology route", "liquid-cooling certification stage", "liquid-cooling customer validation", "liquid-cooling batch orders", "liquid-cooling revenue recognition", "ordinary HVAC / industrial thermal-control revenue share"])
         if classification.strategy_type == "resource_swing":
             names.extend(["对应商品价格", "扣非净利润", "经营现金流", "主营构成"])
         elif classification.strategy_type == "right_trend_growth":
@@ -808,6 +902,8 @@ class FundamentalResultAssembler:
                 "合同负债",
                 "capex",
             ])
+        elif classification.strategy_type == "ai_datacenter_infrastructure":
+            names.extend(["contract liabilities partial_proxy", "capex observation only", "customer capex cycle", "datacenter revenue/order/customer evidence"])
         missing = set(readiness.critical_missing_fields + readiness.high_priority_missing_fields)
         if any(field.startswith("valuation_metrics") for field in missing):
             names.extend(["PE", "PB", "市值", "估值分位"])
@@ -843,7 +939,7 @@ class FundamentalResultAssembler:
             ])
         names.extend(readiness.recommended_data_to_collect[:4])
         out = []
-        max_items = 25 if classification.strategy_type == "life_science_cxo_services" else 12
+        max_items = 25 if classification.strategy_type in {"life_science_cxo_services", "ai_datacenter_infrastructure"} else 12
         for name in list(dict.fromkeys(names))[:max_items]:
             out.append(
                 TrackIndicator(
@@ -908,6 +1004,13 @@ class FundamentalResultAssembler:
                 ("CDMO utilization, commercial project count, capacity expansion or GMP/FDA/NMPA compliance deteriorates", "CDMO utilization, project, capex and compliance-event data"),
                 ("Clinical project count, acceptance progress, cancellation/delay or collection cycle deteriorates", "clinical project, acceptance, cancellation/delay and receivables/collection data"),
                 ("One-off large-order distortion or major customer concentration invalidates historical trend comparison", "single customer/product/order history and major-customer share"),
+            ],
+            "ai_datacenter_infrastructure": [
+                ("Datacenter revenue share, orders, customers, assets, delivery or operating evidence cannot be confirmed", "business composition, segment revenue, order/customer/asset/operation disclosures"),
+                ("Contract liabilities, capex or customer capex expectations are being over-interpreted", "contract liabilities, capex, customer capex and order/backlog disclosures"),
+                ("Power/UPS exposure cannot be separated from storage or photovoltaic business", "power/UPS revenue, storage/PV revenue and datacenter order disclosures"),
+                ("Cooling/liquid-cooling exposure cannot be separated from ordinary HVAC or lacks customer/batch-order validation", "datacenter cooling revenue, liquid-cooling revenue, customer validation and batch-order evidence"),
+                ("IDC operator cabinet/MW/rack-up/PUE/power-quota or depreciation evidence remains missing", "cabinet, MW, rack-up/utilization, PUE, energy policy and depreciation/EBITDA evidence"),
             ],
             "satellite_communication_infrastructure": [
                 ("容量利用率或出租率恶化", "容量利用率 / 出租率数据"),
@@ -1002,6 +1105,10 @@ class FundamentalResultAssembler:
                 limitations.append("订单和项目交付节奏需要验证")
             if "应收账款与现金流跟踪风险" in risk_names:
                 limitations.append("应收账款、回款和经营现金流需要跟踪")
+        elif classification.strategy_type == "ai_datacenter_infrastructure":
+            limitations.append("AI 数据中心基础设施不等同泛 AI 算力链，需按 sub_type 分开验证")
+            limitations.append("合同负债只能作为 partial_proxy，capex 和客户资本开支预期不代表收入确定性")
+            limitations.append("缺收入、订单、客户、交付、利用率/PUE 或液冷客户验证时不得判断兑现充分")
         limitation_text = "；".join(dict.fromkeys(limitations)) or "暂无额外置信度封顶因素"
         risk_prefix = (
             "存在高风险，"
@@ -1071,6 +1178,10 @@ class FundamentalResultAssembler:
             reasons.append("缺容量利用率、客户结构、卫星寿命或折旧摊销，卫星通信基础设施判断不得高置信度")
         if self._life_science_cxo_core_gating_missing(classification, readiness, context):
             reasons.append("Life-science CXO judgement cannot use high confidence while backlog/new orders/customer/overseas exposure/CDMO utilization/clinical project gates are missing.")
+        if self._ai_datacenter_core_gating_missing(classification, readiness, context):
+            reasons.append("AI datacenter infrastructure judgement cannot use high confidence while revenue/order/customer/delivery/operator/power/cooling gates are missing.")
+        if self._ai_datacenter_boundary_insufficient_cap(classification, readiness):
+            reasons.append("AI datacenter mixed-boundary sample lacks structured real order/customer/delivery or sub-type revenue validation; status and confidence are conservatively capped.")
         if self._advanced_manufacturing_medium_risk_count(classification, context) >= 2:
             reasons.append("高端制造新业务、大客户或估值验证风险较多")
         if self._structural_medium_risk_count(classification, context) >= 2:
@@ -1185,6 +1296,48 @@ class FundamentalResultAssembler:
             subtype_fields = {"life_science_cxo.clinical_project_count"}
         return bool((shared | subtype_fields) & missing)
 
+    def _ai_datacenter_core_gating_missing(self, classification, readiness, context) -> bool:
+        if classification.strategy_type != "ai_datacenter_infrastructure":
+            return False
+        missing = {
+            item.field_name
+            for item in readiness.field_readiness
+            if item.status in {"missing", "partial"}
+        }
+        shared = {
+            "ai_datacenter.revenue_share",
+            "ai_datacenter.customer_revenue_share",
+            "ai_datacenter.customer_concentration",
+            "ai_datacenter.orders_or_backlog",
+            "ai_datacenter.delivery_cycle",
+        }
+        subtype = getattr(classification, "sub_type", None)
+        subtype_fields: set[str] = set()
+        if subtype == "datacenter_operator":
+            subtype_fields = {
+                "ai_datacenter.cabinet_count",
+                "ai_datacenter.mw_scale",
+                "ai_datacenter.rack_up_or_utilization",
+                "ai_datacenter.pue",
+                "ai_datacenter.power_quota_energy_policy",
+                "financial_metrics.depreciation_amortization",
+            }
+        elif subtype == "power_ups_infrastructure":
+            subtype_fields = {
+                "ai_datacenter.power_ups_revenue_share",
+                "ai_datacenter.power_ups_orders",
+                "ai_datacenter.storage_pv_revenue_share",
+            }
+        elif subtype == "cooling_liquid_cooling_infrastructure":
+            subtype_fields = {
+                "ai_datacenter.cooling_revenue_share",
+                "ai_datacenter.liquid_cooling_revenue_share",
+                "ai_datacenter.liquid_cooling_customer_validation",
+                "ai_datacenter.liquid_cooling_batch_orders",
+                "ai_datacenter.ordinary_hvac_revenue_share",
+            }
+        return bool((shared | subtype_fields) & missing)
+
     def _high_risk_count(self, readiness, context, scoring) -> int:
         names = {risk.risk_name for risk in context.required_risks if risk.severity == "high"}
         names.update(risk.risk_name for risk in scoring.required_risks if risk.severity == "high")
@@ -1223,6 +1376,8 @@ def framework_vars(strategy_type: str) -> list[str]:
         return ["sub_type", "low-altitude revenue share", "operating volume", "contract acceptance", "customer structure", "safety/regulatory events"]
     if strategy_type == "life_science_cxo_services":
         return ["sub_type", "CXO revenue share", "backlog/new orders", "customer concentration", "overseas/U.S. exposure", "CDMO utilization", "clinical project count", "compliance/FX/geopolitics"]
+    if strategy_type == "ai_datacenter_infrastructure":
+        return ["sub_type", "datacenter revenue share", "orders/backlog", "customer concentration", "delivery cycle", "rack-up/PUE or UPS/cooling evidence", "contract liabilities partial_proxy", "capex observation only"]
     return []
 
 

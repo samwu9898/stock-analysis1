@@ -50,6 +50,25 @@ FIELD_EXPLANATIONS = {
     "financial_metrics.depreciation_amortization": "折旧摊销缺失，卫星资产寿命、折旧压力和利润可比性不足以判断",
     "satellite.launch_plan": "卫星发射计划缺失，不得断言新增容量确定释放",
     "satellite.failure_or_insurance_event": "卫星故障 / 保险事件信息缺失，重大资产事件风险需要继续核查",
+    "ai_datacenter.revenue_share": "AI datacenter related revenue share is missing; theme wording is insufficient to judge business realization.",
+    "ai_datacenter.customer_revenue_share": "Datacenter customer revenue share is missing; customer demand quality is insufficient to judge.",
+    "ai_datacenter.customer_concentration": "Major-customer concentration is missing; customer concentration and order-cut risk must remain explicit.",
+    "ai_datacenter.orders_or_backlog": "Real orders/backlog are missing; contract liabilities are partial_proxy only and do not equal real backlog.",
+    "ai_datacenter.delivery_cycle": "Delivery-cycle evidence is missing; order-to-revenue conversion cannot be judged.",
+    "ai_datacenter.customer_capex_cycle": "Customer capex-cycle evidence is missing; customer capex expectations are not company revenue certainty.",
+    "ai_datacenter.cabinet_count": "Cabinet count is missing; v1 does not infer IDC operating scale.",
+    "ai_datacenter.mw_scale": "MW scale is missing; v1 does not infer power-capacity scale.",
+    "ai_datacenter.rack_up_or_utilization": "Rack-up/utilization is missing; v1 does not calculate a proxy and cannot judge operating efficiency.",
+    "ai_datacenter.pue": "PUE is missing; v1 does not calculate a proxy and cannot judge energy efficiency.",
+    "ai_datacenter.power_quota_energy_policy": "Power quota / energy-policy evidence is missing; capacity release and approval risk remain explicit.",
+    "ai_datacenter.power_ups_revenue_share": "Datacenter power/UPS revenue share is missing; power/UPS cannot be mixed with storage/PV.",
+    "ai_datacenter.power_ups_orders": "Datacenter UPS/distribution order evidence is missing; storage/PV orders are not datacenter orders.",
+    "ai_datacenter.storage_pv_revenue_share": "Storage/PV revenue boundary is missing; mixed business confidence is capped.",
+    "ai_datacenter.cooling_revenue_share": "Datacenter cooling revenue share is missing; ordinary HVAC cannot be treated as datacenter cooling.",
+    "ai_datacenter.liquid_cooling_revenue_share": "Liquid-cooling revenue share is missing; v1 does not calculate a proxy and cannot judge liquid-cooling scale-up.",
+    "ai_datacenter.liquid_cooling_customer_validation": "Liquid-cooling customer validation is missing; certification/POC is not a batch order.",
+    "ai_datacenter.liquid_cooling_batch_orders": "Liquid-cooling batch-order evidence is missing; commercial realization cannot be judged.",
+    "ai_datacenter.ordinary_hvac_revenue_share": "Ordinary HVAC / industrial thermal-control boundary is missing; cooling exposure remains uncertain.",
 }
 
 
@@ -617,6 +636,62 @@ class EvidencePackBuilder:
                 ("资本开支", "capex", "financial_indicator", "industry_cycle", "资本开支用于观察长期资产购建现金支出，不代表需求或产能确定兑现"),
                 ("估值消化能力", "pe_ttm", "valuation", "valuation", "估值消化能力依赖增长兑现和估值水平匹配"),
             ]
+        elif strategy_type == "ai_datacenter_infrastructure":
+            specs = [
+                ("AI datacenter related revenue share", "ai_datacenter_revenue_share", "business_composition", "business_quality", "Revenue share verifies datacenter infrastructure exposure; theme wording alone is insufficient."),
+                ("datacenter customer revenue share", "ai_datacenter_customer_revenue_share", "missing", "customer_quality", "Customer revenue share is required before judging demand stability."),
+                ("major-customer concentration", "ai_datacenter_customer_concentration", "missing", "customer_risk", "Major-customer concentration and order-cut risk must remain explicit."),
+                ("orders / backlog", "ai_datacenter_orders_or_backlog", "future_data_needed", "order_visibility", "Real orders/backlog are required; v1 does not synthesize backlog from contract liabilities."),
+                ("contract liabilities partial_proxy", "orders_or_contract_liabilities", "financial_indicator", "order_visibility", "Contract liabilities are partial_proxy only and do not equal real backlog."),
+                ("delivery cycle", "ai_datacenter_delivery_cycle", "missing", "realization", "Delivery cycle is required to assess order-to-revenue conversion."),
+                ("gross margin", "gross_margin", "financial_indicator", "financial_quality", "Gross margin is base operating-quality evidence; it does not prove utilization or liquid-cooling scale-up."),
+                ("operating cashflow", "operating_cashflow", "financial_indicator", "cash_conversion", "Operating cashflow validates cash conversion and revenue quality."),
+                ("accounts receivable", "accounts_receivable", "financial_indicator", "cash_conversion", "Receivables constrain collection quality and project acceptance interpretation."),
+                ("inventory", "inventory", "financial_indicator", "working_capital", "Inventory helps equipment-supplier working-capital risk; it is not an IDC utilization proxy."),
+                ("capex", "capex", "financial_indicator", "capacity_input", "Capex is capacity/infrastructure input observation only, not capacity release or revenue certainty."),
+                ("capex conversion cycle", "ai_datacenter_capex_conversion_cycle", "future_data_needed", "capital_efficiency", "Future data only; v1 does not calculate capex conversion proxy."),
+                ("construction-in-progress amount and expected completion time", "ai_datacenter_cip_completion", "missing", "capacity_input", "CIP timing helps assess capacity-release uncertainty."),
+                ("historical capex-to-revenue conversion efficiency", "ai_datacenter_historical_capex_revenue_conversion", "future_data_needed", "capital_efficiency", "Future data only; v1 does not calculate proxy."),
+                ("customer capital-expenditure cycle", "ai_datacenter_customer_capex_cycle", "missing", "demand_context", "Customer capex is demand context only and not company revenue certainty."),
+                ("price-competition risk", "ai_datacenter_price_competition_risk", "missing", "margin_risk", "Price competition can compress margin and order quality."),
+            ]
+            if sub_type == "datacenter_operator":
+                specs.extend([
+                    ("cabinet count", "ai_datacenter_cabinet_count", "missing", "operating_assets", "Cabinet count defines IDC operating resources; v1 does not infer it."),
+                    ("MW scale", "ai_datacenter_mw_scale", "missing", "operating_assets", "MW scale is a power-capacity confidence gate; v1 does not infer it."),
+                    ("rack-up rate / utilization", "ai_datacenter_rack_up_utilization", "future_data_needed", "operating_efficiency", "Missing rack-up/utilization prevents efficiency claims; v1 does not calculate proxy."),
+                    ("PUE", "ai_datacenter_pue", "future_data_needed", "energy_efficiency", "Missing PUE prevents energy-efficiency claims; v1 does not calculate proxy."),
+                    ("average electricity price", "ai_datacenter_average_electricity_price", "missing", "cost_risk", "Electricity price affects IDC operating economics."),
+                    ("power cost / revenue", "ai_datacenter_power_cost_revenue", "future_data_needed", "margin_risk", "Future data only; v1 does not calculate power-cost ratio."),
+                    ("revenue per MW", "ai_datacenter_revenue_per_mw", "future_data_needed", "unit_economics", "Future data only; v1 does not calculate proxy."),
+                    ("revenue per cabinet", "ai_datacenter_revenue_per_cabinet", "future_data_needed", "unit_economics", "Future data only; v1 does not calculate proxy."),
+                    ("customer contract term", "ai_datacenter_customer_contract_term", "missing", "revenue_visibility", "Contract term is required before judging revenue visibility."),
+                    ("depreciation and amortization", "depreciation_amortization", "missing", "profit_quality", "Depreciation and amortization affect IDC profit comparison."),
+                    ("EBITDA / EBITDA margin", "ai_datacenter_ebitda_margin", "future_data_needed", "operating_profitability", "Future data only; v1 does not enter EBITDA scoring."),
+                    ("power quota / energy policy", "ai_datacenter_power_quota_energy_policy", "missing", "policy_risk", "Power quota, energy policy and project approval risk must be explicit."),
+                ])
+            elif sub_type == "power_ups_infrastructure":
+                specs.extend([
+                    ("datacenter power / UPS revenue share", "ai_datacenter_power_ups_revenue_share", "business_composition", "business_quality", "Separates datacenter power/UPS from storage/PV and generic power equipment."),
+                    ("UPS / distribution orders", "ai_datacenter_power_ups_orders", "future_data_needed", "order_visibility", "Datacenter UPS/power orders must be separated from storage/PV orders."),
+                    ("datacenter customer revenue share", "ai_datacenter_customer_revenue_share", "missing", "customer_quality", "Customer exposure validates demand quality."),
+                    ("storage / photovoltaic revenue share", "ai_datacenter_storage_pv_revenue_share", "business_composition", "boundary", "Storage/PV revenue share is a boundary field; storage orders are not datacenter orders."),
+                    ("project delivery cycle", "ai_datacenter_project_delivery_cycle", "missing", "realization", "Delivery cycle affects project acceptance and revenue recognition."),
+                    ("UPS / distribution business gross margin", "ai_datacenter_power_ups_gross_margin", "missing", "margin_quality", "Segment margin is needed; consolidated margin is only partial evidence."),
+                    ("project acceptance and collection cycle", "ai_datacenter_acceptance_collection_cycle", "missing", "cash_conversion", "Acceptance and collection cycle validate cash conversion."),
+                ])
+            elif sub_type == "cooling_liquid_cooling_infrastructure":
+                specs.extend([
+                    ("datacenter cooling revenue share", "ai_datacenter_cooling_revenue_share", "business_composition", "business_quality", "Separates datacenter cooling from ordinary HVAC or industrial thermal control."),
+                    ("liquid-cooling revenue share", "ai_datacenter_liquid_cooling_revenue_share", "future_data_needed", "business_quality", "Missing liquid-cooling revenue prevents scale-up claims; v1 does not calculate proxy."),
+                    ("liquid-cooling technology route", "ai_datacenter_liquid_cooling_technology_route", "missing", "technology_risk", "Cold plate, immersion and rear-door routes have different risks."),
+                    ("liquid-cooling certification stage", "ai_datacenter_liquid_cooling_certification_stage", "missing", "realization", "Certification/POC is not a batch order."),
+                    ("liquid-cooling customer validation", "ai_datacenter_liquid_cooling_customer_validation", "missing", "customer_quality", "Customer validation is required before stronger realization claims."),
+                    ("liquid-cooling batch orders", "ai_datacenter_liquid_cooling_batch_orders", "future_data_needed", "order_visibility", "Batch orders are required before commercial realization claims."),
+                    ("liquid-cooling revenue recognition", "ai_datacenter_liquid_cooling_revenue_recognition", "missing", "revenue_quality", "Revenue recognition confirms conversion beyond orders."),
+                    ("ordinary HVAC / industrial thermal-control revenue share", "ai_datacenter_ordinary_hvac_revenue_share", "business_composition", "boundary", "Ordinary HVAC exposure must not be treated as datacenter liquid-cooling exposure."),
+                    ("delivery cycle", "ai_datacenter_delivery_cycle", "missing", "realization", "Delivery cycle affects revenue recognition and receivables."),
+                ])
         elif strategy_type == "low_altitude_economy_infrastructure":
             specs = [
                 ("low-altitude revenue share", "low_altitude_revenue_share", "business_composition", "business_quality", "Revenue share verifies whether low-altitude/general-aviation/airspace business is real business exposure rather than theme wording."),
@@ -824,6 +899,10 @@ class EvidencePackBuilder:
             scope_note = "v1 records this as missing/future_data_needed only; no backlog, CDMO utilization or U.S.-exposure proxy is calculated."
         elif field in {"cxo_one_off_large_order_marker", "cxo_overseas_regulatory_risk", "cxo_gmp_fda_nmpa_event"}:
             scope_note = "Must remain an explicit risk guard when disclosure is missing or uncertain."
+        elif field.startswith("ai_datacenter_"):
+            scope_note = "AI datacenter infrastructure v1 records this as explicit evidence or missing/future_data_needed; no PUE, utilization, liquid-cooling revenue or backlog proxy is calculated."
+        elif field in {"ai_datacenter_rack_up_utilization", "ai_datacenter_pue", "ai_datacenter_liquid_cooling_revenue_share", "ai_datacenter_liquid_cooling_batch_orders"}:
+            scope_note = "v1 records this as missing/future_data_needed only; no proxy is calculated and no realization claim should be made."
         return {
             "indicator_name": name,
             "why_it_matters": why,

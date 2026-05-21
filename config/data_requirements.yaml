@@ -1133,6 +1133,253 @@ life_science_cxo_services:
     reason: "Employee/scientist decline must be marked as operating risk."
     expected_location: [annual_report]
     affects_analysis: [risk_flags]
+ai_datacenter_infrastructure:
+  required_fields:
+  - field_name: basic_info.industry
+    display_name: "industry"
+    category: basic_info
+    importance: critical
+    reason: "Needed to avoid routing generic AI compute-chain, EPC, self-built datacenter, military, server, chip, optical-module or PCB companies into this framework."
+    expected_location: [basic_info.industry]
+    affects_analysis: [business_summary]
+  - field_name: basic_info.main_business
+    display_name: "main business"
+    category: basic_info
+    importance: critical
+    reason: "Needed to confirm IDC/AIDC operation, datacenter power/UPS/distribution, or datacenter cooling/liquid-cooling infrastructure."
+    expected_location: [basic_info.main_business]
+    affects_analysis: [business_summary]
+  - field_name: business_composition.segments
+    display_name: "business composition"
+    category: business_composition
+    importance: critical
+    reason: "Needed to separate datacenter infrastructure exposure from storage/PV, ordinary HVAC, PCB, optical modules, servers, chips, EPC or theme-only exposure."
+    expected_location: [business_composition.segments]
+    affects_analysis: [business_summary, business_quality]
+  - field_name: ai_datacenter.revenue_share
+    display_name: "AI datacenter related revenue share"
+    category: industry
+    importance: critical
+    reason: "Core confidence gate; missing revenue share prevents high-confidence claims that AI datacenter is the core business."
+    expected_location: [business_composition, annual_report]
+    affects_analysis: [business_quality, confidence]
+  - field_name: financial_metrics.revenue
+    display_name: "revenue"
+    category: financial
+    importance: critical
+    reason: "Base operating scale evidence only; revenue growth is not datacenter order realization."
+    expected_location: [financial_indicator]
+    affects_analysis: [financial_quality]
+  - field_name: financial_metrics.net_profit
+    display_name: "net profit"
+    category: financial
+    importance: high
+    reason: "Base profitability evidence only; IDC depreciation policy can distort comparison."
+    expected_location: [financial_indicator]
+    affects_analysis: [financial_quality]
+  - field_name: financial_metrics.gross_margin
+    display_name: "gross margin"
+    category: financial
+    importance: high
+    reason: "Base margin evidence; does not prove utilization, liquid-cooling scale-up or order realization."
+    expected_location: [financial_indicator, business_composition]
+    affects_analysis: [financial_quality, industry_cycle]
+  - field_name: financial_metrics.operating_cashflow
+    display_name: "operating cashflow"
+    category: financial
+    importance: critical
+    reason: "Cash conversion must match revenue and receivables before stronger quality claims."
+    expected_location: [financial_indicator]
+    affects_analysis: [financial_quality, risk_flags]
+  - field_name: financial_metrics.accounts_receivable
+    display_name: "accounts receivable"
+    category: financial
+    importance: high
+    reason: "Receivables constrain revenue quality, collection pressure and project acceptance interpretation."
+    expected_location: [financial_indicator]
+    affects_analysis: [financial_quality, risk_flags]
+  - field_name: financial_metrics.contract_liabilities
+    display_name: "contract liabilities"
+    category: financial
+    importance: medium
+    reason: "Contract liabilities are partial_proxy only and do not equal real backlog."
+    expected_location: [financial_indicator]
+    affects_analysis: [business_quality, risk_flags]
+  - field_name: financial_metrics.capex
+    display_name: "capex"
+    category: financial
+    importance: high
+    reason: "Capex is capacity/infrastructure input observation only, not capacity release or revenue certainty."
+    expected_location: [financial_indicator, cashflow_statement]
+    affects_analysis: [industry_cycle, risk_flags]
+  - field_name: financial_metrics.inventory
+    display_name: "inventory"
+    category: financial
+    importance: medium
+    reason: "Inventory helps equipment-supplier delivery and stocking risk; not an IDC utilization proxy."
+    expected_location: [financial_indicator]
+    affects_analysis: [financial_quality, risk_flags]
+  - field_name: valuation_metrics.pe_ttm
+    display_name: "PE TTM"
+    category: valuation
+    importance: medium
+    reason: "Valuation context only; secondary to business evidence and confidence gates."
+    expected_location: [valuation_metrics.pe_ttm]
+    affects_analysis: [valuation_view]
+  - field_name: valuation_metrics.pb
+    display_name: "PB"
+    category: valuation
+    importance: low
+    reason: "Supplementary valuation context."
+    expected_location: [valuation_metrics.pb]
+    affects_analysis: [valuation_view]
+  - field_name: valuation_metrics.ps
+    display_name: "PS"
+    category: valuation
+    importance: low
+    reason: "Supplementary valuation context."
+    expected_location: [valuation_metrics.ps]
+    affects_analysis: [valuation_view]
+  - field_name: ai_datacenter.customer_revenue_share
+    display_name: "datacenter customer revenue share"
+    category: industry
+    importance: high
+    reason: "Customer revenue share is required before claiming datacenter demand stability."
+    expected_location: [annual_report, customer_disclosure]
+    affects_analysis: [business_quality, risk_flags, confidence]
+  - field_name: ai_datacenter.customer_concentration
+    display_name: "major-customer concentration"
+    category: industry
+    importance: high
+    reason: "Large-customer concentration and order-cut risk must remain explicit."
+    expected_location: [annual_report]
+    affects_analysis: [risk_flags, confidence]
+  - field_name: ai_datacenter.orders_or_backlog
+    display_name: "orders / backlog"
+    category: industry
+    importance: high
+    reason: "Real orders/backlog are needed before judging order realization; v1 does not synthesize backlog from contract liabilities."
+    expected_location: [annual_report, announcements]
+    affects_analysis: [business_quality, catalysts, confidence]
+  - field_name: ai_datacenter.delivery_cycle
+    display_name: "delivery cycle"
+    category: industry
+    importance: high
+    reason: "Delivery cycle is required to assess order-to-revenue conversion and receivables."
+    expected_location: [annual_report, project_disclosure]
+    affects_analysis: [business_quality, risk_flags]
+  - field_name: ai_datacenter.customer_capex_cycle
+    display_name: "customer capex cycle"
+    category: industry
+    importance: medium
+    reason: "Customer capex cycle is demand context only, not company revenue certainty."
+    expected_location: [customer_filings, public_capex_guidance]
+    affects_analysis: [industry_cycle, risk_flags]
+  - field_name: ai_datacenter.cabinet_count
+    display_name: "cabinet count"
+    category: industry
+    importance: high
+    reason: "datacenter_operator confidence gate; v1 does not auto-collect or infer cabinet count."
+    expected_location: [annual_report, investor_presentation]
+    affects_analysis: [business_quality, confidence]
+  - field_name: ai_datacenter.mw_scale
+    display_name: "MW scale"
+    category: industry
+    importance: high
+    reason: "datacenter_operator confidence gate; v1 does not auto-collect or infer MW scale."
+    expected_location: [annual_report, announcements]
+    affects_analysis: [business_quality, confidence]
+  - field_name: ai_datacenter.rack_up_or_utilization
+    display_name: "rack-up rate / utilization"
+    category: industry
+    importance: high
+    reason: "Missing rack-up/utilization prevents operating-efficiency claims; v1 does not calculate proxy."
+    expected_location: [annual_report, operating_data]
+    affects_analysis: [industry_cycle, confidence]
+  - field_name: ai_datacenter.pue
+    display_name: "PUE"
+    category: industry
+    importance: high
+    reason: "Missing PUE prevents energy-efficiency and policy-compliance claims; v1 does not calculate proxy."
+    expected_location: [annual_report, ESG_report]
+    affects_analysis: [industry_cycle, risk_flags, confidence]
+  - field_name: ai_datacenter.power_quota_energy_policy
+    display_name: "power quota / energy policy"
+    category: industry
+    importance: high
+    reason: "Power quota, energy policy and project approval risk must be explicit for IDC operators."
+    expected_location: [annual_report, policy_documents]
+    affects_analysis: [risk_flags, confidence]
+  - field_name: ai_datacenter.customer_contract_term
+    display_name: "customer contract term"
+    category: industry
+    importance: medium
+    reason: "Contract term is required before judging revenue visibility."
+    expected_location: [annual_report, major_contracts]
+    affects_analysis: [business_quality, risk_flags]
+  - field_name: financial_metrics.depreciation_amortization
+    display_name: "depreciation and amortization"
+    category: financial
+    importance: medium
+    reason: "IDC profitability comparisons require depreciation/EBITDA context; do not rely only on net margin."
+    expected_location: [financial_statement]
+    affects_analysis: [financial_quality, risk_flags]
+  - field_name: ai_datacenter.power_ups_revenue_share
+    display_name: "datacenter power / UPS revenue share"
+    category: industry
+    importance: high
+    reason: "Required to separate datacenter power from storage/PV or generic power equipment."
+    expected_location: [business_composition, annual_report]
+    affects_analysis: [business_quality, confidence]
+  - field_name: ai_datacenter.power_ups_orders
+    display_name: "UPS / distribution orders"
+    category: industry
+    importance: high
+    reason: "Datacenter UPS/power orders must be separated from storage or photovoltaic orders."
+    expected_location: [annual_report, announcements]
+    affects_analysis: [business_quality, catalysts, confidence]
+  - field_name: ai_datacenter.storage_pv_revenue_share
+    display_name: "storage / photovoltaic revenue share"
+    category: industry
+    importance: high
+    reason: "Boundary field for mixed power companies; storage/PV orders are not datacenter orders."
+    expected_location: [business_composition, annual_report]
+    affects_analysis: [business_quality, risk_flags]
+  - field_name: ai_datacenter.cooling_revenue_share
+    display_name: "datacenter cooling revenue share"
+    category: industry
+    importance: high
+    reason: "Required to separate datacenter cooling from ordinary HVAC or industrial thermal control."
+    expected_location: [business_composition, annual_report]
+    affects_analysis: [business_quality, confidence]
+  - field_name: ai_datacenter.liquid_cooling_revenue_share
+    display_name: "liquid-cooling revenue share"
+    category: industry
+    importance: high
+    reason: "Missing liquid-cooling revenue prevents claims that liquid-cooling business has scaled; v1 does not calculate proxy."
+    expected_location: [business_composition, annual_report]
+    affects_analysis: [business_quality, confidence]
+  - field_name: ai_datacenter.liquid_cooling_customer_validation
+    display_name: "liquid-cooling customer validation"
+    category: industry
+    importance: high
+    reason: "Certification/POC is not a batch order; customer validation must be explicit."
+    expected_location: [announcements, investor_QA]
+    affects_analysis: [business_quality, risk_flags, confidence]
+  - field_name: ai_datacenter.liquid_cooling_batch_orders
+    display_name: "liquid-cooling batch orders"
+    category: industry
+    importance: high
+    reason: "Batch orders are required before judging liquid-cooling commercial realization."
+    expected_location: [announcements, annual_report]
+    affects_analysis: [business_quality, catalysts, confidence]
+  - field_name: ai_datacenter.ordinary_hvac_revenue_share
+    display_name: "ordinary HVAC / industrial thermal-control revenue share"
+    category: industry
+    importance: high
+    reason: "Boundary field to avoid treating ordinary HVAC as datacenter cooling."
+    expected_location: [business_composition, annual_report]
+    affects_analysis: [business_quality, risk_flags]
 unknown:
   required_fields:
   - field_name: basic_info.industry

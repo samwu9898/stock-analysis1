@@ -26,6 +26,7 @@ EXPECTED_STRATEGY_TYPES = (
     "satellite_communication_infrastructure",
     "low_altitude_economy_infrastructure",
     "life_science_cxo_services",
+    "ai_datacenter_infrastructure",
     "theme_only",
     "unknown",
 )
@@ -51,6 +52,7 @@ def test_infrastructure_strategy_types_are_present_without_dropping_existing_typ
     assert "satellite_communication_infrastructure" in STRATEGY_TYPES
     assert "low_altitude_economy_infrastructure" in STRATEGY_TYPES
     assert "life_science_cxo_services" in STRATEGY_TYPES
+    assert "ai_datacenter_infrastructure" in STRATEGY_TYPES
 
     for strategy_type in (
         "resource_swing",

@@ -1,0 +1,8 @@
+{
+  "stock_code": "300308",
+  "expected_strategy_type": "right_trend_growth",
+  "allowed_status": ["supportive", "neutral"],
+  "max_confidence": "high",
+  "must_track_keywords": ["订单"],
+  "forbidden_phrases": ["买入", "卖出", "加仓", "减仓", "清仓", "止损", "止盈", "目标价"]
+}

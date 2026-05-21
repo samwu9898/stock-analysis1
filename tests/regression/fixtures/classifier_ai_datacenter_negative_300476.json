@@ -1,0 +1,9 @@
+{
+  "meta": {"code": "300476", "stock_name": "Shenghong Technology", "generated_at": "2026-05-21T00:00:00"},
+  "blocks": {
+    "basic_info": [{"stock_code": "300476", "stock_name": "Shenghong Technology", "industry": "PCB / AI server / data center supply chain", "main_business": "AI server PCB and high-speed interconnect PCB, not IDC operation, UPS or cooling infrastructure"}],
+    "financial_indicator": [{"period": "2025-12-31", "revenue": 8000000000, "revenue_yoy": 40, "net_profit": 900000000, "net_profit_yoy": 50, "gross_margin": 27, "operating_cashflow": 1500000000, "accounts_receivable": 700000000, "inventory": 600000000}],
+    "valuation": [{"pe_ttm": 45, "pb": 5, "market_cap": 90000000000}],
+    "business_composition": [{"period": "2025-12-31", "segment_name": "PCB revenue", "revenue_ratio": 95}]
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "stock_code": "002518",
+  "expected_strategy_type": "ai_datacenter_infrastructure",
+  "expected_sub_type": "power_ups_infrastructure",
+  "allowed_status": ["insufficient_data"],
+  "max_confidence": "low",
+  "max_score": 50,
+  "min_required_risk_flags": ["AI datacenter"],
+  "must_track_keywords": ["AI datacenter related revenue share", "datacenter power / UPS revenue share", "storage / photovoltaic revenue share"],
+  "forbidden_phrases": ["买入", "卖出", "加仓", "减仓", "清仓", "止损", "止盈", "目标价"]
+}

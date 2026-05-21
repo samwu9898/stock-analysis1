@@ -1,0 +1,8 @@
+{
+  "meta": {"code": "002230", "stock_name": "iFLYTEK", "generated_at": "2026-05-21T00:00:00"},
+  "blocks": {
+    "basic_info": [{"stock_code": "002230", "stock_name": "iFLYTEK", "industry": "AI software", "main_business": "AI software and education application revenue, not separately verified IDC/AIDC operation, UPS or cooling infrastructure"}],
+    "financial_indicator": [{"period": "2025-12-31", "revenue": 20000000000, "net_profit": 1200000000, "gross_margin": 45, "operating_cashflow": 1500000000, "accounts_receivable": 3000000000}],
+    "business_composition": [{"period": "2025-12-31", "segment_name": "AI software revenue", "revenue_ratio": 85}]
+  }
+}

@@ -150,6 +150,66 @@ def test_life_science_cxo_negative_boundaries_do_not_classify():
         assert result.strategy_type != "life_science_cxo_services"
 
 
+def test_ai_datacenter_positive_subtypes_classify():
+    expected = {
+        "classifier_ai_datacenter_300442.json": "datacenter_operator",
+        "classifier_ai_datacenter_002837.json": "cooling_liquid_cooling_infrastructure",
+        "classifier_ai_datacenter_002335.json": "power_ups_infrastructure",
+        "classifier_ai_datacenter_002518.json": "power_ups_infrastructure",
+        "classifier_ai_datacenter_301018.json": "cooling_liquid_cooling_infrastructure",
+    }
+    for fixture, sub_type in expected.items():
+        result = classify_fixture(fixture)
+        assert result.strategy_type == "ai_datacenter_infrastructure"
+        assert result.sub_type == sub_type
+        assert result.confidence != "high"
+
+
+def test_ai_datacenter_boundary_301018_does_not_fall_into_semiconductor():
+    raw = {
+        "meta": {"code": "301018", "stock_name": "Shenling Environment"},
+        "blocks": {
+            "basic_info": [
+                {
+                    "stock_code": "301018",
+                    "stock_name": "Shenling Environment",
+                    "industry": "industrial HVAC and cleanroom environment equipment",
+                    "main_business": "industrial and commercial temperature-control equipment, including semiconductor cleanroom environment systems",
+                }
+            ],
+            "business_composition": [
+                {"segment_name": "industrial and commercial temperature control", "revenue": 100.0}
+            ],
+            "financial_metrics": [
+                {"revenue": 100.0, "gross_margin": 25.0, "operating_cashflow": 8.0}
+            ],
+        },
+    }
+    normalized = FundamentalDataAdapter().from_dict(raw)
+    result = StockClassifier().classify(normalized)
+
+    assert result.strategy_type == "ai_datacenter_infrastructure"
+    assert result.sub_type == "cooling_liquid_cooling_infrastructure"
+    assert result.confidence != "high"
+
+
+def test_ai_datacenter_negative_supply_chain_samples_do_not_classify():
+    for fixture in [
+        "classifier_ai_datacenter_negative_300308.json",
+        "classifier_ai_datacenter_negative_300476.json",
+        "classifier_ai_datacenter_negative_000063.json",
+        "classifier_ai_datacenter_negative_002230.json",
+    ]:
+        result = classify_fixture(fixture)
+        assert result.strategy_type != "ai_datacenter_infrastructure"
+
+
+def test_ai_datacenter_theme_only_guard():
+    result = classify_fixture("classifier_ai_datacenter_theme_only.json")
+
+    assert result.strategy_type in {"theme_only", "unknown"}
+
+
 def test_news_only_match_cannot_be_high_confidence():
     normalized = FundamentalDataAdapter().from_file(str(FIXTURES / "classifier_theme_only.json"))
     normalized.basic_info.industry = None

@@ -1,0 +1,27 @@
+{
+  "meta": {"code": "002335", "stock_name": "Kehua Data", "generated_at": "2026-05-21T00:00:00"},
+  "blocks": {
+    "basic_info": [{
+      "stock_code": "002335",
+      "stock_name": "Kehua Data",
+      "industry": "data center UPS and power infrastructure with energy storage boundary",
+      "main_business": "data center UPS, uninterruptible power, power distribution revenue, customer orders and delivery evidence; energy storage business must be separated"
+    }],
+    "financial_indicator": [{
+      "period": "2025-12-31",
+      "revenue": 7600000000,
+      "net_profit": 600000000,
+      "gross_margin": 24,
+      "operating_cashflow": 400000000,
+      "accounts_receivable": 1200000000,
+      "contract_liabilities": 350000000,
+      "capex": 500000000,
+      "inventory": 900000000
+    }],
+    "valuation": [{"pe_ttm": 28, "pb": 3, "market_cap": 30000000000}],
+    "business_composition": [
+      {"period": "2025-12-31", "segment_name": "data center UPS power infrastructure revenue", "revenue_ratio": 38},
+      {"period": "2025-12-31", "segment_name": "energy storage revenue", "revenue_ratio": 42}
+    ]
+  }
+}

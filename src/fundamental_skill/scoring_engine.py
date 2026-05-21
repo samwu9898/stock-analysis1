@@ -305,6 +305,18 @@ class FundamentalScoringEngine:
             if cxo_missing:
                 score -= 8
                 penalties.append("life-science CXO confidence-gating indicators missing")
+        if classification.strategy_type == "ai_datacenter_infrastructure":
+            if getattr(classification, "sub_type", None):
+                score += 6
+                pos.append(self._ev("classification.sub_type", getattr(classification, "sub_type", None), "AI datacenter infrastructure sub_type routing is available."))
+            ai_dc_missing = {
+                item.field_name
+                for item in readiness.field_readiness
+                if item.field_name.startswith("ai_datacenter.") and item.status in {"missing", "partial"}
+            }
+            if ai_dc_missing:
+                score -= 10
+                penalties.append("AI datacenter infrastructure confidence-gating indicators missing")
         if classification.strategy_type == "theme_only":
             score -= 10
         if classification.strategy_type == "unknown":
@@ -399,6 +411,43 @@ class FundamentalScoringEngine:
                 score += 4; pos.append(self._ev("financial_metrics.operating_cashflow", metric.operating_cashflow, "Operating cashflow is base cash-conversion evidence, not order visibility.", metric.period))
             if metric and metric.gross_margin and metric.gross_margin > 15:
                 score += 3; pos.append(self._ev("financial_metrics.gross_margin", metric.gross_margin, "Gross margin is base operating-quality evidence; v1 does not infer CDMO utilization from margin.", metric.period))
+        if classification.strategy_type == "ai_datacenter_infrastructure":
+            shared_missing = {
+                "ai_datacenter.revenue_share",
+                "ai_datacenter.customer_revenue_share",
+                "ai_datacenter.customer_concentration",
+                "ai_datacenter.orders_or_backlog",
+                "ai_datacenter.delivery_cycle",
+            } & missing
+            subtype = getattr(classification, "sub_type", None)
+            subtype_missing: set[str] = set()
+            if subtype == "datacenter_operator":
+                subtype_missing = {
+                    "ai_datacenter.cabinet_count",
+                    "ai_datacenter.mw_scale",
+                    "ai_datacenter.rack_up_or_utilization",
+                    "ai_datacenter.pue",
+                    "ai_datacenter.power_quota_energy_policy",
+                } & missing
+            elif subtype == "power_ups_infrastructure":
+                subtype_missing = {
+                    "ai_datacenter.power_ups_revenue_share",
+                    "ai_datacenter.power_ups_orders",
+                    "ai_datacenter.storage_pv_revenue_share",
+                } & missing
+            elif subtype == "cooling_liquid_cooling_infrastructure":
+                subtype_missing = {
+                    "ai_datacenter.cooling_revenue_share",
+                    "ai_datacenter.liquid_cooling_revenue_share",
+                    "ai_datacenter.liquid_cooling_customer_validation",
+                    "ai_datacenter.liquid_cooling_batch_orders",
+                    "ai_datacenter.ordinary_hvac_revenue_share",
+                } & missing
+            if shared_missing or subtype_missing:
+                score -= 12
+                penalties.append("AI datacenter revenue/customer/order/sub_type confidence gates missing")
+            if metric and metric.gross_margin and metric.gross_margin > 15:
+                score += 3; pos.append(self._ev("financial_metrics.gross_margin", metric.gross_margin, "Gross margin is base operating-quality evidence; it does not prove utilization, liquid-cooling scale-up or order realization.", metric.period))
         if classification.strategy_type == "satellite_communication_infrastructure":
             satellite_missing = {
                 "satellite.capacity_utilization_or_lease_rate",
@@ -452,6 +501,9 @@ class FundamentalScoringEngine:
         if classification.strategy_type == "life_science_cxo_services":
             score = min(score, 60)
             penalties.append("PE/PB/PS for life-science CXO services are limited valuation context only")
+        if classification.strategy_type == "ai_datacenter_infrastructure":
+            score = min(score, 60)
+            penalties.append("PE/PB/PS for AI datacenter infrastructure are limited valuation context only")
         return _clamp(score, 20, 95), "估值评分按策略类型保守解释 PE、PB、市值和股息率。", pos, neg, penalties
 
     def _score_catalyst_strength(self, normalized, classification, readiness, context):
@@ -481,6 +533,9 @@ class FundamentalScoringEngine:
         if classification.strategy_type == "life_science_cxo_services":
             score = min(score, 55)
             penalties.append("CXO concept, contract liabilities, capex or R&D ratio do not raise catalyst strength without real orders/customer/overseas/utilization/project evidence")
+        if classification.strategy_type == "ai_datacenter_infrastructure":
+            score = min(score, 55)
+            penalties.append("AI datacenter theme, customer capex, contract liabilities or capex do not raise catalyst strength without real datacenter revenue/order/customer/delivery/operation evidence")
         if normalized.latest_news and not normalized.financial_metrics:
             score = min(score, 65); penalties.append("news catalyst without financial validation capped at 65")
         return _clamp(score, 20, 95), "催化强度仅按新闻存在和业务关键词做保守规则评分。", pos, neg, penalties
@@ -534,6 +589,13 @@ class FundamentalScoringEngine:
                     pos.append(self._ev("financial_metrics.capex", metric.capex, "Capex is capacity input observation only, not capacity absorption or future order realization.", metric.period))
                 if metric.r_and_d_expense_ratio is not None:
                     pos.append(self._ev("financial_metrics.r_and_d_expense_ratio", metric.r_and_d_expense_ratio, "R&D ratio is R&D intensity only, not technology-moat confirmation.", metric.period))
+            if classification.strategy_type == "ai_datacenter_infrastructure":
+                if metric.accounts_receivable is None:
+                    score -= 5; penalties.append("accounts_receivable missing")
+                if metric.contract_liabilities is not None:
+                    pos.append(self._ev("financial_metrics.contract_liabilities", metric.contract_liabilities, "Contract liabilities are partial_proxy only and do not equal real backlog.", metric.period))
+                if metric.capex is not None:
+                    pos.append(self._ev("financial_metrics.capex", metric.capex, "Capex is capacity/infrastructure input observation only, not guaranteed capacity release or revenue certainty.", metric.period))
         return _clamp(score, 20, 90), "风险可控度从70分开始，根据上下文风险、准备度和财务稳健性调整。", pos, neg, penalties
 
     def apply_context_constraints(self, dimension: str, raw_score: int, context: AnalysisContext) -> tuple[int, int | None, list[str]]:
@@ -585,6 +647,8 @@ class FundamentalScoringEngine:
         if classification.strategy_type == "low_altitude_economy_infrastructure" and context.max_overall_confidence == "low":
             caps.append(65)
         if classification.strategy_type == "life_science_cxo_services" and context.max_overall_confidence == "low":
+            caps.append(65)
+        if classification.strategy_type == "ai_datacenter_infrastructure" and context.max_overall_confidence == "low":
             caps.append(65)
         if context.overall_context_quality == "insufficient":
             caps.append(50)
@@ -645,6 +709,15 @@ class FundamentalScoringEngine:
                 warnings.append("Overseas regulation, Biosecure Act, sanctions, geopolitics and FX risk remain explicit CXO guards.")
             if any("one-off" in name for name in risk_names):
                 warnings.append("One-off large-order distortion risk prevents strong historical trend claims.")
+        elif classification.strategy_type == "ai_datacenter_infrastructure":
+            if any("order" in name.lower() or "backlog" in name.lower() for name in risk_names):
+                warnings.append("AI datacenter order visibility needs real order/backlog evidence; contract liabilities are partial_proxy only.")
+            if any("customer" in name.lower() for name in risk_names):
+                warnings.append("Customer revenue share and concentration remain confidence gates for AI datacenter demand stability.")
+            if any("rack-up" in name.lower() or "utilization" in name.lower() or "pue" in name.lower() for name in risk_names):
+                warnings.append("Missing rack-up/utilization/PUE prevents datacenter operating-efficiency claims and no proxy is calculated in v1.")
+            if any("liquid-cooling" in name.lower() for name in risk_names):
+                warnings.append("Liquid-cooling revenue, customer validation and batch orders remain confidence gates; POC/certification is not batch order evidence.")
         return warnings
 
     def _business_text(self, normalized: NormalizedFundamentalInput) -> str:
@@ -705,6 +778,21 @@ class FundamentalScoringEngine:
                 "\u836f\u7269\u53d1\u73b0",
                 "\u533b\u836f\u5916\u5305",
                 "\u5408\u540c\u7814\u7a76",
+            ),
+            "ai_datacenter_infrastructure": (
+                "data center",
+                "IDC",
+                "AIDC",
+                "\u6570\u636e\u4e2d\u5fc3",
+                "\u667a\u7b97\u4e2d\u5fc3",
+                "\u7b97\u529b\u4e2d\u5fc3",
+                "UPS",
+                "\u4e0d\u95f4\u65ad\u7535\u6e90",
+                "\u6db2\u51b7",
+                "\u7cbe\u5bc6\u6e29\u63a7",
+                "\u673a\u67dc",
+                "MW",
+                "PUE",
             ),
         }
         return any(k in text for k in keywords.get(strategy_type, ()))

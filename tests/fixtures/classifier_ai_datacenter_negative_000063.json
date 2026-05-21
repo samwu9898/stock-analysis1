@@ -1,0 +1,8 @@
+{
+  "meta": {"code": "000063", "stock_name": "ZTE", "generated_at": "2026-05-21T00:00:00"},
+  "blocks": {
+    "basic_info": [{"stock_code": "000063", "stock_name": "ZTE", "industry": "communication equipment", "main_business": "communication network equipment and terminals, not separately verified data center infrastructure revenue"}],
+    "financial_indicator": [{"period": "2025-12-31", "revenue": 120000000000, "net_profit": 10000000000, "gross_margin": 40, "operating_cashflow": 12000000000, "accounts_receivable": 9000000000}],
+    "business_composition": [{"period": "2025-12-31", "segment_name": "communication equipment revenue", "revenue_ratio": 80}]
+  }
+}

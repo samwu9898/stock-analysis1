@@ -1,0 +1,11 @@
+{
+  "stock_code": "300442",
+  "expected_strategy_type": "ai_datacenter_infrastructure",
+  "expected_sub_type": "datacenter_operator",
+  "allowed_status": ["neutral", "insufficient_data"],
+  "max_confidence": "medium",
+  "max_score": 70,
+  "min_required_risk_flags": ["AI datacenter"],
+  "must_track_keywords": ["AI datacenter related revenue share", "cabinet count", "PUE"],
+  "forbidden_phrases": ["买入", "卖出", "加仓", "减仓", "清仓", "止损", "止盈", "目标价"]
+}
