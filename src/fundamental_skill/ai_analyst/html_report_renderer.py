@@ -291,71 +291,76 @@ def render_fundamental_html_report(report: dict[str, Any]) -> str:
       --shadow:0 14px 34px rgba(30,37,48,.12);
     }}
     * {{ box-sizing:border-box; }}
-    html {{ scroll-behavior:smooth; }}
-    body {{ margin:0; overflow-x:hidden; background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",Arial,sans-serif; line-height:1.7; letter-spacing:0; }}
+    html {{ scroll-behavior:smooth; max-width:100%; overflow-x:hidden; }}
+    body {{ margin:0; max-width:100%; overflow-x:hidden; background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",Arial,sans-serif; line-height:1.7; letter-spacing:0; }}
     a {{ color:inherit; text-decoration:none; }}
-    .topbar {{ position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:18px; min-width:0; max-width:100%; padding:12px 28px; background:color-mix(in srgb,var(--bg) 88%,transparent); border-bottom:1px solid var(--line); backdrop-filter:blur(12px); }}
-    .brand {{ font-weight:700; color:var(--gold-2); white-space:nowrap; }}
-    nav {{ display:flex; gap:12px; overflow-x:auto; flex:1; min-width:0; max-width:100%; }}
+    body, main, header, footer, section, article, div, p, h1, h2, h3, h4, li, strong, td, th {{ overflow-wrap:anywhere; word-break:break-word; }}
+    .topbar {{ position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:18px; width:100%; min-width:0; max-width:100%; overflow:hidden; padding:12px 28px; background:color-mix(in srgb,var(--bg) 88%,transparent); border-bottom:1px solid var(--line); backdrop-filter:blur(12px); }}
+    .brand {{ flex:0 0 auto; font-weight:700; color:var(--gold-2); white-space:nowrap; }}
+    nav {{ display:flex; gap:12px; overflow-x:auto; overflow-y:hidden; flex:1 1 auto; min-width:0; max-width:100%; -webkit-overflow-scrolling:touch; }}
     nav a {{ color:var(--muted); font-size:14px; white-space:nowrap; padding:5px 0; }}
     nav a:hover {{ color:var(--gold-2); }}
-    .theme-btn {{ border:1px solid var(--line); background:var(--panel-2); color:var(--text); border-radius:6px; padding:7px 10px; cursor:pointer; }}
-    .hero {{ padding:54px 28px 30px; background:radial-gradient(circle at 20% 0%, rgba(215,181,109,.18), transparent 34%), var(--bg); }}
-    .hero-inner {{ max-width:1180px; margin:0 auto; }}
+    .theme-btn {{ flex:0 0 auto; border:1px solid var(--line); background:var(--panel-2); color:var(--text); border-radius:6px; padding:7px 10px; cursor:pointer; }}
+    .hero {{ max-width:100%; overflow:hidden; padding:54px 28px 30px; background:radial-gradient(circle at 20% 0%, rgba(215,181,109,.18), transparent 34%), var(--bg); }}
+    .hero-inner {{ width:100%; max-width:1180px; min-width:0; margin:0 auto; }}
     .hero h1 {{ margin:0 0 12px; font-size:42px; line-height:1.15; letter-spacing:0; overflow-wrap:anywhere; word-break:break-word; }}
     .hero p {{ max-width:880px; color:var(--muted); margin:0; }}
-    .tag-row {{ display:flex; flex-wrap:wrap; gap:8px; margin:0 0 18px; }}
-    .hero-tag {{ display:inline-flex; align-items:center; min-height:28px; padding:3px 10px; border:1px solid color-mix(in srgb,var(--gold) 55%,var(--line)); border-radius:999px; color:var(--gold-2); background:color-mix(in srgb,var(--gold) 10%,transparent); font-size:13px; }}
-    .meta-grid {{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-top:28px; }}
-    .metric {{ background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:14px; box-shadow:var(--shadow); }}
+    .tag-row {{ display:flex; flex-wrap:wrap; min-width:0; max-width:100%; gap:8px; margin:0 0 18px; }}
+    .hero-tag {{ display:inline-flex; align-items:center; max-width:100%; min-height:28px; padding:3px 10px; border:1px solid color-mix(in srgb,var(--gold) 55%,var(--line)); border-radius:999px; color:var(--gold-2); background:color-mix(in srgb,var(--gold) 10%,transparent); font-size:13px; white-space:normal; }}
+    .meta-grid {{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); min-width:0; max-width:100%; gap:12px; margin-top:28px; }}
+    .metric {{ min-width:0; max-width:100%; background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:14px; box-shadow:var(--shadow); }}
     .metric span {{ display:block; color:var(--muted); font-size:13px; }}
     .metric strong {{ display:block; margin-top:4px; font-size:18px; }}
-    .scorebar {{ height:10px; background:var(--panel-2); border-radius:999px; overflow:hidden; margin-top:10px; border:1px solid var(--line); }}
+    .scorebar {{ width:100%; max-width:100%; min-width:0; height:10px; background:var(--panel-2); border-radius:999px; overflow:hidden; margin-top:10px; border:1px solid var(--line); }}
     .scorebar i {{ display:block; width:{score_width}%; height:100%; background:linear-gradient(90deg,var(--gold),var(--gold-2)); }}
-    main {{ max-width:1180px; margin:0 auto; padding:18px 28px 48px; }}
-    .card {{ background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:24px; margin:18px 0; box-shadow:var(--shadow); }}
+    main {{ width:100%; max-width:1180px; min-width:0; margin:0 auto; padding:18px 28px 48px; }}
+    .card {{ min-width:0; max-width:100%; background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:24px; margin:18px 0; box-shadow:var(--shadow); }}
+    .card > *, .mini > *, .metric > *, .scenario > *, .risk-card > *, .quality-score > *, .chain-node > * {{ min-width:0; max-width:100%; }}
     .highlight {{ border-color:color-mix(in srgb,var(--gold) 55%,var(--line)); background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 12%,var(--panel)),var(--panel)); }}
     h2 {{ margin:0 0 16px; font-size:24px; }}
     h3 {{ margin:0 0 10px; font-size:18px; }}
     h4 {{ margin:14px 0 6px; font-size:14px; color:var(--gold-2); }}
     .muted {{ color:var(--muted); }}
-    .two-col {{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }}
+    .two-col {{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); min-width:0; max-width:100%; gap:16px; }}
     .three-col {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }}
     .quality-grid {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }}
-    .quality-score {{ background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:16px; }}
+    .three-col, .quality-grid, .scenario-grid, .risk-grid, .tracking-grid, .chain-map {{ min-width:0; max-width:100%; }}
+    .quality-score {{ min-width:0; max-width:100%; background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:16px; }}
     .quality-head {{ display:flex; align-items:center; justify-content:space-between; gap:10px; }}
     .scorebar.compact {{ height:8px; margin:10px 0; }}
-    .chain-map {{ display:grid; grid-template-columns:1fr auto 1.1fr auto 1fr; align-items:stretch; gap:10px; margin-bottom:16px; }}
-    .chain-node {{ border:1px solid var(--line); background:var(--panel-2); border-radius:8px; padding:16px; min-height:104px; }}
+    .chain-map {{ display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1.1fr) auto minmax(0,1fr); align-items:stretch; gap:10px; margin-bottom:16px; }}
+    .chain-node {{ min-width:0; max-width:100%; border:1px solid var(--line); background:var(--panel-2); border-radius:8px; padding:16px; min-height:104px; }}
     .chain-node.company {{ border-color:color-mix(in srgb,var(--gold) 60%,var(--line)); background:color-mix(in srgb,var(--gold) 10%,var(--panel-2)); }}
     .chain-node span {{ display:block; color:var(--muted); font-size:13px; margin-bottom:6px; }}
     .chain-node strong {{ display:block; font-size:16px; }}
     .chain-arrow {{ color:var(--gold-2); align-self:center; font-size:22px; }}
-    .tracking-grid {{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }}
+    .tracking-grid {{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:14px; }}
     .compact-table table {{ min-width:560px; }}
-    .mini {{ background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:16px; }}
-    .formula {{ font-family:"Microsoft YaHei",Arial,sans-serif; font-size:20px; color:var(--gold-2); padding:14px 16px; border:1px solid color-mix(in srgb,var(--gold) 45%,var(--line)); border-radius:8px; background:color-mix(in srgb,var(--gold) 8%,var(--panel-2)); }}
-    .badge {{ display:inline-flex; align-items:center; min-height:24px; padding:2px 9px; border:1px solid var(--line); border-radius:999px; font-size:12px; color:var(--text); background:var(--panel-2); }}
+    .mini {{ min-width:0; max-width:100%; background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:16px; }}
+    .formula {{ max-width:100%; overflow-x:auto; font-family:"Microsoft YaHei",Arial,sans-serif; font-size:20px; color:var(--gold-2); padding:14px 16px; border:1px solid color-mix(in srgb,var(--gold) 45%,var(--line)); border-radius:8px; background:color-mix(in srgb,var(--gold) 8%,var(--panel-2)); }}
+    .badge {{ display:inline-flex; align-items:center; max-width:100%; min-height:24px; padding:2px 9px; border:1px solid var(--line); border-radius:999px; font-size:12px; color:var(--text); background:var(--panel-2); white-space:normal; }}
     .badge-neutral {{ border-color:var(--gold); color:var(--gold-2); }}
     .badge-risk {{ border-color:var(--risk); color:var(--risk); }}
     .badge-optimistic {{ border-color:var(--ok); color:var(--ok); }}
     .badge-base {{ border-color:var(--gold); color:var(--gold-2); }}
     .badge-downside {{ border-color:var(--risk); color:var(--risk); }}
     ul {{ padding-left:20px; margin:8px 0 0; }}
-    .table-wrap {{ overflow:auto; max-width:100%; border:1px solid var(--line); border-radius:8px; }}
-    table {{ width:100%; border-collapse:collapse; min-width:760px; }}
+    .table-wrap {{ width:100%; min-width:0; max-width:100%; overflow-x:auto; overflow-y:hidden; border:1px solid var(--line); border-radius:8px; }}
+    table {{ width:100%; max-width:none; border-collapse:collapse; min-width:760px; }}
     th,td {{ padding:11px 12px; border-bottom:1px solid var(--line); vertical-align:top; text-align:left; }}
     th {{ background:var(--panel-2); color:var(--gold-2); font-weight:650; }}
     tr:hover td {{ background:color-mix(in srgb,var(--panel-2) 55%,transparent); }}
     .scenario-grid {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }}
-    .scenario {{ border:1px solid var(--line); border-radius:8px; padding:18px; background:var(--panel-2); }}
+    .scenario {{ min-width:0; max-width:100%; border:1px solid var(--line); border-radius:8px; padding:18px; background:var(--panel-2); }}
     .scenario-optimistic {{ border-color:color-mix(in srgb,var(--ok) 50%,var(--line)); }}
     .scenario-base {{ border-color:color-mix(in srgb,var(--gold) 55%,var(--line)); }}
     .scenario-downside {{ border-color:color-mix(in srgb,var(--risk) 55%,var(--line)); }}
     .risk-grid {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }}
-    .risk-card {{ background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:16px; }}
+    .risk-card {{ min-width:0; max-width:100%; background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:16px; }}
     .risk-line {{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; padding:8px 0; border-top:1px solid var(--line); }}
-    footer {{ border-top:1px solid var(--line); padding:24px 28px 40px; color:var(--muted); max-width:1180px; margin:0 auto; }}
+    .risk-line span {{ min-width:0; }}
+    svg {{ max-width:100%; height:auto; }}
+    footer {{ width:100%; min-width:0; border-top:1px solid var(--line); padding:24px 28px 40px; color:var(--muted); max-width:1180px; margin:0 auto; }}
     @media (max-width:900px) {{ .meta-grid,.two-col,.three-col,.scenario-grid,.risk-grid,.quality-grid,.tracking-grid,.chain-map {{ grid-template-columns:1fr; }} .chain-arrow {{ display:none; }} .hero h1 {{ font-size:32px; }} .topbar {{ padding:10px 16px; }} table {{ min-width:640px; }} .compact-table table {{ min-width:520px; }} main,.hero {{ padding-left:16px; padding-right:16px; }} }}
   </style>
 </head>

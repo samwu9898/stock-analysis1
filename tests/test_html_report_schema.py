@@ -4,21 +4,42 @@ from copy import deepcopy
 
 from src.fundamental_skill.ai_analyst.html_report_schema import (
     FundamentalHtmlReport,
+    schema_example,
     validate_fundamental_html_report,
 )
-from src.fundamental_skill.ai_analyst.html_report_runner import run_skeleton
 
 
 def sample_html_report():
-    result = run_skeleton("002050")
-    # Avoid depending on repository output in schema-focused assertions.
-    import json
-    from pathlib import Path
-
-    path = Path(result["json_path"])
-    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload = schema_example()
+    payload["report_meta"].update(
+        {
+            "stock_code": "002050",
+            "stock_name": "三花智控",
+            "generated_at": "2026-05-21T00:00:00+00:00",
+            "strategy_type": "advanced_manufacturing_growth",
+            "strategy_type_label": "高端制造成长",
+            "sub_type": "",
+            "sub_type_label": "不适用",
+            "data_quality_status": "测试数据",
+        }
+    )
     payload["report_meta"]["status"] = "neutral"
     payload["report_meta"]["confidence"] = "low"
+    payload["core_conclusion"].update(
+        {
+            "title": "核心结论",
+            "summary": "这是 schema 测试用基本面摘要。",
+            "evidence_confidence_explanation": "证据置信度用于说明数据可用性。",
+        }
+    )
+    payload["company_profile"].update(
+        {
+            "main_business": "热管理零部件。",
+            "ownership_or_company_nature": "制造业公司",
+            "framework_identity": "高端制造成长",
+            "core_business_anchor": "制冷空调零部件与汽车热管理。",
+        }
+    )
     return payload
 
 

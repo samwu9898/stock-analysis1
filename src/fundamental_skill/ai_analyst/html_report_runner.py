@@ -18,6 +18,7 @@ from .html_report_schema import schema_example, validate_fundamental_html_report
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "output"
 DEFAULT_REPORT_DIR = DEFAULT_OUTPUT_DIR / "reports"
+DEFAULT_SKELETON_SUBDIR = "skeleton"
 
 
 STRATEGY_LABELS = {
@@ -63,13 +64,41 @@ def _load_json(path: Path) -> dict[str, Any]:
     return payload
 
 
+def _report_dir(output_dir: str | Path | None = None) -> Path:
+    directory = Path(output_dir) if output_dir else DEFAULT_OUTPUT_DIR
+    return directory / "reports"
+
+
+def _skeleton_report_dir(output_dir: str | Path | None = None) -> Path:
+    return _report_dir(output_dir) / DEFAULT_SKELETON_SUBDIR
+
+
+def _formal_report_paths(code: str, output_dir: str | Path | None = None) -> tuple[Path, Path]:
+    normalized = normalize_stock_code(code)
+    report_dir = _report_dir(output_dir)
+    return report_dir / f"fundamental_report_{normalized}.json", report_dir / f"fundamental_report_{normalized}.html"
+
+
+def _skeleton_report_paths(code: str, output_dir: str | Path | None = None) -> tuple[Path, Path]:
+    normalized = normalize_stock_code(code)
+    skeleton_dir = _skeleton_report_dir(output_dir)
+    return (
+        skeleton_dir / f"fundamental_report_{normalized}_skeleton.json",
+        skeleton_dir / f"fundamental_report_{normalized}_skeleton.html",
+    )
+
+
+def _is_skeleton_report(report: dict[str, Any]) -> bool:
+    meta = report.get("report_meta") if isinstance(report.get("report_meta"), dict) else {}
+    return str(meta.get("status") or "").lower() == "skeleton" or str(meta.get("confidence") or "").lower() == "skeleton"
+
+
 def run_prompt_only(code: str, output_dir: str | Path | None = None) -> dict[str, Any]:
     normalized = normalize_stock_code(code)
     directory = Path(output_dir) if output_dir else DEFAULT_OUTPUT_DIR
-    report_dir = directory / "reports"
+    report_dir = _report_dir(directory)
     fundamental_path = directory / f"fundamental_{normalized}.json"
     raw_path = directory / f"raw_{normalized}.json"
-    evidence_path = directory / f"evidence_pack_{normalized}.json"
     prompt_path = report_dir / f"fundamental_report_prompt_{normalized}.md"
 
     if not fundamental_path.exists() or not raw_path.exists():
@@ -81,19 +110,19 @@ def run_prompt_only(code: str, output_dir: str | Path | None = None) -> dict[str
 
     report_dir.mkdir(parents=True, exist_ok=True)
     evidence_pack = EvidencePackBuilder().build_from_files(fundamental_path, raw_path)
-    evidence_path.write_text(json.dumps(evidence_pack, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
     prompt = HtmlReportPromptBuilder().build(evidence_pack)
     prompt_path.write_text(prompt, encoding="utf-8")
-    return {"stock_code": normalized, "prompt_path": str(prompt_path), "evidence_pack_path": str(evidence_path)}
+    return {"stock_code": normalized, "prompt_path": str(prompt_path)}
 
 
 def run_render_existing(code: str, output_dir: str | Path | None = None) -> dict[str, Any]:
     normalized = normalize_stock_code(code)
-    directory = Path(output_dir) if output_dir else DEFAULT_OUTPUT_DIR
-    report_dir = directory / "reports"
-    json_path = report_dir / f"fundamental_report_{normalized}.json"
-    html_path = report_dir / f"fundamental_report_{normalized}.html"
+    json_path, html_path = _formal_report_paths(normalized, output_dir)
     report = _load_json(json_path)
+    if _is_skeleton_report(report):
+        raise ValueError(
+            "skeleton report cannot be rendered as formal report; use skeleton mode or a skeleton-specific path"
+        )
     validation = validate_fundamental_html_report(report)
     if not validation["valid"]:
         raise ValueError(f"Invalid FundamentalHtmlReport JSON: {validation['schema_errors']}")
@@ -104,8 +133,8 @@ def run_render_existing(code: str, output_dir: str | Path | None = None) -> dict
 def run_skeleton(code: str, output_dir: str | Path | None = None) -> dict[str, Any]:
     normalized = normalize_stock_code(code)
     directory = Path(output_dir) if output_dir else DEFAULT_OUTPUT_DIR
-    report_dir = directory / "reports"
-    report_dir.mkdir(parents=True, exist_ok=True)
+    skeleton_dir = _skeleton_report_dir(directory)
+    skeleton_dir.mkdir(parents=True, exist_ok=True)
 
     evidence_path = directory / f"evidence_pack_{normalized}.json"
     evidence_pack = json.loads(evidence_path.read_text(encoding="utf-8")) if evidence_path.exists() else {}
@@ -207,8 +236,7 @@ def run_skeleton(code: str, output_dir: str | Path | None = None) -> dict[str, A
     ]
     report["data_quality_and_unknowns"]["cannot_determine"] = ["Skeleton 模式不能作为正式基本面结论。"]
 
-    json_path = report_dir / f"fundamental_report_{normalized}.json"
-    html_path = report_dir / f"fundamental_report_{normalized}.html"
+    json_path, html_path = _skeleton_report_paths(normalized, directory)
     json_path.write_text(json.dumps(report, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
     write_fundamental_html_report(report, html_path)
     return {"stock_code": normalized, "json_path": str(json_path), "html_path": str(html_path), "skeleton_warning": True}
@@ -226,7 +254,7 @@ def main() -> int:
             result = run_prompt_only(args.code, args.output_dir)
             print(f"stock_code: {result['stock_code']}")
             print(f"html_report_prompt: {result['prompt_path']}")
-            print(f"evidence_pack: {result['evidence_pack_path']}")
+            print("prompt_only: generated prompt only; no report JSON or HTML was written")
         elif args.mode == "render_existing":
             result = run_render_existing(args.code, args.output_dir)
             print(f"stock_code: {result['stock_code']}")
@@ -234,6 +262,7 @@ def main() -> int:
         else:
             result = run_skeleton(args.code, args.output_dir)
             print("skeleton warning: this is not a formal AI analysis report")
+            print("skeleton output: written only to the skeleton-specific report directory")
             print(f"stock_code: {result['stock_code']}")
             print(f"html_report_json: {result['json_path']}")
             print(f"html_report: {result['html_path']}")

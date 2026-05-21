@@ -7,18 +7,42 @@ from src.fundamental_skill.ai_analyst.html_report_renderer import (
     render_fundamental_html_report,
     write_fundamental_html_report,
 )
-from src.fundamental_skill.ai_analyst.html_report_runner import run_skeleton
+from src.fundamental_skill.ai_analyst.html_report_schema import schema_example
 
 
 def sample_report():
-    result = run_skeleton("002050")
-    from pathlib import Path
-
-    payload = json.loads(Path(result["json_path"]).read_text(encoding="utf-8"))
+    payload = schema_example()
+    payload["report_meta"].update(
+        {
+            "stock_code": "002050",
+            "stock_name": "三花智控",
+            "generated_at": "2026-05-21T00:00:00+00:00",
+            "strategy_type": "advanced_manufacturing_growth",
+            "strategy_type_label": "高端制造成长",
+            "sub_type": "",
+            "sub_type_label": "不适用",
+            "status": "neutral",
+            "confidence": "high",
+            "fundamental_score": 68,
+            "data_quality_status": "测试数据",
+        }
+    )
     payload["core_conclusion"].update(
         {
             "title": "核心结论",
             "summary": "公司当前只能形成保守的基本面研究摘要，主要原因是业务构成、客户和订单证据仍需补充。",
+            "supporting_points": ["主营业务构成可见。"],
+            "limiting_points": ["新业务收入和订单证据仍需补充。"],
+            "must_track_points": ["毛利率", "经营现金流"],
+            "evidence_confidence_explanation": "证据置信度仅用于说明数据可用性。",
+        }
+    )
+    payload["company_profile"].update(
+        {
+            "main_business": "冷热转换与智能控制相关零部件。",
+            "ownership_or_company_nature": "制造业公司",
+            "framework_identity": "高端制造成长",
+            "core_business_anchor": "制冷空调零部件与汽车热管理。",
         }
     )
     payload["financial_quality_diagnosis"]["final_diagnosis"] = "经营现金流、应收和存货证据仍需结合正式数据复核。"
@@ -94,12 +118,24 @@ def test_html_renderer_contains_required_chinese_sections():
 def test_html_renderer_has_mobile_overflow_guards():
     html = render_fundamental_html_report(sample_report())
 
-    assert "body { margin:0; overflow-x:hidden;" in html
+    assert "html { scroll-behavior:smooth; max-width:100%; overflow-x:hidden; }" in html
+    assert "body { margin:0; max-width:100%; overflow-x:hidden;" in html
+    assert "body, main, header, footer, section, article, div, p, h1, h2, h3, h4, li, strong, td, th" in html
+    assert ".topbar { position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:18px; width:100%; min-width:0; max-width:100%; overflow:hidden;" in html
     assert ".hero h1 {" in html
     assert "overflow-wrap:anywhere;" in html
     assert "word-break:break-word;" in html
-    assert "nav { display:flex; gap:12px; overflow-x:auto; flex:1; min-width:0; max-width:100%;" in html
-    assert ".table-wrap { overflow:auto; max-width:100%;" in html
+    assert "nav { display:flex; gap:12px; overflow-x:auto; overflow-y:hidden; flex:1 1 auto; min-width:0; max-width:100%;" in html
+    assert ".hero { max-width:100%; overflow:hidden;" in html
+    assert ".hero-inner { width:100%; max-width:1180px; min-width:0;" in html
+    assert ".meta-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); min-width:0; max-width:100%;" in html
+    assert ".card { min-width:0; max-width:100%;" in html
+    assert ".mini { min-width:0; max-width:100%;" in html
+    assert ".table-wrap { width:100%; min-width:0; max-width:100%; overflow-x:auto; overflow-y:hidden;" in html
+    assert ".chain-map { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1.1fr) auto minmax(0,1fr);" in html
+    assert ".scorebar { width:100%; max-width:100%; min-width:0;" in html
+    assert ".tracking-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr);" in html
+    assert "svg { max-width:100%; height:auto; }" in html
     assert "@media (max-width:900px)" in html
     assert "table { min-width:640px; }" in html
     assert ".compact-table table { min-width:520px; }" in html
