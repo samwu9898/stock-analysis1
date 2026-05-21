@@ -18,10 +18,10 @@ stock code
   -> deterministic fundamental pipeline
   -> evidence pack
   -> AI prompt / report
-  -> Dashboard v2 audit view
+  -> Dashboard v3 report reader / audit view
 ```
 
-The system should turn an A-share stock code into auditable public-data blocks, run a deterministic fundamental pipeline, assemble evidence for AI consumption, generate or preview an AI analyst prompt/report, and expose the result in a local dashboard for inspection.
+The system should turn an A-share stock code into auditable public-data blocks, run a deterministic fundamental pipeline, assemble evidence for AI consumption, generate or preview an AI analyst prompt/report, and expose the result in a local Dashboard v3 reader for Chinese fundamental-report inspection and audit.
 
 ## 3. Current Architecture
 
@@ -37,7 +37,7 @@ Core modules:
 - `FundamentalScoringEngine`: scores fundamental dimensions under strategy-specific weights and confidence constraints.
 - `FundamentalResultAssembler`: assembles the final structured fundamental result.
 - `AI Analyst Layer`: builds evidence packs and model-ready prompts; current primary mode is `prompt_only`.
-- `Dashboard v2`: local Streamlit viewer / auditor for AI report, prompt, evidence pack, source trace, fundamental JSON, and raw JSON.
+- `Dashboard v3`: local Streamlit fundamental AI report reader / auditor. The main view is Chinese-first and highlights the top conclusion, one-line conclusion, strategy / sub-type explanations, evidence map, risks, evidence gaps, must-track indicators, confidence breakdown, data quality, report stale / mismatch status, and schema / safety / garbled guard state. Evidence Pack, Source Trace, Raw JSON, Prompt, and legacy fields are collapsed as audit material.
 
 Flow:
 
@@ -56,7 +56,7 @@ stock_code
   -> FundamentalAnalysisResult
   -> AI Analyst Layer
   -> evidence_pack + ai_prompt / ai_report
-  -> Dashboard v2 audit display
+  -> Dashboard v3 report reader / audit display
 ```
 
 ## 4. Current Core Module Versions
@@ -64,7 +64,7 @@ stock_code
 - `RealDataConnector v2.3a`
 - `ExternalCommodityPriceConnector v1.1`
 - `AI Analyst Layer prompt_only`
-- `Dashboard v2`
+- `Dashboard v3`
 - `Industry Framework Workflow`
 
 ## 5. Current strategy_type List
@@ -157,6 +157,13 @@ The system must not output:
 - technical analysis;
 - trading-account connection.
 
+Dashboard-specific boundaries:
+
+- Dashboard v3 is not a trading terminal and must not connect to trading accounts.
+- Dashboard v3 must not output trading advice, account actions, target prices, position sizing, or buy/sell language.
+- Dashboard v3 must not add technical charts, technical indicators, `technical_skill`, or `trader_skill`.
+- Dashboard v3 must not modify the deterministic pipeline, schema, classifier, connector, regression expectations, or tests as part of display-only work.
+
 Interpretation boundaries:
 
 - `confidence` is confidence in the evidence behind the current `fundamental_view`; it is not positive strength, upside probability, or investment attractiveness.
@@ -175,7 +182,7 @@ The `fundamental.v1` public schema keeps backward compatibility while adding neu
 - `trader_summary` is deprecated but retained for backward compatibility with historical JSON.
 - `action_hint_for_trader` is deprecated but retained for backward compatibility with historical JSON.
 
-New deterministic outputs fill both new and old fields with the same neutral text. AI evidence packs, prompts, and Dashboard helpers prefer the neutral fields and fall back to legacy fields only for old files. This project still does not implement `trader_skill`, does not implement `technical_skill`, does not connect to trading accounts, and does not output trading advice.
+New deterministic outputs fill both new and old fields with the same neutral text. AI evidence packs, prompts, and Dashboard helpers prefer the neutral fields and fall back to legacy fields only for old files. Dashboard v3 does not show `trader_summary` / `action_hint_for_trader` in the main view; deprecated fields may appear only inside raw JSON or compatibility audit material. This project still does not implement `trader_skill`, does not implement `technical_skill`, does not connect to trading accounts, and does not output trading advice.
 
 ## 11. Industry Framework Extension Workflow
 

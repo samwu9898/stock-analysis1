@@ -20,8 +20,24 @@
 - `FundamentalSkillPipeline`：串联 data adapter、classifier、framework selector、readiness planner、analysis context、scoring engine 和 result assembler。
 - Evidence Pack：把 deterministic pipeline 输出和 raw blocks 压缩成 AI 可消费、可审计的证据包。
 - AI Prompt / AI Report：生成模型可用的基本面分析提示词；当前以 `prompt_only` 工作流为主。
-- Dashboard v2：本地 Streamlit viewer / auditor，用于查看 AI report、prompt、evidence pack、source trace、fundamental JSON 和 raw JSON。
+- Dashboard v3：本地 Streamlit 基本面 AI 分析报告阅读器 / auditor，主视图中文化展示结论、证据、风险、缺口、must-track 指标、置信度拆解和数据质量；Evidence Pack、Source Trace、Raw JSON、Prompt 默认折叠为审计材料。
 - Industry Framework Workflow：用标准流程扩展行业框架，避免把单只股票、主题热度或 proxy 当成基本面事实。
+
+## Dashboard v3
+
+Dashboard v3 是 A 股基本面 AI 分析报告阅读器，不是交易终端。它读取已经生成的 fundamental JSON、evidence pack、AI prompt / report 和 raw JSON，用中文主视图帮助快速理解基本面结论、证据链、风险与证据缺口。
+
+核心展示能力包括：
+
+- 顶部结论区和一句话结论，优先展示 `analyst_summary`，并明确 `confidence` 是证据置信度，不是看好程度。
+- `strategy_type` / `sub_type` 的中文解释，以及规则状态、AI 基本面观点和基本面评分摘要。
+- 证据地图、风险提示与证据缺口、must-track 指标表、置信度拆解、数据质量与缺口。
+- report stale / mismatch 检测：当 AI report 与当前 fundamental / evidence pack 不一致、过期，或 schema / safety / garbled guard 未通过时，Dashboard 会降级展示旧报告并提示重新生成。
+- schema / safety / garbled guard 状态展示，但不抢占主视图。
+- Evidence Pack、Source Trace、Raw JSON、Prompt 和 legacy 字段默认折叠为审计材料。
+- deprecated 字段 `trader_summary` / `action_hint_for_trader` 不在主视图展示，仅可能在 raw JSON 或兼容性审计区域出现。
+
+Dashboard v3 不调用模型 API，不连接交易账户，不输出交易建议，不展示技术面图表或技术指标，不实现 `technical_skill` / `trader_skill`，也不修改 deterministic pipeline。
 
 ## strategy_type
 
@@ -98,13 +114,13 @@ python -m src.fundamental_skill.ai_analyst.runner --code 601698 --mode prompt_on
 - `output/evidence_pack_<code>.json`
 - `output/ai_prompt_<code>.md`
 
-### 6. 打开 Dashboard v2
+### 6. 打开 Dashboard v3
 
 ```bash
 streamlit run dashboard/fundamental_dashboard.py
 ```
 
-Dashboard v2 是本地查看和审计工具，不调用模型 API，不连接账户，不生成交易动作。
+Dashboard v3 是本地基本面 AI 分析报告阅读器和审计工具，不调用模型 API，不连接账户，不生成交易动作。
 
 ## 示例命令
 
@@ -136,7 +152,7 @@ streamlit run dashboard/fundamental_dashboard.py
 - `trader_summary` 已 deprecated，仅为 backward compatibility 保留。
 - `action_hint_for_trader` 已 deprecated，仅为 backward compatibility 保留。
 
-AI layer 和 Dashboard 优先使用 `analyst_summary` / `downstream_review_hint`，仅在读取旧文件时回退到 legacy 字段。当前项目仍不实现 `trader_skill`，不连接交易账户，不输出交易建议。
+AI layer 和 Dashboard 优先使用 `analyst_summary` / `downstream_review_hint`，仅在读取旧文件时回退到 legacy 字段。Dashboard v3 主视图不展示 `trader_summary` / `action_hint_for_trader`；这些 deprecated 字段只可能作为 raw JSON 或兼容性审计材料出现。当前项目仍不实现 `trader_skill`，不连接交易账户，不输出交易建议。
 
 ## 开发流程
 
@@ -171,7 +187,7 @@ Out-of-Sample Audit
 ## 文档入口
 
 - `docs/FUNDAMENTAL_SKILL_SPEC.md`：`fundamental_skill` 输出契约、模块边界和 pipeline 说明。
-- `docs/FUNDAMENTAL_AI_ANALYST_LAYER_SPEC.md`：Evidence Pack、AI Prompt、AI Report 和 Dashboard v2 说明。
+- `docs/FUNDAMENTAL_AI_ANALYST_LAYER_SPEC.md`：Evidence Pack、AI Prompt、AI Report 和 Dashboard v3 说明。
 - `docs/REAL_DATA_CONNECTOR_AUDIT.md`：真实公开数据连接器版本、字段映射、source trace 和限制。
 - `docs/INDUSTRY_FRAMEWORK_DEVELOPMENT_WORKFLOW.md`：新增行业框架的标准流程。
 - `docs/INDUSTRY_FRAMEWORK_TEMPLATE.md`：行业框架设计模板。

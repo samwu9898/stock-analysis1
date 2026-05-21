@@ -1,10 +1,10 @@
-# Fundamental Dashboard v2
+# Fundamental Dashboard v3
 
-Local Streamlit dashboard for viewing and auditing pre-generated Fundamental AI Analyst reports.
+Local Streamlit fundamental AI analysis report reader for viewing and auditing pre-generated Fundamental AI Analyst reports.
 
 ## Scope
 
-Dashboard v2 is an AI Report Viewer / Auditor. It reads existing files:
+Dashboard v3 is a Chinese-first AI fundamental report reader / auditor. It reads existing files:
 
 - `output/ai_report_<code>.json`
 - `output/ai_report_<code>.md`
@@ -12,7 +12,7 @@ Dashboard v2 is an AI Report Viewer / Auditor. It reads existing files:
 - `output/fundamental_<code>.json`
 - `output/raw_<code>.json`
 
-It does not call an LLM, does not call OpenAI APIs, does not connect to accounts, does not add technical indicators, does not implement `technical_skill` or `trader_skill`, and does not change the deterministic fundamental pipeline.
+It does not call an LLM, does not call OpenAI APIs, does not connect to accounts, does not output trading advice, does not add technical indicators, does not implement `technical_skill` or `trader_skill`, and does not change the deterministic fundamental pipeline.
 
 ## Generate Inputs First
 
@@ -39,17 +39,19 @@ streamlit run dashboard/fundamental_dashboard.py
 
 ## Main Views
 
-- AI Executive Summary
-- Fundamental View
-- Confidence Breakdown
-- Evidence Classification
-- AI Analysis Report
-- Must Track Indicators
-- Safety / Schema Status
-- Evidence Pack Viewer
-- Evidence / Raw Data audit panels
+- Chinese top conclusion area
+- One-line conclusion
+- Chinese `strategy_type` / `sub_type` explanations
+- Evidence map
+- Risk warnings and evidence gaps
+- Must-track indicator table
+- Confidence breakdown
+- Data quality and missing-data summary
+- Report stale / mismatch detection
+- Schema / safety / garbled guard status
+- Collapsed audit panels for Evidence Pack, Source Trace, Raw JSON, Prompt, and legacy compatibility fields
 
-Raw JSON and legacy tables are audit material and are collapsed by default.
+Raw JSON, prompt preview, source trace, Evidence Pack, and deprecated compatibility fields are audit material and are collapsed by default. Deprecated `trader_summary` / `action_hint_for_trader` fields are not shown in the main view.
 
 ## Current Limits
 
@@ -57,4 +59,5 @@ Raw JSON and legacy tables are audit material and are collapsed by default.
 - No AI report generation inside the dashboard.
 - AI reports must be generated before viewing.
 - No trading advice, account actions, target prices, position sizing, or technical analysis.
+- No trading-account connection.
 - Raw JSON is shown only for audit/debug purposes.
