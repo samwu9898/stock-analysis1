@@ -18,10 +18,12 @@ stock code
   -> deterministic fundamental pipeline
   -> evidence pack
   -> AI prompt / report
+  -> optional Fundamental HTML Report Generator v2.1
+  -> optional HTML Report Visual Audit Tool v1
   -> Dashboard v3 report reader / audit view
 ```
 
-The system should turn an A-share stock code into auditable public-data blocks, run a deterministic fundamental pipeline, assemble evidence for AI consumption, generate or preview an AI analyst prompt/report, and expose the result in a local Dashboard v3 reader for Chinese fundamental-report inspection and audit.
+The system should turn an A-share stock code into auditable public-data blocks, run a deterministic fundamental pipeline, assemble evidence for AI consumption, generate or preview an AI analyst prompt/report, optionally render a pure-fundamental Chinese HTML report, optionally audit the HTML visually, and expose the result in a local Dashboard v3 reader for Chinese fundamental-report inspection and audit.
 
 ## 3. Current Architecture
 
@@ -37,6 +39,8 @@ Core modules:
 - `FundamentalScoringEngine`: scores fundamental dimensions under strategy-specific weights and confidence constraints.
 - `FundamentalResultAssembler`: assembles the final structured fundamental result.
 - `AI Analyst Layer`: builds evidence packs and model-ready prompts; current primary mode is `prompt_only`.
+- `Fundamental HTML Report Generator v2.1`: upper AI analyst display capability that creates a model prompt for structured `FundamentalHtmlReport` JSON and renders an existing formal JSON into self-contained HTML.
+- `HTML Report Visual Audit Tool v1`: local Playwright / Chromium screenshot and manifest tool for existing HTML reports.
 - `Dashboard v3`: local Streamlit fundamental AI report reader / auditor. The main view is Chinese-first and highlights the top conclusion, one-line conclusion, strategy / sub-type explanations, evidence map, risks, evidence gaps, must-track indicators, confidence breakdown, data quality, report stale / mismatch status, and schema / safety / garbled guard state. Evidence Pack, Source Trace, Raw JSON, Prompt, and legacy fields are collapsed as audit material.
 
 Flow:
@@ -56,6 +60,8 @@ stock_code
   -> FundamentalAnalysisResult
   -> AI Analyst Layer
   -> evidence_pack + ai_prompt / ai_report
+  -> html report prompt -> model-generated FundamentalHtmlReport JSON -> render_existing -> self-contained HTML
+  -> visual audit screenshots + manifest
   -> Dashboard v3 report reader / audit display
 ```
 
@@ -64,6 +70,8 @@ stock_code
 - `RealDataConnector v2.3a`
 - `ExternalCommodityPriceConnector v1.1`
 - `AI Analyst Layer prompt_only`
+- `Fundamental HTML Report Generator v2.1`
+- `HTML Report Visual Audit Tool v1`
 - `Dashboard v3`
 - `Industry Framework Workflow`
 
@@ -153,6 +161,9 @@ python -m pytest tests --basetemp=.pytest_tmp -p no:cacheprovider
 python scripts/run_regression_suite.py
 python -m src.fundamental_skill.real_stock_runner --code 601698 --output output/fundamental_601698.json --force-refresh
 python -m src.fundamental_skill.ai_analyst.runner --code 601698 --mode prompt_only
+python -m src.fundamental_skill.ai_analyst.html_report_runner --code 002050 --mode prompt_only
+python -m src.fundamental_skill.ai_analyst.html_report_runner --code 002050 --mode render_existing
+python scripts/visual_audit_html_report.py --html output/reports/fundamental_report_002050.html --code 002050 --output-dir output/visual_audit/002050
 streamlit run dashboard/fundamental_dashboard.py
 ```
 
@@ -171,6 +182,13 @@ Dashboard-specific boundaries:
 - Dashboard v3 must not output trading advice, account actions, target prices, position sizing, or buy/sell language.
 - Dashboard v3 must not add technical charts, technical indicators, `technical_skill`, or `trader_skill`.
 - Dashboard v3 must not modify the deterministic pipeline, schema, classifier, connector, regression expectations, or tests as part of display-only work.
+
+HTML report boundaries:
+
+- Fundamental HTML Report Generator v2.1 produces pure fundamental Chinese HTML research reports, not a trading terminal.
+- It must not output trading advice, target prices, account actions, position sizing, technical analysis, K-line content, or price execution language.
+- It must not mutate the deterministic pipeline, `RealDataConnector`, classifier, scoring / readiness, schema, dashboard, tests, regression expected files, or output artifacts outside its generated report paths.
+- Skeleton reports are rendering placeholders only and must not be presented as formal reports; skeleton and formal report paths are isolated.
 
 Interpretation boundaries:
 
@@ -220,15 +238,20 @@ Do not add a new industry framework only because one stock is popular or difficu
 - `latest_news` / AkShare news endpoints may fail.
 - Many industry-specific operating data fields are still missing or not stably obtainable.
 - AI report generation is currently mainly `prompt_only`; API mode is not the primary implemented workflow.
-- `output/`, `data/`, and `cache/` are runtime artifacts and should not be committed.
+- HTML report generation v2.1 does not automatically call an API; it creates prompts and renders existing formal `FundamentalHtmlReport` JSON.
+- `002050` 三花智控 is an internal successful HTML report sample candidate after v2.1 and visual audit acceptance.
+- `output/`, `output/reports/`, `output/visual_audit/`, `data/`, and `cache/` are generated/runtime artifacts and should not be committed.
 - Some industries remain uncovered, including banks, medical devices, and intelligent driving. CXO is covered by `life_science_cxo_services`, and AI datacenter infrastructure is covered by `ai_datacenter_infrastructure` v1, but both still have conservative public-data limits.
 - AI Datacenter v1 remains limited by public data availability for orders / backlog, customer structure, cabinet count, MW scale, PUE, rack utilization, liquid-cooling revenue, customer validation, datacenter revenue split, and customer capex-cycle evidence.
 
 ## 13. Suggested Next Steps
 
 - Keep `README.md` and `docs/PROJECT_CONTEXT_HANDOFF.md` synchronized after major project changes.
+- HTML Report Generator v2.1 baseline does not need more repair unless the user reports a specific visual or content issue.
+- Based on user feedback, continue refining the HTML research-report experience, or generate formal HTML reports for other stocks using the existing v2.1 chain.
 - Keep AI Datacenter v1 conservative unless public data sources can reliably validate orders / backlog, customer structure, cabinet / MW / PUE / rack utilization, liquid-cooling revenue, datacenter revenue split, and customer capex-cycle evidence.
 - Do not rush into `technical_skill` or `trader_skill`.
+- Do not connect trading accounts, add target prices, introduce technical analysis, or turn reports into trading recommendations.
 - Do not blindly add more fields without source stability, interpretation rules, and regression coverage.
 - Every new industry framework must follow the documented workflow.
 

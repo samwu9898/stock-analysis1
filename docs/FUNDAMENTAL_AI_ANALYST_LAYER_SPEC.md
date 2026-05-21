@@ -19,6 +19,8 @@ It produces:
 
 - `output/evidence_pack_<code>.json`
 - `output/ai_prompt_<code>.md`
+- `output/reports/fundamental_report_prompt_<code>.md` for the HTML report chain when requested.
+- `output/reports/fundamental_report_<code>.html` only after an existing formal `FundamentalHtmlReport` JSON is rendered.
 
 It does not mutate the deterministic pipeline, call AkShare directly, connect to accounts, introduce technical indicators, implement `technical_skill`, or implement `trader_skill`.
 
@@ -131,13 +133,74 @@ If `fundamental_<code>.json` or `raw_<code>.json` is missing, the runner asks th
 
 ## 6. Why v1 Does Not Call an API
 
-v1 is prompt-only by design. This keeps the deterministic pipeline stable and avoids making tests depend on network access, API keys, model availability, or provider-specific behavior.
+v1 is prompt-only by design and does not automatically call an API. This keeps the deterministic pipeline stable and avoids making tests depend on network access, API keys, model availability, or provider-specific behavior.
 
 The `--mode api` flag is reserved but intentionally not implemented in v1. It prints:
 
 ```text
 API mode not implemented in v1; use prompt_only
 ```
+
+## 6.1 Fundamental HTML Report Generator v2.1
+
+Fundamental HTML Report Generator v2.1 is an upper display capability inside the AI analyst layer. It creates pure-fundamental Chinese HTML research reports and remains separate from the deterministic pipeline.
+
+The formal HTML report chain is:
+
+```text
+evidence_pack
+  -> html report prompt
+  -> model-generated FundamentalHtmlReport JSON
+  -> render_existing
+  -> self-contained HTML
+```
+
+The prompt-only command is:
+
+```bash
+python -m src.fundamental_skill.ai_analyst.html_report_runner --code 002050 --mode prompt_only
+```
+
+This command reads existing `output/fundamental_<code>.json` and `output/raw_<code>.json`, builds the evidence pack, and writes `output/reports/fundamental_report_prompt_<code>.md`. It does not call an API and does not write a formal report JSON or HTML.
+
+After the user has produced a valid formal `output/reports/fundamental_report_<code>.json` from the prompt, render it with:
+
+```bash
+python -m src.fundamental_skill.ai_analyst.html_report_runner --code 002050 --mode render_existing
+```
+
+`render_existing` validates the structured `FundamentalHtmlReport` JSON and writes a self-contained HTML file under `output/reports/`. The renderer is a display layer only; it must not fetch data, call models, mutate evidence, modify scoring, or infer missing facts.
+
+The v2.1 structured `FundamentalHtmlReport` includes:
+
+- `hero_tags`
+- `research_anchor`
+- `quality_score_breakdown`
+- `value_chain_map`
+- `elasticity_formula`
+- `tracking_plan_groups`
+- `financial_ratio_caveats`
+
+These fields improve the research-report reading experience: first-screen tags, research thesis, quality-score explanation, value-chain mapping, fundamental elasticity framing, grouped tracking plan, and financial-ratio caveats. They must remain basic-fundamental explanations, not trading signals.
+
+Skeleton mode is isolated from the formal path. Skeleton files are rendering placeholders only, live under the skeleton-specific report directory, and must not be treated as formal research reports.
+
+## 6.2 HTML Report Visual Audit Workflow
+
+HTML Report Visual Audit Tool v1 audits an existing local HTML report through Playwright / Chromium screenshots. It is not a renderer and does not repair report content.
+
+Run:
+
+```bash
+python scripts/visual_audit_html_report.py \
+  --html output/reports/fundamental_report_002050.html \
+  --code 002050 \
+  --output-dir output/visual_audit/002050
+```
+
+The workflow writes desktop first-screen, mobile first-screen, full-page screenshots, and `visual_audit_manifest.json` under `output/visual_audit/<code>/`. The current `002050` baseline has been visually audited with no horizontal overflow on desktop or mobile.
+
+`output/reports/` and `output/visual_audit/` are generated artifacts and should not be committed.
 
 ## 7. Safety Boundary
 
@@ -146,6 +209,15 @@ The AI analyst layer is limited to fundamental analysis. It must not output trad
 The prompt includes a prohibition list for policy context. Final AI reports should not contain those restricted terms as substantive recommendations. The safety module records detections and separates allowed policy context from blocked report-body usage.
 
 The layer does not delete original evidence. It records safety findings separately.
+
+Additional HTML report safety boundaries:
+
+- It must not output buy/sell/add/reduce/clear-position language, target prices, position sizing, stop-loss, take-profit, or account actions.
+- It must not introduce technical analysis, K-line, moving average, volume, timing, or price-execution modules.
+- It must not treat proxy evidence as fact; contract liabilities are not backlog, capex is not capacity release, and R&D intensity is not proof of a technology barrier.
+- It must not let skeleton output masquerade as a formal report.
+- Formal report and skeleton paths must remain isolated.
+- It must not mutate the deterministic pipeline, connector, classifier, scoring, readiness, schema, dashboard, tests, or regression expected files.
 
 ## 8. Dashboard v3 Reference
 

@@ -19,6 +19,8 @@ Current project boundaries remain unchanged: this project does not implement `tr
 
 它不判断买卖点，不输出交易指令，不给仓位建议，不给目标价，不负责最终交易纪律。它的输出对象是后续综合评估层；当前项目不实现 `trader_skill`，也不引入技术面继续评估。
 
+HTML report generator 属于 AI analyst layer 的上层展示能力，不属于 deterministic `fundamental_skill` pipeline。它把 evidence pack 和模型生成的结构化 `FundamentalHtmlReport` JSON 渲染为纯基本面中文 HTML 研报，不改变 deterministic pipeline，不修改 connector / classifier / scoring / readiness，不输出交易建议，不做技术面。HTML report 和 visual audit 产物写入 `output/`，包括 `output/reports/` 和 `output/visual_audit/`，不进入 git。
+
 `fundamental_skill` 只能表达基本面状态：
 
 - `supportive`：基本面支持继续跟踪或进入后续综合评估。
@@ -29,7 +31,7 @@ Current project boundaries remain unchanged: this project does not implement `tr
 ## 2. 三 Agent 架构
 
 - `fundamental_skill`：基本面分析员，输出结构化 JSON，覆盖公司基本面、行业、财务、估值、风险、催化和跟踪项。
-- `technical_skill`：技术面分析员，后续开发，负责趋势、量价、形态、波动和技术风险。
+- `technical_skill`：不在当前项目实现；不得在当前阶段引入趋势、量价、形态、波动或技术风险分析。
 - `trader_skill`：不在当前项目实现；未来若单独设计，必须另行定义边界和接口。
 
 本规范只覆盖 `fundamental_skill`。

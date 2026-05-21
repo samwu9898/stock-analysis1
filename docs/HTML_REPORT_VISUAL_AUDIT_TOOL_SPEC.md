@@ -2,9 +2,9 @@
 
 Date: 2026-05-21
 
-Stage: Design Spec only
+Stage: v1 implemented / baseline accepted
 
-This document defines a project-specific visual audit tool for Fundamental HTML Report artifacts. This stage only adds the design document. It must not modify renderer code, prompt builder code, report schema, report generation logic, tests, or project dependencies.
+This document defines the project-specific visual audit tool for Fundamental HTML Report artifacts. v1 is implemented as a standalone script at `scripts/visual_audit_html_report.py` and the current baseline is accepted for the 002050 internal sample. Future visual-audit work must not modify renderer code, prompt builder code, report schema, report generation logic, deterministic pipeline, classifier, connector, dashboard, tests, regression expected files, or generated output artifacts unless a separate implementation stage explicitly asks for that.
 
 ## 1. Tool Positioning
 
@@ -26,6 +26,13 @@ local HTML report
 
 This is a screenshot and visual audit tool, not a report renderer.
 
+Current v1 status:
+
+- Script path: `scripts/visual_audit_html_report.py`.
+- Output directory pattern: `output/visual_audit/<code>/`.
+- 002050 三花智控 visual audit has completed with no horizontal overflow on desktop or mobile.
+- `output/visual_audit/` contains generated artifacts and must not be committed.
+
 Allowed responsibilities:
 
 - Open an existing local HTML report in a controlled Chromium session.
@@ -45,18 +52,18 @@ Explicit boundaries:
 - It must not change `html_report_renderer.py`.
 - It must not change prompt builder behavior.
 
-## 2. Recommended Technical Plan
+## 2. Technical Plan
 
-Use Python Playwright for v1 implementation.
+v1 uses Python Playwright.
 
-Recommended setup commands for the implementation stage:
+Setup commands when Playwright / Chromium is not already installed:
 
 ```bash
 pip install playwright
 python -m playwright install chromium
 ```
 
-Recommended script path:
+Script path:
 
 ```text
 scripts/visual_audit_html_report.py
@@ -70,11 +77,11 @@ Rationale:
 - Request interception can prevent external network dependencies from making screenshot capture flaky.
 - The script can be kept independent from renderer and report-generation modules.
 
-The script should be a standalone CLI utility. It should not import report renderer internals unless a future implementation has a very specific need, which v1 does not.
+The script is a standalone CLI utility. It should not import report renderer internals unless a future implementation has a very specific need, which v1 does not.
 
 ## 3. CLI Parameter Design
 
-Recommended command:
+Command:
 
 ```bash
 python scripts/visual_audit_html_report.py \
@@ -104,7 +111,7 @@ Viewport parameters:
 | `--mobile-width` | `390` | Mobile viewport width, aligned with common iPhone portrait review. |
 | `--mobile-height` | `844` | Mobile first-screen viewport height. |
 
-Recommended optional parameters for implementation:
+Optional parameters:
 
 | Parameter | Default | Meaning |
 | --- | --- | --- |
@@ -292,40 +299,40 @@ The tool may reveal renderer issues through screenshots, but it must not fix the
 
 ## 8. v1 Implementation Scope
 
-Recommended new files:
+Implemented files:
 
 ```text
 scripts/visual_audit_html_report.py
 docs/HTML_REPORT_VISUAL_AUDIT_TOOL_SPEC.md
 ```
 
-Recommended optional test file:
+Implemented test coverage includes:
 
 ```text
 tests/test_visual_audit_html_report.py
 ```
 
-The v1 script should:
+The v1 script:
 
-- Parse the CLI arguments above.
-- Validate the HTML input path.
-- Create the output directory.
-- Launch Chromium through Playwright.
-- Block external network requests by default.
-- Open the HTML as `file://`.
-- Capture desktop first-screen, mobile first-screen, and desktop full-page screenshots.
-- Collect basic page metrics such as `scrollWidth`, `clientWidth`, and full-page height.
-- Write `visual_audit_manifest.json`.
-- Optionally write `visual_audit_notes.md`.
-- Return a non-zero exit code on failure.
+- Parses the CLI arguments above.
+- Validates the HTML input path.
+- Creates the output directory.
+- Launches Chromium through Playwright.
+- Blocks external network requests by default.
+- Opens the HTML as `file://`.
+- Captures desktop first-screen, mobile first-screen, and desktop full-page screenshots.
+- Collects basic page metrics such as `scrollWidth`, `clientWidth`, and full-page height.
+- Writes `visual_audit_manifest.json`.
+- Optionally writes `visual_audit_notes.md`.
+- Returns a non-zero exit code on failure.
 
-Recommended tests:
+Test coverage:
 
-- Unit test CLI argument parsing if implemented as importable functions.
-- Test missing HTML path returns failure and writes/prints a clear error.
-- Test a minimal local HTML file produces the three screenshot files and manifest.
-- Test a local HTML file containing an external script still screenshots successfully with external requests blocked.
-- Test manifest includes viewport sizes, screenshot names, status, and page metrics.
+- CLI argument parsing.
+- Missing HTML path returns failure and writes/prints a clear error.
+- Minimal local HTML produces the three screenshot files and manifest.
+- Local HTML containing an external script still screenshots successfully with external requests blocked.
+- Manifest includes viewport sizes, screenshot names, status, and page metrics.
 
 Manual acceptance command:
 
@@ -347,7 +354,7 @@ output/visual_audit/002050/visual_audit_manifest.json
 
 ## 9. v1 Acceptance Criteria
 
-Implementation is acceptable when:
+Implementation baseline is accepted when:
 
 - The tool runs from the project root with the recommended CLI command.
 - It works on `output/reports/fundamental_report_002050.html` when that file exists.
@@ -362,8 +369,12 @@ Implementation is acceptable when:
 
 Product acceptance is acceptable when Codex can then inspect the screenshots and answer the visual acceptance checklist in Section 6 with concrete observations.
 
+Current accepted baseline:
+
+- `002050` 三花智控 has completed visual audit against the generated HTML report.
+- Desktop and mobile manifest metrics show no horizontal page overflow.
+- Generated artifacts live under `output/visual_audit/002050/` and should remain out of git.
+
 ## 10. Recommendation
 
-Recommend entering implementation after this design stage.
-
-Implementation should be narrow: add the standalone Playwright CLI utility, focused tests if feasible, and no renderer or prompt changes. The tool should first prove that Codex can consistently obtain visual artifacts for `fundamental_report_002050.html`; only after that should future work use screenshots to drive renderer improvements.
+Use v1 as the baseline visual acceptance tool for local Fundamental HTML Report artifacts. Future report refinements should start from concrete user feedback or screenshot findings; the visual-audit tool itself should remain independent from renderer, prompt builder, schema, pipeline, dashboard, trading-account integration, and technical-analysis logic.

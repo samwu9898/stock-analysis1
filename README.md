@@ -2,7 +2,7 @@
 
 > 面向 A 股基本面研究的 deterministic pipeline + AI analyst layer。
 >
-> 本项目已经从早期的 AkShare 个股 HTML 报告生成器，重构为 `fundamental_skill` 基本面 AI 分析系统。
+> 本项目已经从早期的 AkShare 个股 HTML 报告生成器，重构为 `fundamental_skill` 基本面 AI 分析系统；当前 HTML 研报能力属于 AI analyst layer 的上层展示链路。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
@@ -20,6 +20,8 @@
 - `FundamentalSkillPipeline`：串联 data adapter、classifier、framework selector、readiness planner、analysis context、scoring engine 和 result assembler。
 - Evidence Pack：把 deterministic pipeline 输出和 raw blocks 压缩成 AI 可消费、可审计的证据包。
 - AI Prompt / AI Report：生成模型可用的基本面分析提示词；当前以 `prompt_only` 工作流为主。
+- Fundamental HTML Report Generator v2.1：基于 evidence pack 生成结构化 `FundamentalHtmlReport` JSON 提示词，并把已生成的正式 JSON 渲染为纯基本面中文 HTML 研报。
+- HTML Report Visual Audit Tool v1：使用 Playwright / Chromium 对本地 HTML 研报进行 desktop、mobile 和 full-page 截图验收，输出视觉审计 manifest。
 - Dashboard v3：本地 Streamlit 基本面 AI 分析报告阅读器 / auditor，主视图中文化展示结论、证据、风险、缺口、must-track 指标、置信度拆解和数据质量；Evidence Pack、Source Trace、Raw JSON、Prompt 默认折叠为审计材料。
 - Industry Framework Workflow：用标准流程扩展行业框架，避免把单只股票、主题热度或 proxy 当成基本面事实。
 
@@ -38,6 +40,56 @@ Dashboard v3 是 A 股基本面 AI 分析报告阅读器，不是交易终端。
 - deprecated 字段 `trader_summary` / `action_hint_for_trader` 不在主视图展示，仅可能在 raw JSON 或兼容性审计区域出现。
 
 Dashboard v3 不调用模型 API，不连接交易账户，不输出交易建议，不展示技术面图表或技术指标，不实现 `technical_skill` / `trader_skill`，也不修改 deterministic pipeline。
+
+## Fundamental HTML Report Generator v2.1
+
+Fundamental HTML Report Generator v2.1 是 AI analyst layer 的上层展示能力，用于生成纯基本面中文 HTML 研报。它不是交易终端，不连接交易账户，不输出交易建议、目标价、仓位或技术面内容，也不修改 deterministic pipeline、connector、classifier、scoring、readiness、schema 或 regression expected。
+
+当前链路是：
+
+```text
+evidence_pack
+-> html report prompt
+-> model-generated FundamentalHtmlReport JSON
+-> render_existing
+-> self-contained HTML
+```
+
+v2.1 支持的结构化报告字段包括：
+
+- `FundamentalHtmlReport` JSON。
+- self-contained HTML renderer。
+- `hero_tags`。
+- `research_anchor`。
+- `quality_score_breakdown`。
+- `value_chain_map`。
+- `elasticity_formula`。
+- `tracking_plan_groups`。
+- `financial_ratio_caveats`。
+
+常用命令：
+
+```bash
+python -m src.fundamental_skill.ai_analyst.html_report_runner --code 002050 --mode prompt_only
+python -m src.fundamental_skill.ai_analyst.html_report_runner --code 002050 --mode render_existing
+```
+
+`prompt_only` 只生成 `output/reports/fundamental_report_prompt_<code>.md`，不自动调用 API，不写正式报告 JSON 或 HTML。正式 `output/reports/fundamental_report_<code>.json` 由用户基于 prompt 和模型输出生成后，`render_existing` 才会渲染 `output/reports/fundamental_report_<code>.html`。
+
+## HTML Report Visual Audit Tool v1
+
+HTML Report Visual Audit Tool v1 是本地 HTML 研报的视觉验收工具，不是 renderer，也不修复报告内容。它打开已有 HTML 文件，生成桌面首屏、移动端首屏、桌面全页截图和 manifest，用于检查中文研报视觉层级、响应式布局、横向溢出和安全边界。
+
+常用命令：
+
+```bash
+python scripts/visual_audit_html_report.py \
+  --html output/reports/fundamental_report_002050.html \
+  --code 002050 \
+  --output-dir output/visual_audit/002050
+```
+
+当前 002050 三花智控是内部成功样例候选；已验证 desktop/mobile 无横向溢出。`output/reports/` 和 `output/visual_audit/` 都是生成产物，不进入 git。
 
 ## strategy_type
 
@@ -115,7 +167,25 @@ python -m src.fundamental_skill.ai_analyst.runner --code 601698 --mode prompt_on
 - `output/evidence_pack_<code>.json`
 - `output/ai_prompt_<code>.md`
 
-### 6. 打开 Dashboard v3
+### 6. 生成 HTML report prompt
+
+```bash
+python -m src.fundamental_skill.ai_analyst.html_report_runner --code 002050 --mode prompt_only
+```
+
+### 7. 渲染已有正式 HTML report JSON
+
+```bash
+python -m src.fundamental_skill.ai_analyst.html_report_runner --code 002050 --mode render_existing
+```
+
+### 8. 运行 HTML report visual audit
+
+```bash
+python scripts/visual_audit_html_report.py --html output/reports/fundamental_report_002050.html --code 002050 --output-dir output/visual_audit/002050
+```
+
+### 9. 打开 Dashboard v3
 
 ```bash
 streamlit run dashboard/fundamental_dashboard.py
@@ -128,6 +198,9 @@ Dashboard v3 是本地基本面 AI 分析报告阅读器和审计工具，不调
 ```bash
 python -m src.fundamental_skill.real_stock_runner --code 601698 --output output/fundamental_601698.json --force-refresh
 python -m src.fundamental_skill.ai_analyst.runner --code 601698 --mode prompt_only
+python -m src.fundamental_skill.ai_analyst.html_report_runner --code 002050 --mode prompt_only
+python -m src.fundamental_skill.ai_analyst.html_report_runner --code 002050 --mode render_existing
+python scripts/visual_audit_html_report.py --html output/reports/fundamental_report_002050.html --code 002050 --output-dir output/visual_audit/002050
 streamlit run dashboard/fundamental_dashboard.py
 ```
 
@@ -181,14 +254,15 @@ Out-of-Sample Audit
 
 - 新闻源仍可能失败，且新闻只能作为公开文本材料或低权重上下文。
 - 部分行业专属数据仍缺失，例如客户结构、项目验收、容量利用率、卫星剩余寿命、运营小时、飞行架次等。
-- AI report 当前以 `prompt_only` 为主；API 模式在 v1 中未实现。
+- AI report 当前以 `prompt_only` 为主；API 模式在 v1 中未实现，HTML report prompt 也不自动调用 API。
 - 行业框架仍需逐步扩展，现有框架不应被当成所有 A 股公司的完整行业分类体系。
-- `output/`、`data/`、`cache/` 等运行产物和缓存不应提交。
+- `output/`、`output/reports/`、`output/visual_audit/`、`data/`、`cache/` 等运行产物和缓存不应提交。
 
 ## 文档入口
 
 - `docs/FUNDAMENTAL_SKILL_SPEC.md`：`fundamental_skill` 输出契约、模块边界和 pipeline 说明。
 - `docs/FUNDAMENTAL_AI_ANALYST_LAYER_SPEC.md`：Evidence Pack、AI Prompt、AI Report 和 Dashboard v3 说明。
+- `docs/HTML_REPORT_VISUAL_AUDIT_TOOL_SPEC.md`：HTML Report Visual Audit Tool v1 的使用方式、输出产物和验收边界。
 - `docs/REAL_DATA_CONNECTOR_AUDIT.md`：真实公开数据连接器版本、字段映射、source trace 和限制。
 - `docs/INDUSTRY_FRAMEWORK_DEVELOPMENT_WORKFLOW.md`：新增行业框架的标准流程。
 - `docs/INDUSTRY_FRAMEWORK_TEMPLATE.md`：行业框架设计模板。
@@ -198,7 +272,7 @@ Out-of-Sample Audit
 
 ## 项目来源
 
-本仓库来源于原始 `stock-analysis` 项目，早期目标是基于 AkShare 生成个股 HTML 深度报告。当前项目已经重构为 A 股 `fundamental_skill` AI analyst system，旧的 HTML 报告生成器、K 线展示和交易式表达不再是项目首页所描述的主线能力。
+本仓库来源于原始 `stock-analysis` 项目，早期目标是基于 AkShare 生成个股 HTML 深度报告。当前项目已经重构为 A 股 `fundamental_skill` AI analyst system；早期 AkShare HTML 生成器、K 线展示和交易式表达不是当前主线。当前主线中的 HTML 研报能力是 Fundamental HTML Report Generator v2.1：它服务于基本面中文研报展示，严格依赖 evidence pack 和结构化 `FundamentalHtmlReport` JSON，不输出交易建议或技术面内容。
 
 ## 许可证
 
