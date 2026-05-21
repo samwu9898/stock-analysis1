@@ -52,6 +52,7 @@ Dashboard v3 不调用模型 API，不连接交易账户，不输出交易建议
 - `satellite_communication_infrastructure`
 - `low_altitude_economy_infrastructure`
 - `life_science_cxo_services`
+- `ai_datacenter_infrastructure`
 - `theme_only`
 - `unknown`
 

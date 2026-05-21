@@ -78,6 +78,7 @@ stock_code
 - `satellite_communication_infrastructure`
 - `low_altitude_economy_infrastructure`
 - `life_science_cxo_services`
+- `ai_datacenter_infrastructure`
 - `theme_only`
 - `unknown`
 
@@ -110,6 +111,7 @@ Missing data must be recorded as missing, warnings, source-trace gaps, or data l
 - `satellite_communication_infrastructure`: completed. Applies to asset-intensive, license/resource-driven satellite communication infrastructure operators that monetize in-orbit satellites, orbital/frequency resources, transponders, bandwidth, or satellite communication services. Representative sample: `601698`. Negative samples include `600118`, `002465`, `688066`, `002895`, and a news-only satellite sample. Main boundary: excludes satellite manufacturing, terminals, remote sensing, data software, military electronics, rockets, drones, and generic communication equipment.
 - `low_altitude_economy_infrastructure`: completed. Applies only to low-altitude infrastructure / operation service business models, not broad concept exposure. Representative positive samples include `000099` and `688631`. Negative samples include `688070`, `002085`, `001696`, `600967`, and `002895`. Main boundary: drone OEMs, eVTOL OEMs, aircraft engines, components, auto parts, airports, aviation leasing, remote sensing, defense, policy-only, announcement-only, or theme-only companies must not be routed here.
 - `life_science_cxo_services`: completed. Applies to CRO / CDMO / CXO / CMC / clinical research or pharmaceutical R&D-production outsourcing service business models. Representative positive samples include `603259`, `300759`, `002821`, `300363`, and `300347`. Negative samples include `000739`, `300012`, `300760`, `600196`, `600276`, and `600521`. Main boundary: excludes self-owned drug-pipeline companies, ordinary API / formulation manufacturing, medical devices, distribution, TCM, consumer healthcare, software-only AI drug discovery, general testing labs, and news-only CXO wording.
+- `ai_datacenter_infrastructure`: completed v1. Applies to AI datacenter infrastructure business models with verifiable datacenter operation, power / UPS infrastructure, or cooling / liquid-cooling infrastructure evidence. Representative and boundary samples include `300442` Runze Technology as `datacenter_operator`, `002837` Envicool as `cooling_liquid_cooling_infrastructure`, `002335` / `002518` as `power_ups_infrastructure` boundary / mixed samples, and `301018` as a cooling / HVAC boundary sample. Negative samples include `300308` and `300476`, which remain in `right_trend_growth` because optical modules and AI PCB are supply-chain / manufacturing-growth exposures rather than AI datacenter infrastructure operators. Main boundary: theme words, AI server supply-chain exposure, optical modules, PCB, storage / photovoltaic mix, ordinary HVAC, or generic power equipment do not classify unless datacenter-specific revenue, orders, customers, assets, or operation evidence is confirmable.
 - `theme_only`: for companies with thematic exposure but weak or unverified fundamental support. Representative sample: `999999_theme_a`. Main boundary: do not treat theme popularity, news heat, or policy language as realized business.
 - `unknown`: for insufficient or unstable classification evidence. Representative sample: `999998_insufficient_b`. Main boundary: do not force a framework when industry, main business, financials, or business composition are not enough.
 
@@ -123,6 +125,12 @@ The `life_science_cxo_services` framework includes these `sub_type` values:
 - `integrated_cxo_platform`
 - `cdmo_manufacturing_services`
 - `clinical_cro_services`
+
+The `ai_datacenter_infrastructure` framework includes these `sub_type` values:
+
+- `datacenter_operator`
+- `power_ups_infrastructure`
+- `cooling_liquid_cooling_infrastructure`
 
 ## 8. Current Testing System
 
@@ -213,12 +221,13 @@ Do not add a new industry framework only because one stock is popular or difficu
 - Many industry-specific operating data fields are still missing or not stably obtainable.
 - AI report generation is currently mainly `prompt_only`; API mode is not the primary implemented workflow.
 - `output/`, `data/`, and `cache/` are runtime artifacts and should not be committed.
-- Some industries remain uncovered, including banks, medical devices, AI data-center infrastructure, and intelligent driving. CXO is covered by `life_science_cxo_services` but still has conservative public-data limits.
+- Some industries remain uncovered, including banks, medical devices, and intelligent driving. CXO is covered by `life_science_cxo_services`, and AI datacenter infrastructure is covered by `ai_datacenter_infrastructure` v1, but both still have conservative public-data limits.
+- AI Datacenter v1 remains limited by public data availability for orders / backlog, customer structure, cabinet count, MW scale, PUE, rack utilization, liquid-cooling revenue, customer validation, datacenter revenue split, and customer capex-cycle evidence.
 
 ## 13. Suggested Next Steps
 
 - Keep `README.md` and `docs/PROJECT_CONTEXT_HANDOFF.md` synchronized after major project changes.
-- A reasonable next framework design target is `ai_datacenter_power_cooling_infrastructure`, starting with Out-of-Sample Audit.
+- Keep AI Datacenter v1 conservative unless public data sources can reliably validate orders / backlog, customer structure, cabinet / MW / PUE / rack utilization, liquid-cooling revenue, datacenter revenue split, and customer capex-cycle evidence.
 - Do not rush into `technical_skill` or `trader_skill`.
 - Do not blindly add more fields without source stability, interpretation rules, and regression coverage.
 - Every new industry framework must follow the documented workflow.

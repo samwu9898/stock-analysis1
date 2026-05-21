@@ -52,7 +52,7 @@ Current project boundaries remain unchanged: this project does not implement `tr
 - `industry_cycle`：行业周期位置、趋势和外部变量。
 - `risk_flags`：风险项，每项包含严重程度、证据和跟踪方法。
 - `catalysts`：催化因素，每项包含类型、证据、预期时间和不确定性。
-- `must_track_indicators`：交易员应持续跟踪的基本面指标。
+- `must_track_indicators`：后续综合评估应持续跟踪的基本面指标。
 - `invalidation_conditions`：基本面判断失效条件，只能提示重新评估、暂停支持判断或更新分析。
 - `thesis_check`：对用户假设的验证情况。
 - `suitable_strategy_type`：适配的策略描述，不是交易指令。
@@ -582,11 +582,11 @@ For final result semantics, do not confuse a readiness cap with a final-score ca
 
 本阶段的 `fundamental_score` 来自规则型 `weighted_total_score`，表示基本面结构化材料的规则评分。它不是交易评分，不是收益预测，也不是任何交易动作依据。若数据不足、置信度低或分类未知，会进一步封顶。
 
-### 13.6 trader_summary 边界
+### 13.6 Neutral Summary 边界
 
-`trader_summary` 是给后续 `trader_skill` 的一句话摘要，必须说明 status、confidence、主要风险和数据缺口。它不得包含仓位、价格、止盈止损或任何直接交易动作。
+`analyst_summary` 是推荐的中性基本面摘要字段，必须说明 status、confidence、主要风险和数据缺口。`trader_summary` 已 deprecated，但为了 historical JSON backward compatibility 仍保留并镜像同一段中性文本。当前项目不实现 `trader_skill`，不连接交易账户，也不输出交易建议。
 
-如果置信度被关键数据缺失封顶，`trader_summary` 必须说明封顶原因。例如资源股缺商品价格时，需要提示外部价格变量未验证；`supportive + medium` 时，需要提示仍存在关键验证项或数据限制。
+如果置信度被关键数据缺失封顶，`analyst_summary` / `trader_summary` 必须说明封顶原因。例如资源股缺商品价格时，需要提示外部价格变量未验证；`supportive + medium` 时，需要提示仍存在关键验证项或数据限制。
 
 ### 13.7 CLI 示例
 
@@ -738,7 +738,7 @@ python scripts/run_regression_suite.py
 - 半导体周期波动风险对 `semiconductor_cycle` 默认提示；国产替代兑现验证风险和半导体估值波动风险按关键词与估值阈值触发。
 - 稳健成长股不强制 risk_flags 非空，只在订单节奏、政策投资、项目交付、应收账款、回款、现金流等文本或数据条件触发。
 
-这些风险进入 `AnalysisContext.required_risks`，并通过 scoring constraints 影响 `catalyst_strength`、`industry_cycle`、`valuation_reasonableness`、`risk_control` 等维度，最终由 Result Assembler 合并到 `risk_flags` 和 `trader_summary`。
+这些风险进入 `AnalysisContext.required_risks`，并通过 scoring constraints 影响 `catalyst_strength`、`industry_cycle`、`valuation_reasonableness`、`risk_control` 等维度，最终由 Result Assembler 合并到 `risk_flags`、`analyst_summary` 和兼容字段 `trader_summary`。
 
 ## 18. Real Data Connector v1
 
