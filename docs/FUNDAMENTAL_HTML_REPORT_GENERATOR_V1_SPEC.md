@@ -2,9 +2,38 @@
 
 日期：2026-05-21
 
-阶段：Design Spec only
+阶段：历史规格 + 当前实现状态说明
 
-本阶段只新增设计文档，不修改代码、不修改 dashboard、不修改 pipeline、不修改 classifier、不修改 connector、不修改 schema、不修改 tests。
+本文档最初是 `Fundamental HTML Report Generator v1` 的设计规格，用于定义单股基本面 HTML 研报的产品边界、信息架构、视觉参考和安全约束。当前实现已经演进到 `Fundamental HTML Report Generator v2.1` presentation baseline，并已配套 `HTML Report Visual Audit Tool v1`。
+
+当前正式链路：
+
+```text
+evidence_pack
+-> output/reports/fundamental_report_prompt_<code>.md
+-> model-generated FundamentalHtmlReport JSON
+-> render_existing
+-> self-contained HTML
+```
+
+当前视觉验收链路：
+
+```text
+scripts/visual_audit_html_report.py
+-> desktop/mobile/full-page screenshots
+-> output/visual_audit/<code>/visual_audit_manifest.json
+```
+
+当前状态：
+
+- `Fundamental HTML Report Generator v2.1` 已完成。
+- `HTML Report Visual Audit Tool v1` 已完成。
+- `002050` 三花智控是内部成功样例候选。
+- `pytest: 354 passed`。
+- `regression suite: passed=47 failed=0 total=47`。
+- `output/reports/` 和 `output/visual_audit/` 是生成产物，不入 git。
+
+本文档保留 v1 设计价值，但不再表示项目停留在设计阶段。后续阅读时应以 v2.1 当前命令、路径和 skeleton/formal report 隔离规则为准。
 
 参考文件说明：用户指定的 `docs/reference/个股研究-中国长城.html` 在当前仓库中未找到；实际可读参考文件为 `examples/个股研究-中国长城.html`。本规格以该文件作为视觉和结构参考，但不继承其交易、技术面或价格执行内容。
 
@@ -673,7 +702,7 @@ Prompt 必须显式禁止：
 - 根据 capex 编造产能释放。
 - 根据 R&D ratio 编造技术壁垒。
 
-## 8. Report Generator v1 流程
+## 8. Report Generator v1 历史流程与 v2.1 当前链路
 
 用户请求：
 
@@ -681,7 +710,7 @@ Prompt 必须显式禁止：
 帮我生成一份 002050 的基本面分析报告
 ```
 
-系统应执行：
+v1 设计中的系统执行意图是：
 
 1. run `real_stock_runner`。
 2. build `evidence_pack`。
@@ -695,24 +724,47 @@ Prompt 必须显式禁止：
 output/reports/fundamental_report_002050.html
 ```
 
-建议文件产物：
+v2.1 当前正式链路拆分为 prompt-only、formal JSON、render-existing 和 visual audit：
+
+```text
+evidence_pack
+-> output/reports/fundamental_report_prompt_<code>.md
+-> model-generated FundamentalHtmlReport JSON
+-> output/reports/fundamental_report_<code>.json
+-> render_existing
+-> output/reports/fundamental_report_<code>.html
+```
+
+当前视觉验收链路：
+
+```text
+python scripts/visual_audit_html_report.py --html output/reports/fundamental_report_002050.html --code 002050 --output-dir output/visual_audit/002050
+```
+
+当前文件产物：
 
 ```text
 output/raw_002050.json
 output/fundamental_002050.json
 output/evidence_pack_002050.json
-output/fundamental_report_prompt_002050.md
+output/reports/fundamental_report_prompt_002050.md
 output/reports/fundamental_report_002050.json
 output/reports/fundamental_report_002050.html
+output/reports/skeleton/fundamental_report_002050_skeleton.json
+output/reports/skeleton/fundamental_report_002050_skeleton.html
+output/visual_audit/002050/
 ```
 
-v1 决策：
+v2.1 当前决策：
 
 - v1 可以在 Codex 对话中由模型生成 report JSON。
-- 后续可选接 API mode。
-- 当前不强制实现自动 API 调用。
-- HTML renderer 应只消费 structured report JSON 与 evidence pack，不重新分析股票。
+- v2.1 仍不自动调用 API；`prompt_only` 只生成 prompt。
+- 当前正式 JSON 必须由模型根据 prompt 生成，并通过 structured `FundamentalHtmlReport` 校验。
+- HTML renderer 只消费 structured report JSON，不重新分析股票。
 - 如果 structured report JSON 缺失或 safety 校验失败，不应生成可信 HTML 正文。
+- skeleton 模式只用于渲染链路验证，输出到 `output/reports/skeleton/`，不能冒充正式报告。
+- tests 不应覆盖正式 `output/reports/` 产物。
+- `output/reports/` 和 `output/visual_audit/` 均为生成产物，不入 git。
 
 ## 9. Evidence Pack v2 派生指标建议
 
@@ -783,13 +835,16 @@ v1 决策：
 - 新增 focused tests。
 - 新增 docs。
 
-建议产生命令：
+当前 v2.1 命令：
 
 ```bash
-python -m src.fundamental_skill.html_report.runner --code 002050
+python -m src.fundamental_skill.ai_analyst.html_report_runner --code 002050 --mode prompt_only
+python -m src.fundamental_skill.ai_analyst.html_report_runner --code 002050 --mode render_existing
+python -m src.fundamental_skill.ai_analyst.html_report_runner --code 002050 --mode skeleton
+python scripts/visual_audit_html_report.py --html output/reports/fundamental_report_002050.html --code 002050 --output-dir output/visual_audit/002050
 ```
 
-v1 最小能力：
+v1 设计中的最小能力，已经在 v2.1 baseline 中演进为 prompt-only、structured `FundamentalHtmlReport` JSON、self-contained renderer、skeleton 隔离和 visual audit：
 
 - 调用真实数据 runner。
 - 生成 evidence pack。
