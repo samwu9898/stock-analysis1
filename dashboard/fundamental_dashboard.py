@@ -22,7 +22,21 @@ OUTPUT_DIR = PROJECT_ROOT / "output"
 SUPPORTED_CODES = ("002050", "000426", "300308", "002371", "601899", "603993")
 
 
-st.set_page_config(page_title="A-Share Fundamental AI Analyst Dashboard", layout="wide")
+st.set_page_config(page_title="A股基本面 AI 分析看板", layout="wide")
+
+
+def stock_selector_table_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        {
+            "股票代码": row.get("stock_code"),
+            "公司名称": row.get("stock_name"),
+            "AI基本面观点": helpers.ai_view_label(row.get("fundamental_view")),
+            "分析框架": helpers.format_strategy_type(row.get("strategy_type")),
+            "已有AI报告": row.get("has_ai_report"),
+            "已有规则结果": row.get("has_fundamental"),
+        }
+        for row in rows
+    ]
 
 
 def badge(text: object, kind: str = "neutral") -> str:
@@ -57,74 +71,64 @@ def render_stock_selector() -> str | None:
     rows = helpers.scan_available_stocks(OUTPUT_DIR)
     codes = [str(row.get("stock_code")) for row in rows if row.get("stock_code")]
 
-    st.subheader("Stock")
+    st.subheader("股票选择")
     if rows:
         st.dataframe(
-            [
-                {
-                    "stock_code": row.get("stock_code"),
-                    "stock_name": row.get("stock_name"),
-                    "fundamental_view": row.get("fundamental_view"),
-                    "strategy_type": row.get("strategy_type"),
-                    "has_ai_report": row.get("has_ai_report"),
-                    "has_fundamental": row.get("has_fundamental"),
-                }
-                for row in rows
-            ],
+            stock_selector_table_rows(rows),
             use_container_width=True,
             hide_index=True,
         )
 
     col1, col2 = st.columns([2, 1])
     with col1:
-        selected = st.selectbox("Select stock", options=codes) if codes else None
+        selected = st.selectbox("选择股票", options=codes) if codes else None
     with col2:
-        manual = st.text_input("Manual stock_code", placeholder="002050")
+        manual = st.text_input("手动输入股票代码", placeholder="002050")
     normalized = helpers.normalize_stock_code(manual)
     return normalized or selected
 
 
 def render_pipeline_tools() -> None:
-    with st.expander("Pipeline Tools", expanded=False):
-        st.caption("Runs the existing deterministic fundamental pipeline only. It does not generate AI reports.")
+    with st.expander("规则流水线工具", expanded=False):
+        st.caption("仅运行既有确定性基本面流水线，不生成 AI 报告。")
         with st.form("run_real_stock_form"):
             col1, col2, col3 = st.columns([2, 1, 1])
             with col1:
-                code = st.text_input("Stock code", value="002050", placeholder="002050")
+                code = st.text_input("股票代码", value="002050", placeholder="002050")
             with col2:
-                force_refresh = st.checkbox("force_refresh", value=False)
+                force_refresh = st.checkbox("强制刷新", value=False)
             with col3:
-                submitted = st.form_submit_button("Run")
+                submitted = st.form_submit_button("运行")
 
         if not submitted:
             return
         normalized = helpers.normalize_stock_code(code)
         if normalized not in SUPPORTED_CODES:
-            st.error("Unsupported stock code for this dashboard.")
+            st.error("当前看板暂不支持该股票代码。")
             return
-        with st.spinner("Running existing fundamental pipeline..."):
+        with st.spinner("正在运行既有基本面流水线..."):
             try:
                 output_path = OUTPUT_DIR / f"fundamental_{normalized}.json"
                 run_real_stock(normalized, output=str(output_path), force_refresh=force_refresh)
             except Exception as exc:
-                st.error(f"Analysis failed: {exc}")
+                st.error(f"分析失败：{exc}")
                 return
-        st.success(f"Saved output/fundamental_{normalized}.json and output/raw_{normalized}.json")
+        st.success(f"已保存 output/fundamental_{normalized}.json 和 output/raw_{normalized}.json")
 
 
 def render_missing_ai_report(stock_code: str, bundle: dict[str, Any]) -> None:
-    st.warning("尚未生成 AI report")
+    st.warning("尚未生成 AI 报告。看板不会自动调用 API 生成报告。")
     st.code(
         f"python -m src.fundamental_skill.ai_analyst.runner --code {stock_code} --mode prompt_only",
         language="bash",
     )
-    st.write("Then use Codex / GPT-5.5 with the generated prompt to create the AI report files.")
+    st.write("如需 AI 报告，请先用生成的 prompt 离线创建报告文件。")
     prompt = bundle.get("ai_prompt") or helpers.prompt_preview(stock_code, OUTPUT_DIR)
     if prompt:
-        with st.expander("Prompt Preview", expanded=False):
+        with st.expander("Prompt 预览", expanded=False):
             st.markdown(prompt)
     else:
-        st.info("No ai_prompt file found yet.")
+        st.info("尚未找到 ai_prompt 文件。")
 
 
 def render_executive_summary(ai_report: dict, fundamental: dict | None, evidence_pack: dict | None) -> None:
@@ -209,25 +213,25 @@ def render_safety_status(status: dict[str, Any]) -> None:
 
 
 def render_evidence_pack_viewer(evidence_pack: dict | None) -> None:
-    with st.expander("Evidence Pack Viewer", expanded=False):
-        st.markdown("**Summary**")
+    with st.expander("审计材料：完整证据包", expanded=False):
+        st.markdown("**摘要**")
         show_table([helpers.evidence_pack_summary(evidence_pack)], "No evidence pack summary.")
-        st.markdown("**source_trace_summary**")
+        st.markdown("**数据来源追踪**")
         show_table(helpers.as_list((evidence_pack or {}).get("source_trace_summary")), "No source trace summary.")
-        st.markdown("**missing_fields**")
+        st.markdown("**缺失字段**")
         show_table(helpers.as_list((evidence_pack or {}).get("missing_fields")), "No missing fields.")
-        st.markdown("**data_limitations**")
+        st.markdown("**数据限制**")
         show_table([{"data_limitation": item} for item in helpers.as_list((evidence_pack or {}).get("data_limitations"))], "No data limitations.")
-        with st.expander("Full evidence_pack JSON", expanded=False):
+        with st.expander("完整证据包 JSON", expanded=False):
             st.json(evidence_pack or {}, expanded=False)
 
 
 def render_raw_data_viewer(fundamental: dict | None, raw: dict | None) -> None:
-    with st.expander("Evidence / Raw Data", expanded=False):
-        st.markdown("**Legacy Fundamental Tables**")
+    with st.expander("审计材料：规则结果与原始数据", expanded=False):
+        st.markdown("**历史规则表格**")
         summary = helpers.fundamental_analyst_summary(fundamental)
         if summary:
-            st.markdown("**Analyst Summary**")
+            st.markdown("**分析师摘要**")
             st.write(summary)
         show_table(helpers.invalidation_condition_rows(fundamental), "No invalidation conditions.")
         show_table(helpers.risk_flag_rows(fundamental), "No risk flags.")
@@ -238,60 +242,159 @@ def render_raw_data_viewer(fundamental: dict | None, raw: dict | None) -> None:
         show_table(helpers.commodity_price_rows(raw), "No commodity price data.")
 
         quality = helpers.data_quality_summary(fundamental, raw)
-        st.markdown("**Data Quality**")
+        st.markdown("**数据质量**")
         show_table(quality["fetch_status"], "No fetch_status available.")
-        with st.expander("Raw JSON", expanded=False):
-            st.markdown("**fundamental JSON**")
+        with st.expander("原始 JSON", expanded=False):
+            st.markdown("**规则结果 JSON**")
             st.json(fundamental or {}, expanded=False)
-            st.markdown("**raw JSON**")
+            st.markdown("**原始抓取 JSON**")
             st.json(raw or {}, expanded=False)
+
+
+def render_top_conclusion(
+    ai_report: dict | None,
+    fundamental: dict | None,
+    evidence_pack: dict | None,
+    status: dict[str, Any],
+    consistency: dict[str, Any],
+) -> None:
+    stock = helpers.current_stock_snapshot(fundamental, evidence_pack, ai_report)
+    st.subheader("顶部结论区")
+    cols = st.columns(4)
+    cols[0].metric("股票代码", stock.get("stock_code") or "-")
+    cols[1].metric("公司名称", stock.get("stock_name") or "-")
+    cols[2].metric("基本面评分", stock.get("fundamental_score") if stock.get("fundamental_score") is not None else "-")
+    cols[3].metric("报告质量状态", consistency.get("label") or "-")
+
+    col1, col2 = st.columns(2)
+    col1.write(f"分析框架：{helpers.format_strategy_type(stock.get('strategy_type'))}")
+    col1.write(f"子类型：{helpers.format_sub_type(stock.get('sub_type'))}")
+    col2.write(f"规则基本面状态：{helpers.status_label(stock.get('status'))}")
+    col2.write(f"AI基本面观点：{helpers.ai_view_label((ai_report or {}).get('fundamental_view'))}")
+    st.write(f"证据置信度：{helpers.confidence_label(stock.get('confidence'))}")
+    st.caption(helpers.CONFIDENCE_EXPLANATION)
+
+    checks = st.columns(3)
+    checks[0].metric("结构校验", "通过" if status.get("schema_valid") else "未通过")
+    checks[1].metric("安全校验", "通过" if status.get("safety_safe") else "未通过")
+    checks[2].metric("乱码检测", "命中" if status.get("garbled_text_detected") else "未命中")
+    for warning in consistency.get("warnings") or []:
+        st.warning(warning)
+
+
+def render_report_reader(
+    ai_report: dict | None,
+    fundamental: dict | None,
+    evidence_pack: dict | None,
+    raw: dict | None,
+    status: dict[str, Any],
+    consistency: dict[str, Any],
+) -> None:
+    st.subheader("一句话结论")
+    summary = helpers.conclusion_summary(fundamental, ai_report, consistency)
+    st.write(summary["primary"])
+    if summary.get("ai_auxiliary"):
+        st.info(summary["ai_auxiliary"])
+    st.caption(helpers.CONFIDENCE_EXPLANATION)
+
+    st.subheader("为什么是这个结论？")
+    for item in helpers.why_conclusion_bullets(fundamental, evidence_pack, ai_report):
+        st.markdown(f"- {item}")
+
+    st.subheader("证据地图")
+    cols = st.columns(3)
+    evidence_source = evidence_pack or ai_report or {}
+    for col, title, key in [
+        (cols[0], "支持证据", "supporting_evidence"),
+        (cols[1], "限制因素", "limiting_evidence"),
+        (cols[2], "缺失证据", "unknown_or_missing_evidence"),
+    ]:
+        with col:
+            st.markdown(f"**{title}**")
+            rows = helpers.evidence_card_rows(evidence_source, key)
+            if rows:
+                for row in rows[:6]:
+                    st.write(row)
+            else:
+                st.info("暂无结构化条目。")
+
+    st.subheader("风险提示与证据缺口")
+    notice = helpers.risk_gap_notice(fundamental, evidence_pack, ai_report)
+    if notice:
+        st.warning(notice)
+        gaps = helpers.high_priority_missing_evidence(evidence_pack, ai_report)
+        if gaps:
+            show_table(helpers.ai_must_track_rows_cn({"must_track_analysis": gaps}, None), "暂无关键证据缺口。")
+        else:
+            show_table(helpers.evidence_card_rows(evidence_pack or ai_report, "unknown_or_missing_evidence")[:10], "暂无关键证据缺口。")
+    risks = helpers.risk_cards(fundamental, evidence_pack, ai_report)
+    show_table(risks[:10], "暂无结构化风险项；请结合证据缺口理解风险尚未被充分识别。")
+
+    st.subheader("必须跟踪指标")
+    high_medium = helpers.ai_must_track_rows_cn(ai_report, evidence_pack, include_low=False)
+    show_table(high_medium, "暂无 high / medium 优先级指标。")
+    low_rows = helpers.ai_must_track_rows_cn(ai_report, evidence_pack, include_low=True)
+    low_rows = [row for row in low_rows if row.get("优先级") == "low"]
+    with st.expander("低优先级指标", expanded=False):
+        show_table(low_rows, "暂无 low 优先级指标。")
+
+    st.subheader("置信度拆解")
+    show_table(helpers.confidence_breakdown_rows(ai_report, evidence_pack), "暂无置信度拆解。")
+
+    st.subheader("数据质量与缺口")
+    show_table([helpers.data_quality_view(fundamental, evidence_pack, raw, consistency)], "暂无数据质量信息。")
 
 
 def render_detail(stock_code: str | None) -> None:
     if not stock_code:
-        st.info("No stock selected.")
+        st.info("尚未选择股票。")
         return
     bundle = helpers.load_ai_bundle(stock_code, OUTPUT_DIR)
     ai_report = bundle.get("ai_report")
     evidence_pack = bundle.get("evidence_pack")
     fundamental = bundle.get("fundamental")
     raw = bundle.get("raw")
+    status = helpers.ai_report_status(ai_report, bundle.get("ai_report_markdown"))
+    consistency = helpers.report_consistency_status(
+        ai_report,
+        evidence_pack,
+        fundamental,
+        ai_report_markdown=bundle.get("ai_report_markdown"),
+        paths=bundle.get("paths"),
+    )
 
     if ai_report is None:
+        render_top_conclusion(ai_report, fundamental, evidence_pack, status, consistency)
         render_missing_ai_report(stock_code, bundle)
+        render_report_reader(ai_report, fundamental, evidence_pack, raw, status, consistency)
         render_evidence_pack_viewer(evidence_pack)
         render_raw_data_viewer(fundamental, raw)
         return
 
-    status = helpers.ai_report_status(ai_report, bundle.get("ai_report_markdown"))
-    render_executive_summary(ai_report, fundamental, evidence_pack)
-    render_safety_status(status)
-    render_fundamental_view(ai_report, fundamental)
-    st.subheader("Confidence Breakdown")
-    show_table(helpers.confidence_breakdown_rows(ai_report, evidence_pack), "No confidence breakdown.")
-    render_evidence_classification(ai_report)
+    render_top_conclusion(ai_report, fundamental, evidence_pack, status, consistency)
+    render_report_reader(ai_report, fundamental, evidence_pack, raw, status, consistency)
 
-    st.subheader("Must Track Indicators")
-    show_table(helpers.ai_must_track_rows(ai_report, evidence_pack), "No must-track indicators.")
-
-    if status.get("garbled_text_detected") and bundle.get("ai_report_markdown"):
-        st.subheader("AI Report Markdown Fallback")
-        st.markdown(bundle["ai_report_markdown"])
-    elif status.get("can_display_body"):
-        render_analysis_report(ai_report)
+    with st.expander("审计材料：AI 报告正文", expanded=False):
+        if status.get("garbled_text_detected"):
+            st.warning("AI 自由文本损坏，已优先使用结构化证据 fallback。")
+        if not status.get("schema_valid"):
+            st.error(f"结构校验未通过：{status.get('schema_errors')}")
+        if not status.get("safety_safe"):
+            st.error(f"安全校验未通过：{status.get('blocked_terms')}")
+        if not consistency.get("can_use_ai_body"):
+            st.warning("报告过期 / 报告不一致，AI 正文仅作为旧报告审计材料展示。")
         if bundle.get("ai_report_markdown"):
-            with st.expander("AI Report Markdown", expanded=False):
-                st.markdown(bundle["ai_report_markdown"])
-    else:
-        st.warning("AI report body is hidden because schema, safety, or quality checks failed.")
+            st.markdown(bundle["ai_report_markdown"])
+        else:
+            render_analysis_report(ai_report)
 
     render_evidence_pack_viewer(evidence_pack)
     render_raw_data_viewer(fundamental, raw)
 
 
 def main() -> None:
-    st.title("A-Share Fundamental AI Analyst Dashboard")
-    st.caption("AI Report Viewer / Auditor. This page reads existing files and does not call model APIs.")
+    st.title("A股基本面 AI 分析看板")
+    st.caption("中文基本面 AI 分析报告阅读器。只读取已有文件，不连接交易账户，不输出交易建议，不自动调用 API。")
     render_pipeline_tools()
     selected_code = render_stock_selector()
     st.divider()

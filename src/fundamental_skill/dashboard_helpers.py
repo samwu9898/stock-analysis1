@@ -17,6 +17,64 @@ from .ai_analyst.safety import check_text_safety, detect_garbled_text, is_garble
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "output"
+CONFIDENCE_EXPLANATION = "置信度表示对当前基本面结论的证据置信度，不等于看好程度。"
+
+STRATEGY_TYPE_LABELS = {
+    "satellite_communication_infrastructure": "卫星通信基础设施",
+    "low_altitude_economy_infrastructure": "低空经济基础设施 / 运营服务",
+    "life_science_cxo_services": "CXO 医药外包服务",
+    "advanced_manufacturing_growth": "高端制造成长",
+    "semiconductor_cycle": "半导体周期",
+    "resource_swing": "资源弹性",
+    "resource_core": "资源核心",
+    "right_trend_growth": "高景气成长",
+    "stable_growth": "稳健成长",
+    "theme_only": "题材型",
+    "unknown": "未知 / 暂无法归类",
+}
+
+SUB_TYPE_LABELS = {
+    "aviation_operations_service": "通航 / 低空飞行运营服务",
+    "airspace_platform_system": "空域平台 / 调度系统",
+    "integrated_cxo_platform": "综合 CXO 平台",
+    "cdmo_manufacturing_services": "CDMO 生产制造服务",
+    "clinical_cro_services": "临床 CRO 服务",
+}
+
+STATUS_LABELS = {
+    "supportive": "基本面支持进一步研究",
+    "neutral": "中性，需要更多证据",
+    "negative": "基本面不支持",
+    "insufficient_data": "数据不足，无法可靠判断",
+}
+
+AI_VIEW_LABELS = {
+    "supportive_for_further_evaluation": "AI 观点：支持进一步研究",
+    "neutral_requires_more_evidence": "AI 观点：中性，需要更多证据",
+    "not_supportive": "AI 观点：不支持",
+    "insufficient_data": "AI 观点：数据不足",
+}
+
+CONFIDENCE_LABELS = {
+    "high": "高证据置信度",
+    "medium": "中等证据置信度",
+    "low": "低证据置信度",
+}
+
+CONFIDENCE_DIMENSION_LABELS = {
+    "data_coverage": "数据覆盖",
+    "financial_quality": "财务质量",
+    "valuation_interpretability": "估值可解释性",
+    "growth_validation": "成长 / 框架验证",
+    "risk_identifiability": "风险可识别性",
+}
+
+STATUS_TO_AI_VIEW = {
+    "supportive": "supportive_for_further_evaluation",
+    "neutral": "neutral_requires_more_evidence",
+    "negative": "not_supportive",
+    "insufficient_data": "insufficient_data",
+}
 
 FORBIDDEN_TRADING_TERMS = (
     "买入",
@@ -207,6 +265,142 @@ def summary_row(payload: dict[str, Any], source_path: str | Path | None = None) 
     }
 
 
+def strategy_type_label(strategy_type: Any) -> str:
+    value = str(strategy_type or "")
+    return STRATEGY_TYPE_LABELS.get(value, "未知 / 暂无法归类")
+
+
+def sub_type_label(sub_type: Any) -> str:
+    value = str(sub_type or "")
+    if not value:
+        return "不适用"
+    return SUB_TYPE_LABELS.get(value, "未识别子类型")
+
+
+def status_label(status: Any) -> str:
+    value = str(status or "")
+    return STATUS_LABELS.get(value, value or "-")
+
+
+def ai_view_label(view: Any) -> str:
+    value = str(view or "")
+    return AI_VIEW_LABELS.get(value, value or "-")
+
+
+def confidence_label(confidence: Any) -> str:
+    value = str(confidence or "")
+    return CONFIDENCE_LABELS.get(value, value or "-")
+
+
+def format_strategy_type(strategy_type: Any) -> str:
+    value = str(strategy_type or "")
+    return f"{value}（{strategy_type_label(value)}）" if value else "未知 / 暂无法归类"
+
+
+def format_sub_type(sub_type: Any) -> str:
+    value = str(sub_type or "")
+    return f"{value}（{sub_type_label(value)}）" if value else "不适用"
+
+
+def evidence_stock(evidence_pack: dict[str, Any] | None) -> dict[str, Any]:
+    stock = (evidence_pack or {}).get("stock")
+    return stock if isinstance(stock, dict) else {}
+
+
+def current_stock_snapshot(
+    fundamental: dict[str, Any] | None,
+    evidence_pack: dict[str, Any] | None,
+    ai_report: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    stock = evidence_stock(evidence_pack)
+    return {
+        "stock_code": stock.get("code") or (fundamental or {}).get("stock_code") or (ai_report or {}).get("stock_code"),
+        "stock_name": stock.get("name") or (fundamental or {}).get("stock_name") or (ai_report or {}).get("stock_name"),
+        "strategy_type": stock.get("strategy_type") or (fundamental or {}).get("strategy_type"),
+        "sub_type": stock.get("sub_type") or (fundamental or {}).get("sub_type"),
+        "status": stock.get("status") or (fundamental or {}).get("status"),
+        "confidence": stock.get("confidence") or (fundamental or {}).get("confidence"),
+        "fundamental_score": stock.get("fundamental_score") or (fundamental or {}).get("fundamental_score"),
+    }
+
+
+def report_consistency_status(
+    ai_report: dict[str, Any] | None,
+    evidence_pack: dict[str, Any] | None,
+    fundamental: dict[str, Any] | None,
+    ai_report_markdown: str | None = None,
+    paths: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    if ai_report is None:
+        return {"status": "missing", "label": "尚无 AI 报告", "warnings": ["尚无 AI 报告。"], "can_use_ai_body": False}
+
+    current = current_stock_snapshot(fundamental, evidence_pack, ai_report)
+    warnings: list[str] = []
+    status = "ok"
+
+    ai_code = normalize_stock_code(ai_report.get("stock_code"))
+    current_code = normalize_stock_code(current.get("stock_code"))
+    if ai_code and current_code and ai_code != current_code:
+        status = "mismatch"
+        warnings.append(f"股票代码不一致：AI report 为 {ai_code}，当前数据为 {current_code}。")
+
+    expected_view = STATUS_TO_AI_VIEW.get(str(current.get("status") or ""))
+    ai_view = ai_report.get("fundamental_view")
+    if expected_view and ai_view and ai_view != expected_view:
+        status = "mismatch"
+        warnings.append(
+            f"状态不一致：规则基本面状态为 {status_label(current.get('status'))}，AI 基本面观点为 {ai_view_label(ai_view)}。"
+        )
+
+    text = stringify_payload(ai_report) + "\n" + (ai_report_markdown or "")
+    strategy = str(current.get("strategy_type") or "")
+    sub_type = str(current.get("sub_type") or "")
+    if strategy and strategy != "unknown":
+        stale_strategy_markers = [
+            "strategy_type is unknown",
+            "strategy_type 为 unknown",
+            "strategy_type: unknown",
+            "current strategy_type is unknown",
+            "No dedicated CXO",
+        ]
+        if any(marker in text for marker in stale_strategy_markers):
+            status = "mismatch"
+            warnings.append(
+                f"分析框架不一致：当前数据为 {format_strategy_type(strategy)}，但 AI report 仍包含旧的 unknown/框架缺口描述。"
+            )
+    if sub_type and sub_type not in text and "unknown" in text:
+        status = "mismatch"
+        warnings.append(f"子类型不一致：当前数据为 {format_sub_type(sub_type)}，AI report 未体现该子类型并包含 unknown 描述。")
+
+    path_map = paths or {}
+    ai_path = Path(path_map.get("ai_report", "")) if path_map.get("ai_report") else None
+    reference_paths = [
+        Path(path_map[name])
+        for name in ("fundamental", "evidence_pack")
+        if path_map.get(name)
+    ]
+    try:
+        if ai_path and ai_path.exists():
+            ai_mtime = ai_path.stat().st_mtime
+            newer_refs = [path.name for path in reference_paths if path.exists() and path.stat().st_mtime > ai_mtime + 1]
+            if newer_refs and status == "ok":
+                status = "stale"
+            if newer_refs:
+                warnings.append(f"AI report 文件早于当前数据文件：{', '.join(newer_refs)}。")
+    except OSError:
+        pass
+
+    label_map = {
+        "ok": "报告正常",
+        "missing": "尚无 AI 报告",
+        "stale": "报告过期",
+        "mismatch": "报告不一致",
+    }
+    if status in {"stale", "mismatch"}:
+        warnings.insert(0, "报告过期 / 报告与当前数据不一致，请重新生成 AI report。")
+    return {"status": status, "label": label_map.get(status, status), "warnings": warnings, "can_use_ai_body": status == "ok"}
+
+
 def neutralize_legacy_review_text(value: Any) -> Any:
     if not isinstance(value, str):
         return value
@@ -273,8 +467,19 @@ def confidence_breakdown_rows(ai_report: dict[str, Any] | None, evidence_pack: d
     rows = as_list((ai_report or {}).get("confidence_breakdown"))
     if not rows:
         rows = as_list((evidence_pack or {}).get("confidence_basis", {}).get("confidence_breakdown"))
-    fields = ["dimension", "level", "reason"]
-    return [pick_fields(row, fields) for row in rows if isinstance(row, dict)]
+    output = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        dimension = row.get("dimension")
+        output.append(
+            {
+                "维度": CONFIDENCE_DIMENSION_LABELS.get(str(dimension), str(dimension or "-")),
+                "状态": row.get("level"),
+                "原因": row.get("reason"),
+            }
+        )
+    return output
 
 
 def evidence_rows(payload: dict[str, Any] | None, section: str) -> list[dict[str, Any]]:
@@ -287,6 +492,51 @@ def evidence_rows(payload: dict[str, Any] | None, section: str) -> list[dict[str
         "confidence_effect",
     ]
     return [pick_fields(row, fields) for row in as_list((payload or {}).get(section)) if isinstance(row, dict)]
+
+
+def evidence_card_rows(payload: dict[str, Any] | None, section: str) -> list[dict[str, Any]]:
+    rows = []
+    for row in as_list((payload or {}).get(section)):
+        if not isinstance(row, dict):
+            continue
+        rows.append(
+            {
+                "证据": row.get("evidence_name"),
+                "当前值": display_value(row.get("evidence_value")),
+                "为什么重要": row.get("why_it_matters"),
+                "影响维度": CONFIDENCE_DIMENSION_LABELS.get(str(row.get("affects_dimension")), row.get("affects_dimension")),
+                "来源": row.get("source"),
+                "对置信度的影响": row.get("confidence_effect"),
+            }
+        )
+    if not rows and section == "unknown_or_missing_evidence":
+        missing_rows = as_list((payload or {}).get("missing_fields")) or as_list(
+            (payload or {}).get("confidence_basis", {}).get("missing_fields")
+        )
+        for row in missing_rows:
+            if isinstance(row, dict):
+                rows.append(
+                    {
+                        "证据": row.get("field"),
+                        "当前值": None,
+                        "为什么重要": row.get("explanation"),
+                        "影响维度": "数据覆盖",
+                        "来源": "missing_fields",
+                        "对置信度的影响": "unknown_or_limits_confidence",
+                    }
+                )
+            else:
+                rows.append(
+                    {
+                        "证据": row,
+                        "当前值": None,
+                        "为什么重要": "该字段缺失，相关基本面维度不足以判断。",
+                        "影响维度": "数据覆盖",
+                        "来源": "missing_fields",
+                        "对置信度的影响": "unknown_or_limits_confidence",
+                    }
+                )
+    return rows
 
 
 def ai_must_track_rows(ai_report: dict[str, Any] | None, evidence_pack: dict[str, Any] | None = None) -> list[dict[str, Any]]:
@@ -312,6 +562,119 @@ def ai_must_track_rows(ai_report: dict[str, Any] | None, evidence_pack: dict[str
             }
         )
     return sorted(rows, key=lambda row: priority_rank(row.get("priority")))
+
+
+def ai_must_track_rows_cn(
+    ai_report: dict[str, Any] | None,
+    evidence_pack: dict[str, Any] | None = None,
+    include_low: bool = True,
+) -> list[dict[str, Any]]:
+    rows = []
+    for row in ai_must_track_rows(ai_report, evidence_pack):
+        if not include_low and row.get("priority") == "low":
+            continue
+        rows.append(
+            {
+                "指标": row.get("indicator_name"),
+                "状态": row.get("current_status"),
+                "优先级": row.get("priority"),
+                "当前值": row.get("current_value"),
+                "为什么重要": row.get("why_it_matters"),
+                "下一步需要验证的证据": row.get("follow_up_question"),
+            }
+        )
+    return rows
+
+
+def high_priority_missing_evidence(evidence_pack: dict[str, Any] | None, ai_report: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    missing = []
+    for row in ai_must_track_rows(ai_report, evidence_pack):
+        priority = str(row.get("priority") or "")
+        status = str(row.get("current_status") or "")
+        if priority in {"high", "medium"} and ("missing" in status or row.get("current_value") in (None, "")):
+            missing.append(row)
+    return missing
+
+
+def risk_gap_notice(fundamental: dict[str, Any] | None, evidence_pack: dict[str, Any] | None, ai_report: dict[str, Any] | None = None) -> str | None:
+    risks = as_list((evidence_pack or {}).get("risk_flags")) or as_list((fundamental or {}).get("risk_flags"))
+    gaps = high_priority_missing_evidence(evidence_pack, ai_report)
+    if not gaps:
+        missing_cards = evidence_card_rows(evidence_pack or ai_report, "unknown_or_missing_evidence")
+        if len(missing_cards) >= 5:
+            gaps = [{"indicator_name": row.get("证据"), "priority": "high", "current_status": "missing"} for row in missing_cards]
+    if risks or not gaps:
+        return None
+    return "当前结构化风险项为 0，但仍存在高/中优先级证据缺口；这表示风险尚未被充分识别或量化，不表示没有风险。"
+
+
+def risk_cards(fundamental: dict[str, Any] | None, evidence_pack: dict[str, Any] | None, ai_report: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    source = as_list((evidence_pack or {}).get("risk_flags")) or as_list((fundamental or {}).get("risk_flags")) or as_list((ai_report or {}).get("risk_analysis"))
+    rows = []
+    for item in source:
+        if not isinstance(item, dict):
+            continue
+        rows.append(
+            {
+                "风险": item.get("risk_name") or item.get("name"),
+                "严重程度": item.get("severity"),
+                "说明": item.get("reason") or item.get("analysis") or item.get("monitor_method"),
+                "证据依据": summarize_evidence(item.get("evidence")),
+            }
+        )
+    return sorted(rows, key=lambda row: {"high": 0, "medium": 1, "low": 2}.get(str(row.get("严重程度")), 3))
+
+
+def conclusion_summary(
+    fundamental: dict[str, Any] | None,
+    ai_report: dict[str, Any] | None,
+    consistency: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    analyst = fundamental_analyst_summary(fundamental)
+    can_use_ai = bool((consistency or {}).get("can_use_ai_body", True))
+    executive = clean_ai_report_text(ai_report, "executive_summary") if can_use_ai else None
+    return {"primary": analyst or executive or "-", "ai_auxiliary": executive if analyst and executive else None}
+
+
+def why_conclusion_bullets(
+    fundamental: dict[str, Any] | None,
+    evidence_pack: dict[str, Any] | None,
+    ai_report: dict[str, Any] | None = None,
+) -> list[str]:
+    current = current_stock_snapshot(fundamental, evidence_pack, ai_report)
+    bullets = [
+        f"规则基本面状态为{status_label(current.get('status'))}，来自确定性 pipeline 的当前证据组合。",
+        f"证据置信度为{confidence_label(current.get('confidence'))}；{CONFIDENCE_EXPLANATION}",
+    ]
+    supporting = evidence_card_rows(evidence_pack or ai_report, "supporting_evidence")
+    limiting = evidence_card_rows(evidence_pack or ai_report, "limiting_evidence")
+    missing = evidence_card_rows(evidence_pack or ai_report, "unknown_or_missing_evidence")
+    if supporting:
+        bullets.append("支持证据包括：" + "、".join(str(row.get("证据")) for row in supporting[:2] if row.get("证据")) + "。")
+    if limiting:
+        bullets.append("限制因素包括：" + "、".join(str(row.get("证据")) for row in limiting[:2] if row.get("证据")) + "。")
+    gaps = [row.get("证据") for row in missing[:3] if row.get("证据")]
+    if gaps:
+        bullets.append("阻止高置信度的关键缺口包括：" + "、".join(str(item) for item in gaps) + "。")
+    return [bullet for bullet in bullets if bullet and not bullet.endswith("：。")][:5]
+
+
+def data_quality_view(
+    fundamental: dict[str, Any] | None,
+    evidence_pack: dict[str, Any] | None,
+    raw: dict[str, Any] | None,
+    consistency: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    missing = as_list((evidence_pack or {}).get("missing_fields")) or as_list((fundamental or {}).get("missing_fields"))
+    fetch_rows = fetch_status_rows(raw)
+    news_failures = [row for row in fetch_rows if row.get("block_name") == "news" and not row.get("success")]
+    source_gaps = as_list((evidence_pack or {}).get("data_limitations"))
+    return {
+        "缺失字段数量": len(missing),
+        "新闻源失败": "是" if news_failures else "否",
+        "数据源缺口": len(source_gaps),
+        "报告质量提示": (consistency or {}).get("label") or "未检查",
+    }
 
 
 def priority_rank(priority: Any) -> int:

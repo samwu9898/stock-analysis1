@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 
+from dashboard.fundamental_dashboard import stock_selector_table_rows
 from src.fundamental_skill import dashboard_helpers as helpers
 
 
@@ -319,8 +320,8 @@ def test_load_ai_report_and_prompt_preview(tmp_path):
 def test_confidence_breakdown_rows_from_ai_report():
     rows = helpers.confidence_breakdown_rows(sample_ai_report())
 
-    assert rows[0]["dimension"] == "data_coverage"
-    assert rows[0]["level"] == "strong"
+    assert rows[0]["维度"] == "数据覆盖"
+    assert rows[0]["状态"] == "strong"
 
 
 def test_evidence_classification_rows():
@@ -337,6 +338,57 @@ def test_ai_must_track_rows_sort_high_priority_first():
     assert rows[0]["indicator_name"] == "high item"
     assert rows[0]["priority"] == "high"
     assert rows[1]["current_value"] == "1.00%"
+
+
+def test_v3_chinese_strategy_and_sub_type_labels():
+    assert helpers.format_strategy_type("satellite_communication_infrastructure") == "satellite_communication_infrastructure（卫星通信基础设施）"
+    assert helpers.format_strategy_type("low_altitude_economy_infrastructure") == "low_altitude_economy_infrastructure（低空经济基础设施 / 运营服务）"
+    assert helpers.format_strategy_type("life_science_cxo_services") == "life_science_cxo_services（CXO 医药外包服务）"
+    assert helpers.format_sub_type("aviation_operations_service") == "aviation_operations_service（通航 / 低空飞行运营服务）"
+    assert helpers.format_sub_type("integrated_cxo_platform") == "integrated_cxo_platform（综合 CXO 平台）"
+    assert helpers.format_sub_type(None) == "不适用"
+
+
+def test_v3_report_consistency_detects_unknown_strategy_mismatch():
+    fundamental = sample_fundamental()
+    fundamental["strategy_type"] = "life_science_cxo_services"
+    fundamental["sub_type"] = "integrated_cxo_platform"
+    fundamental["status"] = "insufficient_data"
+    evidence_pack = sample_evidence_pack()
+    evidence_pack["stock"] = {
+        "code": "000426",
+        "name": "sample",
+        "strategy_type": "life_science_cxo_services",
+        "sub_type": "integrated_cxo_platform",
+        "status": "insufficient_data",
+        "confidence": "low",
+        "fundamental_score": 50,
+    }
+    report = sample_ai_report()
+    report["fundamental_view"] = "insufficient_data"
+    report["valuation_analysis"] = "Because the current strategy_type is unknown, valuation cannot use a professional CXO framework."
+
+    status = helpers.report_consistency_status(report, evidence_pack, fundamental)
+
+    assert status["status"] == "mismatch"
+    assert "报告过期 / 报告与当前数据不一致" in status["warnings"][0]
+    assert status["can_use_ai_body"] is False
+
+
+def test_v3_risk_gap_notice_when_no_risk_flags_but_missing_evidence_high():
+    evidence_pack = sample_evidence_pack()
+    evidence_pack["risk_flags"] = []
+    notice = helpers.risk_gap_notice({"risk_flags": []}, evidence_pack, sample_ai_report())
+
+    assert "不表示没有风险" in notice
+
+
+def test_v3_must_track_rows_use_chinese_columns_and_priority_sort():
+    rows = helpers.ai_must_track_rows_cn(sample_ai_report(), sample_evidence_pack(), include_low=False)
+
+    assert list(rows[0].keys()) == ["指标", "状态", "优先级", "当前值", "为什么重要", "下一步需要验证的证据"]
+    assert rows[0]["指标"] == "high item"
+    assert rows[1]["指标"] == "medium item"
 
 
 def test_ai_report_status_schema_and_safety():
@@ -384,3 +436,30 @@ def test_scan_available_stocks_prefers_ai_report(tmp_path):
 
     assert rows[0]["stock_code"] == "000426"
     assert rows[0]["has_ai_report"] is True
+
+
+def test_stock_selector_table_uses_chinese_column_names():
+    rows = stock_selector_table_rows(
+        [
+            {
+                "stock_code": "000426",
+                "stock_name": "sample",
+                "fundamental_view": "supportive_for_further_evaluation",
+                "strategy_type": "resource_swing",
+                "has_ai_report": True,
+                "has_fundamental": True,
+            }
+        ]
+    )
+
+    assert list(rows[0].keys()) == [
+        "股票代码",
+        "公司名称",
+        "AI基本面观点",
+        "分析框架",
+        "已有AI报告",
+        "已有规则结果",
+    ]
+    assert "stock_code" not in rows[0]
+    assert "stock_name" not in rows[0]
+    assert rows[0]["股票代码"] == "000426"

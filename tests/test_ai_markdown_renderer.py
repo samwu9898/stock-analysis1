@@ -74,13 +74,18 @@ def sample_evidence_pack():
 def test_renderer_replaces_question_mark_summary_with_chinese_fallback():
     markdown = render_ai_report_markdown(sample_report(), evidence_pack=sample_evidence_pack())
 
-    assert "# 601698 AI 基本面报告" in markdown
-    assert "## 摘要" in markdown
+    assert "# 601698 中国卫通 AI基本面分析报告" in markdown
+    assert "## 一句话结论" in markdown
+    assert "## 公司身份与分析框架" in markdown
+    assert "## 证据地图" in markdown
+    assert "## 必须跟踪指标" in markdown
     assert "当前识别为 satellite_communication_infrastructure" in markdown
     assert "????????" not in markdown
-    assert "部分 AI 自由文本字段损坏，当前报告使用结构化 evidence fallback 生成。" in markdown
+    assert "AI 自由文本损坏" in markdown
     assert "合同负债只能作为订单可见度 proxy，不等同真实 backlog" in markdown
     assert "PE/PB/PS 不能单独作为估值充分依据" in markdown
+    assert "置信度表示对当前基本面结论的证据置信度，不等于看好程度。" in markdown
+    assert "trader_summary" not in markdown
 
 
 def test_renderer_writes_and_reads_utf8_markdown(tmp_path):
@@ -89,8 +94,8 @@ def test_renderer_writes_and_reads_utf8_markdown(tmp_path):
     read_back = output.read_text(encoding="utf-8")
 
     assert read_back == markdown
-    assert "容量利用率 / 出租率" in read_back
-    assert "摘要" in read_back
+    assert "satellite.capacity_utilization_or_lease_rate" in read_back
+    assert "一句话结论" in read_back
 
 
 def test_renderer_output_can_be_json_serialized_without_ascii_loss():
@@ -99,4 +104,24 @@ def test_renderer_output_can_be_json_serialized_without_ascii_loss():
 
     encoded = json.dumps(payload, ensure_ascii=False)
 
-    assert "摘要" in encoded
+    assert "一句话结论" in encoded
+
+
+def test_renderer_shows_stale_mismatch_and_garbled_warnings():
+    status = {
+        "status": "mismatch",
+        "label": "报告不一致",
+        "warnings": ["报告过期 / 报告与当前数据不一致，请重新生成 AI report。"],
+        "can_use_ai_body": False,
+    }
+
+    markdown = render_ai_report_markdown(
+        sample_report(),
+        evidence_pack=sample_evidence_pack(),
+        consistency_status=status,
+    )
+
+    assert "报告过期 / 不一致" in markdown
+    assert "请重新生成 AI report" in markdown
+    assert "AI 自由文本损坏" in markdown
+    assert "schema" not in markdown.lower()
