@@ -19,7 +19,7 @@ class HtmlReportPromptBuilder:
         evidence_json = json.dumps(compact_pack, ensure_ascii=False, indent=2, default=str)
         schema_json = json.dumps(schema_example(), ensure_ascii=False, indent=2, default=str)
 
-        return f"""# Fundamental HTML Report Generator v1 结构化报告任务
+        return f"""# Fundamental HTML Report Generator v2.1 结构化报告任务
 
 你是 A 股基本面研究员。请只基于下面的 evidence pack，生成符合 `{REPORT_VERSION}` 的结构化 JSON。最终 JSON 会被 HTML renderer 渲染为专业中文基本面研报。
 
@@ -36,18 +36,31 @@ class HtmlReportPromptBuilder:
 
 - 必须输出中文。
 - 必须解释，不得只复述数据；最终报告要像专业基本面研究报告，而不是字段摘要。
+- 核心结论必须像研究员写的，必须说明：公司到底靠什么赚钱、当前核心基本面命题、已被数据证明的部分、尚未被数据证明的部分、最大限制因素、未来最关键的跟踪指标。
 - 每个判断必须基于 evidence pack 中的事实、source trace、derived observation 或 missing evidence。
 - 缺数据必须明确写“无法判断”或“缺少数据，不足以判断”。
 - 必须区分事实、proxy、推断。
 - 不得编造订单、客户、行业排名、收入占比、产能释放或同业分位。
 - 不得把合同负债冒充 backlog 或真实订单。
 - 不得用 capex 冒充产能释放。
+- 资产负债表存量 / 利润表或现金流量表期间数的 mixed stock-flow ratio 必须标注口径限制，不能据此做强判断；尤其是应收账款/收入、存货/收入、合同负债/收入。
 - 不得把 confidence 当成看好程度；confidence 只表示证据置信度。
 - 不输出交易建议 / 不输出目标价 / 不输出技术面。
 - 不得输出仓位、账户动作、K线、均线、成交量、买卖时机或价格执行依据。
 - fundamental_scenario_analysis 只写基本面情景，不写股价、不写目标价、不写交易动作。
 - valuation_explanation 不得包含目标价。
+- elasticity_formula 只能写基本面弹性公式，例如收入增长、毛利率稳定性、费用率控制、经营现金流、capex、新业务证据；不得输出股价、目标价、盈亏比。
 - 输出必须是单个 JSON 对象，不要 Markdown 包裹，不要解释性前后缀。
+
+## v2.1 必填增强字段
+
+- `hero_tags`：首屏标签，3-6 个，必须是基本面研究标签，例如“高端制造成长”“汽车热管理”“现金流需复核”；不得包含交易、技术或价格执行含义。
+- `research_anchor`：研究主线卡。必须包含 `main_thesis`、`key_conflict`、`current_stage`、`what_is_proven`、`what_is_unproven`。对 002050，应围绕制冷空调零部件基本盘、汽车热管理成长验证、机器人或新业务证据缺口、估值消化依赖收入/利润/现金流。
+- `quality_score_breakdown`：六维质量评分，必须包含 `industry_position`、`business_quality`、`growth_realization`、`financial_quality`、`valuation_explainability`、`risk_identifiability`。每项必须包含 `score`、`max_score`、`label`、`explanation`、`evidence_basis`。这不是交易评级，不得写成买卖建议。
+- `value_chain_map`：产业链图谱，必须包含 `upstream`、`company_role`、`downstream`、`profit_source`、`unproven_moats`、`key_bottlenecks`。数据不足可以写“待验证”，但不能编造客户、订单或行业份额。
+- `elasticity_formula`：基本面弹性公式，必须包含 `formula_title`、`formula_text`、`key_variables`、`interpretation`、`data_limitations`。只解释收入、毛利率、费用率、现金流、capex、新业务证据。
+- `tracking_plan_groups`：分层跟踪计划，必须按“财报跟踪”“公告/订单跟踪”“行业/政策跟踪”“风险复核”分组。每项包含 `indicator`、`frequency`、`why_it_matters`、`trigger_for_review`。
+- `financial_ratio_caveats`：财务比例口径说明，必须覆盖“应收账款/收入”“存货/收入”“合同负债/收入”，说明 stock-flow mixed ratio 的口径限制、解释强度和后续所需数据。
 
 ## 结构化 JSON Schema 要求
 

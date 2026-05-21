@@ -19,6 +19,9 @@ def test_html_report_prompt_contains_required_constraints():
     assert "必须输出中文" in prompt
     assert "不得把合同负债冒充 backlog" in prompt
     assert "不得用 capex 冒充产能释放" in prompt
+    assert "不输出交易建议 / 不输出目标价 / 不输出技术面" in prompt
+    assert "mixed stock-flow ratio" in prompt
+    assert "应收账款/收入" in prompt
 
 
 def test_html_report_prompt_includes_schema_and_evidence_pack():
@@ -29,7 +32,27 @@ def test_html_report_prompt_includes_schema_and_evidence_pack():
     assert '"core_conclusion"' in prompt
     assert '"financial_quality_diagnosis"' in prompt
     assert '"must_track_indicators"' in prompt
+    assert '"research_anchor"' in prompt
+    assert '"quality_score_breakdown"' in prompt
+    assert '"value_chain_map"' in prompt
+    assert '"elasticity_formula"' in prompt
+    assert '"tracking_plan_groups"' in prompt
     assert '"Evidence Pack"' or "Evidence Pack" in prompt
+
+
+def test_html_report_prompt_contains_v21_generation_requirements():
+    pack = EvidencePackBuilder().build(sample_fundamental("advanced_manufacturing_growth"), sample_raw())
+    prompt = HtmlReportPromptBuilder().build(pack)
+
+    assert "`research_anchor`" in prompt
+    assert "`quality_score_breakdown`" in prompt
+    assert "`value_chain_map`" in prompt
+    assert "`elasticity_formula`" in prompt
+    assert "`tracking_plan_groups`" in prompt
+    assert "`financial_ratio_caveats`" in prompt
+    assert "六维质量评分" in prompt
+    assert "分层跟踪计划" in prompt
+    assert "不得输出股价、目标价、盈亏比" in prompt
 
 
 def test_derived_metrics_are_missing_safe():

@@ -137,6 +137,16 @@ def run_skeleton(code: str, output_dir: str | Path | None = None) -> dict[str, A
             "evidence_confidence_explanation": "Skeleton 模式不评估证据置信度。",
         }
     )
+    report["hero_tags"] = ["Skeleton", "仅验证渲染", "非正式报告"]
+    report["research_anchor"].update(
+        {
+            "main_thesis": "Skeleton 模式不生成正式研究主线。",
+            "key_conflict": "Skeleton 模式只验证 HTML 结构，不形成基本面矛盾判断。",
+            "current_stage": "skeleton",
+            "what_is_proven": ["渲染链路可执行。"],
+            "what_is_unproven": ["未生成正式 AI 结构化分析 JSON。"],
+        }
+    )
     report["company_profile"]["main_business"] = "Skeleton 模式未生成公司画像。"
     report["recent_fundamental_updates"]["unavailable_news_note"] = "Skeleton 模式不读取或编造新闻。"
     report["business_composition_analysis"]["analysis"] = "Skeleton 模式不判断业务构成。"
@@ -145,6 +155,25 @@ def run_skeleton(code: str, output_dir: str | Path | None = None) -> dict[str, A
     report["core_fundamental_question"]["main_question"] = "Skeleton 模式不设定正式基本面命题。"
     report["industry_cycle_positioning"]["cycle_stage"] = "Skeleton 模式无法判断。"
     report["value_chain_and_business_model"]["how_company_makes_money"] = "Skeleton 模式不分析商业模式。"
+    report["value_chain_map"].update(
+        {
+            "upstream": "Skeleton 模式待验证",
+            "company_role": "Skeleton 模式待验证",
+            "downstream": "Skeleton 模式待验证",
+            "profit_source": "Skeleton 模式不分析利润来源。",
+            "unproven_moats": ["Skeleton 模式不验证壁垒。"],
+            "key_bottlenecks": ["缺少正式 AI 结构化分析 JSON。"],
+        }
+    )
+    report["elasticity_formula"].update(
+        {
+            "formula_title": "Skeleton 基本面弹性占位",
+            "formula_text": "利润弹性 = 收入增长 × 毛利率稳定性 × 费用率控制",
+            "key_variables": ["收入", "毛利率", "费用率", "经营现金流", "capex"],
+            "interpretation": "Skeleton 模式只展示公式卡片，不形成正式判断。",
+            "data_limitations": ["缺少正式 AI 结构化分析 JSON。"],
+        }
+    )
     for key in ("optimistic_case", "base_case", "downside_case"):
         report["fundamental_scenario_analysis"][key]["impact_on_fundamentals"] = "Skeleton 模式不生成正式情景判断。"
         report["fundamental_scenario_analysis"][key]["evidence_strength"] = "skeleton"
@@ -159,6 +188,22 @@ def run_skeleton(code: str, output_dir: str | Path | None = None) -> dict[str, A
             "next_evidence_needed": "使用 prompt 生成结构化报告 JSON。",
             "current_value": None,
         }
+    ]
+    report["tracking_plan_groups"] = [
+        {
+            "group_name": "财报跟踪",
+            "items": [
+                {
+                    "indicator": "正式 FundamentalHtmlReport JSON",
+                    "frequency": "生成正式报告前",
+                    "why_it_matters": "Skeleton 不能冒充正式报告。",
+                    "trigger_for_review": "补齐正式 JSON 后重新渲染。",
+                }
+            ],
+        },
+        {"group_name": "公告/订单跟踪", "items": []},
+        {"group_name": "行业/政策跟踪", "items": []},
+        {"group_name": "风险复核", "items": []},
     ]
     report["data_quality_and_unknowns"]["cannot_determine"] = ["Skeleton 模式不能作为正式基本面结论。"]
 

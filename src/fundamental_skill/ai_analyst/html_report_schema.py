@@ -76,6 +76,10 @@ ALLOWED_POLICY_PATHS = {
     "report_meta.safety_boundary",
 }
 
+ALLOWED_FIELD_NAMES = {
+    "industry_position",
+}
+
 
 def _as_list(value: Any) -> list[Any]:
     if value is None:
@@ -111,6 +115,8 @@ def forbidden_key_findings(payload: Any) -> list[dict[str, str]]:
         for key in value:
             normalized = _normalize_key(key)
             if normalized == "forbidden_actions_excluded":
+                continue
+            if normalized in ALLOWED_FIELD_NAMES:
                 continue
             for token in FORBIDDEN_FIELD_TOKENS:
                 key_parts = set(normalized.split("_"))
@@ -289,22 +295,90 @@ class SafetyBoundary(StrictModel):
     forbidden_actions_excluded: list[str] = Field(default_factory=list)
 
 
+class ResearchAnchor(StrictModel):
+    main_thesis: str = ""
+    key_conflict: str = ""
+    current_stage: str = ""
+    what_is_proven: list[str] = Field(default_factory=list)
+    what_is_unproven: list[str] = Field(default_factory=list)
+
+
+class QualityScoreItem(StrictModel):
+    score: float | int | None = None
+    max_score: float | int | None = 10
+    label: str = ""
+    explanation: str = ""
+    evidence_basis: list[str] = Field(default_factory=list)
+
+
+class QualityScoreBreakdown(StrictModel):
+    industry_position: QualityScoreItem = Field(default_factory=QualityScoreItem)
+    business_quality: QualityScoreItem = Field(default_factory=QualityScoreItem)
+    growth_realization: QualityScoreItem = Field(default_factory=QualityScoreItem)
+    financial_quality: QualityScoreItem = Field(default_factory=QualityScoreItem)
+    valuation_explainability: QualityScoreItem = Field(default_factory=QualityScoreItem)
+    risk_identifiability: QualityScoreItem = Field(default_factory=QualityScoreItem)
+
+
+class ValueChainMap(StrictModel):
+    upstream: str = ""
+    company_role: str = ""
+    downstream: str = ""
+    profit_source: str = ""
+    unproven_moats: list[str] = Field(default_factory=list)
+    key_bottlenecks: list[str] = Field(default_factory=list)
+
+
+class ElasticityFormula(StrictModel):
+    formula_title: str = ""
+    formula_text: str = ""
+    key_variables: list[str] = Field(default_factory=list)
+    interpretation: str = ""
+    data_limitations: list[str] = Field(default_factory=list)
+
+
+class TrackingPlanItem(StrictModel):
+    indicator: str = ""
+    frequency: str = ""
+    why_it_matters: str = ""
+    trigger_for_review: str = ""
+
+
+class TrackingPlanGroup(StrictModel):
+    group_name: str = ""
+    items: list[TrackingPlanItem] = Field(default_factory=list)
+
+
+class FinancialRatioCaveat(StrictModel):
+    ratio_name: str = ""
+    caveat: str = ""
+    interpretation_strength: str = ""
+    required_follow_up_data: list[str] = Field(default_factory=list)
+
+
 class FundamentalHtmlReport(StrictModel):
     report_version: str = REPORT_VERSION
     report_meta: ReportMeta
+    hero_tags: list[str] = Field(default_factory=list)
     core_conclusion: CoreConclusion
+    research_anchor: ResearchAnchor = Field(default_factory=ResearchAnchor)
     company_profile: CompanyProfile
     recent_fundamental_updates: RecentFundamentalUpdates
     business_composition_analysis: BusinessCompositionAnalysis
     financial_quality_diagnosis: FinancialQualityDiagnosis
+    financial_ratio_caveats: list[FinancialRatioCaveat] = Field(default_factory=list)
     valuation_explanation: ValuationExplanation
     core_fundamental_question: CoreFundamentalQuestion
     industry_cycle_positioning: IndustryCyclePositioning
     value_chain_and_business_model: ValueChainAndBusinessModel
+    value_chain_map: ValueChainMap = Field(default_factory=ValueChainMap)
+    quality_score_breakdown: QualityScoreBreakdown = Field(default_factory=QualityScoreBreakdown)
+    elasticity_formula: ElasticityFormula = Field(default_factory=ElasticityFormula)
     fundamental_scenario_analysis: FundamentalScenarioAnalysis
     peer_comparison: PeerComparison
     risk_analysis: RiskAnalysis
     must_track_indicators: list[MustTrackIndicator] = Field(default_factory=list)
+    tracking_plan_groups: list[TrackingPlanGroup] = Field(default_factory=list)
     follow_up_review_conditions: list[FollowUpReviewCondition] = Field(default_factory=list)
     data_quality_and_unknowns: DataQualityAndUnknowns
     safety_boundary: SafetyBoundary
@@ -388,6 +462,7 @@ def schema_example() -> dict[str, Any]:
             "data_quality_status": "",
             "safety_boundary": "本报告仅供基本面研究，不构成交易建议，不包含目标价，不包含买卖建议，不包含技术面判断，不连接交易账户。",
         },
+        "hero_tags": [],
         "core_conclusion": {
             "title": "",
             "summary": "",
@@ -395,6 +470,13 @@ def schema_example() -> dict[str, Any]:
             "limiting_points": [],
             "must_track_points": [],
             "evidence_confidence_explanation": "",
+        },
+        "research_anchor": {
+            "main_thesis": "",
+            "key_conflict": "",
+            "current_stage": "",
+            "what_is_proven": [],
+            "what_is_unproven": [],
         },
         "company_profile": {
             "main_business": "",
@@ -428,6 +510,26 @@ def schema_example() -> dict[str, Any]:
             "final_diagnosis": "",
             "diagnosis_level": "无法判断",
         },
+        "financial_ratio_caveats": [
+            {
+                "ratio_name": "应收账款/收入",
+                "caveat": "资产负债表存量除以利润表期间数，口径不同，只能作为压力线索，不能单独形成强结论。",
+                "interpretation_strength": "弱",
+                "required_follow_up_data": [],
+            },
+            {
+                "ratio_name": "存货/收入",
+                "caveat": "资产负债表存量除以利润表期间数，口径不同，只能作为周转压力线索。",
+                "interpretation_strength": "弱",
+                "required_follow_up_data": [],
+            },
+            {
+                "ratio_name": "合同负债/收入",
+                "caveat": "合同负债只能作为订单可见度 proxy，不等同于真实订单或 backlog。",
+                "interpretation_strength": "弱",
+                "required_follow_up_data": [],
+            },
+        ],
         "valuation_explanation": {
             "valuation_metrics": [],
             "valuation_interpretation": "",
@@ -455,6 +557,29 @@ def schema_example() -> dict[str, Any]:
             "margin_source": "",
             "moat_claims": [],
             "unproven_moats": [],
+        },
+        "value_chain_map": {
+            "upstream": "",
+            "company_role": "",
+            "downstream": "",
+            "profit_source": "",
+            "unproven_moats": [],
+            "key_bottlenecks": [],
+        },
+        "quality_score_breakdown": {
+            "industry_position": {"score": None, "max_score": 10, "label": "行业位置", "explanation": "", "evidence_basis": []},
+            "business_quality": {"score": None, "max_score": 10, "label": "业务质量", "explanation": "", "evidence_basis": []},
+            "growth_realization": {"score": None, "max_score": 10, "label": "成长兑现", "explanation": "", "evidence_basis": []},
+            "financial_quality": {"score": None, "max_score": 10, "label": "财务质量", "explanation": "", "evidence_basis": []},
+            "valuation_explainability": {"score": None, "max_score": 10, "label": "估值可解释性", "explanation": "", "evidence_basis": []},
+            "risk_identifiability": {"score": None, "max_score": 10, "label": "风险可识别性", "explanation": "", "evidence_basis": []},
+        },
+        "elasticity_formula": {
+            "formula_title": "",
+            "formula_text": "",
+            "key_variables": [],
+            "interpretation": "",
+            "data_limitations": [],
         },
         "fundamental_scenario_analysis": {
             "optimistic_case": {
@@ -496,6 +621,7 @@ def schema_example() -> dict[str, Any]:
             "data_gap_risks": [],
         },
         "must_track_indicators": [],
+        "tracking_plan_groups": [],
         "follow_up_review_conditions": [],
         "data_quality_and_unknowns": {
             "available_data": [],

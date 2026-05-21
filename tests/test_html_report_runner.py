@@ -29,12 +29,45 @@ def test_html_runner_prompt_only_outputs_prompt_file(tmp_path):
 
 def test_html_runner_render_existing_generates_html(tmp_path):
     result = run_skeleton("002050", output_dir=tmp_path)
+    json_path = tmp_path / "reports" / "fundamental_report_002050.json"
+    payload = json.loads(json_path.read_text(encoding="utf-8"))
+    payload["hero_tags"] = ["高端制造成长", "现金流需复核"]
+    payload["research_anchor"] = {
+        "main_thesis": "制冷空调零部件基本盘与汽车热管理成长验证。",
+        "key_conflict": "成长证据与新业务缺口并存。",
+        "current_stage": "验证期",
+        "what_is_proven": ["主业构成可见"],
+        "what_is_unproven": ["新业务订单待验证"],
+    }
+    payload["value_chain_map"] = {
+        "upstream": "待验证",
+        "company_role": "热管理零部件制造商",
+        "downstream": "待验证",
+        "profit_source": "毛利率与收入规模",
+        "unproven_moats": ["客户结构待验证"],
+        "key_bottlenecks": ["订单证据缺失"],
+    }
+    payload["elasticity_formula"] = {
+        "formula_title": "利润弹性",
+        "formula_text": "利润弹性 = 收入增长 × 毛利率稳定性 × 费用率控制",
+        "key_variables": ["收入", "毛利率", "费用率"],
+        "interpretation": "只用于基本面传导解释。",
+        "data_limitations": ["新业务收入缺失"],
+    }
+    payload["tracking_plan_groups"] = [
+        {"group_name": "财报跟踪", "items": [{"indicator": "毛利率", "frequency": "季度", "why_it_matters": "验证利润质量", "trigger_for_review": "波动时复核"}]},
+        {"group_name": "公告/订单跟踪", "items": []},
+        {"group_name": "行业/政策跟踪", "items": []},
+        {"group_name": "风险复核", "items": []},
+    ]
+    json_path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
     render_result = run_render_existing("002050", output_dir=tmp_path)
 
     assert result["skeleton_warning"] is True
     assert (tmp_path / "reports" / "fundamental_report_002050.json").exists()
     assert (tmp_path / "reports" / "fundamental_report_002050.html").exists()
     assert render_result["html_path"].endswith("fundamental_report_002050.html")
+    assert "研究主线 / 核心矛盾" in (tmp_path / "reports" / "fundamental_report_002050.html").read_text(encoding="utf-8")
 
 
 def test_html_runner_missing_file_returns_clear_error(capsys, monkeypatch, tmp_path):

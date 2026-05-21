@@ -24,6 +24,46 @@ def sample_report():
     payload["financial_quality_diagnosis"]["final_diagnosis"] = "经营现金流、应收和存货证据仍需结合正式数据复核。"
     payload["valuation_explanation"]["valuation_interpretation"] = "估值只能结合利润质量、现金流和同业可比性解释。"
     payload["risk_analysis"]["business_risks"] = ["新业务兑现仍缺少收入和客户证据。"]
+    payload["hero_tags"] = ["高端制造成长", "汽车热管理", "现金流需复核"]
+    payload["research_anchor"] = {
+        "main_thesis": "制冷空调零部件基本盘与汽车热管理成长验证构成研究主线。",
+        "key_conflict": "主业证据较清楚，但新业务和估值消化证据仍有缺口。",
+        "current_stage": "成长验证期",
+        "what_is_proven": ["制冷空调零部件与汽车零部件收入构成可见"],
+        "what_is_unproven": ["机器人或新业务收入与订单待验证"],
+    }
+    payload["quality_score_breakdown"] = {
+        "industry_position": {"score": 6, "max_score": 10, "label": "行业位置", "explanation": "制造业主业锚点清楚。", "evidence_basis": ["业务构成"]},
+        "business_quality": {"score": 6, "max_score": 10, "label": "业务质量", "explanation": "毛利率线索可见。", "evidence_basis": ["毛利率"]},
+        "growth_realization": {"score": 4, "max_score": 10, "label": "成长兑现", "explanation": "新业务证据不足。", "evidence_basis": ["missing evidence"]},
+        "financial_quality": {"score": 6, "max_score": 10, "label": "财务质量", "explanation": "现金流需复核。", "evidence_basis": ["经营现金流"]},
+        "valuation_explainability": {"score": 5, "max_score": 10, "label": "估值可解释性", "explanation": "依赖业绩兑现。", "evidence_basis": ["估值指标"]},
+        "risk_identifiability": {"score": 5, "max_score": 10, "label": "风险可识别性", "explanation": "数据缺口清楚。", "evidence_basis": ["missing fields"]},
+    }
+    payload["value_chain_map"] = {
+        "upstream": "原材料、阀件和制造配套待验证",
+        "company_role": "热管理零部件制造商",
+        "downstream": "家电与汽车热管理需求端",
+        "profit_source": "规模制造、毛利率稳定性和产品结构",
+        "unproven_moats": ["客户结构待验证"],
+        "key_bottlenecks": ["新业务订单证据缺失"],
+    }
+    payload["elasticity_formula"] = {
+        "formula_title": "利润弹性",
+        "formula_text": "利润弹性 = 收入增长 × 毛利率稳定性 × 费用率控制",
+        "key_variables": ["收入", "毛利率", "费用率", "经营现金流", "capex"],
+        "interpretation": "用于观察基本面兑现路径。",
+        "data_limitations": ["新业务收入缺失"],
+    }
+    payload["tracking_plan_groups"] = [
+        {
+            "group_name": "财报跟踪",
+            "items": [{"indicator": "毛利率", "frequency": "季度", "why_it_matters": "验证利润质量", "trigger_for_review": "连续下滑时复核"}],
+        },
+        {"group_name": "公告/订单跟踪", "items": []},
+        {"group_name": "行业/政策跟踪", "items": []},
+        {"group_name": "风险复核", "items": []},
+    ]
     return payload
 
 
@@ -38,6 +78,31 @@ def test_html_renderer_contains_required_chinese_sections():
     assert "数据质量与未知项" in html
     assert "基本面情景分析" in html
     assert "主题" in html
+    assert "研究主线 / 核心矛盾" in html
+    assert "六维质量评分" in html
+    assert "产业链图谱" in html
+    assert "基本面弹性公式" in html
+    assert "分层跟踪计划" in html
+    assert "财务比例口径提示" in html
+    assert "指标" in html
+    assert "优先级" in html
+    assert "当前状态" in html
+    assert "为什么重要" in html
+    assert "下一步证据" in html
+
+
+def test_html_renderer_has_mobile_overflow_guards():
+    html = render_fundamental_html_report(sample_report())
+
+    assert "body { margin:0; overflow-x:hidden;" in html
+    assert ".hero h1 {" in html
+    assert "overflow-wrap:anywhere;" in html
+    assert "word-break:break-word;" in html
+    assert "nav { display:flex; gap:12px; overflow-x:auto; flex:1; min-width:0; max-width:100%;" in html
+    assert ".table-wrap { overflow:auto; max-width:100%;" in html
+    assert "@media (max-width:900px)" in html
+    assert "table { min-width:640px; }" in html
+    assert ".compact-table table { min-width:520px; }" in html
 
 
 def test_html_renderer_excludes_trading_and_technical_terms():
@@ -55,6 +120,7 @@ def test_html_renderer_excludes_trading_and_technical_terms():
         "盈亏比",
         "买卖时机",
         "交易终端",
+        "技术面模块",
         "technical_skill",
         "trader_skill",
     ):
