@@ -48,6 +48,26 @@ python -m src.fundamental_skill.ai_analyst.research_intelligence_runner --code 0
 
 Research Intelligence P0 is a research-question finder, not a trading system. It does not output trading advice, target prices, position sizing, technical analysis, or K-line content. It also does not write `output/reports/` and is not connected to the Fundamental HTML Report main chain.
 
+## Research Intelligence P1.1 AI Datacenter Pilot
+
+Research Intelligence P1.1 is an independent AI analyst-layer driver-factor matrix artifact. The accepted first pilot only supports `strategy_type=ai_datacenter_infrastructure` and the sub-types `cooling_liquid_cooling_infrastructure` and `datacenter_operator`.
+
+Outputs:
+
+- `output/research_intelligence_p1_<code>.json`
+- `output/research_questions_p1_<code>.json`
+- `output/research_questions_p1_<code>.md`
+
+Command:
+
+```bash
+python -m src.fundamental_skill.ai_analyst.research_intelligence_p1_runner --code 002837
+```
+
+P1.1 reads `output/evidence_pack_<code>.json` and may read the optional P0 pack. It does not call LLMs, use network access, connect new data sources, mutate the deterministic pipeline, change `status`, `confidence`, `score`, `strategy_type`, or `sub_type`, write `output/reports/`, or connect to the HTML Report / Dashboard main chain.
+
+The P1.1 baseline includes schema + builder enforcement for `company_transmission_path`: if no concrete evidence-pack field value or data point can verify the transmission path, the field is exactly `传导路径无法从当前证据包验证` and the driver confidence cap is `not_assessable`. Source independence is counted by source bucket rather than file, article, or API count.
+
 ## Dashboard v3
 
 Dashboard v3 是 A 股基本面 AI 分析报告阅读器，不是交易终端。它读取已经生成的 fundamental JSON、evidence pack、AI prompt / report 和 raw JSON，用中文主视图帮助快速理解基本面结论、证据链、风险与证据缺口。
@@ -230,6 +250,7 @@ Dashboard v3 是本地基本面 AI 分析报告阅读器和审计工具，不调
 python -m src.fundamental_skill.real_stock_runner --code 601698 --output output/fundamental_601698.json --force-refresh
 python -m src.fundamental_skill.ai_analyst.runner --code 601698 --mode prompt_only
 python -m src.fundamental_skill.ai_analyst.research_intelligence_runner --code 002837
+python -m src.fundamental_skill.ai_analyst.research_intelligence_p1_runner --code 002837
 python -m src.fundamental_skill.ai_analyst.html_report_runner --code 002050 --mode prompt_only
 python -m src.fundamental_skill.ai_analyst.html_report_runner --code 002050 --mode render_existing
 python scripts/visual_audit_html_report.py --html output/reports/fundamental_report_002050.html --code 002050 --output-dir output/visual_audit/002050

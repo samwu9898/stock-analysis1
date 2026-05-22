@@ -21,6 +21,8 @@ It produces:
 - `output/ai_prompt_<code>.md`
 - `output/research_intelligence_<code>.json` when Research Intelligence P0 is requested.
 - `output/research_questions_<code>.json` and `output/research_questions_<code>.md` when Research Intelligence P0 is requested.
+- `output/research_intelligence_p1_<code>.json` when Research Intelligence P1.1 AI Datacenter pilot is requested.
+- `output/research_questions_p1_<code>.json` and `output/research_questions_p1_<code>.md` when Research Intelligence P1.1 AI Datacenter pilot is requested.
 - `output/reports/fundamental_report_prompt_<code>.md` for the HTML report chain when requested.
 - `output/reports/fundamental_report_<code>.html` only after an existing formal `FundamentalHtmlReport` JSON is rendered.
 
@@ -46,6 +48,18 @@ evidence_pack
 ```
 
 P0.1 selects more industry-specific questions from `strategy_type`, `sub_type`, `missing_evidence`, and triggered `rule_id` instead of falling back to broad missing-field wording. It still does not call an LLM, does not fetch data, does not mutate deterministic pipeline outputs, and does not connect to the HTML Report main chain.
+
+Research Intelligence P1.1 adds the accepted AI Datacenter pilot after the evidence pack:
+
+```text
+evidence_pack
+  -> research_intelligence_p1_<code>.json
+  -> research_questions_p1_<code>.json / .md
+```
+
+P1.1 is limited to `strategy_type=ai_datacenter_infrastructure` with `cooling_liquid_cooling_infrastructure` and `datacenter_operator`. It does not call an LLM, does not fetch new data, does not connect new sources, does not mutate deterministic pipeline outputs, and does not connect to the HTML Report main chain or Dashboard.
+
+P1.1 enforces `company_transmission_path` in schema and builder logic. If no concrete evidence-pack field value or data point can verify the company transmission path, the field must be exactly `传导路径无法从当前证据包验证` and the driver `confidence_cap` must be `not_assessable`. P1.1 also counts source independence by source bucket rather than file count, article count, or repeated API rows.
 
 ## 3. Evidence Pack
 
@@ -171,6 +185,22 @@ The runner reads `output/evidence_pack_<code>.json` and writes:
 This workflow does not call OpenAI or any other model API, does not use network access, and does not connect new data sources. It produces an independent analyst-layer artifact focused on source hierarchy, evidence classification, strategy-aware business-financial cross-validation, rule-triggered contradiction detection, P0/P1/P2 research questions with evidence triggers, and IR / manual review questions.
 
 P0.1 accepted behavior adds template sharpening and fallback cleanup to this same workflow. P0 questions still require `evidence_trigger`; P1/P2 questions should avoid generic fallback wording when the strategy context provides a sharper question. The generated `research_intelligence` and `research_questions` files remain runtime artifacts, not committed source.
+
+## 5.2 Research Intelligence P1.1 AI Datacenter Pilot Workflow
+
+Run:
+
+```bash
+python -m src.fundamental_skill.ai_analyst.research_intelligence_p1_runner --code 002837
+```
+
+The runner reads `output/evidence_pack_<code>.json`, may read `output/research_intelligence_<code>.json`, and writes:
+
+- `output/research_intelligence_p1_<code>.json`
+- `output/research_questions_p1_<code>.json`
+- `output/research_questions_p1_<code>.md`
+
+This workflow is an independent driver-factor matrix artifact. It keeps policy, news, theme heat, customer capex, capex, contract liabilities, PUE / MW / cabinet metrics, utilization, and liquid-cooling revenue evidence-gated. Missing fields remain `missing` or `not_assessable`; they are not fabricated into facts.
 
 ## 6. Why v1 Does Not Call an API
 

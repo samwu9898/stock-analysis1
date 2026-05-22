@@ -6,6 +6,8 @@ Revision: v1.1
 
 Stage: Design audit only. This document adds design guidance only. It must not change code, tests, pipeline behavior, classifier rules, connectors, scoring, readiness, HTML renderer, Dashboard, generated output, regression fixtures, or existing artifact semantics.
 
+Implementation status: P1.1 AI Datacenter pilot has been implemented and accepted after this v1.1 design. The accepted pilot is limited to `ai_datacenter_infrastructure` with `cooling_liquid_cooling_infrastructure` and `datacenter_operator`; it outputs independent `research_intelligence_p1_<code>.json`, `research_questions_p1_<code>.json`, and `research_questions_p1_<code>.md` artifacts. Acceptance covered `002837` and `300442`, with latest recorded pytest result `402 passed` and regression suite result `passed=47 failed=0 total=47`.
+
 ## 1. P1 Positioning
 
 Research Intelligence P1 is the next independent research-intelligence layer above the accepted P0 / P0.1 / P0.2 baseline.
@@ -814,13 +816,15 @@ This P1 design is acceptable when:
 
 ## 16. Implementation Recommendation
 
-Recommendation: enter P1.1 implementation only after this v1.1 design is accepted and the three required preconditions are complete:
+P1.1 implementation status: implemented / accepted. The first AI Datacenter pilot baseline is frozen unless a later acceptance stage reopens it. The implementation includes `company_transmission_path` schema + builder enforcement, source-bucket independent counting, conservative `not_assessable` handling, and independent P1 JSON / Markdown artifacts. It remains outside connectors, HTML display, Dashboard display, project database, peer benchmark, all-strategy expansion, and live macro / policy data.
+
+Historical pre-implementation gate: P1.1 implementation was allowed only after this v1.1 design was accepted and the three required preconditions were complete:
 
 - `company_transmission_path` schema / builder enforcement;
 - source-bucket-based independent-source counting;
 - P1.1 pilot narrowing to `ai_datacenter_infrastructure`.
 
-The recommended first implementation slice is P1.1:
+The implemented first slice is P1.1:
 
 ```text
 evidence-pack-only P1 schema
@@ -831,6 +835,6 @@ evidence-pack-only P1 schema
 + independent P1 JSON / Markdown artifacts
 ```
 
-Do not start with connectors, HTML display, Dashboard display, project database, peer benchmark, all-strategy expansion, or live macro / policy data. The first value of P1 is to make the current evidence boundaries sharper and convert missing macro / industry / project assumptions into answerable research questions.
+The accepted baseline did not start with connectors, HTML display, Dashboard display, project database, peer benchmark, all-strategy expansion, or live macro / policy data. The first value of P1 remains making the current evidence boundaries sharper and converting missing macro / industry / project assumptions into answerable research questions.
 
 After P1.1 pilot artifacts for 002837 and 300442 pass manual quality review, expand to other `strategy_type` values through P1.1 expansion or later phases.

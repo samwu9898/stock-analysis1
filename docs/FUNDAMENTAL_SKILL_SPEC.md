@@ -21,6 +21,14 @@ Research Intelligence P0 is an upper AI analyst artifact above the deterministic
 
 It does not modify `FundamentalAnalysisResult`, deterministic pipeline behavior, classifier output, connector mappings, scoring, readiness, result assembly, or HTML rendering. It is a rule-triggered, evidence-gated research question discovery layer, not a trading system, not a technical-analysis module, and not a report renderer.
 
+Research Intelligence P1.1 is the accepted AI Datacenter pilot artifact in the AI analyst layer. It reads the existing evidence pack, may read the P0 pack, and writes an independent driver-factor matrix plus driver research questions:
+
+- `output/research_intelligence_p1_<code>.json`
+- `output/research_questions_p1_<code>.json`
+- `output/research_questions_p1_<code>.md`
+
+P1.1 is limited to `ai_datacenter_infrastructure` with `cooling_liquid_cooling_infrastructure` and `datacenter_operator`. It does not change deterministic pipeline behavior, classifier output, connector mappings, scoring, readiness, result assembly, `status`, `confidence`, `score`, `strategy_type`, or `sub_type`. It does not output trading advice, target prices, position sizing, technical analysis, or K-line content, and it does not connect to the HTML Report / Dashboard main chain.
+
 Research Intelligence P0.1 is the accepted template-sharpening layer for that same AI analyst artifact. It turns generic missing-field follow-ups into strategy-aware research questions selected from `strategy_type`, `sub_type`, `missing_evidence`, and triggered `rule_id`. It keeps the deterministic pipeline unchanged, does not change `status`, `confidence`, `score`, `strategy_type`, or `sub_type`, and does not output trading advice or technical analysis.
 
 ## 1. 定位

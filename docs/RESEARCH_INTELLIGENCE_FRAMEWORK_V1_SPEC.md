@@ -31,6 +31,8 @@ output/fundamental_<code>.json
 + output/evidence_pack_<code>.json
   -> output/research_intelligence_<code>.json
   -> output/research_questions_<code>.json
+  -> output/research_intelligence_p1_<code>.json      # P1.1 AI Datacenter pilot when requested
+  -> output/research_questions_p1_<code>.json/.md     # P1.1 AI Datacenter pilot when requested
 ```
 
 It does not modify existing:
@@ -82,6 +84,23 @@ P0.1 final acceptance refreshed and reviewed four runtime samples:
 - `002050` Sanhua Intelligent Controls: robotics or other new-business standalone revenue, orders, customers, mass-production evidence, major-customer revenue share, valuation digestion, and separation between expectation and realized evidence.
 - `603259` WuXi AppTec: backlog / new orders, contract liabilities as partial proxy only, overseas / US customer exposure, Biosecure Act / overseas regulatory review, customer-loss risk, capacity utilization, project stage, and customer concentration.
 - `300442` Range Intelligent Computing: customer contract type and term, cabinet / MW scale, rack-up pace, PUE, AIDC / intelligent-computing demand conversion into contracts / utilization / revenue / operating cash flow, capex-to-revenue bridge, depreciation, and power cost.
+
+### 2.3 P1.1 AI Datacenter Pilot Baseline
+
+Research Intelligence P1.1 has entered implementation and the AI Datacenter pilot baseline has been accepted. This does not change the P0 / P0.1 / P0.2 definitions above.
+
+Accepted P1.1 behavior:
+
+- supports only `strategy_type=ai_datacenter_infrastructure`;
+- supports only `cooling_liquid_cooling_infrastructure` and `datacenter_operator`;
+- reads `output/evidence_pack_<code>.json` and may read the optional P0 pack;
+- writes independent `output/research_intelligence_p1_<code>.json`, `output/research_questions_p1_<code>.json`, and `output/research_questions_p1_<code>.md`;
+- does not call LLMs, use network access, connect new data sources, mutate deterministic pipeline outputs, or connect to HTML / Dashboard;
+- enforces `company_transmission_path` in schema and builder logic;
+- counts independent sources by source bucket;
+- preserves `not_assessable` for missing PUE / MW / cabinet / utilization / liquid-cooling revenue / customer-contract bridges.
+
+Accepted pilot samples: `002837` and `300442`. Latest recorded validation: `pytest` `402 passed`; regression suite `passed=47 failed=0 total=47`.
 
 ## 3. P0 Scope
 
