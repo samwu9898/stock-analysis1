@@ -50,6 +50,26 @@ It does not modify existing:
 
 P0 produces independent artifacts. It does not feed or alter HTML Report Generator v2.2. HTML / Dashboard integration is P2.
 
+### 2.1 P0 Implementation Status
+
+Research Intelligence P0 has been implemented and the baseline has been accepted.
+
+Current accepted behavior:
+
+- outputs independent artifacts: `output/research_intelligence_<code>.json`, `output/research_questions_<code>.json`, and `output/research_questions_<code>.md`;
+- reads only `output/evidence_pack_<code>.json`;
+- does not call LLMs;
+- does not use network access;
+- does not connect new data sources;
+- does not modify `status`, `confidence`, `score`, `strategy_type`, or `sub_type`;
+- does not connect to the HTML Report main chain;
+- `002837` smoke passed;
+- latest recorded pytest result: `374 passed`;
+- latest recorded regression suite result: `passed=47 failed=0 total=47`;
+- generated `output/` artifacts remain runtime products and should not be committed.
+
+This documentation sync stage is documentation-only, so pytest and the regression suite are not rerun here.
+
 ## 3. P0 Scope
 
 P0 is intentionally narrow. It should implement only:
@@ -664,7 +684,7 @@ Because this is documentation only, no pytest run is required.
 
 ## 16. Implementation Recommendation
 
-Recommendation: proceed to `Research Intelligence Framework v1 P0 Implementation` only after this v1.1 design is accepted.
+Recommendation status: P0 implementation has proceeded and the baseline has been accepted. The original implementation constraints below remain the accepted boundary for future maintenance and P0.1 work.
 
 Recommended P0 implementation constraints:
 

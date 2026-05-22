@@ -17,13 +17,14 @@ stock code
   -> real public data
   -> deterministic fundamental pipeline
   -> evidence pack
+  -> optional Research Intelligence P0 research-question artifacts
   -> AI prompt / report
   -> optional Fundamental HTML Report Generator v2.1
   -> optional HTML Report Visual Audit Tool v1
   -> Dashboard v3 report reader / audit view
 ```
 
-The system should turn an A-share stock code into auditable public-data blocks, run a deterministic fundamental pipeline, assemble evidence for AI consumption, generate or preview an AI analyst prompt/report, optionally render a pure-fundamental Chinese HTML report, optionally audit the HTML visually, and expose the result in a local Dashboard v3 reader for Chinese fundamental-report inspection and audit.
+The system should turn an A-share stock code into auditable public-data blocks, run a deterministic fundamental pipeline, assemble evidence for AI consumption, optionally generate Research Intelligence P0 research-question artifacts, generate or preview an AI analyst prompt/report, optionally render a pure-fundamental Chinese HTML report, optionally audit the HTML visually, and expose the result in a local Dashboard v3 reader for Chinese fundamental-report inspection and audit.
 
 ## 3. Current Architecture
 
@@ -39,6 +40,7 @@ Core modules:
 - `FundamentalScoringEngine`: scores fundamental dimensions under strategy-specific weights and confidence constraints.
 - `FundamentalResultAssembler`: assembles the final structured fundamental result.
 - `AI Analyst Layer`: builds evidence packs and model-ready prompts; current primary mode is `prompt_only`.
+- `Research Intelligence P0`: independent AI analyst artifact builder that reads only `evidence_pack`, builds a research intelligence pack and research question set, and acts as a research-question discovery layer rather than a report renderer or trading system.
 - `Fundamental HTML Report Generator v2.1`: upper AI analyst display capability that creates a model prompt for structured `FundamentalHtmlReport` JSON and renders an existing formal JSON into self-contained HTML.
 - `HTML Report Visual Audit Tool v1`: local Playwright / Chromium screenshot and manifest tool for existing HTML reports.
 - `Dashboard v3`: local Streamlit fundamental AI report reader / auditor. The main view is Chinese-first and highlights the top conclusion, one-line conclusion, strategy / sub-type explanations, evidence map, risks, evidence gaps, must-track indicators, confidence breakdown, data quality, report stale / mismatch status, and schema / safety / garbled guard state. Evidence Pack, Source Trace, Raw JSON, Prompt, and legacy fields are collapsed as audit material.
@@ -59,7 +61,9 @@ stock_code
   -> FundamentalResultAssembler
   -> FundamentalAnalysisResult
   -> AI Analyst Layer
-  -> evidence_pack + ai_prompt / ai_report
+  -> evidence_pack
+  -> optional research_intelligence + research_questions
+  -> ai_prompt / ai_report
   -> html report prompt -> model-generated FundamentalHtmlReport JSON -> render_existing -> self-contained HTML
   -> visual audit screenshots + manifest
   -> Dashboard v3 report reader / audit display
@@ -70,6 +74,7 @@ stock_code
 - `RealDataConnector v2.3a`
 - `ExternalCommodityPriceConnector v1.1`
 - `AI Analyst Layer prompt_only`
+- `Research Intelligence P0`
 - `Fundamental HTML Report Generator v2.1`
 - `HTML Report Visual Audit Tool v1`
 - `Dashboard v3`
@@ -161,6 +166,7 @@ python -m pytest tests --basetemp=.pytest_tmp -p no:cacheprovider
 python scripts/run_regression_suite.py
 python -m src.fundamental_skill.real_stock_runner --code 601698 --output output/fundamental_601698.json --force-refresh
 python -m src.fundamental_skill.ai_analyst.runner --code 601698 --mode prompt_only
+python -m src.fundamental_skill.ai_analyst.research_intelligence_runner --code 002837
 python -m src.fundamental_skill.ai_analyst.html_report_runner --code 002050 --mode prompt_only
 python -m src.fundamental_skill.ai_analyst.html_report_runner --code 002050 --mode render_existing
 python scripts/visual_audit_html_report.py --html output/reports/fundamental_report_002050.html --code 002050 --output-dir output/visual_audit/002050
@@ -189,6 +195,14 @@ HTML report boundaries:
 - It must not output trading advice, target prices, account actions, position sizing, technical analysis, K-line content, or price execution language.
 - It must not mutate the deterministic pipeline, `RealDataConnector`, classifier, scoring / readiness, schema, dashboard, tests, regression expected files, or output artifacts outside its generated report paths.
 - Skeleton reports are rendering placeholders only and must not be presented as formal reports; skeleton and formal report paths are isolated.
+
+Research Intelligence P0 boundaries:
+
+- Research Intelligence P0 reads only `output/evidence_pack_<code>.json`.
+- It does not call LLMs, use network access, connect new data sources, or connect trading accounts.
+- It does not mutate deterministic results, `status`, `confidence`, `score`, `strategy_type`, `sub_type`, connector, classifier, scoring, readiness, result assembler, HTML renderer, or report outputs.
+- It writes only independent artifacts: `output/research_intelligence_<code>.json`, `output/research_questions_<code>.json`, and `output/research_questions_<code>.md`.
+- It is evidence-gated and rule-triggered; missing data should produce not-assessable diagnostics or IR / manual review questions, not invented conclusions.
 
 Interpretation boundaries:
 
@@ -238,6 +252,7 @@ Do not add a new industry framework only because one stock is popular or difficu
 - `latest_news` / AkShare news endpoints may fail.
 - Many industry-specific operating data fields are still missing or not stably obtainable.
 - AI report generation is currently mainly `prompt_only`; API mode is not the primary implemented workflow.
+- Research Intelligence P0 has been accepted as a baseline research-question discovery artifact. The `002837` smoke passed and generated a research intelligence pack plus JSON / Markdown research question set from the existing evidence pack.
 - HTML report generation v2.1 does not automatically call an API; it creates prompts and renders existing formal `FundamentalHtmlReport` JSON.
 - `002050` 三花智控 is an internal successful HTML report sample candidate after v2.1 and visual audit acceptance.
 - `output/`, `output/reports/`, `output/visual_audit/`, `data/`, and `cache/` are generated/runtime artifacts and should not be committed.
@@ -247,6 +262,7 @@ Do not add a new industry framework only because one stock is popular or difficu
 ## 13. Suggested Next Steps
 
 - Keep `README.md` and `docs/PROJECT_CONTEXT_HANDOFF.md` synchronized after major project changes.
+- Research Intelligence P0.1 optimization candidates: sharpen `ai_datacenter_infrastructure` question templates; distinguish liquid-cooling customer validation stage such as POC / testing / certification / batch orders; clarify datacenter room cooling versus ordinary thermal-control boundaries; sharpen the template for revenue growth not converting into profit and operating cash flow.
 - HTML Report Generator v2.1 baseline does not need more repair unless the user reports a specific visual or content issue.
 - Based on user feedback, continue refining the HTML research-report experience, or generate formal HTML reports for other stocks using the existing v2.1 chain.
 - Keep AI Datacenter v1 conservative unless public data sources can reliably validate orders / backlog, customer structure, cabinet / MW / PUE / rack utilization, liquid-cooling revenue, datacenter revenue split, and customer capex-cycle evidence.

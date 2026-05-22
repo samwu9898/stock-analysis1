@@ -19,10 +19,23 @@ It produces:
 
 - `output/evidence_pack_<code>.json`
 - `output/ai_prompt_<code>.md`
+- `output/research_intelligence_<code>.json` when Research Intelligence P0 is requested.
+- `output/research_questions_<code>.json` and `output/research_questions_<code>.md` when Research Intelligence P0 is requested.
 - `output/reports/fundamental_report_prompt_<code>.md` for the HTML report chain when requested.
 - `output/reports/fundamental_report_<code>.html` only after an existing formal `FundamentalHtmlReport` JSON is rendered.
 
 It does not mutate the deterministic pipeline, call AkShare directly, connect to accounts, introduce technical indicators, implement `technical_skill`, or implement `trader_skill`.
+
+Research Intelligence P0 sits after `evidence_pack` generation and before any optional display/reporting layer:
+
+```text
+evidence_pack
+  -> research_intelligence_<code>.json
+  -> research_questions_<code>.json / .md
+  -> optional AI prompt / HTML report workflows
+```
+
+In P0 it is not connected to the HTML Report main chain. It does not call an LLM, does not fetch new data, and does not infer missing facts. It is a deterministic, rule-triggered, evidence-gated artifact for discovering research questions and manual-review / IR questions.
 
 ## 3. Evidence Pack
 
@@ -131,6 +144,22 @@ The runner reads existing output files, builds the evidence pack, generates the 
 
 If `fundamental_<code>.json` or `raw_<code>.json` is missing, the runner asks the user to run `src.fundamental_skill.real_stock_runner` first.
 
+## 5.1 Research Intelligence P0 Workflow
+
+Run:
+
+```bash
+python -m src.fundamental_skill.ai_analyst.research_intelligence_runner --code 002837
+```
+
+The runner reads `output/evidence_pack_<code>.json` and writes:
+
+- `output/research_intelligence_<code>.json`
+- `output/research_questions_<code>.json`
+- `output/research_questions_<code>.md`
+
+This workflow does not call OpenAI or any other model API, does not use network access, and does not connect new data sources. It produces an independent analyst-layer artifact focused on source hierarchy, evidence classification, strategy-aware business-financial cross-validation, rule-triggered contradiction detection, P0/P1/P2 research questions with evidence triggers, and IR / manual review questions.
+
 ## 6. Why v1 Does Not Call an API
 
 v1 is prompt-only by design and does not automatically call an API. This keeps the deterministic pipeline stable and avoids making tests depend on network access, API keys, model availability, or provider-specific behavior.
@@ -209,6 +238,8 @@ The AI analyst layer is limited to fundamental analysis. It must not output trad
 The prompt includes a prohibition list for policy context. Final AI reports should not contain those restricted terms as substantive recommendations. The safety module records detections and separates allowed policy context from blocked report-body usage.
 
 The layer does not delete original evidence. It records safety findings separately.
+
+Research Intelligence P0 inherits the same safety boundary. It must not convert contradiction rules, missing evidence, or IR questions into trading actions. It must also preserve proxy boundaries: contract liabilities are not backlog, capex is not confirmed capacity release, and R&D ratio is not proof of a technology barrier.
 
 Additional HTML report safety boundaries:
 

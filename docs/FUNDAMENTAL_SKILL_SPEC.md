@@ -13,6 +13,14 @@ New v1 outputs mirror `analyst_summary` to `trader_summary`, and `downstream_rev
 
 Current project boundaries remain unchanged: this project does not implement `trader_skill`, does not implement `technical_skill`, does not connect to trading accounts, and does not output trading advice.
 
+Research Intelligence P0 is an upper AI analyst artifact above the deterministic `fundamental_skill` pipeline. It reads the existing evidence pack and writes independent research-question artifacts:
+
+- `output/research_intelligence_<code>.json`
+- `output/research_questions_<code>.json`
+- `output/research_questions_<code>.md`
+
+It does not modify `FundamentalAnalysisResult`, deterministic pipeline behavior, classifier output, connector mappings, scoring, readiness, result assembly, or HTML rendering. It is a rule-triggered, evidence-gated research question discovery layer, not a trading system, not a technical-analysis module, and not a report renderer.
+
 ## 1. 定位
 
 `fundamental_skill` 是 A 股基本面分析 Skill。它只负责判断公司基本面、行业景气、财务质量、估值、风险、催化和后续跟踪指标。
@@ -20,6 +28,7 @@ Current project boundaries remain unchanged: this project does not implement `tr
 它不判断买卖点，不输出交易指令，不给仓位建议，不给目标价，不负责最终交易纪律。它的输出对象是后续综合评估层；当前项目不实现 `trader_skill`，也不引入技术面继续评估。
 
 HTML report generator 属于 AI analyst layer 的上层展示能力，不属于 deterministic `fundamental_skill` pipeline。它把 evidence pack 和模型生成的结构化 `FundamentalHtmlReport` JSON 渲染为纯基本面中文 HTML 研报，不改变 deterministic pipeline，不修改 connector / classifier / scoring / readiness，不输出交易建议，不做技术面。HTML report 和 visual audit 产物写入 `output/`，包括 `output/reports/` 和 `output/visual_audit/`，不进入 git。
+Research Intelligence P0 也属于 AI analyst layer 的上层 artifact，但它不接 HTML Report 主链路；它只把 evidence pack 转成 research intelligence pack 和 research question set，用于发现业务-财务交叉验证问题、规则触发矛盾和 IR / manual review 问题清单。
 
 `fundamental_skill` 只能表达基本面状态：
 

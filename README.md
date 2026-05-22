@@ -20,10 +20,29 @@
 - `FundamentalSkillPipeline`：串联 data adapter、classifier、framework selector、readiness planner、analysis context、scoring engine 和 result assembler。
 - Evidence Pack：把 deterministic pipeline 输出和 raw blocks 压缩成 AI 可消费、可审计的证据包。
 - AI Prompt / AI Report：生成模型可用的基本面分析提示词；当前以 `prompt_only` 工作流为主。
+- Research Intelligence P0：基于 `evidence_pack` 的独立研究问题发现器，输出 source hierarchy、evidence classification、strategy-aware 业务-财务交叉验证、规则触发矛盾检测、P0/P1/P2 research questions 和 IR / manual review question list。
 - Fundamental HTML Report Generator v2.1：基于 evidence pack 生成结构化 `FundamentalHtmlReport` JSON 提示词，并把已生成的正式 JSON 渲染为纯基本面中文 HTML 研报。
 - HTML Report Visual Audit Tool v1：使用 Playwright / Chromium 对本地 HTML 研报进行 desktop、mobile 和 full-page 截图验收，输出视觉审计 manifest。
 - Dashboard v3：本地 Streamlit 基本面 AI 分析报告阅读器 / auditor，主视图中文化展示结论、证据、风险、缺口、must-track 指标、置信度拆解和数据质量；Evidence Pack、Source Trace、Raw JSON、Prompt 默认折叠为审计材料。
 - Industry Framework Workflow：用标准流程扩展行业框架，避免把单只股票、主题热度或 proxy 当成基本面事实。
+
+## Research Intelligence P0
+
+Research Intelligence P0 is an independent AI analyst-layer research-question discovery artifact. It only reads `output/evidence_pack_<code>.json`; it does not call LLMs, use network access, connect new data sources, mutate the deterministic pipeline, or change `status`, `confidence`, `score`, `strategy_type`, or `sub_type`.
+
+Outputs:
+
+- `output/research_intelligence_<code>.json`
+- `output/research_questions_<code>.json`
+- `output/research_questions_<code>.md`
+
+Command:
+
+```bash
+python -m src.fundamental_skill.ai_analyst.research_intelligence_runner --code 002837
+```
+
+Research Intelligence P0 is a research-question finder, not a trading system. It does not output trading advice, target prices, position sizing, technical analysis, or K-line content. It also does not write `output/reports/` and is not connected to the Fundamental HTML Report main chain.
 
 ## Dashboard v3
 
@@ -167,25 +186,33 @@ python -m src.fundamental_skill.ai_analyst.runner --code 601698 --mode prompt_on
 - `output/evidence_pack_<code>.json`
 - `output/ai_prompt_<code>.md`
 
-### 6. 生成 HTML report prompt
+### 6. Generate Research Intelligence P0 artifacts
+
+```bash
+python -m src.fundamental_skill.ai_analyst.research_intelligence_runner --code 002837
+```
+
+This reads `output/evidence_pack_<code>.json` and writes the independent research intelligence pack plus research question set. It does not call model APIs, mutate the deterministic pipeline, or generate / modify HTML reports.
+
+### 7. 生成 HTML report prompt
 
 ```bash
 python -m src.fundamental_skill.ai_analyst.html_report_runner --code 002050 --mode prompt_only
 ```
 
-### 7. 渲染已有正式 HTML report JSON
+### 8. 渲染已有正式 HTML report JSON
 
 ```bash
 python -m src.fundamental_skill.ai_analyst.html_report_runner --code 002050 --mode render_existing
 ```
 
-### 8. 运行 HTML report visual audit
+### 9. 运行 HTML report visual audit
 
 ```bash
 python scripts/visual_audit_html_report.py --html output/reports/fundamental_report_002050.html --code 002050 --output-dir output/visual_audit/002050
 ```
 
-### 9. 打开 Dashboard v3
+### 10. 打开 Dashboard v3
 
 ```bash
 streamlit run dashboard/fundamental_dashboard.py
@@ -198,6 +225,7 @@ Dashboard v3 是本地基本面 AI 分析报告阅读器和审计工具，不调
 ```bash
 python -m src.fundamental_skill.real_stock_runner --code 601698 --output output/fundamental_601698.json --force-refresh
 python -m src.fundamental_skill.ai_analyst.runner --code 601698 --mode prompt_only
+python -m src.fundamental_skill.ai_analyst.research_intelligence_runner --code 002837
 python -m src.fundamental_skill.ai_analyst.html_report_runner --code 002050 --mode prompt_only
 python -m src.fundamental_skill.ai_analyst.html_report_runner --code 002050 --mode render_existing
 python scripts/visual_audit_html_report.py --html output/reports/fundamental_report_002050.html --code 002050 --output-dir output/visual_audit/002050
@@ -261,7 +289,8 @@ Out-of-Sample Audit
 ## 文档入口
 
 - `docs/FUNDAMENTAL_SKILL_SPEC.md`：`fundamental_skill` 输出契约、模块边界和 pipeline 说明。
-- `docs/FUNDAMENTAL_AI_ANALYST_LAYER_SPEC.md`：Evidence Pack、AI Prompt、AI Report 和 Dashboard v3 说明。
+- `docs/FUNDAMENTAL_AI_ANALYST_LAYER_SPEC.md`：Evidence Pack、AI Prompt、AI Report、Research Intelligence P0 和 Dashboard v3 说明。
+- `docs/RESEARCH_INTELLIGENCE_FRAMEWORK_V1_SPEC.md`：Research Intelligence P0 设计、实现状态、artifact 边界和 roadmap。
 - `docs/HTML_REPORT_VISUAL_AUDIT_TOOL_SPEC.md`：HTML Report Visual Audit Tool v1 的使用方式、输出产物和验收边界。
 - `docs/REAL_DATA_CONNECTOR_AUDIT.md`：真实公开数据连接器版本、字段映射、source trace 和限制。
 - `docs/INDUSTRY_FRAMEWORK_DEVELOPMENT_WORKFLOW.md`：新增行业框架的标准流程。
