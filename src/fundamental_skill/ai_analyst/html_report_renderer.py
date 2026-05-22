@@ -106,6 +106,144 @@ def _score_percent(score: Any, max_score: Any) -> int:
     return max(0, min(100, int(score_value / max_value * 100)))
 
 
+def _first_text(*values: Any) -> str:
+    for value in values:
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return ""
+
+
+def _pressure_tone(text: Any) -> str:
+    normalized = str(text or "").lower()
+    if any(token in normalized for token in ("承压", "偏高", "为负", "下降", "下滑", "缺失", "missing", "weak", "low")):
+        return "high"
+    if any(token in normalized for token in ("待验证", "复核", "一般", "中等", "medium", "partial")):
+        return "medium"
+    if any(token in normalized for token in ("健康", "改善", "稳定", "充足", "strong", "high")):
+        return "low"
+    return "medium"
+
+
+def _pressure_label(tone: str) -> str:
+    return {"high": "压力较高", "medium": "需要复核", "low": "相对稳健"}.get(tone, "需要复核")
+
+
+def _pressure_lane(title: str, detail: Any, tone: str | None = None) -> str:
+    tone = tone or _pressure_tone(detail)
+    width = {"high": 86, "medium": 58, "low": 34}.get(tone, 58)
+    return f"""
+    <article class="pressure-lane pressure-{tone}">
+      <div class="pressure-head"><strong>{_e(title)}</strong>{_badge(_pressure_label(tone), tone)}</div>
+      <div class="pressure-track"><i style="width:{width}%"></i></div>
+      <p>{_e(detail)}</p>
+    </article>
+    """
+
+
+def _meta_item(label: str, value: Any, kind: str = "neutral") -> str:
+    return f'<div class="strip-item"><span>{_e(label)}</span><strong>{_e(value)}</strong></div>'
+
+
+def _hero_summary_strip(meta: dict[str, Any], score: Any) -> str:
+    return f"""
+    <div class="summary-strip">
+      {_meta_item("基本面状态", meta.get("status"))}
+      {_meta_item("证据置信度", meta.get("confidence"))}
+      <div class="strip-item score-strip">
+        <span>基本面评分</span><strong>{_e(score)}</strong>
+        <div class="scorebar"><i></i></div>
+      </div>
+      {_meta_item("分析框架", meta.get("strategy_type_label"))}
+      {_meta_item("子类型", meta.get("sub_type_label") or "不适用")}
+      {_meta_item("边界", "纯基本面")}
+    </div>
+    """
+
+
+def _hero_block(
+    report: dict[str, Any],
+    meta: dict[str, Any],
+    core: dict[str, Any],
+    research_anchor: dict[str, Any],
+    question: dict[str, Any],
+    score: Any,
+) -> str:
+    thesis = _first_text(research_anchor.get("main_thesis"), question.get("main_question"), core.get("title"))
+    conflict = _first_text(research_anchor.get("key_conflict"), question.get("key_conflict"))
+    boundary = _first_text(meta.get("data_quality_status"), core.get("evidence_confidence_explanation"))
+    return f"""
+    <section class="hero">
+      <div class="hero-inner">
+        <div class="hero-kicker">
+          <span>基本面研报</span>
+          <span>{_e(meta.get("generated_at"))}</span>
+        </div>
+        {_tags(report.get("hero_tags"))}
+        <div class="hero-layout">
+          <div class="hero-main">
+            <h1>{_e(meta.get("stock_code"))} {_e(meta.get("stock_name"))}</h1>
+            <p class="hero-subtitle">{_e(core.get("title") or "基本面分析报告")}</p>
+            <p class="hero-thesis">{_e(thesis)}</p>
+          </div>
+          <aside class="hero-aside">
+            <div class="aside-label">关键判断</div>
+            <p>{_e(core.get("summary"))}</p>
+          </aside>
+        </div>
+        {_hero_summary_strip(meta, score)}
+        <div class="hero-evidence">
+          <div><span>核心矛盾</span><p>{_e(conflict)}</p></div>
+          <div><span>证据边界</span><p>{_e(boundary)}</p></div>
+        </div>
+      </div>
+    </section>
+    """
+
+
+def _editorial_conclusion(core: dict[str, Any], research_anchor: dict[str, Any], question: dict[str, Any]) -> str:
+    proven = research_anchor.get("what_is_proven") or core.get("supporting_points")
+    unproven = research_anchor.get("what_is_unproven") or core.get("limiting_points")
+    review = core.get("must_track_points") or question.get("what_would_confirm")
+    conflict = _first_text(research_anchor.get("key_conflict"), question.get("key_conflict"))
+    return f"""
+    <section id="conclusion" class="card editorial-conclusion">
+      <div class="section-eyebrow">核心结论</div>
+      <h2>{_e(core.get("title") or "核心结论")}</h2>
+      <p class="lead-judgment">{_e(core.get("summary"))}</p>
+      <div class="conflict-callout"><span>主矛盾</span><p>{_e(conflict)}</p></div>
+      <div class="evidence-grid">
+        <article class="evidence-card proven"><span>01</span><h3>已证明</h3>{_list(proven)}</article>
+        <article class="evidence-card unproven"><span>02</span><h3>待验证</h3>{_list(unproven)}</article>
+        <article class="evidence-card review"><span>03</span><h3>关键复核</h3>{_list(review)}</article>
+      </div>
+      <p class="confidence-note">{_e(core.get("evidence_confidence_explanation"))}</p>
+    </section>
+    """
+
+
+def _financial_quality_panel(financial: dict[str, Any]) -> str:
+    diagnosis_tone = _pressure_tone(financial.get("final_diagnosis") or financial.get("diagnosis_level"))
+    return f"""
+    <div class="financial-diagnosis">
+      <div class="diagnosis-summary pressure-{diagnosis_tone}">
+        <span>诊断等级</span>
+        <strong>{_e(financial.get("diagnosis_level"))}</strong>
+        <p>{_e(financial.get("final_diagnosis"))}</p>
+      </div>
+      <div class="pressure-grid">
+        {_pressure_lane("收入质量", financial.get("revenue_quality"))}
+        {_pressure_lane("利润质量", financial.get("profit_quality"))}
+        {_pressure_lane("现金流质量", financial.get("cashflow_quality"))}
+        {_pressure_lane("应收压力", financial.get("receivables_pressure"))}
+        {_pressure_lane("存货压力", financial.get("inventory_pressure"))}
+        {_pressure_lane("capex 压力", financial.get("capex_pressure"))}
+        {_pressure_lane("合同负债", financial.get("contract_liabilities_interpretation"))}
+        {_pressure_lane("自由现金流", financial.get("free_cashflow_interpretation"))}
+      </div>
+    </div>
+    """
+
+
 def _quality_score_cards(breakdown: dict[str, Any]) -> str:
     labels = [
         ("industry_position", "行业位置"),
@@ -301,12 +439,29 @@ def render_fundamental_html_report(report: dict[str, Any]) -> str:
     nav a {{ color:var(--muted); font-size:14px; white-space:nowrap; padding:5px 0; }}
     nav a:hover {{ color:var(--gold-2); }}
     .theme-btn {{ flex:0 0 auto; border:1px solid var(--line); background:var(--panel-2); color:var(--text); border-radius:6px; padding:7px 10px; cursor:pointer; }}
-    .hero {{ max-width:100%; overflow:hidden; padding:54px 28px 30px; background:radial-gradient(circle at 20% 0%, rgba(215,181,109,.18), transparent 34%), var(--bg); }}
+    .hero {{ max-width:100%; overflow:hidden; padding:34px 28px 22px; background:radial-gradient(circle at 18% 0%, rgba(215,181,109,.18), transparent 34%), linear-gradient(180deg,color-mix(in srgb,var(--panel) 32%,var(--bg)),var(--bg)); border-bottom:1px solid color-mix(in srgb,var(--gold) 28%,var(--line)); }}
     .hero-inner {{ width:100%; max-width:1180px; min-width:0; margin:0 auto; }}
-    .hero h1 {{ margin:0 0 12px; font-size:42px; line-height:1.15; letter-spacing:0; overflow-wrap:anywhere; word-break:break-word; }}
-    .hero p {{ max-width:880px; color:var(--muted); margin:0; }}
+    .hero-kicker {{ display:flex; justify-content:space-between; gap:14px; color:var(--gold-2); font-size:13px; margin-bottom:14px; }}
+    .hero-layout {{ display:grid; grid-template-columns:minmax(0,1.35fr) minmax(280px,.65fr); gap:22px; align-items:stretch; }}
+    .hero h1 {{ margin:0 0 6px; font-size:46px; line-height:1.08; letter-spacing:0; overflow-wrap:anywhere; word-break:break-word; }}
+    .hero p {{ color:var(--muted); margin:0; }}
+    .hero-subtitle {{ max-width:920px; font-size:22px; color:var(--text); font-weight:750; }}
+    .hero-thesis {{ max-width:900px; margin-top:14px !important; font-size:16px; }}
+    .hero-aside {{ min-width:0; max-width:100%; border:1px solid color-mix(in srgb,var(--gold) 42%,var(--line)); border-radius:8px; padding:16px; background:color-mix(in srgb,var(--gold) 8%,var(--panel)); box-shadow:var(--shadow); }}
+    .aside-label {{ color:var(--gold-2); font-size:13px; font-weight:700; margin-bottom:8px; }}
+    .hero-aside p {{ color:var(--text); font-size:15px; line-height:1.75; }}
     .tag-row {{ display:flex; flex-wrap:wrap; min-width:0; max-width:100%; gap:8px; margin:0 0 18px; }}
     .hero-tag {{ display:inline-flex; align-items:center; max-width:100%; min-height:28px; padding:3px 10px; border:1px solid color-mix(in srgb,var(--gold) 55%,var(--line)); border-radius:999px; color:var(--gold-2); background:color-mix(in srgb,var(--gold) 10%,transparent); font-size:13px; white-space:normal; }}
+    .summary-strip {{ display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px; margin-top:18px; padding:10px; border:1px solid var(--line); border-radius:8px; background:color-mix(in srgb,var(--panel) 82%,transparent); }}
+    .strip-item {{ min-width:0; border-right:1px solid var(--line); padding:4px 10px; }}
+    .strip-item:last-child {{ border-right:0; }}
+    .strip-item span {{ display:block; color:var(--muted); font-size:12px; }}
+    .strip-item strong {{ display:block; margin:2px 0 4px; font-size:15px; line-height:1.35; }}
+    .score-strip .scorebar {{ height:7px; margin-top:6px; }}
+    .hero-evidence {{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px; margin-top:12px; }}
+    .hero-evidence div {{ min-width:0; border:1px solid var(--line); border-radius:8px; padding:12px 14px; background:color-mix(in srgb,var(--panel-2) 72%,transparent); }}
+    .hero-evidence span {{ display:block; color:var(--gold-2); font-size:13px; font-weight:700; margin-bottom:4px; }}
+    .hero-evidence p {{ font-size:14px; }}
     .meta-grid {{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); min-width:0; max-width:100%; gap:12px; margin-top:28px; }}
     .metric {{ min-width:0; max-width:100%; background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:14px; box-shadow:var(--shadow); }}
     .metric span {{ display:block; color:var(--muted); font-size:13px; }}
@@ -315,14 +470,42 @@ def render_fundamental_html_report(report: dict[str, Any]) -> str:
     .scorebar i {{ display:block; width:{score_width}%; height:100%; background:linear-gradient(90deg,var(--gold),var(--gold-2)); }}
     main {{ width:100%; max-width:1180px; min-width:0; margin:0 auto; padding:18px 28px 48px; }}
     .card {{ min-width:0; max-width:100%; background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:24px; margin:18px 0; box-shadow:var(--shadow); }}
-    .card > *, .mini > *, .metric > *, .scenario > *, .risk-card > *, .quality-score > *, .chain-node > * {{ min-width:0; max-width:100%; }}
+    .card > *, .mini > *, .metric > *, .scenario > *, .risk-card > *, .quality-score > *, .chain-node > *, .pressure-lane > *, .evidence-card > * {{ min-width:0; max-width:100%; }}
     .highlight {{ border-color:color-mix(in srgb,var(--gold) 55%,var(--line)); background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 12%,var(--panel)),var(--panel)); }}
+    .editorial-conclusion {{ border-color:color-mix(in srgb,var(--gold) 58%,var(--line)); background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 14%,var(--panel)),var(--panel)); }}
+    .section-eyebrow {{ display:inline-flex; color:var(--bg); background:var(--gold-2); border-radius:999px; padding:2px 10px; font-size:12px; font-weight:800; margin-bottom:12px; }}
+    .lead-judgment {{ font-size:17px; color:var(--text); margin-bottom:16px; }}
+    .conflict-callout {{ border-left:3px solid var(--gold-2); background:color-mix(in srgb,var(--panel-2) 82%,transparent); padding:12px 14px; border-radius:6px; margin-bottom:16px; }}
+    .conflict-callout span {{ display:block; color:var(--gold-2); font-size:13px; font-weight:700; margin-bottom:4px; }}
+    .evidence-grid {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }}
+    .evidence-card {{ min-width:0; background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:16px; }}
+    .evidence-card > span {{ display:inline-flex; color:var(--gold-2); font-size:12px; font-weight:800; margin-bottom:6px; }}
+    .evidence-card.proven {{ border-color:color-mix(in srgb,var(--ok) 40%,var(--line)); }}
+    .evidence-card.unproven {{ border-color:color-mix(in srgb,var(--gold) 45%,var(--line)); }}
+    .evidence-card.review {{ border-color:color-mix(in srgb,var(--risk) 35%,var(--line)); }}
+    .confidence-note {{ color:var(--muted); border-top:1px solid var(--line); padding-top:12px; margin-top:14px; }}
     h2 {{ margin:0 0 16px; font-size:24px; }}
     h3 {{ margin:0 0 10px; font-size:18px; }}
     h4 {{ margin:14px 0 6px; font-size:14px; color:var(--gold-2); }}
     .muted {{ color:var(--muted); }}
     .two-col {{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); min-width:0; max-width:100%; gap:16px; }}
     .three-col {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }}
+    .financial-diagnosis {{ display:grid; grid-template-columns:minmax(240px,.34fr) minmax(0,.66fr); gap:16px; }}
+    .diagnosis-summary {{ min-width:0; border:1px solid var(--line); border-radius:8px; padding:18px; background:var(--panel-2); }}
+    .diagnosis-summary span {{ display:block; color:var(--muted); font-size:13px; }}
+    .diagnosis-summary strong {{ display:block; color:var(--gold-2); font-size:28px; line-height:1.2; margin:4px 0 10px; }}
+    .pressure-grid {{ min-width:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }}
+    .pressure-lane {{ min-width:0; max-width:100%; border:1px solid var(--line); border-radius:8px; padding:12px; background:var(--panel-2); }}
+    .pressure-head {{ display:flex; align-items:center; justify-content:space-between; gap:8px; }}
+    .pressure-track {{ height:7px; margin:9px 0; border-radius:999px; overflow:hidden; background:color-mix(in srgb,var(--line) 55%,transparent); }}
+    .pressure-track i {{ display:block; height:100%; border-radius:999px; background:var(--gold-2); }}
+    .pressure-lane p {{ font-size:13px; color:var(--muted); }}
+    .pressure-high .pressure-track i {{ background:var(--risk); }}
+    .pressure-medium .pressure-track i {{ background:var(--gold-2); }}
+    .pressure-low .pressure-track i {{ background:var(--ok); }}
+    .badge-high {{ border-color:var(--risk); color:var(--risk); }}
+    .badge-medium {{ border-color:var(--gold); color:var(--gold-2); }}
+    .badge-low {{ border-color:var(--ok); color:var(--ok); }}
     .quality-grid {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }}
     .three-col, .quality-grid, .scenario-grid, .risk-grid, .tracking-grid, .chain-map {{ min-width:0; max-width:100%; }}
     .quality-score {{ min-width:0; max-width:100%; background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:16px; }}
@@ -361,44 +544,19 @@ def render_fundamental_html_report(report: dict[str, Any]) -> str:
     .risk-line span {{ min-width:0; }}
     svg {{ max-width:100%; height:auto; }}
     footer {{ width:100%; min-width:0; border-top:1px solid var(--line); padding:24px 28px 40px; color:var(--muted); max-width:1180px; margin:0 auto; }}
-    @media (max-width:900px) {{ .meta-grid,.two-col,.three-col,.scenario-grid,.risk-grid,.quality-grid,.tracking-grid,.chain-map {{ grid-template-columns:1fr; }} .chain-arrow {{ display:none; }} .hero h1 {{ font-size:32px; }} .topbar {{ padding:10px 16px; }} table {{ min-width:640px; }} .compact-table table {{ min-width:520px; }} main,.hero {{ padding-left:16px; padding-right:16px; }} }}
+    @media (max-width:900px) {{ .hero-layout,.hero-evidence,.financial-diagnosis,.pressure-grid,.evidence-grid,.meta-grid,.two-col,.three-col,.scenario-grid,.risk-grid,.quality-grid,.tracking-grid,.chain-map {{ grid-template-columns:1fr; }} .summary-strip {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .strip-item {{ border-right:0; border-bottom:1px solid var(--line); }} .strip-item:nth-last-child(-n+2) {{ border-bottom:0; }} .chain-arrow {{ display:none; }} .hero {{ padding-top:24px; padding-bottom:16px; }} .hero h1 {{ font-size:34px; }} .hero-subtitle {{ font-size:19px; }} .hero-thesis {{ font-size:15px; }} .hero-aside p {{ font-size:14px; }} .topbar {{ padding:10px 16px; }} table {{ min-width:640px; }} .compact-table table {{ min-width:520px; }} main,.hero {{ padding-left:16px; padding-right:16px; }} }}
+    @media (max-width:520px) {{ .summary-strip {{ grid-template-columns:1fr 1fr; gap:6px; padding:8px; }} .strip-item {{ padding:4px 6px; }} .strip-item strong {{ font-size:14px; }} .hero-kicker {{ flex-direction:column; gap:2px; }} .hero h1 {{ font-size:30px; }} .hero-aside {{ padding:12px; }} .hero-evidence div {{ padding:10px; }} .card {{ padding:18px; }} }}
   </style>
 </head>
 <body>
   <header class="topbar"><div class="brand">基本面研报</div><nav>{nav_html}</nav><button class="theme-btn" type="button" onclick="document.body.classList.toggle('light')">主题</button></header>
-  <section class="hero">
-    <div class="hero-inner">
-      {_tags(report.get("hero_tags"))}
-      <h1>{_e(meta.get("stock_code"))} {_e(meta.get("stock_name"))} 基本面分析报告</h1>
-      <p>{_e(core.get("summary"))}</p>
-      <div class="meta-grid">
-        <div class="metric"><span>分析框架</span><strong>{_e(meta.get("strategy_type_label"))}</strong></div>
-        <div class="metric"><span>基本面状态</span><strong>{_e(meta.get("status"))}</strong></div>
-        <div class="metric"><span>证据置信度</span><strong>{_e(meta.get("confidence"))}</strong></div>
-        <div class="metric"><span>基本面评分</span><strong>{_e(score)}</strong><div class="scorebar"><i></i></div></div>
-        <div class="metric"><span>子类型</span><strong>{_e(meta.get("sub_type_label") or "不适用")}</strong></div>
-        <div class="metric"><span>数据质量</span><strong>{_e(meta.get("data_quality_status"))}</strong></div>
-        <div class="metric"><span>生成时间</span><strong>{_e(meta.get("generated_at"))}</strong></div>
-        <div class="metric"><span>边界</span><strong>纯基本面</strong></div>
-      </div>
-    </div>
-  </section>
+  {_hero_block(report, meta, core, research_anchor, question, score)}
   <main>
-    <section id="conclusion" class="card highlight">
-      <h2>{_e(core.get("title") or "核心结论")}</h2>
-      <p>{_e(core.get("summary"))}</p>
-      <div class="mini"><h3>核心矛盾</h3><p>{_e(research_anchor.get("key_conflict") or question.get("key_conflict"))}</p></div>
-      <div class="three-col">
-        <div class="mini"><h3>支持证据</h3>{_list(core.get("supporting_points"))}</div>
-        <div class="mini"><h3>限制因素</h3>{_list(core.get("limiting_points"))}</div>
-        <div class="mini"><h3>必须跟踪</h3>{_list(core.get("must_track_points"))}</div>
-      </div>
-      <p class="muted">{_e(core.get("evidence_confidence_explanation"))}</p>
-    </section>
+    {_editorial_conclusion(core, research_anchor, question)}
     {_section("profile", "公司画像", f'<div class="two-col"><div class="mini"><h3>主营业务</h3><p>{_e(profile.get("main_business"))}</p><h3>业务锚点</h3><p>{_e(profile.get("core_business_anchor"))}</p></div><div class="mini"><h3>框架身份</h3><p>{_e(profile.get("framework_identity"))}</p><h3>公司属性</h3><p>{_e(profile.get("ownership_or_company_nature"))}</p></div></div><h3>业务分部</h3>{_table(profile.get("business_segments"))}')}
     {_section("updates", "近期基本面动态", f'<div class="two-col"><div class="mini"><h3>财务更新</h3><p>{_e(updates.get("financial_update"))}</p></div><div class="mini"><h3>业务更新</h3><p>{_e(updates.get("business_update"))}</p></div><div class="mini"><h3>政策与行业</h3><p>{_e(updates.get("policy_or_industry_update"))}</p></div><div class="mini"><h3>新闻可用性</h3><p>{_e(updates.get("unavailable_news_note") or "新闻源不可用；不补写未经验证的近期事件。")}</p></div></div>')}
     {_section("business", "业务构成分析", f'{_table(business.get("segment_table"))}<div class="three-col"><div class="mini"><h3>核心业务</h3><p>{_e(business.get("core_segment"))}</p></div><div class="mini"><h3>拖累业务</h3><p>{_e(business.get("drag_segment"))}</p></div><div class="mini"><h3>成长弹性来源</h3><p>{_e(business.get("growth_optional_segment"))}</p></div></div><p>{_e(business.get("analysis"))}</p>')}
-    {_section("financial", "财务质量诊断", f'<div class="two-col"><div class="mini"><h3>收入质量</h3><p>{_e(financial.get("revenue_quality"))}</p><h3>利润质量</h3><p>{_e(financial.get("profit_quality"))}</p><h3>现金流质量</h3><p>{_e(financial.get("cashflow_quality"))}</p></div><div class="mini"><h3>诊断等级</h3>{_badge(financial.get("diagnosis_level"), "neutral")}<p>{_e(financial.get("final_diagnosis"))}</p></div></div><div class="three-col"><div class="mini"><h3>应收压力</h3><p>{_e(financial.get("receivables_pressure"))}</p></div><div class="mini"><h3>存货压力</h3><p>{_e(financial.get("inventory_pressure"))}</p></div><div class="mini"><h3>合同负债解释</h3><p>{_e(financial.get("contract_liabilities_interpretation"))}</p></div><div class="mini"><h3>资本开支压力</h3><p>{_e(financial.get("capex_pressure"))}</p></div><div class="mini"><h3>自由现金流</h3><p>{_e(financial.get("free_cashflow_interpretation"))}</p></div></div>')}
+    {_section("financial", "财务质量诊断", _financial_quality_panel(financial))}
     {_section("ratio-caveats", "财务比例口径提示", _financial_caveats(report.get("financial_ratio_caveats")))}
     {_section("anchor", "研究主线 / 核心矛盾", f'<div class="two-col"><div class="mini"><h3>研究主线</h3><p>{_e(research_anchor.get("main_thesis"))}</p><h3>当前阶段</h3><p>{_e(research_anchor.get("current_stage"))}</p></div><div class="mini"><h3>核心矛盾</h3><p>{_e(research_anchor.get("key_conflict"))}</p></div><div class="mini"><h3>已被证明</h3>{_list(research_anchor.get("what_is_proven"))}</div><div class="mini"><h3>尚未证明</h3>{_list(research_anchor.get("what_is_unproven"))}</div></div>')}
     {_section("quality-score", "六维质量评分", _quality_score_cards(quality_breakdown))}

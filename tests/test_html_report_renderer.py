@@ -108,6 +108,15 @@ def test_html_renderer_contains_required_chinese_sections():
     assert "基本面弹性公式" in html
     assert "分层跟踪计划" in html
     assert "财务比例口径提示" in html
+    assert "hero-layout" in html
+    assert "summary-strip" in html
+    assert "editorial-conclusion" in html
+    assert "evidence-grid" in html
+    assert "financial-diagnosis" in html
+    assert "pressure-lane" in html
+    assert "已证明" in html
+    assert "待验证" in html
+    assert "关键复核" in html
     assert "指标" in html
     assert "优先级" in html
     assert "当前状态" in html
@@ -128,7 +137,12 @@ def test_html_renderer_has_mobile_overflow_guards():
     assert "nav { display:flex; gap:12px; overflow-x:auto; overflow-y:hidden; flex:1 1 auto; min-width:0; max-width:100%;" in html
     assert ".hero { max-width:100%; overflow:hidden;" in html
     assert ".hero-inner { width:100%; max-width:1180px; min-width:0;" in html
-    assert ".meta-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); min-width:0; max-width:100%;" in html
+    assert ".hero-layout { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(280px,.65fr);" in html
+    assert ".summary-strip { display:grid; grid-template-columns:repeat(6,minmax(0,1fr));" in html
+    assert ".hero-evidence { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr);" in html
+    assert ".financial-diagnosis { display:grid; grid-template-columns:minmax(240px,.34fr) minmax(0,.66fr);" in html
+    assert ".pressure-grid { min-width:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr));" in html
+    assert ".evidence-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr));" in html
     assert ".card { min-width:0; max-width:100%;" in html
     assert ".mini { min-width:0; max-width:100%;" in html
     assert ".table-wrap { width:100%; min-width:0; max-width:100%; overflow-x:auto; overflow-y:hidden;" in html
@@ -137,6 +151,8 @@ def test_html_renderer_has_mobile_overflow_guards():
     assert ".tracking-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr);" in html
     assert "svg { max-width:100%; height:auto; }" in html
     assert "@media (max-width:900px)" in html
+    assert ".hero-layout,.hero-evidence,.financial-diagnosis,.pressure-grid,.evidence-grid" in html
+    assert ".summary-strip { grid-template-columns:repeat(2,minmax(0,1fr)); }" in html
     assert "table { min-width:640px; }" in html
     assert ".compact-table table { min-width:520px; }" in html
 

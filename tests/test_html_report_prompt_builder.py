@@ -53,6 +53,11 @@ def test_html_report_prompt_contains_v21_generation_requirements():
     assert "六维质量评分" in prompt
     assert "分层跟踪计划" in prompt
     assert "不得输出股价、目标价、盈亏比" in prompt
+    assert "v2.2 编辑化表达要求" in prompt
+    assert "研报首页语言" in prompt
+    assert "已证明" in prompt
+    assert "待验证" in prompt
+    assert "关键复核" in prompt
 
 
 def test_derived_metrics_are_missing_safe():
