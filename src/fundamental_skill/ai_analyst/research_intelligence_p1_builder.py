@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Build Research Intelligence P1.1 AI datacenter pilot artifacts."""
+"""Build Research Intelligence P1.1 pilot driver-matrix artifacts."""
 
 from __future__ import annotations
 
@@ -19,8 +19,11 @@ from .research_intelligence_p1_schema import (
 )
 
 
-SUPPORTED_STRATEGY_TYPE = "ai_datacenter_infrastructure"
-SUPPORTED_SUB_TYPES = {"cooling_liquid_cooling_infrastructure", "datacenter_operator"}
+AI_DATACENTER_STRATEGY_TYPE = "ai_datacenter_infrastructure"
+AI_DATACENTER_SUB_TYPES = {"cooling_liquid_cooling_infrastructure", "datacenter_operator"}
+CXO_STRATEGY_TYPE = "life_science_cxo_services"
+CXO_SUB_TYPES = {"integrated_cxo_platform", "cdmo_manufacturing_services", "clinical_cro_services"}
+SUPPORTED_STRATEGY_TYPES = {AI_DATACENTER_STRATEGY_TYPE, CXO_STRATEGY_TYPE}
 
 GENERIC_MISSING_BRIDGE_REASON = "Current evidence pack lacks concrete company transmission nodes for this driver."
 
@@ -93,10 +96,15 @@ class ResearchIntelligenceP1Builder:
         sub_type = stock.get("sub_type") or evidence_pack.get("sub_type")
 
         source_summary = self.source_bucket_summary(evidence_pack)
-        if strategy_type != SUPPORTED_STRATEGY_TYPE or sub_type not in SUPPORTED_SUB_TYPES:
-            drivers = [self._unsupported_driver(strategy_type, sub_type)]
-        else:
+        if strategy_type == AI_DATACENTER_STRATEGY_TYPE and sub_type in AI_DATACENTER_SUB_TYPES:
             drivers = self._ai_datacenter_drivers(evidence_pack, str(sub_type))
+            summary_scope = "P1.1 AI datacenter pilot"
+        elif strategy_type == CXO_STRATEGY_TYPE and sub_type in CXO_SUB_TYPES:
+            drivers = self._cxo_drivers(evidence_pack, str(sub_type))
+            summary_scope = "P1.1 CXO expansion"
+        else:
+            drivers = [self._unsupported_driver(strategy_type, sub_type)]
+            summary_scope = "P1.1 unsupported pilot boundary"
 
         questions = [self._question_from_driver(driver) for driver in drivers]
         pack = ResearchDriverMatrixPack.model_validate(
@@ -122,7 +130,7 @@ class ResearchIntelligenceP1Builder:
                 "strategy_type": strategy_type,
                 "sub_type": sub_type,
                 "questions": questions,
-                "p1_summary": f"P1.1 AI datacenter pilot driver questions: {len(questions)}",
+                "p1_summary": f"{summary_scope} driver questions: {len(questions)}",
             }
         )
         return pack, qset
@@ -176,17 +184,26 @@ class ResearchIntelligenceP1Builder:
             layer="risk",
             driver_factor="unsupported_pilot_strategy",
             driver_scope="pilot_boundary",
-            why_it_matters="P1.1 first implementation is intentionally limited to the AI datacenter pilot.",
-            required_evidence=["strategy_type=ai_datacenter_infrastructure", "supported pilot sub_type"],
+            why_it_matters="P1.1 implementation is intentionally limited to accepted pilot strategy types.",
+            required_evidence=[
+                "strategy_type=ai_datacenter_infrastructure or life_science_cxo_services",
+                "supported pilot sub_type",
+            ],
             available_evidence=[f"input.strategy_type={strategy_type}", f"input.sub_type={sub_type}"],
-            missing_evidence=["P1.1 expansion template for this strategy_type or sub_type"],
+            missing_evidence=["P1.1 template for this strategy_type or sub_type"],
             company_transmission_path=TRANSMISSION_PATH_FALLBACK,
             data_availability_status="not_assessable",
             confidence_cap="not_assessable",
-            not_assessable_reason="Current P1.1 pilot only supports ai_datacenter_infrastructure with cooling_liquid_cooling_infrastructure or datacenter_operator.",
+            not_assessable_reason=(
+                "Current P1.1 implementation only supports ai_datacenter_infrastructure "
+                "and life_science_cxo_services pilot sub_types."
+            ),
             what_was_checked=["stock.strategy_type", "stock.sub_type"],
             source_refs=[],
-            research_question="当前 P1.1 pilot 仅支持 ai_datacenter_infrastructure，其他 strategy_type 需后续扩展。",
+            research_question=(
+                "Current P1.1 pilot boundary does not support this strategy_type / sub_type; "
+                "what expansion template would be required before assessment?"
+            ),
             interpretation_guard="Do not expand unsupported strategy types by free-form inference.",
         )
 
@@ -438,6 +455,316 @@ class ResearchIntelligenceP1Builder:
             ),
         ]
 
+    def _cxo_drivers(self, pack: dict[str, Any], sub_type: str) -> list[DriverFactor]:
+        specs = [*self._cxo_common_specs()]
+        if sub_type == "integrated_cxo_platform":
+            specs.extend(self._cxo_integrated_specs())
+        elif sub_type == "cdmo_manufacturing_services":
+            specs.extend(self._cxo_cdmo_specs())
+        elif sub_type == "clinical_cro_services":
+            specs.extend(self._cxo_clinical_specs())
+        return [self._build_driver(pack, spec) for spec in specs]
+
+    def _cxo_common_specs(self) -> list[DriverSpec]:
+        return [
+            DriverSpec(
+                "macro",
+                "global biotech / pharma R&D outsourcing demand",
+                "macro",
+                "Global outsourcing demand is background until bridged to company customers, orders, revenue, and cash collection.",
+                ("global biotech funding trend", "pharma R&D outsourcing trend", "company customer or order bridge", "service-line revenue bridge"),
+                ("business_composition", "financial_metrics.revenue", "financial_metrics.accounts_receivable", "financial_metrics.operating_cashflow"),
+                "Global pharma or biotech demand must not be treated as company demand without company-level evidence.",
+                "Has global biotech / pharma R&D outsourcing demand translated into disclosed company customers, orders, service-line revenue, receivables, and cash conversion?",
+                "Check global demand source, disclosed customers/orders, service-line revenue, receivables, and operating cash flow.",
+            ),
+            DriverSpec(
+                "macro",
+                "pharma R&D budget / biotech funding cycle",
+                "macro",
+                "Customer budget and biotech funding cycles can affect CXO demand but do not prove company realization.",
+                ("pharma R&D budget trend", "biotech funding trend", "customer budget signal", "company order or project bridge"),
+                ("business_composition", "financial_metrics.revenue", "financial_metrics.gross_margin"),
+                "Customer budgets and funding cycles are context only until linked to company orders, projects, revenue, and collection.",
+                "Which customer-budget or biotech-funding evidence is linked to company orders, projects, service-line revenue, and collection?",
+                "Check customer budget sources, company orders/projects, revenue bridge, and collection bridge.",
+            ),
+            DriverSpec(
+                "policy",
+                "overseas regulatory / Biosecure Act risk",
+                "policy",
+                "Overseas regulation and Biosecure Act exposure are risk context, not company operating facts without impact evidence.",
+                ("official regulatory or policy source", "affected company entity or service line", "customer/order impact", "revenue or cash-flow bridge"),
+                ("missing_fields", "unknown_or_missing_evidence", "risk_flags", "business_composition.geography"),
+                "Biosecure Act or overseas regulation must not be converted into company performance impact without company-specific evidence.",
+                "What evidence shows whether Biosecure Act or overseas regulatory risk has affected company customers, orders, projects, revenue, margin, or collection?",
+                "Check official risk source, affected entity, customer/order impact, and financial bridge.",
+            ),
+            DriverSpec(
+                "company",
+                "CXO revenue contribution",
+                "company",
+                "CXO service-line revenue is the first company-level bridge for the CXO framework.",
+                ("CXO service revenue contribution", "business composition segment", "period", "gross margin or revenue ratio"),
+                ("business_composition", "financial_metrics.revenue", "financial_metrics.gross_margin"),
+                "Segment revenue supports exposure, but it does not prove order recovery, customer quality, or future growth.",
+                "What CXO / CRO / CDMO service revenue contribution is disclosed by service line, period, revenue ratio, and margin?",
+                "Check business composition segments, service-line revenue, period, revenue ratio, and gross margin.",
+                True,
+            ),
+            DriverSpec(
+                "company",
+                "backlog / new signed orders",
+                "company",
+                "True backlog and new signed orders test order visibility beyond recognized revenue.",
+                ("true backlog or on-hand orders", "new signed orders", "order period", "service line", "customer or project stage", "revenue recognition path"),
+                ("missing_fields", "unknown_or_missing_evidence", "enhanced_must_track_indicators", "financial_metrics.contract_liabilities"),
+                "Contract liabilities are only a partial proxy and must not substitute for true backlog or new signed orders.",
+                "What true backlog and new signed order evidence exists by service line, customer type, project stage, and revenue recognition timing?",
+                "Check backlog, new signed orders, service line, customer/project stage, and revenue recognition.",
+            ),
+            DriverSpec(
+                "financial",
+                "contract liabilities as partial proxy only",
+                "financial",
+                "Contract liabilities may show prepayments or visibility, but they are not backlog or confirmed future revenue.",
+                ("contract liabilities", "linked customer/order/project disclosure", "prepayment terms", "revenue recognition terms"),
+                ("financial_metrics.contract_liabilities", "financial_metrics.revenue", "financial_metrics.operating_cashflow", "enhanced_must_track_indicators"),
+                "Contract liabilities are partial proxy only and must not be labeled backlog.",
+                "What business, customer, or project do contract liabilities correspond to, and what evidence prevents treating them as true backlog?",
+                "Check contract liabilities, linked order/project evidence, prepayment terms, and revenue recognition.",
+                True,
+            ),
+            DriverSpec(
+                "risk",
+                "customer concentration",
+                "risk",
+                "Customer concentration can create order volatility, margin pressure, and collection risk.",
+                ("top customer revenue share", "major customer changes", "active customer count", "customer geography", "one-off order marker"),
+                ("missing_fields", "unknown_or_missing_evidence", "enhanced_must_track_indicators", "risk_flags"),
+                "Revenue or segment mix cannot substitute for customer concentration evidence.",
+                "Does customer concentration or major-customer change create order, margin, receivable, or one-off revenue risk?",
+                "Check top customer share, active customer count, major customer changes, geography, and one-off order markers.",
+            ),
+            DriverSpec(
+                "company",
+                "overseas revenue / US customer exposure",
+                "company",
+                "Overseas and U.S. exposure determine regulatory, customer, FX, and demand-risk follow-up needs.",
+                ("overseas revenue share", "U.S. or North America revenue share", "customer geography", "major customer region", "FX exposure"),
+                ("business_composition.geography", "missing_fields", "unknown_or_missing_evidence"),
+                "Overseas revenue is exposure only; it is not regulatory impact or customer-loss evidence by itself.",
+                "How much revenue and customer demand is exposed to overseas and U.S. customers, and how is that linked to revenue, margin, receivables, or cash conversion?",
+                "Check geographic revenue, U.S. or North America exposure, customer region, FX exposure, and financial bridge.",
+                True,
+            ),
+            DriverSpec(
+                "industry",
+                "CDMO capacity utilization",
+                "industry",
+                "CDMO utilization distinguishes built capacity from absorbed capacity and realized production demand.",
+                ("CDMO capacity", "capacity utilization", "commercial-stage project count", "capacity expansion status", "CDMO revenue", "gross margin", "capex bridge"),
+                ("missing_fields", "unknown_or_missing_evidence", "enhanced_must_track_indicators", "financial_metrics.capex", "financial_metrics.gross_margin", "business_composition"),
+                "Do not infer CDMO utilization from capex, revenue growth, or gross margin without actual utilization or project-stage evidence.",
+                "Is CDMO capacity being absorbed by commercial projects and utilization, or does current evidence only show capex, revenue, and margin without utilization bridge?",
+                "Check CDMO capacity, utilization, commercial-stage projects, capacity expansion, capex, revenue, margin, and cash bridge.",
+            ),
+            DriverSpec(
+                "industry",
+                "clinical project pipeline / project stage",
+                "industry",
+                "Clinical project count and stage are required before judging clinical CRO pipeline quality.",
+                ("clinical project count", "project stage", "project progress or acceptance", "cancellation or delay", "clinical service revenue", "collection status"),
+                ("missing_fields", "unknown_or_missing_evidence", "enhanced_must_track_indicators", "business_composition"),
+                "Do not fabricate clinical project count or stage from clinical service revenue or company descriptions.",
+                "What clinical project count, stage mix, progress, cancellation/delay, and collection evidence validates clinical CRO service demand?",
+                "Check clinical project count, stage mix, progress, cancellation/delay, clinical revenue, and collection status.",
+            ),
+            DriverSpec(
+                "risk",
+                "one-off large order / project volatility",
+                "risk",
+                "Large customer or one-off project effects can distort normalized revenue, margin, and cash conversion.",
+                ("major customer or product order concentration", "one-off order marker", "project completion or cancellation", "abnormal base-period explanation"),
+                ("risk_flags", "missing_fields", "unknown_or_missing_evidence", "enhanced_must_track_indicators", "financial_metrics.revenue"),
+                "Growth fields alone cannot prove normalized demand without customer/project evidence.",
+                "Is current growth or margin affected by one-off large orders, customer concentration, or project volatility rather than normalized CXO demand?",
+                "Check major customer/order concentration, one-off marker, project completion/cancellation, and base-period explanation.",
+            ),
+            DriverSpec(
+                "financial",
+                "receivables / collection cycle",
+                "financial",
+                "Receivables and collection cycle test whether recognized CXO revenue converts into cash.",
+                ("accounts receivable", "revenue", "operating cash flow", "collection cycle or DSO", "payment terms"),
+                ("financial_metrics.accounts_receivable", "financial_metrics.revenue", "financial_metrics.operating_cashflow", "missing_fields"),
+                "Receivables are a cash-quality check, not proof of customer demand.",
+                "Are receivables and collection cycle consistent with revenue recognition, or is cash conversion lagging recognized CXO revenue?",
+                "Check accounts receivable, revenue, operating cash flow, DSO or payment terms, and customer payment evidence.",
+                True,
+            ),
+            DriverSpec(
+                "financial",
+                "operating cash flow",
+                "financial",
+                "Operating cash flow tests whether revenue, project delivery, and collection are converting into cash.",
+                ("operating cash flow", "revenue", "accounts receivable", "contract liabilities"),
+                ("financial_metrics.operating_cashflow", "financial_metrics.revenue", "financial_metrics.accounts_receivable", "financial_metrics.contract_liabilities"),
+                "Revenue growth without cash conversion remains a research question.",
+                "Does operating cash flow support recognized CXO revenue, or do receivables and project cycles weaken cash conversion?",
+                "Check operating cash flow, revenue, receivables, contract liabilities, and collection quality.",
+                True,
+            ),
+            DriverSpec(
+                "financial",
+                "capex-to-revenue / utilization bridge",
+                "financial",
+                "Capex must be bridged to projects, acceptance, utilization, revenue, and cash flow before capacity interpretation.",
+                ("capex", "project or capacity mapping", "acceptance or start-up", "utilization", "service-line revenue", "cash-flow bridge"),
+                ("financial_metrics.capex", "financial_metrics.revenue", "financial_metrics.operating_cashflow", "business_composition", "unknown_or_missing_evidence"),
+                "Capex is investment, not capacity release, utilization, order absorption, or revenue realization.",
+                "Which projects or capacity does capex fund, and has the company disclosed acceptance, utilization, revenue, and operating cash-flow bridges?",
+                "Check capex, project/capacity mapping, acceptance, utilization, service-line revenue, and operating cash flow.",
+                True,
+            ),
+            DriverSpec(
+                "financial",
+                "margin and cash conversion",
+                "financial",
+                "Margin and cash conversion show whether CXO revenue quality is supported by service mix, pricing, and collection.",
+                ("gross margin", "net margin", "operating cash flow", "receivables", "contract liabilities", "service-line mix"),
+                ("financial_metrics.gross_margin", "financial_metrics.net_margin", "financial_metrics.operating_cashflow", "financial_metrics.accounts_receivable", "financial_metrics.contract_liabilities", "business_composition"),
+                "Margin and cash metrics do not prove demand recovery without order, customer, or project evidence.",
+                "Do margins and operating cash flow support the quality of CXO revenue, or do receivables, capex, or mix changes indicate weaker cash conversion?",
+                "Check gross margin, net margin, operating cash flow, receivables, contract liabilities, and service-line mix.",
+                True,
+            ),
+            DriverSpec(
+                "risk",
+                "customer loss / project cancellation",
+                "risk",
+                "Customer loss and project cancellation can affect order visibility, utilization, revenue recognition, and collection.",
+                ("customer loss evidence", "project cancellation or delay", "affected service line", "revenue or collection impact"),
+                ("risk_flags", "missing_fields", "unknown_or_missing_evidence", "enhanced_must_track_indicators"),
+                "Do not infer customer loss or project cancellation without direct disclosure.",
+                "What evidence shows customer loss, project cancellation, delay, affected service line, and revenue or collection impact?",
+                "Check customer loss, project cancellation/delay, service line, revenue impact, and collection impact.",
+            ),
+            DriverSpec(
+                "risk",
+                "overseas regulatory / geopolitical risk",
+                "risk",
+                "Overseas regulatory and geopolitical risks require company-specific exposure and impact evidence.",
+                ("overseas exposure", "U.S. customer exposure", "regulatory event", "company impact disclosure", "financial bridge"),
+                ("business_composition.geography", "risk_flags", "missing_fields", "unknown_or_missing_evidence"),
+                "Do not treat overseas regulation or geopolitical risk as company performance fact without impact evidence.",
+                "Which overseas regulatory or geopolitical exposure has company-specific customer, order, project, revenue, margin, or collection impact evidence?",
+                "Check overseas exposure, U.S. customer exposure, regulatory event, company impact disclosure, and financial bridge.",
+            ),
+            DriverSpec(
+                "risk",
+                "capacity absorption risk",
+                "risk",
+                "Capacity absorption risk tests whether invested labs or manufacturing assets are being used by projects and revenue.",
+                ("capacity expansion", "utilization", "project stage", "service-line revenue", "cash-flow bridge"),
+                ("financial_metrics.capex", "financial_metrics.gross_margin", "financial_metrics.operating_cashflow", "missing_fields", "unknown_or_missing_evidence"),
+                "Do not infer capacity absorption from capex or margin without utilization and project-stage evidence.",
+                "Does the evidence show capacity expansion being absorbed by utilization, projects, service-line revenue, and operating cash flow?",
+                "Check capacity expansion, utilization, project stage, service-line revenue, and cash-flow bridge.",
+            ),
+            DriverSpec(
+                "risk",
+                "disclosure gap risk",
+                "risk",
+                "Disclosure gaps define which CXO driver claims cannot be assessed from the current evidence pack.",
+                ("missing driver fields", "source trace", "data limitations", "must-track indicator status"),
+                ("missing_fields", "data_limitations", "enhanced_must_track_indicators", "source_trace_summary"),
+                "Disclosure gaps must remain research questions and must not be filled with generic industry assumptions.",
+                "Which CXO driver fields are missing or only partially evidenced, and what source should verify each gap?",
+                "Check missing fields, data limitations, must-track indicators, and source trace summary.",
+            ),
+        ]
+
+    def _cxo_integrated_specs(self) -> list[DriverSpec]:
+        return [
+            DriverSpec(
+                "company",
+                "integrated platform business mix",
+                "company",
+                "Integrated CXO platforms need service-line mix rather than one homogeneous revenue reading.",
+                ("drug discovery revenue", "preclinical service revenue", "CMC / CDMO revenue", "testing or biology revenue", "period"),
+                ("business_composition", "enhanced_must_track_indicators"),
+                "Total revenue growth does not prove that every integrated CXO segment is improving.",
+                "How is integrated CXO platform revenue split across discovery, preclinical, testing, biology, CMC/CDMO, and other service lines?",
+                "Check service-line revenue, revenue ratio, margin, and period.",
+                True,
+            ),
+            DriverSpec(
+                "company",
+                "active customers / platform efficiency",
+                "company",
+                "Integrated platforms require customer breadth and personnel/platform efficiency evidence.",
+                ("active customer count", "major customer changes", "employee or scientist count", "personnel efficiency"),
+                ("missing_fields", "unknown_or_missing_evidence", "enhanced_must_track_indicators"),
+                "Do not infer customer breadth or personnel efficiency from revenue alone.",
+                "What active-customer, major-customer-change, employee, scientist, or personnel-efficiency evidence supports platform quality?",
+                "Check active customers, major customer changes, employee/scientist count, and personnel efficiency.",
+            ),
+        ]
+
+    def _cxo_cdmo_specs(self) -> list[DriverSpec]:
+        return [
+            DriverSpec(
+                "industry",
+                "commercial-stage CDMO projects",
+                "industry",
+                "Commercial-stage project count is needed to distinguish manufacturing visibility from early-stage demand.",
+                ("commercial-stage project count", "project stage", "customer or product concentration", "revenue recognition path"),
+                ("missing_fields", "unknown_or_missing_evidence", "enhanced_must_track_indicators", "business_composition"),
+                "Do not infer commercial-stage project count from CDMO revenue, capex, or margin.",
+                "Which commercial-stage CDMO projects, stages, customer/product concentration, and revenue-recognition paths are disclosed?",
+                "Check commercial-stage project count, project stage, customer/product concentration, and revenue recognition.",
+            ),
+            DriverSpec(
+                "risk",
+                "GMP / FDA / NMPA compliance event",
+                "risk",
+                "Compliance events can affect manufacturing continuity, customer trust, and delivery.",
+                ("GMP / FDA / NMPA compliance event", "affected facility or service line", "remediation status", "customer/order impact"),
+                ("missing_fields", "unknown_or_missing_evidence", "risk_flags", "enhanced_must_track_indicators"),
+                "Do not fabricate compliance events or company impact without source-traced disclosure.",
+                "Are there GMP / FDA / NMPA compliance events, and what facility, service line, remediation status, or customer/order impact is disclosed?",
+                "Check compliance events, affected facility/service line, remediation, and customer/order impact.",
+            ),
+        ]
+
+    def _cxo_clinical_specs(self) -> list[DriverSpec]:
+        return [
+            DriverSpec(
+                "company",
+                "SMO / data-statistics revenue",
+                "company",
+                "Clinical CRO sub-type needs clinical service-line mix beyond total revenue.",
+                ("clinical trial service revenue", "SMO revenue", "data-statistics revenue", "period", "project delivery bridge"),
+                ("business_composition", "enhanced_must_track_indicators", "financial_metrics.revenue"),
+                "Clinical service revenue does not prove project stage or delivery quality without project evidence.",
+                "What clinical trial, SMO, or data-statistics revenue is disclosed, and how is it linked to project delivery and collection?",
+                "Check clinical service-line revenue, period, project delivery, and collection.",
+                True,
+            ),
+            DriverSpec(
+                "risk",
+                "clinical project delivery / collection",
+                "risk",
+                "Clinical project delivery and collection determine whether projects become high-quality revenue and cash.",
+                ("project delivery progress", "acceptance or milestone", "project cancellation or delay", "receivables", "collection cycle"),
+                ("missing_fields", "unknown_or_missing_evidence", "enhanced_must_track_indicators", "financial_metrics.accounts_receivable", "financial_metrics.operating_cashflow"),
+                "Do not judge clinical project delivery or collection cycle without project and payment evidence.",
+                "Which clinical projects have delivery progress, milestones, cancellation/delay status, receivables, and collection evidence?",
+                "Check delivery progress, milestone/acceptance, cancellation/delay, receivables, and collection cycle.",
+            ),
+        ]
+
     def _build_driver(self, pack: dict[str, Any], spec: DriverSpec) -> DriverFactor:
         available = self._available_evidence(pack, spec.checked_paths)
         missing = self._missing_evidence(pack, spec.required_evidence, spec.checked_paths)
@@ -477,9 +804,13 @@ class ResearchIntelligenceP1Builder:
         for path in checked_paths:
             if path == "business_composition":
                 available.extend(self._business_segment_nodes(pack))
+            elif path == "business_composition.geography":
+                available.extend(self._business_geography_nodes(pack))
             elif path == "enhanced_must_track_indicators":
                 available.extend(self._indicator_nodes(pack))
-            elif path in {"missing_fields", "unknown_or_missing_evidence", "risk_flags"}:
+            elif path == "source_trace_summary":
+                available.extend(self._source_trace_nodes(pack))
+            elif path in {"missing_fields", "unknown_or_missing_evidence", "risk_flags", "data_limitations"}:
                 continue
             else:
                 value = self._value_at_path(pack, path)
@@ -542,14 +873,30 @@ class ResearchIntelligenceP1Builder:
             return "financial_metrics.operating_cashflow=" in available_text
         if requirement == "accounts receivable":
             return "financial_metrics.accounts_receivable=" in available_text
+        if requirement in {"receivables", "collection status"}:
+            return "financial_metrics.accounts_receivable=" in available_text
         if requirement == "contract liabilities":
             return "financial_metrics.contract_liabilities=" in available_text
         if requirement == "capex":
             return "financial_metrics.capex=" in available_text
         if requirement in {"gross margin", "gross margin or revenue ratio"}:
             return "financial_metrics.gross_margin=" in available_text or "gross_margin" in available_text
+        if requirement == "net margin":
+            return "financial_metrics.net_margin=" in available_text
         if requirement in {"business composition segment", "period"}:
             return "business_composition" in available_text
+        if requirement in {
+            "service-line revenue bridge",
+            "service-line revenue",
+            "cxo service revenue contribution",
+            "service-line mix",
+        }:
+            return "business_composition" in available_text
+        if requirement == "overseas revenue share":
+            return any(
+                token in available_text
+                for token in ("overseas", "north america", "u.s.", "us customer", "境外", "海外", "北美", "美国")
+            )
         if requirement == "datacenter-related revenue or ratio":
             return any(token in available_text for token in ("aidc", "idc", "机房", "机柜", "数据中心"))
         return False
@@ -580,6 +927,39 @@ class ResearchIntelligenceP1Builder:
             nodes.append(f"evidence_pack.business_composition[{index}]={'; '.join(bits)}")
         return nodes[:8]
 
+    def _business_geography_nodes(self, pack: dict[str, Any]) -> list[str]:
+        nodes: list[str] = []
+        keywords = (
+            "overseas",
+            "domestic",
+            "north america",
+            "u.s.",
+            "united states",
+            "us customer",
+            "境外",
+            "境内",
+            "海外",
+            "北美",
+            "美国",
+        )
+        for index, row in enumerate(_as_list(pack.get("business_composition"))):
+            if not isinstance(row, dict):
+                continue
+            name = str(row.get("segment_name") or "")
+            classification = str(row.get("classification_type") or "")
+            haystack = f"{name} {classification}".lower()
+            if not any(keyword in haystack for keyword in keywords):
+                continue
+            ratio = row.get("revenue_ratio")
+            period = row.get("period")
+            bits = [f"segment_name:{name}"]
+            if _is_present(ratio):
+                bits.append(f"revenue_ratio:{_display_value(ratio)}")
+            if period:
+                bits.append(f"period:{period}")
+            nodes.append(f"evidence_pack.business_composition[{index}]={'; '.join(bits)}")
+        return nodes[:6]
+
     def _indicator_nodes(self, pack: dict[str, Any]) -> list[str]:
         nodes: list[str] = []
         for index, row in enumerate(_as_list(pack.get("enhanced_must_track_indicators"))):
@@ -590,6 +970,21 @@ class ResearchIntelligenceP1Builder:
             if not name or not status:
                 continue
             nodes.append(f"evidence_pack.enhanced_must_track_indicators[{index}]={_safe_text(name)}; status:{_safe_text(status)}")
+        return nodes[:8]
+
+    def _source_trace_nodes(self, pack: dict[str, Any]) -> list[str]:
+        nodes: list[str] = []
+        for index, row in enumerate(_as_list(pack.get("source_trace_summary"))):
+            if not isinstance(row, dict):
+                continue
+            block = row.get("block_name")
+            trace_count = row.get("trace_count")
+            if not block:
+                continue
+            nodes.append(
+                f"evidence_pack.source_trace_summary[{index}]="
+                f"block_name:{_safe_text(block)}; trace_count:{_safe_text(trace_count)}"
+            )
         return nodes[:8]
 
     def _value_at_path(self, pack: dict[str, Any], path: str) -> Any:

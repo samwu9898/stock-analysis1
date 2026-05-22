@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CLI runner for Research Intelligence P1.1 AI datacenter pilot artifacts."""
+"""CLI runner for Research Intelligence P1.1 pilot artifacts."""
 
 from __future__ import annotations
 
@@ -100,7 +100,7 @@ def run_research_intelligence_p1(
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Build Research Intelligence P1.1 AI datacenter pilot artifacts.")
+    parser = argparse.ArgumentParser(description="Build Research Intelligence P1.1 pilot artifacts.")
     parser.add_argument("--code", required=True, help="6 digit A-share stock code")
     parser.add_argument("--evidence-pack-path", default=None, help="Path to evidence_pack_<code>.json")
     parser.add_argument("--p0-pack-path", default=None, help="Optional path to research_intelligence_<code>.json")
@@ -122,7 +122,7 @@ def main() -> int:
     print(f"research_intelligence_p1: {result['research_intelligence_p1_path']}")
     print(f"research_questions_p1: {result['research_questions_p1_path']}")
     print(f"research_questions_p1_md: {result['research_questions_p1_markdown_path']}")
-    print("mode: research_intelligence_p1_1_ai_datacenter_pilot")
+    print("mode: research_intelligence_p1_1_pilot")
     return 0
 
 
