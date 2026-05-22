@@ -106,6 +106,26 @@ def test_unknown_and_theme_only_are_conservative():
         assert any("复核分类" in q.question or "先复核" in q.question for q in questions.questions)
 
 
+def test_unknown_and_theme_only_do_not_create_p0_explosion_from_missing_fields():
+    raw = sample_raw()
+    raw["blocks"]["financial_indicator"] = [{}]
+    raw["blocks"]["valuation"] = [{}]
+    raw["blocks"]["business_composition"] = []
+
+    for strategy in ["unknown", "theme_only"]:
+        _, questions = build_outputs(strategy, raw)
+        p0_questions = [q for q in questions.questions if q.priority == "P0"]
+
+        assert 1 <= len(p0_questions) <= 3
+        assert all(q.evidence_trigger for q in p0_questions)
+        assert any(q.question_id == "q_classification_basic_review" for q in p0_questions)
+        assert any(q.question_id == "q_grouped_missing_data_for_classification" for q in p0_questions)
+        assert not any(
+            q.priority == "P0" and q.trigger_rule_id == "contract_liabilities_overread_as_backlog"
+            for q in questions.questions
+        )
+
+
 def test_ai_datacenter_cooling_questions_are_researcher_specific():
     _, questions = build_outputs(
         "ai_datacenter_infrastructure",
@@ -202,6 +222,91 @@ def test_life_science_cxo_questions_keep_backlog_proxy_guard():
     assert "美国" in text
     assert "生物安全法案" in text
     assert "产能利用率" in text
+
+
+def test_resource_questions_include_commodity_volume_cost_and_cash_resilience():
+    for strategy in ["resource_core", "resource_swing"]:
+        _, questions = build_outputs(strategy)
+        text = question_text(questions)
+
+        assert "核心商品暴露" in text
+        assert "商品价格" in text
+        assert "产量" in text
+        assert "销量" in text
+        assert "品位" in text
+        assert "资源量/储量" in text
+        assert "现金成本" in text
+        assert "完全成本" in text
+        assert "套期保值" in text
+        assert "汇率敞口" in text
+        assert "维持性/扩张性 capex" in text
+        assert "债务结构" in text
+        assert "补充业务构成" not in text
+
+
+def test_low_altitude_questions_are_operating_and_acceptance_specific():
+    _, questions = build_outputs("low_altitude_economy_infrastructure")
+    text = question_text(questions)
+
+    assert "低空、通航或空管收入占比" in text
+    assert "飞行小时" in text
+    assert "飞行架次" in text
+    assert "平台调度量" in text
+    assert "验收节点" in text
+    assert "收入确认口径" in text
+    assert "政府/国企客户回款周期" in text
+    assert "低空基础设施或运营服务" in text
+    assert "补充客户、订单或交付" not in text
+
+
+def test_satellite_questions_are_capacity_contract_and_life_specific():
+    _, questions = build_outputs("satellite_communication_infrastructure")
+    text = question_text(questions)
+
+    assert "卫星容量" in text
+    assert "转发器" in text
+    assert "带宽资源" in text
+    assert "容量利用率" in text
+    assert "客户合同期限" in text
+    assert "卫星剩余寿命" in text
+    assert "合同续约风险" in text
+    assert "补充客户、订单或交付" not in text
+
+
+def test_contract_liabilities_proxy_questions_are_strategy_contextualized():
+    builder = ResearchIntelligenceBuilder()
+    item = rule_item("contract_liabilities_overread_as_backlog")
+    ai_datacenter_text = builder._strategy_rule_question_text(item, "ai_datacenter_infrastructure", None)
+
+    assert "客户项目可见度" in builder._strategy_rule_question_text(item, "life_science_cxo_services", None)
+    assert "客户合同" in ai_datacenter_text
+    assert "订单金额" in ai_datacenter_text
+    assert "交付节点" in ai_datacenter_text
+    assert "收入确认口径" in ai_datacenter_text
+    assert "partial proxy" in ai_datacenter_text
+    assert "不能替代真实订单" in ai_datacenter_text
+    assert "已确认未来收入" in ai_datacenter_text
+    assert "运营服务回款" in builder._strategy_rule_question_text(item, "low_altitude_economy_infrastructure", None)
+    assert "容量租赁" in builder._strategy_rule_question_text(item, "satellite_communication_infrastructure", None)
+    assert "价格敞口" in builder._strategy_rule_question_text(item, "resource_swing", None)
+    assert "先降级处理" in builder._strategy_rule_question_text(item, "unknown", None)
+
+
+def test_stable_growth_mock_evidence_triggers_stability_specific_questions():
+    raw = sample_raw()
+    raw["blocks"]["financial_indicator"][0].pop("operating_cashflow")
+
+    _, questions = build_outputs("stable_growth", raw)
+    text = question_text(questions)
+
+    assert "稳健增长" in text
+    assert "经营现金流" in text
+    assert "回款" in text
+    assert "应收账款" in text
+    assert "ROE" in text
+    assert "杠杆" in text
+    assert "合同负债或订单" in text
+    assert "债务结构" in text
 
 
 def test_rule_missing_fields_do_not_fabricate_contradiction():

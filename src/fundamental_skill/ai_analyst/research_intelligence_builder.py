@@ -87,6 +87,28 @@ def _indicator_by_name(pack: dict[str, Any]) -> dict[str, dict[str, Any]]:
     }
 
 
+def _contract_liabilities_proxy_items(pack: dict[str, Any]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for item in _as_list(pack.get("enhanced_must_track_indicators")):
+        if not isinstance(item, dict):
+            continue
+        text = " ".join(
+            str(item.get(key) or "")
+            for key in ("indicator_name", "field", "current_status", "scope_note", "why_it_matters")
+        ).lower()
+        if (
+            "contract liabilit" in text
+            or "contract_liabilities" in text
+            or "合同负债" in text
+        ) and "proxy" in text:
+            rows.append(item)
+    return rows
+
+
+def _has_contract_liabilities_proxy_item(pack: dict[str, Any]) -> bool:
+    return bool(_contract_liabilities_proxy_items(pack))
+
+
 def _pack_text(pack: dict[str, Any]) -> str:
     parts: list[str] = []
     stock = pack.get("stock", {})
@@ -404,9 +426,13 @@ class ResearchIntelligenceBuilder:
             ],
             "resource_core": [
                 {"claim": "resource thesis should be supported by commodity exposure, prices, and cash resilience", "required": ["business_composition.segments", "external.commodity_prices", "financial_metrics.operating_cashflow", "financial_metrics.debt_to_asset"], "checks": ["commodity exposure vs cash/debt"]},
+                {"claim": "resource economics require production, grade, reserves, and unit-cost disclosure", "required": ["resource.production_volume", "resource.sales_volume", "resource.grade", "resource.reserves", "resource.cash_cost", "resource.all_in_cost"], "checks": ["production/grade/reserves vs cost curve"]},
+                {"claim": "resource cycle resilience requires hedging, FX exposure, capex split, and debt maturity checks", "required": ["resource.inventory_policy", "resource.hedging_policy", "resource.fx_exposure", "resource.maintenance_capex", "resource.expansion_capex", "resource.debt_maturity"], "checks": ["hedging/FX/capex/debt vs cash resilience"]},
             ],
             "resource_swing": [
                 {"claim": "resource swing thesis should link commodity prices, business mix, margins, and cash flow", "required": ["business_composition.segments", "external.commodity_prices", "financial_metrics.gross_margin", "financial_metrics.operating_cashflow"], "checks": ["commodity price vs margin/cash"]},
+                {"claim": "resource swing needs production, sales volume, grade, reserves, and cost-curve evidence", "required": ["resource.production_volume", "resource.sales_volume", "resource.grade", "resource.reserves", "resource.cash_cost", "resource.all_in_cost"], "checks": ["volume/grade/reserves vs commodity sensitivity"]},
+                {"claim": "resource swing downside requires inventory, hedging, FX, capex nature, cash flow, and debt structure", "required": ["resource.inventory_policy", "resource.hedging_policy", "resource.fx_exposure", "resource.maintenance_capex", "resource.expansion_capex", "resource.debt_maturity"], "checks": ["cycle downside vs cash/debt resilience"]},
             ],
             "semiconductor_cycle": [
                 {"claim": "semiconductor cycle claims require inventory, orders, customer adoption, and R&D interpretation", "required": ["financial_metrics.inventory", "customer_orders", "financial_metrics.r_and_d_expense_ratio", "financial_metrics.gross_margin"], "checks": ["inventory vs demand", "R&D as input only"]},
@@ -543,13 +569,17 @@ class ResearchIntelligenceBuilder:
             checked = ["financial_metrics.contract_liabilities", "missing order/backlog fields"]
             cl = _to_float(financial.get("contract_liabilities"))
             order_missing = any("orders_or_backlog" in field or "backlog" in field for field in missing)
+            has_proxy_item = _has_contract_liabilities_proxy_item(pack)
             if cl is None:
                 status, ctype = "not_assessable", "missing_data_blocker"
                 miss(["financial_metrics.contract_liabilities"])
             elif order_missing or _text_contains_any(text, ["backlog", "订单"]):
-                status, ctype, severity = "true", "proxy_overread", "high"
+                status, ctype = "true", "proxy_overread"
+                severity = "medium" if strategy_type in {"theme_only", "unknown"} or not has_proxy_item else "high"
                 evidence_for = [f"contract_liabilities={cl}"]
                 missing_evidence = [field for field in missing if "backlog" in field or "orders" in field]
+                if not has_proxy_item:
+                    missing_evidence.append("evidence_classification_gap.contract_liabilities_proxy")
         elif rule_id == "r_and_d_ratio_overread_as_moat":
             checked = ["financial_metrics.r_and_d_expense_ratio", "technology moat/adoption evidence"]
             rd = _to_float(financial.get("r_and_d_expense_ratio"))
@@ -705,19 +735,22 @@ class ResearchIntelligenceBuilder:
             return (
                 "低空、通航或空管收入占比是否披露？"
                 "飞行小时、飞行架次或平台调度量是否披露？"
-                "项目合同是否有验收和收入确认，主业是否真是低空基础设施或运营服务，而不是制造或题材？"
+                "项目合同是否有验收节点和收入确认口径，政府/国企客户回款周期是否影响应收和经营现金流？"
+                "主业是否真是低空基础设施或运营服务，而不是制造或题材？"
             )
         if strategy_type == "satellite_communication_infrastructure":
             return (
                 "卫星容量、转发器或带宽资源是否披露？"
                 "容量利用率、客户合同期限和单价是否披露？"
-                "卫星寿命、折旧和 capex 是否影响现金流稳定性，客户集中度是否可判断？"
+                "卫星剩余寿命、折旧和 capex 是否影响现金流稳定性？"
+                "客户集中度和合同续约风险是否披露？"
             )
         if strategy_type in {"resource_core", "resource_swing"}:
             return (
                 "核心商品暴露和收入占比是否清楚？"
-                "产量、成本曲线、库存、价格传导和套期保值是否披露？"
-                "经营现金流和债务结构是否能承受周期波动？"
+                "商品价格如何传导到收入、毛利率和经营现金流？"
+                "产量、销量、品位、资源量/储量、现金成本、完全成本和成本曲线是否披露？"
+                "库存、套期保值、汇率敞口、维持性/扩张性 capex、经营现金流和债务结构是否能承受周期波动？"
             )
         if strategy_type == "semiconductor_cycle":
             return (
@@ -729,7 +762,7 @@ class ResearchIntelligenceBuilder:
             return (
                 "稳健增长是否有经营现金流和回款支撑？"
                 "应收账款是否过快扩张，ROE 变化来自业务质量还是杠杆？"
-                "订单或合同负债是否支撑稳定性，且是否避免把合同负债当作 backlog？"
+                "合同负债或订单是否支撑稳定性，债务和现金流是否支持稳健属性，且是否避免把合同负债当作 backlog？"
             )
         if strategy_type in {"theme_only", "unknown"}:
             return (
@@ -747,8 +780,22 @@ class ResearchIntelligenceBuilder:
         cross_validation: list[CrossValidationItem],
     ) -> list[ResearchQuestion]:
         questions: list[ResearchQuestion] = []
+        unknown_missing_fields: list[str] = []
         for item in contradictions:
             if item.triggered not in {"true", "not_assessable"}:
+                continue
+            if strategy_type in {"theme_only", "unknown"}:
+                if item.rule_id == "classification_low_confidence_requires_review":
+                    question = self._question_from_rule(item, strategy_type, sub_type)
+                    question.priority = "P0"
+                    questions.append(question)
+                elif item.triggered == "not_assessable" or item.contradiction_type == "missing_data_blocker":
+                    unknown_missing_fields.extend(item.missing_evidence)
+                else:
+                    question = self._question_from_rule(item, strategy_type, sub_type)
+                    question.priority = "P1"
+                    question.suggested_recipient = "manual_review"
+                    questions.append(question)
                 continue
             questions.append(self._question_from_rule(item, strategy_type, sub_type))
         if strategy_type in {"theme_only", "unknown"}:
@@ -768,6 +815,28 @@ class ResearchIntelligenceBuilder:
                 confidence_cap="low",
                 what_was_checked=["stock.strategy_type", "basic_info", "business_composition", "financial_metrics"],
             ))
+            grouped_missing = list(dict.fromkeys(unknown_missing_fields))[:10]
+            if grouped_missing:
+                questions.append(ResearchQuestion(
+                    question_id="q_grouped_missing_data_for_classification",
+                    question=(
+                        "先补齐基础财务字段、主营业务和业务构成证据，再决定是否进入具体行业框架；"
+                        "字段缺失只能形成 grouped missing-data review，不能触发大量 P0。"
+                    ),
+                    category="classification",
+                    priority="P0",
+                    evidence_trigger="grouped_missing_data_for_classification",
+                    trigger_rule_id="grouped_missing_data_for_classification",
+                    why_it_matters="unknown / theme_only 样本必须先处理基础证据缺口，避免由字段缺失制造多个 P0。",
+                    evidence_gap=", ".join(grouped_missing),
+                    suggested_recipient="manual_review",
+                    expected_answer_type="document",
+                    source_refs=["basic_info", "business_composition", "financial_metrics", "valuation_metrics"],
+                    data_availability_status="missing",
+                    confidence_cap="low",
+                    not_assessable_reason=f"Missing required evidence: {', '.join(grouped_missing)}",
+                    what_was_checked=["basic_info", "business_composition", "financial_metrics", "valuation_metrics"],
+                ))
         for cv in cross_validation:
             if cv.validation_status in {"missing", "not_assessable", "partially_validated"} and cv.missing_evidence:
                 questions.append(ResearchQuestion(
@@ -837,9 +906,19 @@ class ResearchIntelligenceBuilder:
     def _strategy_rule_question_text(self, item: ContradictionItem, strategy_type: str, sub_type: str | None) -> str | None:
         if item.rule_id == "contract_liabilities_overread_as_backlog":
             if strategy_type == "life_science_cxo_services":
-                return "backlog 和新签订单是否由公司官方披露？合同负债对应哪些业务和客户，是否仅作为 partial proxy、不能替代 backlog？"
+                return "backlog、新签订单和客户项目可见度是否由公司官方披露？合同负债对应哪些业务和客户项目，是否仅作为 partial proxy、不能替代 backlog？"
             if strategy_type == "ai_datacenter_infrastructure":
-                return "订单或 backlog 是否披露金额、客户、交付节点和验收口径？合同负债对应哪些项目，是否仅作为 partial proxy、不能替代真实订单或 backlog？"
+                return "合同负债对应哪些客户合同或订单？是否披露订单金额、客户类型、交付节点和收入确认口径？合同负债只能作为收入可见度 partial proxy，不能替代真实订单、真实 backlog 或已确认未来收入。"
+            if strategy_type == "low_altitude_economy_infrastructure":
+                return "合同负债对应哪些低空项目合同、验收节点或运营服务回款安排，是否仅作为 partial proxy、不能替代已验收项目收入或确定订单？"
+            if strategy_type == "satellite_communication_infrastructure":
+                return "合同负债对应哪些客户合同期限、容量租赁或续约安排，是否仅作为 partial proxy、不能替代转发器/带宽利用率或真实 backlog？"
+            if strategy_type in {"resource_core", "resource_swing"}:
+                return "预收款或合同负债对应哪些商品、客户或销售合同，是否仅作为 partial proxy、不能等同于产量、销量、价格敞口或 backlog？"
+            if strategy_type == "stable_growth":
+                return "合同负债或订单是否支撑稳健增长的持续性，是否仅作为 partial proxy、不能替代 backlog、回款质量或收入确认证据？"
+            if strategy_type in {"theme_only", "unknown"}:
+                return "仅在证据明确显示合同负债被当作 backlog 时复核该 proxy；否则先降级处理，避免把合同负债当作未来收入事实。"
             return "合同负债对应哪些业务和客户，是否仅作为 partial proxy、不能替代 backlog 或已确认未来收入？"
         if item.rule_id == "capex_without_revenue_bridge":
             if strategy_type == "ai_datacenter_infrastructure" and sub_type == "datacenter_operator":
@@ -878,9 +957,11 @@ class ResearchIntelligenceBuilder:
             if strategy_type == "ai_datacenter_infrastructure" and sub_type == "datacenter_operator":
                 return "AIDC/智算中心政策或行业需求是否已转化为可披露客户合同、上架率、PUE、收入或经营现金流，而不是仅停留在主题或建设预期？"
             if strategy_type == "low_altitude_economy_infrastructure":
-                return "低空、通航或空管收入占比是否披露，项目合同是否有验收和收入确认；主业是否真是低空基础设施或运营服务？"
+                return "低空、通航或空管收入占比是否披露，飞行小时、飞行架次或平台调度量是否可核验；项目合同是否有验收节点和收入确认口径，主业是否真是低空基础设施或运营服务？"
+            if strategy_type == "satellite_communication_infrastructure":
+                return "卫星通信政策或主题是否已转化为卫星容量、转发器/带宽资源、容量利用率、客户合同期限和单价证据，而不是泛化主题叙事？"
         if item.rule_id == "stable_growth_without_receivables_cashflow_check":
-            return "稳健增长是否有经营现金流和回款支撑，应收账款是否过快扩张，ROE 变化来自业务质量还是杠杆？"
+            return "稳健增长是否有经营现金流和回款支撑，应收账款是否过快扩张，ROE 变化来自业务质量还是杠杆，合同负债或订单、债务结构和现金流是否支持稳健属性？"
         if item.rule_id == "classification_low_confidence_requires_review":
             return "为什么无法稳定分类；主营收入、订单、客户和核心财务证据分别缺什么，哪些主题说法不得进入正式结论？"
         if item.rule_id == "customer_order_claim_without_customer_evidence":
@@ -892,6 +973,10 @@ class ResearchIntelligenceBuilder:
                 return "机器人或新业务客户、订单和量产证据是否为官方披露，大客户收入占比是否可判断？"
             if strategy_type == "life_science_cxo_services":
                 return "海外或美国客户收入占比、客户集中度和客户流失风险是否披露，相关订单是否有官方依据？"
+            if strategy_type == "low_altitude_economy_infrastructure":
+                return "低空项目合同是否披露客户类型、验收节点、收入确认口径和回款周期；政府/国企客户是否影响应收账款和经营现金流？"
+            if strategy_type == "satellite_communication_infrastructure":
+                return "客户合同是否披露合同期限、容量租赁规模、单价、续约条件和客户集中度；不要只用泛化客户订单证据替代容量变现证据。"
         if item.rule_id == "capacity_claim_without_utilization":
             if strategy_type == "ai_datacenter_infrastructure" and sub_type == "cooling_liquid_cooling_infrastructure":
                 return "液冷或机房温控相关产能、项目投产、客户验收和收入转换是否披露？现有 capex 是否已转化为液冷/数据中心温控收入？"
@@ -899,6 +984,10 @@ class ResearchIntelligenceBuilder:
                 return "CDMO 产能利用率、临床项目数量或客户集中度是否披露，产能扩张是否已经形成收入、利用率或毛利率改善？"
             if strategy_type == "ai_datacenter_infrastructure" and sub_type == "datacenter_operator":
                 return "机柜数、MW、上架率和 PUE 是否披露，新增资源是否已经转化为收入或客户合同？"
+            if strategy_type == "low_altitude_economy_infrastructure":
+                return "飞行小时、飞行架次、平台调度量和项目验收节点是否披露，新增低空基础设施或运营服务是否已经转化为收入和回款？"
+            if strategy_type == "satellite_communication_infrastructure":
+                return "卫星容量、转发器或带宽资源、容量利用率和客户合同期限是否披露，新增 capex 是否已有容量租赁或续约证据？"
         return None
 
     def _safety_boundary(self, findings: list[dict[str, str]]) -> SafetyBoundary:
