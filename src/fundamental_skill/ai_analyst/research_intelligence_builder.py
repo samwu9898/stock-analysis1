@@ -121,9 +121,9 @@ class ResearchIntelligenceBuilder:
         source_hierarchy = self._source_hierarchy(evidence_pack)
         evidence_classification = self._evidence_classification(evidence_pack)
         strategy_driver_map = {"drivers": self._strategy_driver_map(evidence_pack, strategy_type)}
-        cross_validation = self._cross_validation(evidence_pack, strategy_type)
+        cross_validation = self._cross_validation(evidence_pack, strategy_type, sub_type)
         contradictions = self._contradictions(evidence_pack, strategy_type)
-        questions = self._questions(evidence_pack, strategy_type, contradictions, cross_validation)
+        questions = self._questions(evidence_pack, strategy_type, sub_type, contradictions, cross_validation)
         manual_items = [item for item in questions if item.suggested_recipient != "IR"]
         ir_items = [item for item in questions if item.suggested_recipient == "IR"]
 
@@ -341,11 +341,11 @@ class ResearchIntelligenceBuilder:
         # than assuming the field was checked.
         return True
 
-    def _cross_validation(self, pack: dict[str, Any], strategy_type: str) -> list[CrossValidationItem]:
+    def _cross_validation(self, pack: dict[str, Any], strategy_type: str, sub_type: str | None = None) -> list[CrossValidationItem]:
         financial = pack.get("financial_metrics", {})
         business = _as_list(pack.get("business_composition"))
         text = _pack_text(pack)
-        specs = self._cross_validation_specs(strategy_type)
+        specs = self._cross_validation_specs(strategy_type, sub_type)
         rows: list[CrossValidationItem] = []
         for index, spec in enumerate(specs, 1):
             required = spec["required"]
@@ -372,7 +372,7 @@ class ResearchIntelligenceBuilder:
             ))
         return rows
 
-    def _cross_validation_specs(self, strategy_type: str) -> list[dict[str, Any]]:
+    def _cross_validation_specs(self, strategy_type: str, sub_type: str | None = None) -> list[dict[str, Any]]:
         common = [
             {
                 "claim": "reported growth should convert into cash and working-capital quality",
@@ -421,7 +421,42 @@ class ResearchIntelligenceBuilder:
                 {"claim": "unknown classification needs basic business and financial anchors before research conclusions", "required": ["basic_info.main_business", "business_composition.segments", "financial_metrics.revenue_yoy"], "checks": ["classification evidence completeness"]},
             ],
         }
-        return common + by_type.get(strategy_type, by_type["unknown"])
+        specs = common + by_type.get(strategy_type, by_type["unknown"])
+        if strategy_type == "ai_datacenter_infrastructure" and sub_type == "cooling_liquid_cooling_infrastructure":
+            specs.extend([
+                {
+                    "claim": "liquid-cooling realization should distinguish validation stage, batch orders, revenue recognition, and ordinary HVAC boundary",
+                    "required": [
+                        "ai_datacenter_cooling_revenue_share",
+                        "ai_datacenter_liquid_cooling_revenue_share",
+                        "ai_datacenter_liquid_cooling_customer_validation",
+                        "ai_datacenter_liquid_cooling_batch_orders",
+                        "ai_datacenter_liquid_cooling_revenue_recognition",
+                        "ai_datacenter_ordinary_hvac_revenue_share",
+                    ],
+                    "checks": ["liquid-cooling POC/certification vs batch orders", "datacenter cooling vs ordinary HVAC"],
+                },
+            ])
+        elif strategy_type == "ai_datacenter_infrastructure" and sub_type == "datacenter_operator":
+            specs.extend([
+                {
+                    "claim": "datacenter operator growth should bridge operating resources, rack-up, contracts, capex conversion, depreciation, and power cost",
+                    "required": [
+                        "ai_datacenter_cabinet_count",
+                        "ai_datacenter_mw_scale",
+                        "ai_datacenter_rack_up_utilization",
+                        "ai_datacenter_pue",
+                        "ai_datacenter_customer_contract_term",
+                        "ai_datacenter_customer_concentration",
+                        "ai_datacenter_revenue_per_cabinet",
+                        "financial_metrics.capex",
+                        "depreciation_amortization",
+                        "ai_datacenter_power_cost_revenue",
+                    ],
+                    "checks": ["cabinet/MW/rack-up/PUE vs revenue", "capex vs contracts/revenue/cash"],
+                },
+            ])
+        return specs
 
     def _contradictions(self, pack: dict[str, Any], strategy_type: str) -> list[ContradictionItem]:
         rules = [
@@ -619,10 +654,95 @@ class ResearchIntelligenceBuilder:
     def _field_missing(self, field: str, pack: dict[str, Any]) -> bool:
         return self._required_missing(field, _missing_fields(pack), pack.get("financial_metrics", {}), _as_list(pack.get("business_composition")), pack)
 
+    def _cross_validation_question_text(
+        self,
+        cv: CrossValidationItem,
+        strategy_type: str,
+        sub_type: str | None,
+    ) -> str:
+        missing = set(cv.missing_evidence)
+        claim = cv.business_claim
+
+        def has_any(tokens: list[str]) -> bool:
+            return any(token in missing or any(token in field for field in missing) for token in tokens)
+
+        if strategy_type == "ai_datacenter_infrastructure" and sub_type == "cooling_liquid_cooling_infrastructure":
+            if has_any(["liquid_cooling", "ordinary_hvac", "cooling_revenue"]):
+                return (
+                    "液冷客户验证目前是 POC、测试、认证，还是已经形成批量订单？"
+                    "液冷订单是否披露金额、客户、交付节点和验收口径？"
+                    "液冷收入是否单独披露，收入确认口径是什么；机房温控收入中有多少来自数据中心需求，多少可能是普通温控或工业温控？"
+                )
+            if not has_any(["ai_datacenter"]):
+                return "数据中心温控收入增长是否有经营现金流、回款和应收账款质量支撑，哪些财务字段仍缺失？"
+            return "数据中心温控收入、客户收入占比和订单交付证据分别披露到什么层级，能否与普通温控或工业温控明确分开？"
+        if strategy_type == "ai_datacenter_infrastructure" and sub_type == "datacenter_operator":
+            if not has_any(["ai_datacenter", "cabinet", "mw", "rack_up", "pue", "contract", "power_cost", "depreciation"]):
+                return "数据中心运营收入增长是否有经营现金流、回款和应收账款质量支撑，哪些财务字段仍缺失？"
+            return (
+                "机柜数、MW、上架率和 PUE 是否披露？"
+                "新增 capex 对应哪些数据中心项目，是否已经转化为上架率、收入或客户合同？"
+                "客户合同期限、客户集中度、单机柜收入是否披露，折旧和电力成本如何影响利润和经营现金流？"
+            )
+        if strategy_type == "advanced_manufacturing_growth":
+            if has_any(["new_business", "customer_orders", "major_customer", "business_composition"]):
+                return (
+                    "机器人或其他新业务是否有单独收入、订单、客户或量产证据？"
+                    "新业务毛利率是否可拆分，大客户收入占比是否披露？"
+                    "当前估值消化依赖哪些利润增长、毛利率和经营现金流证据，应收账款与经营现金流是否支持收入增长质量？"
+                )
+            return "当前估值消化依赖哪些利润增长、毛利率和经营现金流证据，是否能和新业务兑现节奏对应起来？"
+        if strategy_type == "life_science_cxo_services":
+            if not has_any(["cxo", "backlog", "customer", "capacity", "regulatory", "overseas"]):
+                return "CXO 收入增长是否有经营现金流、回款和应收账款质量支撑，哪些财务字段仍缺失？"
+            return (
+                "backlog 和新签订单是否有官方披露？"
+                "合同负债是否仅为 partial proxy、不能替代 backlog？"
+                "美国或海外客户收入占比是否披露，生物安全法案、海外监管和客户流失风险是否需要单独复核？"
+                "CDMO 产能利用率、临床项目数量或客户集中度是否披露，产能扩张是否已经形成收入、利用率或毛利率改善？"
+            )
+        if strategy_type == "low_altitude_economy_infrastructure":
+            return (
+                "低空、通航或空管收入占比是否披露？"
+                "飞行小时、飞行架次或平台调度量是否披露？"
+                "项目合同是否有验收和收入确认，主业是否真是低空基础设施或运营服务，而不是制造或题材？"
+            )
+        if strategy_type == "satellite_communication_infrastructure":
+            return (
+                "卫星容量、转发器或带宽资源是否披露？"
+                "容量利用率、客户合同期限和单价是否披露？"
+                "卫星寿命、折旧和 capex 是否影响现金流稳定性，客户集中度是否可判断？"
+            )
+        if strategy_type in {"resource_core", "resource_swing"}:
+            return (
+                "核心商品暴露和收入占比是否清楚？"
+                "产量、成本曲线、库存、价格传导和套期保值是否披露？"
+                "经营现金流和债务结构是否能承受周期波动？"
+            )
+        if strategy_type == "semiconductor_cycle":
+            return (
+                "存货变化是否支持周期复苏叙事？"
+                "国产替代收入是否可拆分，客户导入是否已有收入证据？"
+                "R&D 强度是否只是投入，而不是技术壁垒证明？"
+            )
+        if strategy_type == "stable_growth":
+            return (
+                "稳健增长是否有经营现金流和回款支撑？"
+                "应收账款是否过快扩张，ROE 变化来自业务质量还是杠杆？"
+                "订单或合同负债是否支撑稳定性，且是否避免把合同负债当作 backlog？"
+            )
+        if strategy_type in {"theme_only", "unknown"}:
+            return (
+                "当前主题是否有主营收入、订单和客户证据？"
+                "为什么无法稳定分类，哪些主题说法不得进入正式结论？"
+            )
+        return f"补充验证：{claim}"
+
     def _questions(
         self,
         pack: dict[str, Any],
         strategy_type: str,
+        sub_type: str | None,
         contradictions: list[ContradictionItem],
         cross_validation: list[CrossValidationItem],
     ) -> list[ResearchQuestion]:
@@ -630,7 +750,7 @@ class ResearchIntelligenceBuilder:
         for item in contradictions:
             if item.triggered not in {"true", "not_assessable"}:
                 continue
-            questions.append(self._question_from_rule(item, strategy_type))
+            questions.append(self._question_from_rule(item, strategy_type, sub_type))
         if strategy_type in {"theme_only", "unknown"}:
             questions.append(ResearchQuestion(
                 question_id="q_classification_basic_review",
@@ -649,10 +769,10 @@ class ResearchIntelligenceBuilder:
                 what_was_checked=["stock.strategy_type", "basic_info", "business_composition", "financial_metrics"],
             ))
         for cv in cross_validation:
-            if cv.validation_status in {"missing", "not_assessable"} and cv.missing_evidence:
+            if cv.validation_status in {"missing", "not_assessable", "partially_validated"} and cv.missing_evidence:
                 questions.append(ResearchQuestion(
                     question_id=f"q_{cv.item_id}",
-                    question=f"补充验证：{cv.business_claim}",
+                    question=self._cross_validation_question_text(cv, strategy_type, sub_type),
                     category="cross_validation",
                     priority="P1",
                     evidence_trigger=f"missing_required_evidence:{','.join(cv.missing_evidence[:3])}",
@@ -668,12 +788,17 @@ class ResearchIntelligenceBuilder:
                     what_was_checked=cv.what_was_checked,
                 ))
         dedup: dict[str, ResearchQuestion] = {}
+        seen_text: set[str] = set()
         for question in questions:
+            if question.question in seen_text:
+                continue
+            seen_text.add(question.question)
             dedup.setdefault(question.question_id, question)
         return list(dedup.values())
 
-    def _question_from_rule(self, item: ContradictionItem, strategy_type: str) -> ResearchQuestion:
-        question_text = {
+    def _question_from_rule(self, item: ContradictionItem, strategy_type: str, sub_type: str | None = None) -> ResearchQuestion:
+        strategy_specific = self._strategy_rule_question_text(item, strategy_type, sub_type)
+        question_text = strategy_specific or {
             "revenue_growth_vs_cashflow_mismatch": "解释收入增长与经营现金流不匹配的原因，并补充回款、项目交付或季节性说明。",
             "profit_growth_without_cashflow": "解释利润增长为何未转化为经营现金流，并补充现金转换证据。",
             "capex_without_revenue_bridge": "说明 capex 对应项目状态，以及是否已有收入、利用率、验收或交付验证。",
@@ -708,6 +833,73 @@ class ResearchIntelligenceBuilder:
             not_assessable_reason=item.not_assessable_reason,
             what_was_checked=item.what_was_checked,
         )
+
+    def _strategy_rule_question_text(self, item: ContradictionItem, strategy_type: str, sub_type: str | None) -> str | None:
+        if item.rule_id == "contract_liabilities_overread_as_backlog":
+            if strategy_type == "life_science_cxo_services":
+                return "backlog 和新签订单是否由公司官方披露？合同负债对应哪些业务和客户，是否仅作为 partial proxy、不能替代 backlog？"
+            if strategy_type == "ai_datacenter_infrastructure":
+                return "订单或 backlog 是否披露金额、客户、交付节点和验收口径？合同负债对应哪些项目，是否仅作为 partial proxy、不能替代真实订单或 backlog？"
+            return "合同负债对应哪些业务和客户，是否仅作为 partial proxy、不能替代 backlog 或已确认未来收入？"
+        if item.rule_id == "capex_without_revenue_bridge":
+            if strategy_type == "ai_datacenter_infrastructure" and sub_type == "datacenter_operator":
+                return "新增 capex 对应哪些数据中心项目，是否已经转化为上架率、收入或客户合同；折旧和电力成本如何影响利润和经营现金流？"
+            if strategy_type == "life_science_cxo_services":
+                return "产能扩张对应哪些 CDMO/CRO 项目，是否已经形成收入、利用率或毛利率改善；capex 是否仍只是产能投入观察？"
+            if strategy_type == "satellite_communication_infrastructure":
+                return "卫星寿命、折旧和 capex 对现金流稳定性的影响如何披露，新增资产是否已有容量利用率、合同期限和单价证据？"
+            return "capex 对应哪些项目，是否已有收入、利用率、验收或交付证据；避免把 capex 直接当作产能释放。"
+        if item.rule_id == "new_business_without_segment_revenue":
+            if strategy_type == "advanced_manufacturing_growth":
+                return "机器人或其他新业务是否有单独收入、订单、客户或量产证据；新业务毛利率和大客户收入占比是否可拆分？"
+            if strategy_type == "ai_datacenter_infrastructure" and sub_type == "cooling_liquid_cooling_infrastructure":
+                return "液冷客户验证目前是 POC、测试、认证，还是批量订单；液冷收入是否单独披露，收入确认口径是什么？"
+        if item.rule_id == "revenue_growth_vs_cashflow_mismatch":
+            if strategy_type == "ai_datacenter_infrastructure" and sub_type == "cooling_liquid_cooling_infrastructure":
+                return "数据中心温控或液冷收入增长为何没有同步转化为利润和经营现金流，回款、验收或交付周期是否拖累现金质量？"
+            return "收入增长为何没有同步转化为经营现金流，回款、验收、交付或季节性因素分别是什么？"
+        if item.rule_id == "profit_growth_without_cashflow":
+            return "利润增长为何没有同步转化为经营现金流，利润来源、回款节奏和营运资本变化是否披露？"
+        if item.rule_id == "high_valuation_without_earnings_cashflow_support":
+            if strategy_type == "advanced_manufacturing_growth":
+                return "当前估值消化依赖哪些利润增长、毛利率和经营现金流证据，机器人或新业务兑现节奏是否足以解释估值压力？"
+            return "估值解释依赖哪些利润增长、毛利率和经营现金流证据，哪些证据仍缺失？"
+        if item.rule_id == "r_and_d_ratio_overread_as_moat":
+            if strategy_type == "semiconductor_cycle":
+                return "R&D 强度是否只是投入而不是技术壁垒证明，客户导入、国产替代收入和产品采用证据是否披露？"
+            return "R&D 强度是否只是投入证据，产品采用、客户验证或认证证据是否能独立支撑技术壁垒判断？"
+        if item.rule_id == "inventory_build_vs_demand_claim" and strategy_type == "semiconductor_cycle":
+            return "存货变化是否支持周期复苏叙事，客户导入和收入确认是否能解释备货、周转或减值风险？"
+        if item.rule_id == "commodity_exposure_without_business_mix":
+            return "核心商品暴露和收入占比是否清楚，产量、成本曲线、库存、价格传导、套期保值和现金流韧性是否披露？"
+        if item.rule_id == "policy_theme_without_contract_revenue":
+            if strategy_type in {"theme_only", "unknown"}:
+                return "当前主题是否有主营收入、订单和客户证据；为什么无法稳定分类，哪些主题说法不得进入正式结论？"
+            if strategy_type == "ai_datacenter_infrastructure" and sub_type == "datacenter_operator":
+                return "AIDC/智算中心政策或行业需求是否已转化为可披露客户合同、上架率、PUE、收入或经营现金流，而不是仅停留在主题或建设预期？"
+            if strategy_type == "low_altitude_economy_infrastructure":
+                return "低空、通航或空管收入占比是否披露，项目合同是否有验收和收入确认；主业是否真是低空基础设施或运营服务？"
+        if item.rule_id == "stable_growth_without_receivables_cashflow_check":
+            return "稳健增长是否有经营现金流和回款支撑，应收账款是否过快扩张，ROE 变化来自业务质量还是杠杆？"
+        if item.rule_id == "classification_low_confidence_requires_review":
+            return "为什么无法稳定分类；主营收入、订单、客户和核心财务证据分别缺什么，哪些主题说法不得进入正式结论？"
+        if item.rule_id == "customer_order_claim_without_customer_evidence":
+            if strategy_type == "ai_datacenter_infrastructure" and sub_type == "cooling_liquid_cooling_infrastructure":
+                return "液冷或数据中心温控客户是否已有官方披露？订单是否包含客户类型、金额、交付节点、验收口径和收入确认安排？"
+            if strategy_type == "ai_datacenter_infrastructure" and sub_type == "datacenter_operator":
+                return "客户合同是否披露客户类型、合同期限、机柜/MW规模、上架节奏和收入确认口径？"
+            if strategy_type == "advanced_manufacturing_growth":
+                return "机器人或新业务客户、订单和量产证据是否为官方披露，大客户收入占比是否可判断？"
+            if strategy_type == "life_science_cxo_services":
+                return "海外或美国客户收入占比、客户集中度和客户流失风险是否披露，相关订单是否有官方依据？"
+        if item.rule_id == "capacity_claim_without_utilization":
+            if strategy_type == "ai_datacenter_infrastructure" and sub_type == "cooling_liquid_cooling_infrastructure":
+                return "液冷或机房温控相关产能、项目投产、客户验收和收入转换是否披露？现有 capex 是否已转化为液冷/数据中心温控收入？"
+            if strategy_type == "life_science_cxo_services":
+                return "CDMO 产能利用率、临床项目数量或客户集中度是否披露，产能扩张是否已经形成收入、利用率或毛利率改善？"
+            if strategy_type == "ai_datacenter_infrastructure" and sub_type == "datacenter_operator":
+                return "机柜数、MW、上架率和 PUE 是否披露，新增资源是否已经转化为收入或客户合同？"
+        return None
 
     def _safety_boundary(self, findings: list[dict[str, str]]) -> SafetyBoundary:
         return SafetyBoundary(
