@@ -30,11 +30,15 @@
 
 Research Intelligence P0 is an independent AI analyst-layer research-question discovery artifact. It only reads `output/evidence_pack_<code>.json`; it does not call LLMs, use network access, connect new data sources, mutate the deterministic pipeline, or change `status`, `confidence`, `score`, `strategy_type`, or `sub_type`.
 
+Research Intelligence P0.1 has also been completed and accepted. P0.1 sharpens the research-question templates from generic missing-field checklists into industry-aware follow-up questions selected by `strategy_type`, `sub_type`, missing evidence, and triggered rule. It keeps all P0 questions evidence-triggered and preserves the proxy guards: contract liabilities are only a partial proxy, capex is not capacity release, R&D ratio is not proof of a technology barrier, liquid-cooling POC / certification is not a batch order, and customer capex is not company revenue.
+
 Outputs:
 
 - `output/research_intelligence_<code>.json`
 - `output/research_questions_<code>.json`
 - `output/research_questions_<code>.md`
+
+These files are generated runtime artifacts and should not be committed.
 
 Command:
 
@@ -192,7 +196,7 @@ python -m src.fundamental_skill.ai_analyst.runner --code 601698 --mode prompt_on
 python -m src.fundamental_skill.ai_analyst.research_intelligence_runner --code 002837
 ```
 
-This reads `output/evidence_pack_<code>.json` and writes the independent research intelligence pack plus research question set. It does not call model APIs, mutate the deterministic pipeline, or generate / modify HTML reports.
+This reads `output/evidence_pack_<code>.json` and writes the independent research intelligence pack plus research question set. P0.1 uses sharper strategy-aware question templates instead of generic missing-field fallback wording. It does not call model APIs, mutate the deterministic pipeline, or generate / modify HTML reports. `output/research_intelligence_*.json` and `output/research_questions_*.json/.md` are generated runtime artifacts and should not be committed.
 
 ### 7. 生成 HTML report prompt
 

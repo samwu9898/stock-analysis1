@@ -21,6 +21,8 @@ Research Intelligence P0 is an upper AI analyst artifact above the deterministic
 
 It does not modify `FundamentalAnalysisResult`, deterministic pipeline behavior, classifier output, connector mappings, scoring, readiness, result assembly, or HTML rendering. It is a rule-triggered, evidence-gated research question discovery layer, not a trading system, not a technical-analysis module, and not a report renderer.
 
+Research Intelligence P0.1 is the accepted template-sharpening layer for that same AI analyst artifact. It turns generic missing-field follow-ups into strategy-aware research questions selected from `strategy_type`, `sub_type`, `missing_evidence`, and triggered `rule_id`. It keeps the deterministic pipeline unchanged, does not change `status`, `confidence`, `score`, `strategy_type`, or `sub_type`, and does not output trading advice or technical analysis.
+
 ## 1. 定位
 
 `fundamental_skill` 是 A 股基本面分析 Skill。它只负责判断公司基本面、行业景气、财务质量、估值、风险、催化和后续跟踪指标。

@@ -37,6 +37,16 @@ evidence_pack
 
 In P0 it is not connected to the HTML Report main chain. It does not call an LLM, does not fetch new data, and does not infer missing facts. It is a deterministic, rule-triggered, evidence-gated artifact for discovering research questions and manual-review / IR questions.
 
+Research Intelligence P0.1 keeps the same chain and boundaries, but sharpens question templates. The workflow remains:
+
+```text
+evidence_pack
+  -> research_intelligence_<code>.json
+  -> research_questions_<code>.json / .md
+```
+
+P0.1 selects more industry-specific questions from `strategy_type`, `sub_type`, `missing_evidence`, and triggered `rule_id` instead of falling back to broad missing-field wording. It still does not call an LLM, does not fetch data, does not mutate deterministic pipeline outputs, and does not connect to the HTML Report main chain.
+
 ## 3. Evidence Pack
 
 The evidence pack compresses pipeline output and raw public-data blocks into a model-friendly JSON object. It intentionally avoids passing full raw JSON to the model.
@@ -159,6 +169,8 @@ The runner reads `output/evidence_pack_<code>.json` and writes:
 - `output/research_questions_<code>.md`
 
 This workflow does not call OpenAI or any other model API, does not use network access, and does not connect new data sources. It produces an independent analyst-layer artifact focused on source hierarchy, evidence classification, strategy-aware business-financial cross-validation, rule-triggered contradiction detection, P0/P1/P2 research questions with evidence triggers, and IR / manual review questions.
+
+P0.1 accepted behavior adds template sharpening and fallback cleanup to this same workflow. P0 questions still require `evidence_trigger`; P1/P2 questions should avoid generic fallback wording when the strategy context provides a sharper question. The generated `research_intelligence` and `research_questions` files remain runtime artifacts, not committed source.
 
 ## 6. Why v1 Does Not Call an API
 

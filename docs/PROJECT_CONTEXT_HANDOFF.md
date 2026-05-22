@@ -40,7 +40,7 @@ Core modules:
 - `FundamentalScoringEngine`: scores fundamental dimensions under strategy-specific weights and confidence constraints.
 - `FundamentalResultAssembler`: assembles the final structured fundamental result.
 - `AI Analyst Layer`: builds evidence packs and model-ready prompts; current primary mode is `prompt_only`.
-- `Research Intelligence P0`: independent AI analyst artifact builder that reads only `evidence_pack`, builds a research intelligence pack and research question set, and acts as a research-question discovery layer rather than a report renderer or trading system.
+- `Research Intelligence P0/P0.1`: independent AI analyst artifact builder that reads only `evidence_pack`, builds a research intelligence pack and research question set, and acts as a research-question discovery layer rather than a report renderer or trading system. P0.1 sharpens generic missing-evidence prompts into strategy-type-aware research questions.
 - `Fundamental HTML Report Generator v2.1`: upper AI analyst display capability that creates a model prompt for structured `FundamentalHtmlReport` JSON and renders an existing formal JSON into self-contained HTML.
 - `HTML Report Visual Audit Tool v1`: local Playwright / Chromium screenshot and manifest tool for existing HTML reports.
 - `Dashboard v3`: local Streamlit fundamental AI report reader / auditor. The main view is Chinese-first and highlights the top conclusion, one-line conclusion, strategy / sub-type explanations, evidence map, risks, evidence gaps, must-track indicators, confidence breakdown, data quality, report stale / mismatch status, and schema / safety / garbled guard state. Evidence Pack, Source Trace, Raw JSON, Prompt, and legacy fields are collapsed as audit material.
@@ -74,7 +74,7 @@ stock_code
 - `RealDataConnector v2.3a`
 - `ExternalCommodityPriceConnector v1.1`
 - `AI Analyst Layer prompt_only`
-- `Research Intelligence P0`
+- `Research Intelligence P0/P0.1`
 - `Fundamental HTML Report Generator v2.1`
 - `HTML Report Visual Audit Tool v1`
 - `Dashboard v3`
@@ -203,6 +203,7 @@ Research Intelligence P0 boundaries:
 - It does not mutate deterministic results, `status`, `confidence`, `score`, `strategy_type`, `sub_type`, connector, classifier, scoring, readiness, result assembler, HTML renderer, or report outputs.
 - It writes only independent artifacts: `output/research_intelligence_<code>.json`, `output/research_questions_<code>.json`, and `output/research_questions_<code>.md`.
 - It is evidence-gated and rule-triggered; missing data should produce not-assessable diagnostics or IR / manual review questions, not invented conclusions.
+- P0.1 keeps this boundary while sharpening question text by `strategy_type`, `sub_type`, `missing_evidence`, and triggered `rule_id`; it does not change deterministic `status`, `confidence`, `score`, `strategy_type`, or `sub_type`, and it does not connect to the HTML Report main chain.
 
 Interpretation boundaries:
 
@@ -252,7 +253,13 @@ Do not add a new industry framework only because one stock is popular or difficu
 - `latest_news` / AkShare news endpoints may fail.
 - Many industry-specific operating data fields are still missing or not stably obtainable.
 - AI report generation is currently mainly `prompt_only`; API mode is not the primary implemented workflow.
-- Research Intelligence P0 has been accepted as a baseline research-question discovery artifact. The `002837` smoke passed and generated a research intelligence pack plus JSON / Markdown research question set from the existing evidence pack.
+- Research Intelligence P0 has been accepted as a baseline research-question discovery artifact.
+- Research Intelligence P0.1 Template Sharpening and Fallback Template Cleanup have passed final acceptance. The latest acceptance refreshed and reviewed `002837`, `002050`, `603259`, and `300442`; pytest recorded `379 passed`, and the regression suite recorded `passed=47 failed=0 total=47`.
+- P0.1 sample acceptance coverage:
+  - `002837` Envicool: liquid-cooling customer validation, batch-order distinction, room cooling versus ordinary thermal-control boundary.
+  - `002050` Sanhua Intelligent Controls: robotics / new-business revenue, orders, customers, major-customer revenue share, and valuation digestion evidence.
+  - `603259` WuXi AppTec: backlog, new orders, contract-liability proxy guard, overseas / US customers, Biosecure Act / overseas regulatory risk, and capacity utilization.
+  - `300442` Range Intelligent Computing: cabinet / MW scale, rack-up rate, PUE, customer contracts, capex-to-revenue bridge, depreciation, and power cost.
 - HTML report generation v2.1 does not automatically call an API; it creates prompts and renders existing formal `FundamentalHtmlReport` JSON.
 - `002050` 三花智控 is an internal successful HTML report sample candidate after v2.1 and visual audit acceptance.
 - `output/`, `output/reports/`, `output/visual_audit/`, `data/`, and `cache/` are generated/runtime artifacts and should not be committed.
@@ -262,7 +269,7 @@ Do not add a new industry framework only because one stock is popular or difficu
 ## 13. Suggested Next Steps
 
 - Keep `README.md` and `docs/PROJECT_CONTEXT_HANDOFF.md` synchronized after major project changes.
-- Research Intelligence P0.1 optimization candidates: sharpen `ai_datacenter_infrastructure` question templates; distinguish liquid-cooling customer validation stage such as POC / testing / certification / batch orders; clarify datacenter room cooling versus ordinary thermal-control boundaries; sharpen the template for revenue growth not converting into profit and operating cash flow.
+- Research Intelligence P0.1 baseline does not need more repair unless new samples reveal generic fallback wording or weak industry context. Next useful directions are multi-sample real use, P1 design, or longitudinal resolved-question workflows.
 - HTML Report Generator v2.1 baseline does not need more repair unless the user reports a specific visual or content issue.
 - Based on user feedback, continue refining the HTML research-report experience, or generate formal HTML reports for other stocks using the existing v2.1 chain.
 - Keep AI Datacenter v1 conservative unless public data sources can reliably validate orders / backlog, customer structure, cabinet / MW / PUE / rack utilization, liquid-cooling revenue, datacenter revenue split, and customer capex-cycle evidence.

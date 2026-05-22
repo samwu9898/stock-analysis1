@@ -50,9 +50,9 @@ It does not modify existing:
 
 P0 produces independent artifacts. It does not feed or alter HTML Report Generator v2.2. HTML / Dashboard integration is P2.
 
-### 2.1 P0 Implementation Status
+### 2.1 P0 / P0.1 Implementation Status
 
-Research Intelligence P0 has been implemented and the baseline has been accepted.
+Research Intelligence P0 has been implemented and the baseline has been accepted. Research Intelligence P0.1 Template Sharpening and Fallback Template Cleanup have also been implemented and accepted.
 
 Current accepted behavior:
 
@@ -63,12 +63,25 @@ Current accepted behavior:
 - does not connect new data sources;
 - does not modify `status`, `confidence`, `score`, `strategy_type`, or `sub_type`;
 - does not connect to the HTML Report main chain;
-- `002837` smoke passed;
-- latest recorded pytest result: `374 passed`;
+- P0.1 sharpens research-question templates by `strategy_type`, `sub_type`, `missing_evidence`, and triggered `rule_id`;
+- P0.1 cleans up generic fallback wording in P1/P2 questions when an industry-specific template is available;
+- P0.1 preserves `evidence_trigger` enforcement for every P0 question;
+- P0.1 preserves proxy guards: contract liabilities are only a partial proxy, capex is not capacity release, R&D ratio is not proof of a technology barrier, liquid-cooling POC / certification is not a batch order, and customer capex is not company revenue;
+- final acceptance covered `002837`, `002050`, `603259`, and `300442`;
+- latest recorded pytest result: `379 passed`;
 - latest recorded regression suite result: `passed=47 failed=0 total=47`;
 - generated `output/` artifacts remain runtime products and should not be committed.
 
 This documentation sync stage is documentation-only, so pytest and the regression suite are not rerun here.
+
+### 2.2 P0.1 Accepted Sample Coverage
+
+P0.1 final acceptance refreshed and reviewed four runtime samples:
+
+- `002837` Envicool: liquid-cooling customer validation, POC / testing / certification versus batch orders, liquid-cooling order evidence, room cooling versus ordinary / industrial thermal-control boundary, and revenue growth versus profit / operating cash-flow conversion.
+- `002050` Sanhua Intelligent Controls: robotics or other new-business standalone revenue, orders, customers, mass-production evidence, major-customer revenue share, valuation digestion, and separation between expectation and realized evidence.
+- `603259` WuXi AppTec: backlog / new orders, contract liabilities as partial proxy only, overseas / US customer exposure, Biosecure Act / overseas regulatory review, customer-loss risk, capacity utilization, project stage, and customer concentration.
+- `300442` Range Intelligent Computing: customer contract type and term, cabinet / MW scale, rack-up pace, PUE, AIDC / intelligent-computing demand conversion into contracts / utilization / revenue / operating cash flow, capex-to-revenue bridge, depreciation, and power cost.
 
 ## 3. P0 Scope
 
