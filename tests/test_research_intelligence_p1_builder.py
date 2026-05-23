@@ -127,6 +127,73 @@ def build_satellite_outputs(code="601698"):
     return ResearchIntelligenceP1Builder().build(build_satellite_pack(code))
 
 
+def build_low_altitude_pack(code="000099"):
+    fundamental = sample_fundamental("low_altitude_economy_infrastructure")
+    fundamental["stock_code"] = code
+    fundamental["stock_name"] = "CITIC Offshore Helicopter"
+    fundamental["sub_type"] = "aviation_operations_service"
+    fundamental["status"] = "neutral"
+    fundamental["confidence"] = "low"
+    fundamental["fundamental_score"] = 63
+    raw = sample_raw()
+    raw["meta"] = {"code": code, "stock_name": "CITIC Offshore Helicopter"}
+    raw["blocks"]["basic_info"] = [
+        {
+            "stock_code": code,
+            "stock_name": "CITIC Offshore Helicopter",
+            "industry": "general aviation operation services",
+            "main_business": "general aviation operation and low-altitude flight services, including transport and emergency rescue services",
+        }
+    ]
+    raw["blocks"]["financial_indicator"][0].update(
+        {
+            "period": "2026-03-31",
+            "revenue": 502587618.96,
+            "gross_margin": 21.236629,
+            "net_margin": 17.794997,
+            "operating_cashflow": 318600630.86,
+            "accounts_receivable": 746917688.8,
+            "contract_liabilities": 54125155.85,
+            "capex": 68043974.05,
+        }
+    )
+    raw["blocks"]["business_composition"] = [
+        {
+            "period": "2025-12-31",
+            "classification_type": "by industry",
+            "segment_name": "general aviation transportation",
+            "revenue": 2215984977.85,
+            "revenue_ratio": 0.991324,
+            "gross_margin": 0.237805,
+        },
+        {
+            "period": "2025-12-31",
+            "classification_type": "by product",
+            "segment_name": "general aviation transportation service",
+            "revenue": 1646294001.73,
+            "revenue_ratio": 0.736472,
+            "gross_margin": 0.14868,
+        },
+    ]
+    raw["fetch_status"]["basic_info"] = {
+        "success": True,
+        "missing_fields": [],
+        "warnings": [],
+        "source_trace": [{"function_name": "stock_individual_info_em", "source_period": "2026-05-20"}],
+    }
+    raw["fetch_status"]["business_composition"] = {
+        "success": True,
+        "missing_fields": [],
+        "warnings": [],
+        "source_trace": [{"function_name": "stock_zygc_ym", "source_period": "2025-12-31"}],
+    }
+    return EvidencePackBuilder().build(fundamental, raw)
+
+
+def build_low_altitude_outputs(code="000099"):
+    return ResearchIntelligenceP1Builder().build(build_low_altitude_pack(code))
+
+
 def driver_names(pack):
     return {item.driver_factor for item in pack.driver_matrix}
 
@@ -353,6 +420,157 @@ def test_satellite_outputs_do_not_include_forbidden_safety_terms():
     assert pack.safety_boundary.safe
     assert questions.safety_boundary.safe
     assert not any(term in text for term in forbidden_terms)
+
+
+def test_low_altitude_driver_matrix_contains_required_four_groups():
+    pack, questions = build_low_altitude_outputs()
+    names = driver_names(pack)
+
+    assert pack.strategy_type == "low_altitude_economy_infrastructure"
+    assert pack.sub_type == "aviation_operations_service"
+    assert {
+        "low-altitude policy pilot progress",
+        "airspace / route approval",
+        "local government low-altitude infrastructure spending",
+        "aviation safety / regulatory requirements",
+        "low-altitude operation demand",
+        "low-altitude / general aviation / air-traffic-management revenue contribution",
+        "flight hours",
+        "flight sorties",
+        "platform dispatch volume",
+        "route / base / airspace resources",
+        "project contracts",
+        "project acceptance / delivery",
+        "customer type",
+        "revenue stability",
+        "gross margin stability",
+        "operating cash flow",
+        "receivables",
+        "government / SOE collection cycle",
+        "contract liabilities as partial proxy only",
+        "capex-to-service-capacity bridge",
+        "safety / compliance cost",
+        "airspace approval delay",
+        "project acceptance delay",
+        "safety incident / regulatory penalty",
+        "government payment delay",
+        "utilization / flight-hour insufficiency",
+        "policy pilot does not convert into company revenue",
+        "customer concentration",
+        "weather / operational disruption risk",
+    }.issubset(names)
+    assert questions.questions
+
+
+def test_low_altitude_policy_airspace_and_local_spending_without_bridge_are_not_assessable():
+    pack, _ = build_low_altitude_outputs()
+    rows = {item.driver_factor: item for item in pack.driver_matrix}
+
+    for name in [
+        "low-altitude policy pilot progress",
+        "airspace / route approval",
+        "local government low-altitude infrastructure spending",
+        "low-altitude operation demand",
+    ]:
+        row = rows[name]
+        assert row.company_transmission_path == TRANSMISSION_PATH_FALLBACK
+        assert row.confidence_cap == "not_assessable"
+        assert row.data_availability_status == "not_assessable"
+        assert row.missing_evidence
+
+
+def test_low_altitude_missing_flight_hours_sorties_and_dispatch_are_not_assessable():
+    pack, _ = build_low_altitude_outputs()
+    rows = {item.driver_factor: item for item in pack.driver_matrix}
+
+    for name in ["flight hours", "flight sorties", "platform dispatch volume", "utilization / flight-hour insufficiency"]:
+        row = rows[name]
+        assert row.company_transmission_path == TRANSMISSION_PATH_FALLBACK
+        assert row.confidence_cap == "not_assessable"
+        assert row.data_availability_status == "not_assessable"
+        assert "Do not" in row.interpretation_guard or "Revenue cannot substitute" in row.interpretation_guard
+
+
+def test_low_altitude_project_contract_and_acceptance_missing_are_not_assessable():
+    pack, _ = build_low_altitude_outputs()
+    rows = {item.driver_factor: item for item in pack.driver_matrix}
+
+    for name in ["project contracts", "project acceptance / delivery", "project acceptance delay"]:
+        row = rows[name]
+        assert row.company_transmission_path == TRANSMISSION_PATH_FALLBACK
+        assert row.confidence_cap == "not_assessable"
+        assert row.data_availability_status == "not_assessable"
+    assert "as acceptance" in rows["project acceptance / delivery"].interpretation_guard
+
+
+def test_low_altitude_government_collection_cycle_missing_is_not_assessable():
+    pack, _ = build_low_altitude_outputs()
+    rows = {item.driver_factor: item for item in pack.driver_matrix}
+
+    for name in ["government / SOE collection cycle", "government payment delay"]:
+        row = rows[name]
+        assert row.company_transmission_path == TRANSMISSION_PATH_FALLBACK
+        assert row.confidence_cap == "not_assessable"
+        assert "certainty" in row.interpretation_guard
+
+
+def test_low_altitude_capex_does_not_equal_service_capacity_release():
+    pack, _ = build_low_altitude_outputs()
+    row = {item.driver_factor: item for item in pack.driver_matrix}["capex-to-service-capacity bridge"]
+
+    assert row.company_transmission_path != TRANSMISSION_PATH_FALLBACK
+    assert "evidence_pack.financial_metrics.capex=" in row.company_transmission_path
+    assert "not service-capacity release" in row.interpretation_guard
+    assert any("flight hours" in item or "utilization" in item for item in row.missing_evidence)
+
+
+def test_low_altitude_contract_liabilities_do_not_replace_backlog():
+    pack, _ = build_low_altitude_outputs()
+    rows = {item.driver_factor: item for item in pack.driver_matrix}
+    project_contracts = rows["project contracts"]
+    contract_proxy = rows["contract liabilities as partial proxy only"]
+
+    assert project_contracts.company_transmission_path == TRANSMISSION_PATH_FALLBACK
+    assert project_contracts.confidence_cap == "not_assessable"
+    assert "not backlog" in project_contracts.interpretation_guard
+    assert contract_proxy.company_transmission_path != TRANSMISSION_PATH_FALLBACK
+    assert "evidence_pack.financial_metrics.contract_liabilities=" in contract_proxy.company_transmission_path
+    assert "must not be labeled backlog" in contract_proxy.interpretation_guard
+
+
+def test_low_altitude_company_transmission_path_enforcement_uses_exact_fallback_or_nodes():
+    pack, _ = build_low_altitude_outputs()
+    bad_phrases = [
+        "低空经济政策向好，公司受益",
+        "空域改革推进，公司飞行量提升",
+        "地方政府加大低空投入，公司收入增长",
+    ]
+
+    for row in pack.driver_matrix:
+        assert not any(phrase in row.company_transmission_path for phrase in bad_phrases)
+        if row.company_transmission_path == TRANSMISSION_PATH_FALLBACK:
+            assert row.confidence_cap == "not_assessable"
+        else:
+            assert "evidence_pack." in row.company_transmission_path
+            assert "=" in row.company_transmission_path
+
+
+def test_low_altitude_source_bucket_counting_uses_existing_bucket_rules():
+    pack, _ = build_low_altitude_outputs()
+
+    assert pack.source_bucket_summary.consensus_assessment_status == "not_assessable"
+    assert pack.source_bucket_summary.independent_source_count >= 2
+    assert "company_disclosure" in pack.source_bucket_summary.source_buckets
+    assert "financial_statement" in pack.source_bucket_summary.source_buckets
+
+
+def test_low_altitude_outputs_do_not_include_forbidden_safety_terms():
+    pack, questions = build_low_altitude_outputs()
+    text = json.dumps({"pack": pack.model_dump(), "questions": questions.model_dump()}, ensure_ascii=False)
+
+    assert pack.safety_boundary.safe
+    assert questions.safety_boundary.safe
+    assert not any(term in text for term in FORBIDDEN_TERMS)
 
 
 def test_cxo_integrated_platform_driver_matrix_contains_required_factors():

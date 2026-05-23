@@ -42,8 +42,14 @@ VAGUE_TRANSMISSION_PHRASES = {
     "行业空间大，公司有望受益",
     "政策支持，公司有望兑现",
     "政策持续支持，公司有望兑现",
+    "低空经济政策向好，公司受益",
+    "空域改革推进，公司飞行量提升",
+    "地方政府加大低空投入，公司收入增长",
     "policy supports demand, company benefits",
     "industry demand is strong, company should benefit",
+    "low-altitude policy improves, company benefits",
+    "airspace reform progresses, company flight volume improves",
+    "local government spending increases, company revenue grows",
 }
 
 FORBIDDEN_SAFETY_TERMS = {

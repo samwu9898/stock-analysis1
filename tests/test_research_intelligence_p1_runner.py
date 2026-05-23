@@ -88,6 +88,55 @@ def _satellite_pack():
     return EvidencePackBuilder().build(fundamental, raw)
 
 
+def _low_altitude_pack():
+    fundamental = sample_fundamental("low_altitude_economy_infrastructure")
+    fundamental["stock_code"] = "000099"
+    fundamental["stock_name"] = "CITIC Offshore Helicopter"
+    fundamental["sub_type"] = "aviation_operations_service"
+    raw = sample_raw()
+    raw["meta"] = {"code": "000099", "stock_name": "CITIC Offshore Helicopter"}
+    raw["blocks"]["basic_info"] = [
+        {
+            "stock_code": "000099",
+            "stock_name": "CITIC Offshore Helicopter",
+            "industry": "general aviation operation services",
+            "main_business": "general aviation operation and low-altitude flight services",
+        }
+    ]
+    raw["blocks"]["financial_indicator"][0].update(
+        {
+            "revenue": 502587618.96,
+            "gross_margin": 21.236629,
+            "operating_cashflow": 318600630.86,
+            "accounts_receivable": 746917688.8,
+            "contract_liabilities": 54125155.85,
+            "capex": 68043974.05,
+        }
+    )
+    raw["blocks"]["business_composition"] = [
+        {
+            "period": "2025-12-31",
+            "classification_type": "by industry",
+            "segment_name": "general aviation transportation",
+            "revenue_ratio": 0.991324,
+            "gross_margin": 0.237805,
+        }
+    ]
+    raw["fetch_status"]["basic_info"] = {
+        "success": True,
+        "missing_fields": [],
+        "warnings": [],
+        "source_trace": [{"function_name": "stock_individual_info_em", "source_period": "2026-05-20"}],
+    }
+    raw["fetch_status"]["business_composition"] = {
+        "success": True,
+        "missing_fields": [],
+        "warnings": [],
+        "source_trace": [{"function_name": "stock_zygc_ym", "source_period": "2025-12-31"}],
+    }
+    return EvidencePackBuilder().build(fundamental, raw)
+
+
 def test_research_intelligence_p1_runner_writes_independent_json_and_markdown(tmp_path):
     evidence_path = tmp_path / "evidence_pack_002837.json"
     evidence_path.write_text(json.dumps(_pack(), ensure_ascii=False), encoding="utf-8")
@@ -154,4 +203,21 @@ def test_research_intelligence_p1_runner_writes_satellite_expansion_artifacts(tm
     assert result["research_intelligence_p1"]["strategy_type"] == "satellite_communication_infrastructure"
     assert any(item["driver_factor"] == "capacity utilization" for item in matrix)
     assert any(item["driver_factor"] == "satellite remaining life / replacement capex" for item in matrix)
+    assert not (tmp_path / "reports").exists()
+
+
+def test_research_intelligence_p1_runner_writes_low_altitude_expansion_artifacts(tmp_path):
+    evidence_path = tmp_path / "evidence_pack_000099.json"
+    evidence_path.write_text(json.dumps(_low_altitude_pack(), ensure_ascii=False), encoding="utf-8")
+
+    result = run_research_intelligence_p1("000099", evidence_pack_path=evidence_path, output_dir=tmp_path)
+    matrix = result["research_intelligence_p1"]["driver_matrix"]
+
+    assert (tmp_path / "research_intelligence_p1_000099.json").exists()
+    assert (tmp_path / "research_questions_p1_000099.json").exists()
+    assert (tmp_path / "research_questions_p1_000099.md").exists()
+    assert result["research_intelligence_p1"]["strategy_type"] == "low_altitude_economy_infrastructure"
+    assert result["research_intelligence_p1"]["sub_type"] == "aviation_operations_service"
+    assert any(item["driver_factor"] == "flight hours" for item in matrix)
+    assert any(item["driver_factor"] == "capex-to-service-capacity bridge" for item in matrix)
     assert not (tmp_path / "reports").exists()

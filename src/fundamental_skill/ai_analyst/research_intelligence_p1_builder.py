@@ -24,7 +24,14 @@ AI_DATACENTER_SUB_TYPES = {"cooling_liquid_cooling_infrastructure", "datacenter_
 CXO_STRATEGY_TYPE = "life_science_cxo_services"
 CXO_SUB_TYPES = {"integrated_cxo_platform", "cdmo_manufacturing_services", "clinical_cro_services"}
 SATELLITE_STRATEGY_TYPE = "satellite_communication_infrastructure"
-SUPPORTED_STRATEGY_TYPES = {AI_DATACENTER_STRATEGY_TYPE, CXO_STRATEGY_TYPE, SATELLITE_STRATEGY_TYPE}
+LOW_ALTITUDE_STRATEGY_TYPE = "low_altitude_economy_infrastructure"
+LOW_ALTITUDE_SUB_TYPES = {"aviation_operations_service"}
+SUPPORTED_STRATEGY_TYPES = {
+    AI_DATACENTER_STRATEGY_TYPE,
+    CXO_STRATEGY_TYPE,
+    SATELLITE_STRATEGY_TYPE,
+    LOW_ALTITUDE_STRATEGY_TYPE,
+}
 
 GENERIC_MISSING_BRIDGE_REASON = "Current evidence pack lacks concrete company transmission nodes for this driver."
 
@@ -106,6 +113,9 @@ class ResearchIntelligenceP1Builder:
         elif strategy_type == SATELLITE_STRATEGY_TYPE:
             drivers = self._satellite_drivers(evidence_pack)
             summary_scope = "P1.1 satellite expansion"
+        elif strategy_type == LOW_ALTITUDE_STRATEGY_TYPE and sub_type in LOW_ALTITUDE_SUB_TYPES:
+            drivers = self._low_altitude_drivers(evidence_pack, str(sub_type))
+            summary_scope = "P1.1 low altitude expansion"
         else:
             drivers = [self._unsupported_driver(strategy_type, sub_type)]
             summary_scope = "P1.1 unsupported pilot boundary"
@@ -192,9 +202,9 @@ class ResearchIntelligenceP1Builder:
             required_evidence=[
                 (
                     "strategy_type=ai_datacenter_infrastructure, life_science_cxo_services, "
-                    "or satellite_communication_infrastructure"
+                    "satellite_communication_infrastructure, or low_altitude_economy_infrastructure"
                 ),
-                "supported pilot sub_type",
+                "supported pilot sub_type such as aviation_operations_service for low altitude",
             ],
             available_evidence=[f"input.strategy_type={strategy_type}", f"input.sub_type={sub_type}"],
             missing_evidence=["P1.1 template for this strategy_type or sub_type"],
@@ -203,7 +213,8 @@ class ResearchIntelligenceP1Builder:
             confidence_cap="not_assessable",
             not_assessable_reason=(
                 "Current P1.1 implementation only supports ai_datacenter_infrastructure, "
-                "life_science_cxo_services, and satellite_communication_infrastructure pilot templates."
+                "life_science_cxo_services, satellite_communication_infrastructure, and "
+                "low_altitude_economy_infrastructure / aviation_operations_service pilot templates."
             ),
             what_was_checked=["stock.strategy_type", "stock.sub_type"],
             source_refs=[],
@@ -774,6 +785,339 @@ class ResearchIntelligenceP1Builder:
 
     def _satellite_drivers(self, pack: dict[str, Any]) -> list[DriverFactor]:
         return [self._build_driver(pack, spec) for spec in self._satellite_specs()]
+
+    def _low_altitude_drivers(self, pack: dict[str, Any], sub_type: str) -> list[DriverFactor]:
+        if sub_type != "aviation_operations_service":
+            return [self._unsupported_driver(LOW_ALTITUDE_STRATEGY_TYPE, sub_type)]
+        return [self._build_driver(pack, spec) for spec in self._low_altitude_aviation_specs()]
+
+    def _low_altitude_aviation_specs(self) -> list[DriverSpec]:
+        return [
+            DriverSpec(
+                "policy",
+                "low-altitude policy pilot progress",
+                "macro_policy_industry",
+                "Policy pilots are context until linked to company routes, projects, contracts, revenue, and collection.",
+                ("official policy pilot list", "pilot scope", "company-specific participation", "project / contract / revenue / collection bridge"),
+                ("missing_fields", "unknown_or_missing_evidence", "risk_flags", "enhanced_must_track_indicators"),
+                "Policy pilot progress is not company revenue, and must not be written as low-altitude policy improves so the company benefits.",
+                "Which policy pilots are tied to company-specific routes, bases, projects, contracts, revenue recognition, or collection evidence?",
+                "Check official policy pilot, company participation, project/contract evidence, revenue recognition, and collection.",
+            ),
+            DriverSpec(
+                "policy",
+                "airspace / route approval",
+                "macro_policy_industry",
+                "Airspace and route approval determine whether policy context becomes company-usable operating resources.",
+                ("approved airspace", "route approval", "operating permission", "base or takeoff / landing site rights", "company operating volume bridge"),
+                ("missing_fields", "unknown_or_missing_evidence", "enhanced_must_track_indicators", "basic_info.main_business"),
+                "Airspace reform is not company-usable airspace without company-level approval, route, base, or operation-right evidence.",
+                "What company-usable airspace, route, base, or takeoff / landing resources have been approved, and how do they connect to flight volume and revenue?",
+                "Check airspace approval, route approval, operating permission, base resources, and operating-volume bridge.",
+            ),
+            DriverSpec(
+                "policy",
+                "local government low-altitude infrastructure spending",
+                "macro_policy_industry",
+                "Local government spending matters only when linked to company contracts, acceptance, revenue, and collection.",
+                ("budget / tender / procurement project", "project owner", "winning bidder", "company contract amount", "delivery / acceptance", "revenue and collection bridge"),
+                ("financial_metrics.revenue", "financial_metrics.accounts_receivable", "financial_metrics.operating_cashflow", "financial_metrics.contract_liabilities", "business_composition"),
+                "Local-government spending plans are not company revenue without contract, acceptance, revenue, and collection evidence.",
+                "Has local government low-altitude spending converted into disclosed company contracts, accepted projects, revenue, receivables, and cash collection?",
+                "Check procurement project, company contract, acceptance, revenue, receivables, and cash collection.",
+            ),
+            DriverSpec(
+                "policy",
+                "aviation safety / regulatory requirements",
+                "macro_policy_industry",
+                "Safety and regulatory requirements can affect service continuity, compliance cost, and operating permissions.",
+                ("operating licenses", "safety-management disclosures", "accident / incident history", "CAAC penalties", "compliance cost", "grounding / rectification events"),
+                ("missing_fields", "risk_flags", "enhanced_must_track_indicators", "data_limitations"),
+                "Safety and compliance are constraints; absence of event data is not proof of safe operations.",
+                "What safety, license, penalty, rectification, or compliance-cost evidence affects service continuity, cost structure, or operating risk?",
+                "Check licenses, safety events, penalties, rectification, and compliance cost.",
+            ),
+            DriverSpec(
+                "industry",
+                "low-altitude operation demand",
+                "macro_policy_industry",
+                "Low-altitude demand is useful only if bridged to company customers, routes, flight hours, sorties, revenue, and cash flow.",
+                ("demand by emergency rescue / offshore oil / tourism / logistics / inspection", "company customer bridge", "route bridge", "flight-hour or sortie bridge", "revenue and cash-flow bridge"),
+                ("business_composition", "financial_metrics.revenue", "financial_metrics.gross_margin", "financial_metrics.operating_cashflow", "financial_metrics.accounts_receivable"),
+                "Industry demand is not company demand unless the company customer, route, operating-volume, revenue, and cash-flow bridge is evidenced.",
+                "Which low-altitude demand categories have translated into company customers, routes, flight hours, sorties, revenue, receivables, and cash flow?",
+                "Check customer demand category, company customers, routes, flight hours, sorties, revenue, receivables, and cash flow.",
+            ),
+            DriverSpec(
+                "company",
+                "low-altitude / general aviation / air-traffic-management revenue contribution",
+                "company_operating",
+                "Service-line revenue contribution is the first company-level bridge for low-altitude infrastructure or operation exposure.",
+                ("segment revenue", "revenue ratio", "segment gross margin", "service-line description", "period", "sub-type routing"),
+                ("basic_info.main_business", "business_composition", "financial_metrics.revenue", "financial_metrics.gross_margin"),
+                "Business composition supports exposure only; it does not prove flight utilization, route quality, customer stability, or project acceptance.",
+                "What share of revenue is directly tied to low-altitude, general aviation, or air-traffic-management services, and what period and segment definition support it?",
+                "Check main business, business composition, revenue ratio, segment gross margin, period, and sub_type.",
+                True,
+            ),
+            DriverSpec(
+                "company",
+                "flight hours",
+                "company_operating",
+                "Flight hours validate utilization and demand realization for aviation operation services.",
+                ("disclosed flight hours by period", "service type", "aircraft / route / customer mapping", "revenue and cash-flow bridge"),
+                ("missing_fields", "unknown_or_missing_evidence", "enhanced_must_track_indicators", "financial_metrics.revenue"),
+                "Do not infer operating capability, utilization, demand stability, or revenue per flight hour when flight hours are missing.",
+                "What disclosed flight hours validate utilization and demand realization, and how do they connect to revenue and cash conversion?",
+                "Check flight hours, period, service type, aircraft/route/customer mapping, revenue, and cash-flow bridge.",
+            ),
+            DriverSpec(
+                "company",
+                "flight sorties",
+                "company_operating",
+                "Flight sorties validate actual service volume by mission and customer type.",
+                ("disclosed flight sorties by period", "mission type", "customer / route mapping", "revenue and cash-flow bridge"),
+                ("missing_fields", "unknown_or_missing_evidence", "enhanced_must_track_indicators", "financial_metrics.revenue"),
+                "Do not write service volume as fact without flight-sortie evidence.",
+                "What flight-sortie data validates actual service volume by mission type and customer, and how does it bridge to revenue?",
+                "Check flight sorties, mission type, route/customer mapping, revenue, and cash-flow bridge.",
+            ),
+            DriverSpec(
+                "company",
+                "platform dispatch volume",
+                "company_operating",
+                "Dispatch volume is relevant only when the company operates a low-altitude platform and discloses usage.",
+                ("dispatch volume", "platform users", "route / airspace / aircraft coverage", "recurring platform revenue", "project acceptance"),
+                ("missing_fields", "unknown_or_missing_evidence", "enhanced_must_track_indicators", "business_composition"),
+                "Do not infer platform usage from project labels, revenue, or aviation-operation subtype unless dispatch volume is disclosed.",
+                "If a platform exists, what dispatch volume and monetization evidence supports platform utilization?",
+                "Check dispatch volume, platform users, coverage, recurring platform revenue, and acceptance.",
+            ),
+            DriverSpec(
+                "company",
+                "route / base / airspace resources",
+                "company_operating",
+                "Routes, bases, takeoff / landing sites, and airspace permissions define operating-resource access.",
+                ("route list", "base list", "takeoff / landing sites", "usable airspace", "operating permissions", "coverage", "utilization"),
+                ("missing_fields", "unknown_or_missing_evidence", "enhanced_must_track_indicators", "basic_info.main_business"),
+                "Do not convert operating-service description into route, base, or scarce airspace-resource control.",
+                "What routes, bases, takeoff / landing sites, and airspace resources does the company control, and how are they used?",
+                "Check routes, bases, takeoff/landing sites, usable airspace, operating permissions, coverage, and utilization.",
+            ),
+            DriverSpec(
+                "company",
+                "project contracts",
+                "company_operating",
+                "Signed project contracts are required before treating low-altitude project demand as company visibility.",
+                ("signed contract", "customer", "amount", "period", "service scope", "revenue-recognition terms", "collection schedule"),
+                ("financial_metrics.contract_liabilities", "business_composition", "financial_metrics.revenue", "missing_fields", "unknown_or_missing_evidence"),
+                "Contract liabilities are partial proxy only; strategic cooperation or framework agreement is not signed contract revenue and not backlog.",
+                "Which contracts support low-altitude or general aviation service revenue, and what amount, customer, scope, and timing are disclosed?",
+                "Check signed contracts, customers, amount, period, service scope, revenue recognition, and collection schedule.",
+            ),
+            DriverSpec(
+                "company",
+                "project acceptance / delivery",
+                "company_operating",
+                "Acceptance and delivery milestones determine whether projects can become recognized revenue and collectable cash.",
+                ("delivery milestone", "acceptance certificate", "accepted amount", "revenue recognition", "customer payment", "unresolved delivery risk"),
+                ("financial_metrics.revenue", "financial_metrics.accounts_receivable", "financial_metrics.operating_cashflow", "missing_fields", "unknown_or_missing_evidence"),
+                "Do not treat project announcement, winning bid, or contract signing as acceptance.",
+                "Which projects have been delivered and accepted, and how is acceptance linked to revenue recognition and cash collection?",
+                "Check delivery milestone, acceptance certificate, accepted amount, revenue recognition, customer payment, and delivery risk.",
+            ),
+            DriverSpec(
+                "company",
+                "customer type",
+                "company_operating",
+                "Customer type and concentration determine demand durability, collection risk, and policy dependence.",
+                ("customer split by government / SOE / enterprise / emergency rescue / offshore oil / tourism / logistics / inspection", "revenue concentration", "receivable concentration", "payment terms"),
+                ("financial_metrics.accounts_receivable", "financial_metrics.operating_cashflow", "business_composition", "missing_fields", "risk_flags"),
+                "Government or SOE customer type does not imply payment certainty, and segment revenue cannot substitute for customer structure.",
+                "What customer types drive revenue, receivables, and cash collection, and where is government or SOE payment-cycle risk concentrated?",
+                "Check customer type, revenue concentration, receivable concentration, payment terms, receivables, and operating cash flow.",
+            ),
+            DriverSpec(
+                "financial",
+                "revenue stability",
+                "financial",
+                "Revenue stability requires contract duration, customer concentration, operating volume, renewals, and cash collection beyond revenue snapshots.",
+                ("revenue by period", "segment revenue", "contract duration", "customer concentration", "flight hours / sorties", "renewal or recurring service evidence"),
+                ("financial_metrics.revenue", "business_composition", "financial_metrics.operating_cashflow", "financial_metrics.accounts_receivable", "missing_fields"),
+                "Historical revenue alone is not stability proof without contracts, customers, flight hours, sorties, renewal evidence, and collection.",
+                "Is revenue stability supported by contracts, customers, flight hours or sorties, renewal evidence, and cash collection, or only by historical revenue fields?",
+                "Check revenue, segment revenue, contract duration, customer concentration, flight hours/sorties, renewals, receivables, and cash flow.",
+            ),
+            DriverSpec(
+                "financial",
+                "gross margin stability",
+                "financial",
+                "Gross margin stability needs period comparison and service mix, aircraft utilization, pricing, maintenance, depreciation, and compliance-cost bridges.",
+                ("gross margin by period", "segment gross margin", "service mix", "aircraft utilization", "fuel / maintenance / depreciation cost", "pricing terms"),
+                ("financial_metrics.gross_margin", "business_composition", "missing_fields", "risk_flags"),
+                "Do not infer pricing power, utilization, or stable service mix from gross margin alone.",
+                "Is gross margin stability explained by service mix, aircraft utilization, pricing, maintenance, depreciation, and compliance cost?",
+                "Check gross margin, segment gross margin, service mix, utilization, cost detail, pricing terms, and period comparison.",
+            ),
+            DriverSpec(
+                "financial",
+                "operating cash flow",
+                "financial",
+                "Operating cash flow tests whether service revenue converts into cash after receivables and contract-liability context.",
+                ("operating cash flow", "revenue", "receivables", "contract liabilities", "customer payment terms", "project collection history"),
+                ("financial_metrics.operating_cashflow", "financial_metrics.revenue", "financial_metrics.accounts_receivable", "financial_metrics.contract_liabilities"),
+                "Cash flow is validation evidence, not proof of demand durability or customer payment certainty.",
+                "Does operating cash flow support revenue quality after considering receivables, contract liabilities, customer type, and collection cycle?",
+                "Check operating cash flow, revenue, receivables, contract liabilities, customer payment terms, and project collection history.",
+                True,
+            ),
+            DriverSpec(
+                "financial",
+                "receivables",
+                "financial",
+                "Receivables test collection pressure after service revenue recognition.",
+                ("accounts receivable", "revenue", "receivable aging", "bad-debt provision", "customer concentration", "government / SOE exposure", "operating cash flow"),
+                ("financial_metrics.accounts_receivable", "financial_metrics.revenue", "financial_metrics.operating_cashflow", "missing_fields", "risk_flags"),
+                "Recognized revenue and government customer labels do not guarantee collection.",
+                "Are receivables consistent with recognized service revenue, or do aging, concentration, and payment terms indicate collection pressure?",
+                "Check accounts receivable, revenue, receivable aging, bad-debt provision, customer concentration, customer type, and operating cash flow.",
+                True,
+            ),
+            DriverSpec(
+                "financial",
+                "government / SOE collection cycle",
+                "financial",
+                "Government and SOE collection cycle requires customer type, acceptance, payment terms, receivable aging, and cash receipts.",
+                ("customer type", "payment terms", "project acceptance", "receivable aging", "overdue receivables", "cash receipts by customer or project"),
+                ("financial_metrics.accounts_receivable", "financial_metrics.operating_cashflow", "missing_fields", "risk_flags"),
+                "Do not treat government or SOE customers as payment certainty; receivables alone cannot establish collection cycle.",
+                "How long is the collection cycle for government or SOE customers, and is payment delayed after project acceptance or service delivery?",
+                "Check customer type, payment terms, project acceptance, receivable aging, overdue receivables, and cash receipts by customer/project.",
+            ),
+            DriverSpec(
+                "financial",
+                "contract liabilities as partial proxy only",
+                "financial",
+                "Contract liabilities may show prepayments or visibility, but they are not backlog or confirmed future revenue.",
+                ("contract liabilities", "prepayment terms", "linked customer / contract / project disclosure", "revenue recognition terms", "comparison with revenue and cash flow"),
+                ("financial_metrics.contract_liabilities", "financial_metrics.revenue", "financial_metrics.operating_cashflow", "enhanced_must_track_indicators"),
+                "Contract liabilities are partial proxy only and must not be labeled backlog.",
+                "What customer, contract, or project do contract liabilities correspond to, and why should they not be treated as true backlog?",
+                "Check contract liabilities, prepayment terms, linked customer/contract/project disclosure, revenue recognition, revenue, and cash flow.",
+                True,
+            ),
+            DriverSpec(
+                "financial",
+                "capex-to-service-capacity bridge",
+                "financial",
+                "Capex must be bridged to aircraft, bases, routes, platforms, acceptance, utilization, revenue, and cash flow before capacity interpretation.",
+                ("capex", "aircraft / base / platform / project mapping", "delivery / acceptance", "flight hours / sorties", "utilization", "revenue and cash-flow bridge"),
+                ("financial_metrics.capex", "financial_metrics.revenue", "financial_metrics.operating_cashflow", "business_composition", "missing_fields"),
+                "Capex is cash outflow or investment observation only; it is not service-capacity release, utilization, flight-hour growth, or revenue conversion.",
+                "Which aircraft, bases, routes, platforms, or projects does capex fund, and has the company disclosed acceptance, utilization, revenue, and cash-flow bridges?",
+                "Check capex, asset/project mapping, acceptance, flight hours/sorties, utilization, revenue, and operating cash flow.",
+                True,
+            ),
+            DriverSpec(
+                "financial",
+                "safety / compliance cost",
+                "financial",
+                "Safety and compliance costs can affect service continuity, gross margin, and cash conversion.",
+                ("safety-management cost", "maintenance cost", "training cost", "insurance cost", "regulatory penalty", "rectification cost", "impact on margin and cash flow"),
+                ("financial_metrics.gross_margin", "financial_metrics.operating_cashflow", "missing_fields", "risk_flags", "data_limitations"),
+                "Do not infer safety-cost burden or absence from aggregate gross margin or cash flow alone.",
+                "What safety and compliance costs affect service continuity, gross margin, and cash conversion?",
+                "Check safety-management cost, maintenance cost, training cost, insurance cost, regulatory penalty, rectification cost, margin, and cash flow.",
+            ),
+            DriverSpec(
+                "risk",
+                "airspace approval delay",
+                "risk",
+                "Airspace or route approval delays can affect flight volume, route launch, service continuity, and revenue timing.",
+                ("approval applications", "route / airspace approval status", "delay events", "affected service or project", "revenue impact"),
+                ("missing_fields", "unknown_or_missing_evidence", "risk_flags", "basic_info.main_business"),
+                "Do not infer approved airspace or absence of delay from policy direction.",
+                "Are any airspace or route approvals delayed, and which services, projects, flight volumes, or revenues are affected?",
+                "Check approval applications, route/airspace status, delay events, affected service/project, and revenue impact.",
+            ),
+            DriverSpec(
+                "risk",
+                "project acceptance delay",
+                "risk",
+                "Project acceptance delays can affect revenue recognition, receivables, and cash collection.",
+                ("project list", "expected acceptance date", "actual acceptance", "delay reason", "revenue recognition and payment impact"),
+                ("financial_metrics.revenue", "financial_metrics.accounts_receivable", "financial_metrics.operating_cashflow", "missing_fields", "risk_flags"),
+                "Project announcement is not acceptance, and delivery is not collection.",
+                "Which projects are waiting for acceptance, and how would delays affect revenue recognition, receivables, and cash flow?",
+                "Check project list, expected and actual acceptance, delay reason, revenue recognition, receivables, and payment impact.",
+            ),
+            DriverSpec(
+                "risk",
+                "safety incident / regulatory penalty",
+                "risk",
+                "Safety incidents and regulatory penalties can affect service continuity, cost, insurance, licenses, and customer confidence.",
+                ("accident / incident", "CAAC penalty", "grounding / rectification", "insurance claim", "service interruption", "financial impact"),
+                ("missing_fields", "risk_flags", "unknown_or_missing_evidence", "enhanced_must_track_indicators"),
+                "Absence of event evidence is not evidence of safe operations.",
+                "Have safety incidents, penalties, grounding, or rectification events affected operations, costs, or customer service continuity?",
+                "Check accident/incident records, CAAC penalties, grounding, rectification, insurance, service interruption, and financial impact.",
+            ),
+            DriverSpec(
+                "risk",
+                "government payment delay",
+                "risk",
+                "Government payment delay requires customer type, acceptance, payment schedule, overdue receivables, aging, and cash-flow pressure.",
+                ("customer type", "project acceptance", "payment schedule", "overdue receivables", "receivable aging", "operating cash-flow pressure"),
+                ("financial_metrics.accounts_receivable", "financial_metrics.operating_cashflow", "missing_fields", "risk_flags"),
+                "Government customer exposure is not collection certainty; receivables alone cannot prove payment delay or payment quality.",
+                "Is there evidence of government payment delay after service delivery or project acceptance, and how does it affect operating cash flow?",
+                "Check customer type, project acceptance, payment schedule, overdue receivables, aging, and operating cash flow.",
+            ),
+            DriverSpec(
+                "risk",
+                "utilization / flight-hour insufficiency",
+                "risk",
+                "Utilization and flight-hour sufficiency determine whether fleet and route capacity are actually used.",
+                ("fleet scale", "aircraft type mix", "flight hours", "flight sorties", "route / base usage", "revenue per flight hour"),
+                ("missing_fields", "unknown_or_missing_evidence", "enhanced_must_track_indicators", "financial_metrics.revenue"),
+                "Revenue cannot substitute for utilization, flight hours, sorties, or revenue per flight hour.",
+                "Does operating volume support fleet and service-capacity utilization, or is utilization not assessable from current evidence?",
+                "Check fleet scale, aircraft type mix, flight hours, flight sorties, route/base usage, and revenue per flight hour.",
+            ),
+            DriverSpec(
+                "risk",
+                "policy pilot does not convert into company revenue",
+                "risk",
+                "Policy pilot conversion risk tests whether policy context has become contracts, accepted projects, revenue, and collection.",
+                ("policy pilot", "company project role", "contract", "acceptance", "revenue recognition", "collection"),
+                ("missing_fields", "unknown_or_missing_evidence", "financial_metrics.revenue", "financial_metrics.operating_cashflow", "risk_flags"),
+                "Do not treat policy pilot as project income without company contract, acceptance, revenue, and collection bridge.",
+                "Which policy pilots have failed or not yet proven conversion into company contracts, accepted projects, revenue, and cash collection?",
+                "Check policy pilot, company project role, contract, acceptance, revenue recognition, and collection.",
+            ),
+            DriverSpec(
+                "risk",
+                "customer concentration",
+                "risk",
+                "Customer concentration can create renewal, pricing, receivable, and one-off revenue risk.",
+                ("top customer share", "customer count", "customer type", "revenue concentration", "receivable concentration", "renewal / contract duration"),
+                ("financial_metrics.accounts_receivable", "missing_fields", "risk_flags", "unknown_or_missing_evidence", "enhanced_must_track_indicators"),
+                "Segment revenue or industry labels cannot substitute for customer concentration evidence.",
+                "Does customer concentration create renewal, pricing, receivable, or one-off revenue risk?",
+                "Check top customer share, customer count, customer type, revenue concentration, receivable concentration, renewal, and contract duration.",
+            ),
+            DriverSpec(
+                "risk",
+                "weather / operational disruption risk",
+                "risk",
+                "Weather and operational disruption can affect flight hours, sorties, service delivery, cost, and customer continuity.",
+                ("weather disruptions", "route cancellation", "mission delay", "service interruption", "seasonal operating data", "revenue / cost impact"),
+                ("missing_fields", "risk_flags", "unknown_or_missing_evidence", "data_limitations"),
+                "Do not infer operational continuity from annual revenue alone.",
+                "What weather or operational disruptions affect flight hours, sorties, service delivery, cost, or customer continuity?",
+                "Check weather disruptions, route cancellation, mission delay, service interruption, seasonal data, and revenue/cost impact.",
+            ),
+        ]
 
     def _satellite_specs(self) -> list[DriverSpec]:
         return [
