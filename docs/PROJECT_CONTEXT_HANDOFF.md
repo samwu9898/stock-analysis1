@@ -42,7 +42,7 @@ Core modules:
 - `FundamentalResultAssembler`: assembles the final structured fundamental result.
 - `AI Analyst Layer`: builds evidence packs and model-ready prompts; current primary mode is `prompt_only`.
 - `Research Intelligence P0/P0.1`: independent AI analyst artifact builder that reads only `evidence_pack`, builds a research intelligence pack and research question set, and acts as a research-question discovery layer rather than a report renderer or trading system. P0.1 sharpens generic missing-evidence prompts into strategy-type-aware research questions.
-- `Research Intelligence P1.1`: independent driver-factor matrix artifact builder for `ai_datacenter_infrastructure`, `life_science_cxo_services`, and `satellite_communication_infrastructure`. It reads `evidence_pack` plus an optional P0 pack, writes `research_intelligence_p1` and `research_questions_p1` artifacts, enforces `company_transmission_path` and source-bucket independence, keeps missing evidence `not_assessable` first, and stays outside the HTML / Dashboard main chain.
+- `Research Intelligence P1.1`: independent driver-factor matrix artifact builder for `ai_datacenter_infrastructure`, `life_science_cxo_services`, `satellite_communication_infrastructure`, and `low_altitude_economy_infrastructure`. It reads `evidence_pack` plus an optional P0 pack, writes `research_intelligence_p1` and `research_questions_p1` artifacts, enforces `company_transmission_path` and source-bucket independence, keeps missing evidence `not_assessable` first, and stays outside the HTML / Dashboard main chain.
 - `Fundamental HTML Report Generator v2.1`: upper AI analyst display capability that creates a model prompt for structured `FundamentalHtmlReport` JSON and renders an existing formal JSON into self-contained HTML.
 - `HTML Report Visual Audit Tool v1`: local Playwright / Chromium screenshot and manifest tool for existing HTML reports.
 - `Dashboard v3`: local Streamlit fundamental AI report reader / auditor. The main view is Chinese-first and highlights the top conclusion, one-line conclusion, strategy / sub-type explanations, evidence map, risks, evidence gaps, must-track indicators, confidence breakdown, data quality, report stale / mismatch status, and schema / safety / garbled guard state. Evidence Pack, Source Trace, Raw JSON, Prompt, and legacy fields are collapsed as audit material.
@@ -78,7 +78,7 @@ stock_code
 - `ExternalCommodityPriceConnector v1.1`
 - `AI Analyst Layer prompt_only`
 - `Research Intelligence P0/P0.1`
-- `Research Intelligence P1.1 AI Datacenter / CXO / Satellite expansions`
+- `Research Intelligence P1.1 AI Datacenter / CXO / Satellite / Low Altitude expansions`
 - `Fundamental HTML Report Generator v2.1`
 - `HTML Report Visual Audit Tool v1`
 - `Dashboard v3`
@@ -171,7 +171,7 @@ python scripts/run_regression_suite.py
 python -m src.fundamental_skill.real_stock_runner --code 601698 --output output/fundamental_601698.json --force-refresh
 python -m src.fundamental_skill.ai_analyst.runner --code 601698 --mode prompt_only
 python -m src.fundamental_skill.ai_analyst.research_intelligence_runner --code 002837
-python -m src.fundamental_skill.ai_analyst.research_intelligence_p1_runner --code 601698
+python -m src.fundamental_skill.ai_analyst.research_intelligence_p1_runner --code 000099
 python -m src.fundamental_skill.ai_analyst.html_report_runner --code 002050 --mode prompt_only
 python -m src.fundamental_skill.ai_analyst.html_report_runner --code 002050 --mode render_existing
 python scripts/visual_audit_html_report.py --html output/reports/fundamental_report_002050.html --code 002050 --output-dir output/visual_audit/002050
@@ -260,7 +260,7 @@ Do not add a new industry framework only because one stock is popular or difficu
 - AI report generation is currently mainly `prompt_only`; API mode is not the primary implemented workflow.
 - Research Intelligence P0 has been accepted as a baseline research-question discovery artifact.
 - Research Intelligence P0.1 Template Sharpening and Fallback Template Cleanup have passed final acceptance. The latest acceptance refreshed and reviewed `002837`, `002050`, `603259`, and `300442`; pytest recorded `379 passed`, and the regression suite recorded `passed=47 failed=0 total=47`.
-- Research Intelligence P1.1 AI Datacenter pilot, CXO expansion, and Satellite expansion have been implemented and accepted. Current P1.1 support is intentionally limited to `ai_datacenter_infrastructure`, `life_science_cxo_services`, and `satellite_communication_infrastructure`; it does not expand to all `strategy_type` values. AI Datacenter acceptance covered `002837` and `300442`; Satellite primary acceptance covered `601698`. Latest recorded pytest result is `423 passed`, and latest recorded regression suite result is `passed=47 failed=0 total=47`.
+- Research Intelligence P1.1 AI Datacenter pilot, CXO expansion, Satellite expansion, and Low Altitude expansion have been implemented and accepted. Current P1.1 support is intentionally limited to `ai_datacenter_infrastructure`, `life_science_cxo_services`, `satellite_communication_infrastructure`, and `low_altitude_economy_infrastructure`; it does not expand to all `strategy_type` values. AI Datacenter acceptance covered `002837` and `300442`; Satellite primary acceptance covered `601698`; Low Altitude primary acceptance covered `000099`. Latest recorded pytest result is `434 passed`, and latest recorded regression suite result is `passed=47 failed=0 total=47`.
 - P0.1 sample acceptance coverage:
   - `002837` Envicool: liquid-cooling customer validation, batch-order distinction, room cooling versus ordinary thermal-control boundary.
   - `002050` Sanhua Intelligent Controls: robotics / new-business revenue, orders, customers, major-customer revenue share, and valuation digestion evidence.
@@ -276,7 +276,7 @@ Do not add a new industry framework only because one stock is popular or difficu
 
 - Keep `README.md` and `docs/PROJECT_CONTEXT_HANDOFF.md` synchronized after major project changes.
 - Research Intelligence P0.1 baseline does not need more repair unless new samples reveal generic fallback wording or weak industry context. Next useful directions are multi-sample real use, P1 design, or longitudinal resolved-question workflows.
-- For Research Intelligence P1.1, the preferred next step is Satellite multi-sample observation first, then deciding the next narrow P1.1 expansion. Do not jump directly into P1.2 or P1.3 before Satellite artifact behavior is observed across more samples.
+- For Research Intelligence P1.1, the preferred next step is Low Altitude multi-sample observation first, then deciding the next narrow P1.1 expansion. Do not jump directly into P1.2 or P1.3 before Low Altitude artifact behavior is observed across more samples.
 - HTML Report Generator v2.1 baseline does not need more repair unless the user reports a specific visual or content issue.
 - Based on user feedback, continue refining the HTML research-report experience, or generate formal HTML reports for other stocks using the existing v2.1 chain.
 - Keep AI Datacenter v1 conservative unless public data sources can reliably validate orders / backlog, customer structure, cabinet / MW / PUE / rack utilization, liquid-cooling revenue, datacenter revenue split, and customer capex-cycle evidence.

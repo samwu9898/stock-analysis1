@@ -87,19 +87,19 @@ P0.1 final acceptance refreshed and reviewed four runtime samples:
 
 ### 2.3 P1.1 Driver Matrix Baseline
 
-Research Intelligence P1.1 has entered implementation, and the AI Datacenter pilot, CXO expansion, and Satellite expansion have been accepted. This does not change the P0 / P0.1 / P0.2 definitions above.
+Research Intelligence P1.1 has entered implementation, and the AI Datacenter pilot, CXO expansion, Satellite expansion, and Low Altitude expansion have been accepted. This does not change the P0 / P0.1 / P0.2 definitions above.
 
 Accepted P1.1 behavior:
 
-- supports only `strategy_type=ai_datacenter_infrastructure`, `life_science_cxo_services`, and `satellite_communication_infrastructure`;
+- supports only `strategy_type=ai_datacenter_infrastructure`, `life_science_cxo_services`, `satellite_communication_infrastructure`, and `low_altitude_economy_infrastructure`;
 - reads `output/evidence_pack_<code>.json` and may read the optional P0 pack;
 - writes independent `output/research_intelligence_p1_<code>.json`, `output/research_questions_p1_<code>.json`, and `output/research_questions_p1_<code>.md`;
 - does not call LLMs, use network access, connect new data sources, mutate deterministic pipeline outputs, or connect to HTML / Dashboard;
 - enforces `company_transmission_path` in schema and builder logic;
 - counts independent sources by source bucket;
-- preserves `not_assessable` for missing AI Datacenter PUE / MW / cabinet / utilization / liquid-cooling revenue / customer-contract bridges, CXO order / backlog / utilization / regulatory bridges, and Satellite transponder / bandwidth resources, utilization, contract duration, pricing, customer concentration, remaining life, launch / failure / insurance, and replacement-capex bridges.
+- preserves `not_assessable` for missing AI Datacenter PUE / MW / cabinet / utilization / liquid-cooling revenue / customer-contract bridges, CXO order / backlog / utilization / regulatory bridges, Satellite transponder / bandwidth resources, utilization, contract duration, pricing, customer concentration, remaining life, launch / failure / insurance, and replacement-capex bridges, and Low Altitude policy-pilot, airspace / route approval, flight-hour, flight-sortie, platform-dispatch, project-acceptance, customer-type, government / SOE collection-cycle, capex bridge, and safety / regulatory bridges.
 
-Accepted AI Datacenter pilot samples: `002837` and `300442`. Accepted Satellite primary sample: `601698`. Latest recorded validation after Satellite acceptance: `pytest` `423 passed`; regression suite `passed=47 failed=0 total=47`.
+Accepted AI Datacenter pilot samples: `002837` and `300442`. Accepted Satellite primary sample: `601698`. Accepted Low Altitude primary sample: `000099`. Latest recorded validation after Low Altitude acceptance: `pytest` `434 passed`; regression suite `passed=47 failed=0 total=47`.
 
 ## 3. P0 Scope
 

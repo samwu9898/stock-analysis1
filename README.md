@@ -55,6 +55,7 @@ Research Intelligence P1.1 is an independent AI analyst-layer driver-factor matr
 - `ai_datacenter_infrastructure`
 - `life_science_cxo_services`
 - `satellite_communication_infrastructure`
+- `low_altitude_economy_infrastructure`
 
 Outputs:
 
@@ -65,12 +66,14 @@ Outputs:
 Command:
 
 ```bash
-python -m src.fundamental_skill.ai_analyst.research_intelligence_p1_runner --code 601698
+python -m src.fundamental_skill.ai_analyst.research_intelligence_p1_runner --code 000099
 ```
 
 P1.1 reads `output/evidence_pack_<code>.json` and may read the optional P0 pack. It does not call LLMs, use network access, connect new data sources, mutate the deterministic pipeline, change `status`, `confidence`, `score`, `strategy_type`, or `sub_type`, write `output/reports/`, or connect to the HTML Report / Dashboard main chain.
 
 The P1.1 baseline includes schema + builder enforcement for `company_transmission_path`: if no concrete evidence-pack field value or data point can verify the transmission path, the field is exactly `传导路径无法从当前证据包验证` and the driver confidence cap is `not_assessable`. Source independence is counted by source bucket rather than file, article, or API count.
+
+P1.1 Low Altitude expansion has been accepted with `000099` as the primary sample. It is evidence-pack-only and `not_assessable` first: policy pilots, airspace / route approval, local-government spending, flight hours, flight sorties, platform dispatch volume, project contracts / acceptance, customer type, government / SOE collection cycle, capex bridge, and safety / regulatory events remain missing or `not_assessable` unless concrete evidence-pack fields support them.
 
 `output/research_intelligence_p1_*` and `output/research_questions_p1_*` are generated runtime artifacts and should not be committed.
 
@@ -256,7 +259,7 @@ Dashboard v3 是本地基本面 AI 分析报告阅读器和审计工具，不调
 python -m src.fundamental_skill.real_stock_runner --code 601698 --output output/fundamental_601698.json --force-refresh
 python -m src.fundamental_skill.ai_analyst.runner --code 601698 --mode prompt_only
 python -m src.fundamental_skill.ai_analyst.research_intelligence_runner --code 002837
-python -m src.fundamental_skill.ai_analyst.research_intelligence_p1_runner --code 601698
+python -m src.fundamental_skill.ai_analyst.research_intelligence_p1_runner --code 000099
 python -m src.fundamental_skill.ai_analyst.html_report_runner --code 002050 --mode prompt_only
 python -m src.fundamental_skill.ai_analyst.html_report_runner --code 002050 --mode render_existing
 python scripts/visual_audit_html_report.py --html output/reports/fundamental_report_002050.html --code 002050 --output-dir output/visual_audit/002050

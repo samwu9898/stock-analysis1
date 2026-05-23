@@ -57,9 +57,11 @@ evidence_pack
   -> research_questions_p1_<code>.json / .md
 ```
 
-P1.1 currently supports only these accepted strategy types: `ai_datacenter_infrastructure`, `life_science_cxo_services`, and `satellite_communication_infrastructure`. It does not call an LLM, does not fetch new data, does not connect new sources, does not mutate deterministic pipeline outputs, and does not connect to the HTML Report main chain or Dashboard.
+P1.1 currently supports only these accepted strategy types: `ai_datacenter_infrastructure`, `life_science_cxo_services`, `satellite_communication_infrastructure`, and `low_altitude_economy_infrastructure`. It does not call an LLM, does not fetch new data, does not connect new sources, does not mutate deterministic pipeline outputs, and does not connect to the HTML Report main chain or Dashboard.
 
 For Satellite, the P1.1 driver matrix remains evidence-pack-only and `not_assessable` first: satellite resources, transponder / bandwidth resources, capacity utilization, customer contract duration, lease / service pricing, customer concentration, satellite remaining life, replacement capex, launch / failure / insurance evidence, and related risk bridges must remain missing or `not_assessable` unless a concrete evidence-pack field or data point supports them.
+
+For Low Altitude, the P1.1 driver matrix also remains evidence-pack-only and `not_assessable` first. Policy pilots, airspace / route approval, local-government spending, flight hours, flight sorties, platform dispatch volume, route / base / airspace resources, project contracts / acceptance, customer type, government / SOE collection cycle, capex-to-service-capacity bridge, and safety / regulatory events must remain missing or `not_assessable` unless concrete evidence-pack fields support them. Missing flight hours, flight sorties, platform dispatch volume, airspace / route approval, project acceptance, customer type, and government / SOE collection-cycle evidence must not be fabricated into facts.
 
 P1.1 enforces `company_transmission_path` in schema and builder logic. If no concrete evidence-pack field value or data point can verify the company transmission path, the field must be exactly `传导路径无法从当前证据包验证` and the driver `confidence_cap` must be `not_assessable`. P1.1 also counts source independence by source bucket rather than file count, article count, or repeated API rows.
 
@@ -193,7 +195,7 @@ P0.1 accepted behavior adds template sharpening and fallback cleanup to this sam
 Run:
 
 ```bash
-python -m src.fundamental_skill.ai_analyst.research_intelligence_p1_runner --code 601698
+python -m src.fundamental_skill.ai_analyst.research_intelligence_p1_runner --code 000099
 ```
 
 The runner reads `output/evidence_pack_<code>.json`, may read `output/research_intelligence_<code>.json`, and writes:
@@ -202,7 +204,7 @@ The runner reads `output/evidence_pack_<code>.json`, may read `output/research_i
 - `output/research_questions_p1_<code>.json`
 - `output/research_questions_p1_<code>.md`
 
-This workflow is an independent driver-factor matrix artifact. Current P1.1 support is limited to `ai_datacenter_infrastructure`, `life_science_cxo_services`, and `satellite_communication_infrastructure`. It keeps policy, news, theme heat, customer capex, capex, contract liabilities, PUE / MW / cabinet metrics, utilization, liquid-cooling revenue, CXO order / backlog proxies, satellite capacity resources, satellite utilization, contract duration, pricing, customer concentration, remaining life, and replacement capex evidence-gated. Missing fields remain `missing` or `not_assessable`; they are not fabricated into facts.
+This workflow is an independent driver-factor matrix artifact. Current P1.1 support is limited to `ai_datacenter_infrastructure`, `life_science_cxo_services`, `satellite_communication_infrastructure`, and `low_altitude_economy_infrastructure`. It keeps policy, news, theme heat, customer capex, capex, contract liabilities, PUE / MW / cabinet metrics, utilization, liquid-cooling revenue, CXO order / backlog proxies, satellite capacity resources, satellite utilization, contract duration, pricing, customer concentration, remaining life, replacement capex, low-altitude policy pilots, airspace / route approvals, flight hours, flight sorties, platform dispatch volume, project acceptance, customer type, and government / SOE collection-cycle evidence-gated. Missing fields remain `missing` or `not_assessable`; they are not fabricated into facts.
 
 ## 6. Why v1 Does Not Call an API
 
