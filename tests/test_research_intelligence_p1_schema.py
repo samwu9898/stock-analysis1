@@ -114,6 +114,15 @@ def test_company_transmission_path_rejects_vague_language():
         )
 
 
+def test_company_transmission_path_rejects_satellite_vague_language():
+    with pytest.raises(ValueError, match="vague transmission"):
+        DriverFactor.model_validate(
+            _driver(
+                company_transmission_path="卫星通信需求向好，公司受益",
+            )
+        )
+
+
 def test_source_bucket_counting_deduplicates_same_bucket_and_marks_not_assessable():
     summary = SourceBucketSummary.model_validate(
         {

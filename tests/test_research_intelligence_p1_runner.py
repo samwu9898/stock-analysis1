@@ -39,6 +39,55 @@ def _cxo_pack(sub_type="integrated_cxo_platform"):
     return EvidencePackBuilder().build(fundamental, raw)
 
 
+def _satellite_pack():
+    fundamental = sample_fundamental("satellite_communication_infrastructure")
+    fundamental["stock_code"] = "601698"
+    fundamental["stock_name"] = "China Satcom"
+    fundamental["sub_type"] = None
+    raw = sample_raw()
+    raw["meta"] = {"code": "601698", "stock_name": "China Satcom"}
+    raw["blocks"]["basic_info"] = [
+        {
+            "stock_code": "601698",
+            "stock_name": "China Satcom",
+            "industry": "telecom, broadcast television and satellite transmission services",
+            "main_business": "satellite space-segment operation and related application services",
+        }
+    ]
+    raw["blocks"]["financial_indicator"][0].update(
+        {
+            "revenue": 542414493.94,
+            "gross_margin": 19.04,
+            "operating_cashflow": -37552257.46,
+            "accounts_receivable": 973141701.49,
+            "contract_liabilities": 773835146.63,
+            "capex": 21414263.55,
+        }
+    )
+    raw["blocks"]["business_composition"] = [
+        {
+            "period": "2025-12-31",
+            "classification_type": "by industry",
+            "segment_name": "broadcast television and satellite transmission services",
+            "revenue_ratio": 1.0,
+            "gross_margin": 0.294502,
+        }
+    ]
+    raw["fetch_status"]["basic_info"] = {
+        "success": True,
+        "missing_fields": [],
+        "warnings": [],
+        "source_trace": [{"function_name": "stock_individual_info_em", "source_period": "2026-05-20"}],
+    }
+    raw["fetch_status"]["business_composition"] = {
+        "success": True,
+        "missing_fields": [],
+        "warnings": [],
+        "source_trace": [{"function_name": "stock_zygc_ym", "source_period": "2025-12-31"}],
+    }
+    return EvidencePackBuilder().build(fundamental, raw)
+
+
 def test_research_intelligence_p1_runner_writes_independent_json_and_markdown(tmp_path):
     evidence_path = tmp_path / "evidence_pack_002837.json"
     evidence_path.write_text(json.dumps(_pack(), ensure_ascii=False), encoding="utf-8")
@@ -89,4 +138,20 @@ def test_research_intelligence_p1_runner_writes_cxo_expansion_artifacts(tmp_path
     assert (tmp_path / "research_questions_p1_603259.md").exists()
     assert result["research_intelligence_p1"]["strategy_type"] == "life_science_cxo_services"
     assert any(item["driver_factor"] == "CXO revenue contribution" for item in matrix)
+    assert not (tmp_path / "reports").exists()
+
+
+def test_research_intelligence_p1_runner_writes_satellite_expansion_artifacts(tmp_path):
+    evidence_path = tmp_path / "evidence_pack_601698.json"
+    evidence_path.write_text(json.dumps(_satellite_pack(), ensure_ascii=False), encoding="utf-8")
+
+    result = run_research_intelligence_p1("601698", evidence_pack_path=evidence_path, output_dir=tmp_path)
+    matrix = result["research_intelligence_p1"]["driver_matrix"]
+
+    assert (tmp_path / "research_intelligence_p1_601698.json").exists()
+    assert (tmp_path / "research_questions_p1_601698.json").exists()
+    assert (tmp_path / "research_questions_p1_601698.md").exists()
+    assert result["research_intelligence_p1"]["strategy_type"] == "satellite_communication_infrastructure"
+    assert any(item["driver_factor"] == "capacity utilization" for item in matrix)
+    assert any(item["driver_factor"] == "satellite remaining life / replacement capex" for item in matrix)
     assert not (tmp_path / "reports").exists()

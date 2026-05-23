@@ -23,7 +23,8 @@ AI_DATACENTER_STRATEGY_TYPE = "ai_datacenter_infrastructure"
 AI_DATACENTER_SUB_TYPES = {"cooling_liquid_cooling_infrastructure", "datacenter_operator"}
 CXO_STRATEGY_TYPE = "life_science_cxo_services"
 CXO_SUB_TYPES = {"integrated_cxo_platform", "cdmo_manufacturing_services", "clinical_cro_services"}
-SUPPORTED_STRATEGY_TYPES = {AI_DATACENTER_STRATEGY_TYPE, CXO_STRATEGY_TYPE}
+SATELLITE_STRATEGY_TYPE = "satellite_communication_infrastructure"
+SUPPORTED_STRATEGY_TYPES = {AI_DATACENTER_STRATEGY_TYPE, CXO_STRATEGY_TYPE, SATELLITE_STRATEGY_TYPE}
 
 GENERIC_MISSING_BRIDGE_REASON = "Current evidence pack lacks concrete company transmission nodes for this driver."
 
@@ -102,6 +103,9 @@ class ResearchIntelligenceP1Builder:
         elif strategy_type == CXO_STRATEGY_TYPE and sub_type in CXO_SUB_TYPES:
             drivers = self._cxo_drivers(evidence_pack, str(sub_type))
             summary_scope = "P1.1 CXO expansion"
+        elif strategy_type == SATELLITE_STRATEGY_TYPE:
+            drivers = self._satellite_drivers(evidence_pack)
+            summary_scope = "P1.1 satellite expansion"
         else:
             drivers = [self._unsupported_driver(strategy_type, sub_type)]
             summary_scope = "P1.1 unsupported pilot boundary"
@@ -186,7 +190,10 @@ class ResearchIntelligenceP1Builder:
             driver_scope="pilot_boundary",
             why_it_matters="P1.1 implementation is intentionally limited to accepted pilot strategy types.",
             required_evidence=[
-                "strategy_type=ai_datacenter_infrastructure or life_science_cxo_services",
+                (
+                    "strategy_type=ai_datacenter_infrastructure, life_science_cxo_services, "
+                    "or satellite_communication_infrastructure"
+                ),
                 "supported pilot sub_type",
             ],
             available_evidence=[f"input.strategy_type={strategy_type}", f"input.sub_type={sub_type}"],
@@ -195,8 +202,8 @@ class ResearchIntelligenceP1Builder:
             data_availability_status="not_assessable",
             confidence_cap="not_assessable",
             not_assessable_reason=(
-                "Current P1.1 implementation only supports ai_datacenter_infrastructure "
-                "and life_science_cxo_services pilot sub_types."
+                "Current P1.1 implementation only supports ai_datacenter_infrastructure, "
+                "life_science_cxo_services, and satellite_communication_infrastructure pilot templates."
             ),
             what_was_checked=["stock.strategy_type", "stock.sub_type"],
             source_refs=[],
@@ -762,6 +769,269 @@ class ResearchIntelligenceP1Builder:
                 "Do not judge clinical project delivery or collection cycle without project and payment evidence.",
                 "Which clinical projects have delivery progress, milestones, cancellation/delay status, receivables, and collection evidence?",
                 "Check delivery progress, milestone/acceptance, cancellation/delay, receivables, and collection cycle.",
+            ),
+        ]
+
+    def _satellite_drivers(self, pack: dict[str, Any]) -> list[DriverFactor]:
+        return [self._build_driver(pack, spec) for spec in self._satellite_specs()]
+
+    def _satellite_specs(self) -> list[DriverSpec]:
+        return [
+            DriverSpec(
+                "macro",
+                "satellite communication demand",
+                "macro",
+                "Satellite communication demand is background until bridged to company customers, contracts, utilization, revenue, and cash collection.",
+                ("satellite communication demand series", "application demand", "company customer or contract bridge", "capacity utilization bridge", "revenue bridge"),
+                ("business_composition", "financial_metrics.revenue", "financial_metrics.operating_cashflow", "financial_metrics.accounts_receivable"),
+                "Satellite communication demand must not be treated as company revenue without company-level customer, contract, utilization, and cash-flow evidence.",
+                "Has satellite communication demand translated into disclosed company customers, contracts, capacity utilization, revenue, receivables, and operating cash flow?",
+                "Check demand source, company customer/contract bridge, utilization, revenue, receivables, and operating cash flow.",
+            ),
+            DriverSpec(
+                "policy",
+                "national satellite communication infrastructure policy",
+                "policy",
+                "National policy can shape infrastructure context, but policy support is not business realization.",
+                ("official policy source", "affected infrastructure segment", "company license or project evidence", "company contract evidence", "revenue or cash-flow bridge"),
+                ("missing_fields", "unknown_or_missing_evidence", "risk_flags", "enhanced_must_track_indicators"),
+                "Policy support is not business realization without company-specific project, contract, revenue, or cash-flow evidence.",
+                "Which national satellite communication infrastructure policies are linked to company-specific licenses, projects, contracts, revenue recognition, or cash collection?",
+                "Check official policy source, company license/project evidence, contract evidence, revenue bridge, and cash-flow bridge.",
+            ),
+            DriverSpec(
+                "industry",
+                "bandwidth / transponder capacity demand",
+                "industry",
+                "Bandwidth and transponder demand matter only when company capacity, utilization, pricing, and revenue bridge are evidenced.",
+                ("bandwidth demand source", "transponder demand source", "company transponder or bandwidth resources", "capacity utilization", "lease or service pricing"),
+                ("business_composition", "financial_metrics.revenue", "financial_metrics.gross_margin", "missing_fields", "risk_flags"),
+                "External bandwidth or transponder demand cannot prove company utilization, pricing, or revenue.",
+                "Is external bandwidth / transponder demand visible in company capacity utilization, service pricing, contract renewals, revenue, margin, and cash flow?",
+                "Check bandwidth/transponder demand, company capacity resources, utilization, pricing, revenue, margin, and cash flow.",
+            ),
+            DriverSpec(
+                "industry",
+                "enterprise / broadcast / emergency communication demand",
+                "industry",
+                "Customer-segment demand requires contract, renewal, pricing, receivable, and cash-flow evidence before it can support company realization.",
+                ("enterprise demand", "broadcast demand", "emergency communication demand", "customer contract duration", "collection quality"),
+                ("business_composition", "financial_metrics.revenue", "financial_metrics.operating_cashflow", "financial_metrics.accounts_receivable"),
+                "Customer category labels do not prove demand stability, renewal quality, pricing, or collection.",
+                "Which enterprise, broadcast, or emergency communication customers support revenue, and are contract duration, renewal, pricing, receivables, and cash collection evidenced?",
+                "Check customer segment demand, contract duration, renewal, pricing, receivables, and cash collection.",
+            ),
+            DriverSpec(
+                "company",
+                "satellite resources",
+                "company",
+                "Satellite resources define the asset base, but resource ownership does not prove productive utilization or monetization.",
+                ("in-orbit satellite list", "ownership or control", "orbital slot or frequency resources", "service scope", "capacity mapped to revenue"),
+                ("basic_info.main_business", "basic_info.industry", "business_composition", "missing_fields", "risk_flags"),
+                "Main-business text or satellite-resource language cannot prove sufficient resources, utilization, or revenue conversion.",
+                "What satellite resources, orbital/frequency rights, and service scope does the company control, and how are they linked to service revenue and operating cash flow?",
+                "Check in-orbit satellites, ownership/control, orbital/frequency resources, service scope, capacity map, revenue, and operating cash flow.",
+            ),
+            DriverSpec(
+                "company",
+                "transponder / bandwidth resources",
+                "company",
+                "Transponder and bandwidth resources are needed before assessing space-segment monetization capacity.",
+                ("transponder count", "bandwidth capacity", "capacity by band", "available versus leased capacity", "service region"),
+                ("business_composition", "financial_metrics.revenue", "missing_fields", "risk_flags"),
+                "Do not infer transponder or bandwidth resources from revenue or business composition alone.",
+                "What transponder and bandwidth resources are available, and which part is monetized by disclosed contracts or service revenue?",
+                "Check transponder count, bandwidth capacity, capacity by band, available/leased split, service region, contracts, and service revenue.",
+            ),
+            DriverSpec(
+                "company",
+                "capacity utilization",
+                "company",
+                "Capacity utilization distinguishes available satellite capacity from revenue-generating capacity.",
+                ("capacity utilization rate", "lease rate", "bandwidth sold versus available", "utilization by satellite or band", "revenue and margin bridge"),
+                ("missing_fields", "unknown_or_missing_evidence", "risk_flags", "financial_metrics.revenue", "financial_metrics.gross_margin"),
+                "Capacity resources, revenue, gross margin, or capex are not capacity utilization.",
+                "Are satellite resources being used at disclosed utilization levels, and how does utilization connect to revenue, margin, receivables, and cash flow?",
+                "Check utilization rate, lease rate, sold/available bandwidth, utilization by satellite or band, revenue, margin, receivables, and cash flow.",
+            ),
+            DriverSpec(
+                "company",
+                "customer contract duration",
+                "company",
+                "Contract duration and renewal terms are required before assessing revenue visibility.",
+                ("contract start and end dates", "average contract duration", "renewal terms", "customer type", "revenue recognition schedule"),
+                ("financial_metrics.contract_liabilities", "business_composition", "missing_fields", "risk_flags"),
+                "Contract liabilities and segment revenue cannot establish contract duration or renewal visibility.",
+                "What are the contract durations and renewal terms for satellite communication customers, and how do they support or weaken revenue visibility?",
+                "Check customer contracts, duration, renewal terms, customer type, and revenue recognition schedule.",
+            ),
+            DriverSpec(
+                "company",
+                "lease / service pricing",
+                "company",
+                "Lease and service pricing are needed to distinguish pricing quality from accounting margin snapshots.",
+                ("unit bandwidth price", "transponder lease price", "service pricing formula", "price changes", "customer mix", "gross margin bridge"),
+                ("financial_metrics.gross_margin", "business_composition", "missing_fields", "risk_flags"),
+                "Gross margin alone cannot prove lease price, service pricing, or pricing power.",
+                "What evidence shows lease or service pricing by capacity type, and is pricing pressure visible in gross margin or customer mix?",
+                "Check unit bandwidth price, transponder lease price, service pricing formula, price changes, customer mix, and gross margin bridge.",
+            ),
+            DriverSpec(
+                "risk",
+                "customer concentration",
+                "risk",
+                "Customer concentration can create renewal, pricing, receivable, and one-off revenue risk.",
+                ("top customer revenue share", "customer count", "customer type", "contract concentration", "receivable concentration"),
+                ("missing_fields", "risk_flags", "unknown_or_missing_evidence", "enhanced_must_track_indicators", "financial_metrics.accounts_receivable"),
+                "Segment revenue or industry labels cannot substitute for customer concentration evidence.",
+                "Does customer concentration create renewal, pricing, receivable, or one-off revenue risk?",
+                "Check top customer share, customer count, customer type, contract concentration, receivable concentration, and collection quality.",
+            ),
+            DriverSpec(
+                "financial",
+                "revenue stability",
+                "financial",
+                "Revenue stability needs customer contract duration, renewal, customer concentration, utilization, and cash collection evidence.",
+                ("revenue by period", "segment revenue", "customer contract duration", "renewal rate", "customer concentration", "utilization bridge"),
+                ("financial_metrics.revenue", "business_composition", "financial_metrics.operating_cashflow", "financial_metrics.accounts_receivable", "missing_fields"),
+                "Do not state revenue stability as fact when customer contracts, renewal, concentration, and utilization are missing.",
+                "Is revenue stability supported by contract duration, renewal evidence, utilization, customer concentration, and cash collection, or only by historical revenue fields?",
+                "Check revenue, segment revenue, contract duration, renewal rate, customer concentration, utilization, receivables, and cash flow.",
+            ),
+            DriverSpec(
+                "financial",
+                "gross margin stability",
+                "financial",
+                "Gross margin stability requires period comparison plus pricing, utilization, customer mix, and depreciation context.",
+                ("gross margin by period", "segment gross margin", "pricing", "capacity utilization", "depreciation policy", "customer mix"),
+                ("financial_metrics.gross_margin", "business_composition", "missing_fields", "risk_flags"),
+                "Gross margin alone cannot prove pricing power or stable utilization.",
+                "Is gross margin stability explained by pricing, utilization, customer mix, and depreciation, or is current evidence only a financial snapshot?",
+                "Check gross margin by period, segment gross margin, pricing, utilization, depreciation policy, and customer mix.",
+            ),
+            DriverSpec(
+                "financial",
+                "capex",
+                "financial",
+                "Capex can indicate long-term asset investment, but it does not prove launch success, in-orbit operation, utilization, or revenue conversion.",
+                ("capex", "project or satellite mapping", "procurement or launch progress", "acceptance or in-orbit status", "revenue and cash-flow bridge"),
+                ("financial_metrics.capex", "financial_metrics.revenue", "financial_metrics.operating_cashflow", "missing_fields", "risk_flags"),
+                "Capex is cash outflow only; it is not satellite deployment success, capacity release, utilization, or revenue.",
+                "Which satellites, projects, or assets does capex fund, and has the company disclosed launch, in-orbit status, utilization, revenue, and cash-flow bridges?",
+                "Check capex, project/satellite mapping, procurement, launch progress, in-orbit status, utilization, revenue, and cash flow.",
+                True,
+            ),
+            DriverSpec(
+                "financial",
+                "depreciation",
+                "financial",
+                "Depreciation and useful-life policy are critical for asset-heavy satellite operators.",
+                ("depreciation or amortization amount", "satellite asset depreciation policy", "satellite useful life", "impairment", "segment asset detail"),
+                ("financial_metrics.depreciation_amortization", "missing_fields", "risk_flags", "financial_metrics.gross_margin"),
+                "Profitability comparisons must not ignore missing depreciation, amortization, impairment, and satellite useful-life policy.",
+                "How do depreciation policy and satellite useful life affect reported profit and margin quality?",
+                "Check depreciation/amortization, satellite asset policy, useful life, impairment, segment asset detail, and gross margin.",
+            ),
+            DriverSpec(
+                "financial",
+                "operating cash flow",
+                "financial",
+                "Operating cash flow tests whether recognized satellite communication revenue converts into cash.",
+                ("operating cash flow", "revenue", "receivables", "contract liabilities", "customer payment terms", "collection history"),
+                ("financial_metrics.operating_cashflow", "financial_metrics.revenue", "financial_metrics.accounts_receivable", "financial_metrics.contract_liabilities"),
+                "Cash-flow quality is a validation question and does not prove stable demand by itself.",
+                "Does operating cash flow support revenue quality after considering receivables, contract liabilities, customer payment terms, and capex needs?",
+                "Check operating cash flow, revenue, receivables, contract liabilities, payment terms, collection history, and capex needs.",
+                True,
+            ),
+            DriverSpec(
+                "financial",
+                "receivables",
+                "financial",
+                "Receivables help test customer payment quality and collection risk.",
+                ("accounts receivable", "revenue", "customer concentration", "aging", "bad-debt provision", "payment terms", "operating cash flow"),
+                ("financial_metrics.accounts_receivable", "financial_metrics.revenue", "financial_metrics.operating_cashflow", "missing_fields", "risk_flags"),
+                "Do not infer customer quality or collection stability without receivable aging, payment terms, and customer concentration.",
+                "Are receivables consistent with the satellite communication revenue model, or do aging, concentration, and payment terms indicate collection risk?",
+                "Check receivables, revenue, customer concentration, aging, bad-debt provision, payment terms, and operating cash flow.",
+                True,
+            ),
+            DriverSpec(
+                "financial",
+                "satellite remaining life / replacement capex",
+                "financial",
+                "Remaining satellite life and replacement capex determine asset-aging and long-cycle cash-flow risk.",
+                ("remaining useful life by satellite", "design life", "launch date", "replacement schedule", "sustaining capex", "depreciation and impairment"),
+                ("financial_metrics.capex", "missing_fields", "risk_flags"),
+                "Capex cannot substitute for satellite remaining life, launch date, replacement schedule, depreciation, or impairment evidence.",
+                "What is the remaining useful life of operating satellites, and what replacement capex is required to maintain service capacity?",
+                "Check remaining useful life, design life, launch date, replacement schedule, sustaining capex, depreciation, and impairment.",
+            ),
+            DriverSpec(
+                "risk",
+                "satellite failure / launch / replacement risk",
+                "risk",
+                "Launch, in-orbit anomaly, insurance, impairment, and replacement events can materially affect capacity and service continuity.",
+                ("launch schedule", "launch success or failure", "in-orbit anomaly", "insurance claim", "impairment", "replacement plan", "service impact"),
+                ("missing_fields", "risk_flags", "unknown_or_missing_evidence", "enhanced_must_track_indicators"),
+                "Normal revenue or ordinary operation data cannot prove absence of satellite failure, launch, insurance, impairment, or replacement risk.",
+                "Are there satellite launch, in-orbit failure, insurance, impairment, or replacement events that affect capacity, service continuity, capex, or cash flow?",
+                "Check launch schedule, launch result, in-orbit anomaly, insurance claim, impairment, replacement plan, and service impact.",
+            ),
+            DriverSpec(
+                "risk",
+                "remaining useful life risk",
+                "risk",
+                "Remaining useful life risk determines replacement timing, service continuity, and depreciation interpretation.",
+                ("launch date", "design life", "remaining life", "depreciation policy", "replacement timeline", "service dependency by satellite"),
+                ("missing_fields", "risk_flags", "financial_metrics.capex"),
+                "Do not infer remaining life from company age, capex, or satellite-resource descriptions.",
+                "Which satellites are approaching end of life, and what evidence links remaining life to revenue continuity and replacement capex?",
+                "Check launch date, design life, remaining life, depreciation policy, replacement timeline, and service dependency by satellite.",
+            ),
+            DriverSpec(
+                "risk",
+                "capacity utilization risk",
+                "risk",
+                "Utilization risk tests whether available satellite capacity is leased, sold, renewed, and converted into revenue.",
+                ("available capacity", "leased capacity", "utilization rate", "customer cancellations", "price changes", "revenue and margin bridge"),
+                ("missing_fields", "risk_flags", "financial_metrics.revenue", "financial_metrics.gross_margin"),
+                "Capacity resources are not utilization or revenue, and revenue alone cannot assess unused-capacity risk.",
+                "Does unused capacity, lower lease rate, or customer churn create revenue and margin risk?",
+                "Check available capacity, leased capacity, utilization rate, customer cancellations, price changes, revenue, and margin bridge.",
+            ),
+            DriverSpec(
+                "risk",
+                "customer renewal risk",
+                "risk",
+                "Customer renewal risk requires contract expiry, renewal rate, customer concentration, and receivable-quality evidence.",
+                ("contract duration", "expiry schedule", "renewal rate", "customer concentration", "customer type", "receivable quality"),
+                ("financial_metrics.contract_liabilities", "financial_metrics.accounts_receivable", "missing_fields", "risk_flags"),
+                "Revenue, contract liabilities, or customer category labels cannot prove customer renewal quality.",
+                "What contract expiries or renewal dependencies could affect revenue visibility and cash collection?",
+                "Check contract duration, expiry schedule, renewal rate, customer concentration, customer type, and receivable quality.",
+            ),
+            DriverSpec(
+                "risk",
+                "technology substitution risk",
+                "risk",
+                "Technology substitution can affect pricing, utilization, and customer renewal, but only company impact evidence supports assessment.",
+                ("LEO / HTS / terrestrial fiber / 5G substitute", "affected service line", "pricing evidence", "utilization evidence", "company response"),
+                ("risk_flags", "missing_fields", "unknown_or_missing_evidence", "business_composition"),
+                "Technology narratives must not be treated as realized company impact without service-line, pricing, utilization, or customer evidence.",
+                "Which services face substitution from LEO, high-throughput satellites, terrestrial networks, or other technologies, and is impact visible in pricing, utilization, revenue, or margin?",
+                "Check substitute technology, affected service line, pricing, utilization, customer impact, and company response.",
+            ),
+            DriverSpec(
+                "risk",
+                "policy / regulatory risk",
+                "risk",
+                "Policy and regulation are constraints on license, frequency, orbital resources, service continuity, pricing, and capex.",
+                ("license conditions", "frequency or orbital resource regulation", "national security constraints", "policy changes", "company compliance evidence", "service impact"),
+                ("basic_info.industry", "risk_flags", "missing_fields", "unknown_or_missing_evidence"),
+                "Policy and regulation are constraints, not automatic support or business realization.",
+                "What policy, license, frequency, orbital-slot, or regulatory conditions could affect company service continuity, pricing, capex, or customer contracts?",
+                "Check license conditions, frequency/orbital regulation, national-security constraints, policy changes, compliance evidence, and service impact.",
             ),
         ]
 

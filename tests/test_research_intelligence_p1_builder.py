@@ -67,6 +67,66 @@ def build_cxo_outputs(sub_type="integrated_cxo_platform", code="603259"):
     return ResearchIntelligenceP1Builder().build(build_cxo_pack(sub_type, code))
 
 
+def build_satellite_pack(code="601698"):
+    fundamental = sample_fundamental("satellite_communication_infrastructure")
+    fundamental["stock_code"] = code
+    fundamental["stock_name"] = "China Satcom"
+    fundamental["sub_type"] = None
+    fundamental["status"] = "neutral"
+    fundamental["confidence"] = "low"
+    fundamental["fundamental_score"] = 42
+    raw = sample_raw()
+    raw["meta"] = {"code": code, "stock_name": "China Satcom"}
+    raw["blocks"]["basic_info"] = [
+        {
+            "stock_code": code,
+            "stock_name": "China Satcom",
+            "industry": "telecom, broadcast television and satellite transmission services",
+            "main_business": "satellite space-segment operation and related application services",
+        }
+    ]
+    raw["blocks"]["financial_indicator"][0].update(
+        {
+            "period": "2026-03-31",
+            "revenue": 542414493.94,
+            "gross_margin": 19.04,
+            "net_margin": 7.76,
+            "operating_cashflow": -37552257.46,
+            "accounts_receivable": 973141701.49,
+            "contract_liabilities": 773835146.63,
+            "capex": 21414263.55,
+        }
+    )
+    raw["blocks"]["business_composition"] = [
+        {
+            "period": "2025-12-31",
+            "classification_type": "by industry",
+            "segment_name": "broadcast television and satellite transmission services",
+            "revenue": 2644781700.0,
+            "revenue_ratio": 1.0,
+            "gross_margin": 0.294502,
+        },
+        {"period": "2025-12-31", "classification_type": "by geography", "segment_name": "overseas", "revenue_ratio": 0.210178},
+    ]
+    raw["fetch_status"]["basic_info"] = {
+        "success": True,
+        "missing_fields": [],
+        "warnings": [],
+        "source_trace": [{"function_name": "stock_individual_info_em", "source_period": "2026-05-20"}],
+    }
+    raw["fetch_status"]["business_composition"] = {
+        "success": True,
+        "missing_fields": [],
+        "warnings": [],
+        "source_trace": [{"function_name": "stock_zygc_ym", "source_period": "2025-12-31"}],
+    }
+    return EvidencePackBuilder().build(fundamental, raw)
+
+
+def build_satellite_outputs(code="601698"):
+    return ResearchIntelligenceP1Builder().build(build_satellite_pack(code))
+
+
 def driver_names(pack):
     return {item.driver_factor for item in pack.driver_matrix}
 
@@ -174,6 +234,125 @@ def test_unsupported_strategy_type_outputs_unsupported_pilot_strategy():
     assert row.data_availability_status == "not_assessable"
     assert row.confidence_cap == "not_assessable"
     assert "does not support this strategy_type" in questions.questions[0].question
+
+
+def test_satellite_driver_matrix_contains_required_four_groups():
+    pack, questions = build_satellite_outputs()
+    names = driver_names(pack)
+
+    assert pack.strategy_type == "satellite_communication_infrastructure"
+    assert {
+        "satellite communication demand",
+        "national satellite communication infrastructure policy",
+        "bandwidth / transponder capacity demand",
+        "enterprise / broadcast / emergency communication demand",
+        "satellite resources",
+        "transponder / bandwidth resources",
+        "capacity utilization",
+        "customer contract duration",
+        "lease / service pricing",
+        "customer concentration",
+        "revenue stability",
+        "gross margin stability",
+        "capex",
+        "depreciation",
+        "operating cash flow",
+        "receivables",
+        "satellite remaining life / replacement capex",
+        "satellite failure / launch / replacement risk",
+        "remaining useful life risk",
+        "capacity utilization risk",
+        "customer renewal risk",
+        "technology substitution risk",
+        "policy / regulatory risk",
+    }.issubset(names)
+    assert questions.questions
+
+
+def test_satellite_missing_capacity_operating_fields_are_not_assessable():
+    pack, _ = build_satellite_outputs()
+    rows = {item.driver_factor: item for item in pack.driver_matrix}
+
+    for name in [
+        "transponder / bandwidth resources",
+        "capacity utilization",
+        "customer contract duration",
+        "lease / service pricing",
+        "satellite remaining life / replacement capex",
+        "satellite failure / launch / replacement risk",
+    ]:
+        row = rows[name]
+        assert row.company_transmission_path == TRANSMISSION_PATH_FALLBACK
+        assert row.confidence_cap == "not_assessable"
+        assert row.data_availability_status == "not_assessable"
+        assert row.missing_evidence
+
+
+def test_satellite_capex_does_not_equal_satellite_deployment_success():
+    pack, _ = build_satellite_outputs()
+    row = {item.driver_factor: item for item in pack.driver_matrix}["capex"]
+
+    assert row.company_transmission_path != TRANSMISSION_PATH_FALLBACK
+    assert "evidence_pack.financial_metrics.capex=" in row.company_transmission_path
+    assert "not satellite deployment success" in row.interpretation_guard
+    assert any("launch" in item or "in-orbit" in item for item in row.missing_evidence)
+
+
+def test_satellite_capacity_resource_not_utilization_or_revenue():
+    pack, _ = build_satellite_outputs()
+    rows = {item.driver_factor: item for item in pack.driver_matrix}
+
+    assert rows["bandwidth / transponder capacity demand"].company_transmission_path == TRANSMISSION_PATH_FALLBACK
+    assert "cannot prove company utilization" in rows["bandwidth / transponder capacity demand"].interpretation_guard
+    assert rows["capacity utilization risk"].company_transmission_path == TRANSMISSION_PATH_FALLBACK
+    assert "Capacity resources are not utilization or revenue" in rows["capacity utilization risk"].interpretation_guard
+
+
+def test_satellite_policy_support_not_business_realization():
+    pack, _ = build_satellite_outputs()
+    rows = {item.driver_factor: item for item in pack.driver_matrix}
+
+    for name in ["national satellite communication infrastructure policy", "policy / regulatory risk"]:
+        row = rows[name]
+        assert row.company_transmission_path == TRANSMISSION_PATH_FALLBACK
+        assert row.confidence_cap == "not_assessable"
+        assert "not business realization" in row.interpretation_guard or "not automatic support" in row.interpretation_guard
+
+
+def test_satellite_company_transmission_path_enforcement_uses_exact_fallback_or_nodes():
+    pack, _ = build_satellite_outputs()
+    bad_phrases = [
+        "卫星通信需求向好，公司受益",
+        "政策支持，公司兑现",
+        "容量资源丰富，公司收入稳定",
+    ]
+
+    for row in pack.driver_matrix:
+        assert not any(phrase in row.company_transmission_path for phrase in bad_phrases)
+        if row.company_transmission_path == TRANSMISSION_PATH_FALLBACK:
+            assert row.confidence_cap == "not_assessable"
+        else:
+            assert "evidence_pack." in row.company_transmission_path
+            assert "=" in row.company_transmission_path
+
+
+def test_satellite_source_bucket_counting_uses_existing_bucket_rules():
+    pack, _ = build_satellite_outputs()
+
+    assert pack.source_bucket_summary.consensus_assessment_status == "not_assessable"
+    assert pack.source_bucket_summary.independent_source_count >= 2
+    assert "company_disclosure" in pack.source_bucket_summary.source_buckets
+    assert "financial_statement" in pack.source_bucket_summary.source_buckets
+
+
+def test_satellite_outputs_do_not_include_forbidden_safety_terms():
+    pack, questions = build_satellite_outputs()
+    text = json.dumps({"pack": pack.model_dump(), "questions": questions.model_dump()}, ensure_ascii=False)
+    forbidden_terms = FORBIDDEN_TERMS + ["买入", "卖出", "加仓", "减仓", "清仓", "止损", "止盈", "目标价", "仓位", "盈亏比", "K线", "技术面"]
+
+    assert pack.safety_boundary.safe
+    assert questions.safety_boundary.safe
+    assert not any(term in text for term in forbidden_terms)
 
 
 def test_cxo_integrated_platform_driver_matrix_contains_required_factors():
