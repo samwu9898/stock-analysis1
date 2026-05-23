@@ -21,8 +21,8 @@ It produces:
 - `output/ai_prompt_<code>.md`
 - `output/research_intelligence_<code>.json` when Research Intelligence P0 is requested.
 - `output/research_questions_<code>.json` and `output/research_questions_<code>.md` when Research Intelligence P0 is requested.
-- `output/research_intelligence_p1_<code>.json` when Research Intelligence P1.1 AI Datacenter pilot is requested.
-- `output/research_questions_p1_<code>.json` and `output/research_questions_p1_<code>.md` when Research Intelligence P1.1 AI Datacenter pilot is requested.
+- `output/research_intelligence_p1_<code>.json` when Research Intelligence P1.1 is requested.
+- `output/research_questions_p1_<code>.json` and `output/research_questions_p1_<code>.md` when Research Intelligence P1.1 is requested.
 - `output/reports/fundamental_report_prompt_<code>.md` for the HTML report chain when requested.
 - `output/reports/fundamental_report_<code>.html` only after an existing formal `FundamentalHtmlReport` JSON is rendered.
 
@@ -49,7 +49,7 @@ evidence_pack
 
 P0.1 selects more industry-specific questions from `strategy_type`, `sub_type`, `missing_evidence`, and triggered `rule_id` instead of falling back to broad missing-field wording. It still does not call an LLM, does not fetch data, does not mutate deterministic pipeline outputs, and does not connect to the HTML Report main chain.
 
-Research Intelligence P1.1 adds the accepted AI Datacenter pilot after the evidence pack:
+Research Intelligence P1.1 adds the accepted driver-factor matrix artifact after the evidence pack:
 
 ```text
 evidence_pack
@@ -57,7 +57,9 @@ evidence_pack
   -> research_questions_p1_<code>.json / .md
 ```
 
-P1.1 is limited to `strategy_type=ai_datacenter_infrastructure` with `cooling_liquid_cooling_infrastructure` and `datacenter_operator`. It does not call an LLM, does not fetch new data, does not connect new sources, does not mutate deterministic pipeline outputs, and does not connect to the HTML Report main chain or Dashboard.
+P1.1 currently supports only these accepted strategy types: `ai_datacenter_infrastructure`, `life_science_cxo_services`, and `satellite_communication_infrastructure`. It does not call an LLM, does not fetch new data, does not connect new sources, does not mutate deterministic pipeline outputs, and does not connect to the HTML Report main chain or Dashboard.
+
+For Satellite, the P1.1 driver matrix remains evidence-pack-only and `not_assessable` first: satellite resources, transponder / bandwidth resources, capacity utilization, customer contract duration, lease / service pricing, customer concentration, satellite remaining life, replacement capex, launch / failure / insurance evidence, and related risk bridges must remain missing or `not_assessable` unless a concrete evidence-pack field or data point supports them.
 
 P1.1 enforces `company_transmission_path` in schema and builder logic. If no concrete evidence-pack field value or data point can verify the company transmission path, the field must be exactly `传导路径无法从当前证据包验证` and the driver `confidence_cap` must be `not_assessable`. P1.1 also counts source independence by source bucket rather than file count, article count, or repeated API rows.
 
@@ -186,12 +188,12 @@ This workflow does not call OpenAI or any other model API, does not use network 
 
 P0.1 accepted behavior adds template sharpening and fallback cleanup to this same workflow. P0 questions still require `evidence_trigger`; P1/P2 questions should avoid generic fallback wording when the strategy context provides a sharper question. The generated `research_intelligence` and `research_questions` files remain runtime artifacts, not committed source.
 
-## 5.2 Research Intelligence P1.1 AI Datacenter Pilot Workflow
+## 5.2 Research Intelligence P1.1 Driver Matrix Workflow
 
 Run:
 
 ```bash
-python -m src.fundamental_skill.ai_analyst.research_intelligence_p1_runner --code 002837
+python -m src.fundamental_skill.ai_analyst.research_intelligence_p1_runner --code 601698
 ```
 
 The runner reads `output/evidence_pack_<code>.json`, may read `output/research_intelligence_<code>.json`, and writes:
@@ -200,7 +202,7 @@ The runner reads `output/evidence_pack_<code>.json`, may read `output/research_i
 - `output/research_questions_p1_<code>.json`
 - `output/research_questions_p1_<code>.md`
 
-This workflow is an independent driver-factor matrix artifact. It keeps policy, news, theme heat, customer capex, capex, contract liabilities, PUE / MW / cabinet metrics, utilization, and liquid-cooling revenue evidence-gated. Missing fields remain `missing` or `not_assessable`; they are not fabricated into facts.
+This workflow is an independent driver-factor matrix artifact. Current P1.1 support is limited to `ai_datacenter_infrastructure`, `life_science_cxo_services`, and `satellite_communication_infrastructure`. It keeps policy, news, theme heat, customer capex, capex, contract liabilities, PUE / MW / cabinet metrics, utilization, liquid-cooling revenue, CXO order / backlog proxies, satellite capacity resources, satellite utilization, contract duration, pricing, customer concentration, remaining life, and replacement capex evidence-gated. Missing fields remain `missing` or `not_assessable`; they are not fabricated into facts.
 
 ## 6. Why v1 Does Not Call an API
 
