@@ -50,6 +50,18 @@ VAGUE_TRANSMISSION_PHRASES = {
     "low-altitude policy improves, company benefits",
     "airspace reform progresses, company flight volume improves",
     "local government spending increases, company revenue grows",
+    "商品价格上涨，公司受益",
+    "商品周期改善，公司业绩改善",
+    "资源储量大，所以产量增长",
+    "capex 增加，所以产能释放",
+    "库存下降，所以需求强劲",
+    "无套保披露，所以风险已对冲",
+    "commodity prices improved, company benefits",
+    "commodity cycle improves, company performance improves",
+    "large reserves support production growth",
+    "capex increased, so capacity has been released",
+    "inventory declined, so demand is strong",
+    "missing hedging disclosure means risk is hedged",
 }
 
 FORBIDDEN_SAFETY_TERMS = {

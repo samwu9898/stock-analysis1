@@ -137,6 +137,56 @@ def _low_altitude_pack():
     return EvidencePackBuilder().build(fundamental, raw)
 
 
+def _resource_pack():
+    fundamental = sample_fundamental("resource_swing")
+    fundamental["stock_code"] = "000426"
+    fundamental["stock_name"] = "Xingye Silver & Tin"
+    fundamental["sub_type"] = None
+    raw = sample_raw()
+    raw["meta"] = {"code": "000426", "stock_name": "Xingye Silver & Tin"}
+    raw["blocks"]["basic_info"] = [
+        {
+            "stock_code": "000426",
+            "stock_name": "Xingye Silver & Tin",
+            "industry": "non-ferrous metal mining and processing",
+            "main_business": "silver, tin, lead-zinc ore mining and processing",
+        }
+    ]
+    raw["blocks"]["financial_indicator"][0].update(
+        {
+            "revenue": 1775000000.0,
+            "revenue_yoy": 28.0,
+            "gross_margin": 52.5,
+            "operating_cashflow": 620000000.0,
+            "accounts_receivable": 360000000.0,
+            "inventory": 420000000.0,
+            "capex": 229152931.6,
+        }
+    )
+    raw["blocks"]["business_composition"] = [
+        {
+            "period": "2025-12-31",
+            "classification_type": "by product",
+            "segment_name": "silver concentrate",
+            "revenue_ratio": 0.50,
+            "gross_margin": 0.61,
+        }
+    ]
+    raw["fetch_status"]["basic_info"] = {
+        "success": True,
+        "missing_fields": [],
+        "warnings": [],
+        "source_trace": [{"function_name": "stock_individual_info_em", "source_period": "2026-05-20"}],
+    }
+    raw["fetch_status"]["business_composition"] = {
+        "success": True,
+        "missing_fields": [],
+        "warnings": [],
+        "source_trace": [{"function_name": "stock_zygc_ym", "source_period": "2025-12-31"}],
+    }
+    return EvidencePackBuilder().build(fundamental, raw)
+
+
 def test_research_intelligence_p1_runner_writes_independent_json_and_markdown(tmp_path):
     evidence_path = tmp_path / "evidence_pack_002837.json"
     evidence_path.write_text(json.dumps(_pack(), ensure_ascii=False), encoding="utf-8")
@@ -220,4 +270,21 @@ def test_research_intelligence_p1_runner_writes_low_altitude_expansion_artifacts
     assert result["research_intelligence_p1"]["sub_type"] == "aviation_operations_service"
     assert any(item["driver_factor"] == "flight hours" for item in matrix)
     assert any(item["driver_factor"] == "capex-to-service-capacity bridge" for item in matrix)
+    assert not (tmp_path / "reports").exists()
+
+
+def test_research_intelligence_p1_runner_writes_resource_swing_expansion_artifacts(tmp_path):
+    evidence_path = tmp_path / "evidence_pack_000426.json"
+    evidence_path.write_text(json.dumps(_resource_pack(), ensure_ascii=False), encoding="utf-8")
+
+    result = run_research_intelligence_p1("000426", evidence_pack_path=evidence_path, output_dir=tmp_path)
+    matrix = result["research_intelligence_p1"]["driver_matrix"]
+
+    assert (tmp_path / "research_intelligence_p1_000426.json").exists()
+    assert (tmp_path / "research_questions_p1_000426.json").exists()
+    assert (tmp_path / "research_questions_p1_000426.md").exists()
+    assert result["research_intelligence_p1"]["strategy_type"] == "resource_swing"
+    assert any(item["driver_factor"] == "core commodity price exposure" for item in matrix)
+    assert any(item["driver_factor"] == "revenue sensitivity to commodity price" for item in matrix)
+    assert not any(item["driver_factor"] == "dividend capacity for resource_core" for item in matrix)
     assert not (tmp_path / "reports").exists()

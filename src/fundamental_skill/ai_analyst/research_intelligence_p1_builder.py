@@ -26,14 +26,53 @@ CXO_SUB_TYPES = {"integrated_cxo_platform", "cdmo_manufacturing_services", "clin
 SATELLITE_STRATEGY_TYPE = "satellite_communication_infrastructure"
 LOW_ALTITUDE_STRATEGY_TYPE = "low_altitude_economy_infrastructure"
 LOW_ALTITUDE_SUB_TYPES = {"aviation_operations_service"}
+RESOURCE_SWING_STRATEGY_TYPE = "resource_swing"
+RESOURCE_CORE_STRATEGY_TYPE = "resource_core"
 SUPPORTED_STRATEGY_TYPES = {
     AI_DATACENTER_STRATEGY_TYPE,
     CXO_STRATEGY_TYPE,
     SATELLITE_STRATEGY_TYPE,
     LOW_ALTITUDE_STRATEGY_TYPE,
+    RESOURCE_SWING_STRATEGY_TYPE,
 }
 
 GENERIC_MISSING_BRIDGE_REASON = "Current evidence pack lacks concrete company transmission nodes for this driver."
+RESOURCE_PRODUCT_TERMS = (
+    "silver",
+    "tin",
+    "lead",
+    "zinc",
+    "copper",
+    "gold",
+    "molybdenum",
+    "tungsten",
+    "lithium",
+    "nickel",
+    "cobalt",
+    "iron",
+    "ore",
+    "mine",
+    "mining",
+    "concentrate",
+    "smelter",
+    "processing",
+    "银",
+    "锡",
+    "铅",
+    "锌",
+    "铜",
+    "金",
+    "钼",
+    "钨",
+    "锂",
+    "镍",
+    "钴",
+    "铁",
+    "矿",
+    "精矿",
+    "采选",
+    "冶炼",
+)
 
 
 @dataclass(frozen=True)
@@ -116,6 +155,12 @@ class ResearchIntelligenceP1Builder:
         elif strategy_type == LOW_ALTITUDE_STRATEGY_TYPE and sub_type in LOW_ALTITUDE_SUB_TYPES:
             drivers = self._low_altitude_drivers(evidence_pack, str(sub_type))
             summary_scope = "P1.1 low altitude expansion"
+        elif strategy_type == RESOURCE_SWING_STRATEGY_TYPE and stock_code == "000426":
+            drivers = self._resource_swing_drivers(evidence_pack)
+            summary_scope = "P1.1 resource swing expansion"
+        elif strategy_type == RESOURCE_CORE_STRATEGY_TYPE:
+            drivers = [self._resource_core_design_only_driver(sub_type)]
+            summary_scope = "P1.1 resource core design-only boundary"
         else:
             drivers = [self._unsupported_driver(strategy_type, sub_type)]
             summary_scope = "P1.1 unsupported pilot boundary"
@@ -202,7 +247,8 @@ class ResearchIntelligenceP1Builder:
             required_evidence=[
                 (
                     "strategy_type=ai_datacenter_infrastructure, life_science_cxo_services, "
-                    "satellite_communication_infrastructure, or low_altitude_economy_infrastructure"
+                    "satellite_communication_infrastructure, low_altitude_economy_infrastructure, "
+                    "or resource_swing primary sample 000426"
                 ),
                 "supported pilot sub_type such as aviation_operations_service for low altitude",
             ],
@@ -214,7 +260,8 @@ class ResearchIntelligenceP1Builder:
             not_assessable_reason=(
                 "Current P1.1 implementation only supports ai_datacenter_infrastructure, "
                 "life_science_cxo_services, satellite_communication_infrastructure, and "
-                "low_altitude_economy_infrastructure / aviation_operations_service pilot templates."
+                "low_altitude_economy_infrastructure / aviation_operations_service pilot templates, plus "
+                "resource_swing for primary sample 000426 only."
             ),
             what_was_checked=["stock.strategy_type", "stock.sub_type"],
             source_refs=[],
@@ -223,6 +270,512 @@ class ResearchIntelligenceP1Builder:
                 "what expansion template would be required before assessment?"
             ),
             interpretation_guard="Do not expand unsupported strategy types by free-form inference.",
+        )
+
+    def _resource_core_design_only_driver(self, sub_type: Any) -> DriverFactor:
+        return DriverFactor(
+            layer="risk",
+            driver_factor="unsupported_pilot_strategy",
+            driver_scope="resource_core_design_only_boundary",
+            why_it_matters="P1.1 Resource first implementation is limited to resource_swing and keeps resource_core design-only.",
+            required_evidence=[
+                "strategy_type=resource_swing for first implementation",
+                "historical operating cash flow for any later resource_core implementation",
+                "capex split: sustaining vs expansionary for any later resource_core implementation",
+                "debt / liquidity evidence for any later resource_core implementation",
+                "dividend history or payout ratio for any later resource_core implementation",
+            ],
+            available_evidence=[f"input.strategy_type={RESOURCE_CORE_STRATEGY_TYPE}", f"input.sub_type={sub_type}"],
+            missing_evidence=[
+                "accepted first-implementation scope for resource_core",
+                "complete resource_core implementation-gate evidence bundle",
+            ],
+            company_transmission_path=TRANSMISSION_PATH_FALLBACK,
+            data_availability_status="not_assessable",
+            confidence_cap="not_assessable",
+            not_assessable_reason=(
+                "resource_core is design-only in P1.1 Resource first implementation; "
+                "do not assess stability, defensive quality, or dividend capacity."
+            ),
+            what_was_checked=["stock.strategy_type", "stock.sub_type"],
+            source_refs=[],
+            research_question=(
+                "resource_core remains outside first implementation; does a later sample evidence pack provide "
+                "operating cash flow history, sustaining-vs-expansionary capex split, debt/liquidity fields, "
+                "and dividend history or payout ratio?"
+            ),
+            interpretation_guard=(
+                "Do not generate resource_core stability, defensive, low-cost, or dividend-capacity judgments in "
+                "the resource_swing first implementation."
+            ),
+        )
+
+    def _resource_swing_drivers(self, pack: dict[str, Any]) -> list[DriverFactor]:
+        return [self._build_resource_driver(pack, spec) for spec in self._resource_swing_specs()]
+
+    def _resource_swing_specs(self) -> list[DriverSpec]:
+        return [
+            DriverSpec(
+                "commodity",
+                "core commodity price exposure",
+                "macro / commodity / FX",
+                "Commodity exposure identifies which product prices matter, but commodity price is not company revenue.",
+                ("main commodity products", "product revenue ratio", "realized selling price", "production / sales volume", "cost and margin bridge"),
+                ("basic_info.main_business", "business_composition", "financial_metrics.revenue", "financial_metrics.gross_margin", "financial_metrics.operating_cashflow", "commodity_prices"),
+                "Commodity exposure is not company revenue or price benefit. External prices need realized price, volume, cost, margin, and cash-flow bridge.",
+                "Which commodities actually drive company revenue, margin, and cash flow, and what product-level evidence links external prices to realized company economics?",
+                "Check product / segment exposure, realized selling price, production volume, sales volume, unit cost, gross margin, and operating cash flow.",
+                True,
+            ),
+            DriverSpec(
+                "commodity",
+                "commodity price cycle",
+                "macro / commodity / FX",
+                "Commodity-cycle context can affect resource companies, but cycle context is not company performance.",
+                ("commodity cycle phase", "commodity price history", "realized price", "sales volume", "product inventory", "cash-flow bridge"),
+                ("commodity_prices", "business_composition", "financial_metrics.revenue", "financial_metrics.gross_margin", "financial_metrics.inventory", "financial_metrics.operating_cashflow"),
+                "Do not write commodity-cycle movement as company performance without realized company price, volume, margin, and cash-flow evidence.",
+                "Has the commodity cycle translated into company realized price, sales volume, gross margin, working capital, and operating cash flow?",
+                "Check commodity price series, realized selling price, sales volume, product inventory, margin, working capital, and operating cash flow.",
+            ),
+            DriverSpec(
+                "macro",
+                "USD / RMB FX exposure",
+                "macro / commodity / FX",
+                "FX exposure can affect USD-priced commodities, foreign revenue, costs, debt, cash, and derivatives.",
+                ("currency-denominated revenue", "currency-denominated cost", "foreign-currency debt", "FX gain / loss", "FX hedge detail"),
+                ("business_composition.geography", "financial_metrics.revenue", "missing_fields", "unknown_or_missing_evidence"),
+                "Do not infer FX exposure solely from commodity type or export possibility.",
+                "What revenue, cost, debt, cash, or derivative items expose the company to USD / RMB movement, and how is that visible in profit or cash flow?",
+                "Check geographic / currency exposure, FX gain or loss, foreign-currency debt, cash, and derivative disclosure.",
+            ),
+            DriverSpec(
+                "financial",
+                "interest-rate / financing-cost pressure",
+                "macro / commodity / FX",
+                "Financing cost can constrain capex, liquidity, and cycle resilience when debt and maturity evidence exist.",
+                ("debt amount", "interest expense", "rate structure", "debt maturity", "liquidity", "operating cash flow", "capex"),
+                ("financial_metrics.operating_cashflow", "financial_metrics.capex", "missing_fields", "unknown_or_missing_evidence"),
+                "Do not infer financing pressure without debt, interest expense, maturity, or liquidity evidence.",
+                "Does financing cost or refinancing pressure constrain sustaining capex, expansion capex, liquidity, or resource-cycle resilience?",
+                "Check debt, interest expense, rate structure, maturity schedule, liquidity, operating cash flow, and capex.",
+            ),
+            DriverSpec(
+                "commodity",
+                "global demand / inventory cycle",
+                "macro / commodity / FX",
+                "Demand and inventory-cycle signals need product inventory, sales volume, and cash-conversion evidence.",
+                ("global demand series", "exchange / downstream inventory", "product-level company inventory", "sales volume", "production / sales reconciliation"),
+                ("financial_metrics.inventory", "financial_metrics.revenue", "financial_metrics.accounts_receivable", "financial_metrics.operating_cashflow", "commodity_prices"),
+                "Inventory change alone, even combined with revenue growth, is not demand evidence.",
+                "Are global demand and inventory-cycle signals visible in company sales volume, product inventory, receivables, and operating cash flow?",
+                "Check external demand, exchange inventory, product inventory split, sales volume, production / sales reconciliation, receivables, and operating cash flow.",
+            ),
+            DriverSpec(
+                "policy",
+                "policy / supply constraint",
+                "macro / commodity / FX",
+                "Policy and supply constraints can affect mine permits, quotas, output, costs, and capex only with company-specific evidence.",
+                ("mine permit / quota", "production restriction", "environmental policy event", "company mine or capacity impact", "financial impact"),
+                ("basic_info.industry", "business_composition", "risk_flags", "missing_fields", "unknown_or_missing_evidence"),
+                "Policy / supply constraint is not automatic pricing power, production impact, or company realization.",
+                "Which policy or supply constraints affect the company's mines, smelters, permits, output, costs, or capex requirements?",
+                "Check permits, quotas, production restrictions, company mine/capacity impact, cost effect, and capex requirement.",
+            ),
+            DriverSpec(
+                "company",
+                "commodity revenue exposure",
+                "company / asset / operation",
+                "Product revenue exposure is the first company-level resource transmission node.",
+                ("revenue by commodity", "revenue ratio", "segment gross margin", "period", "product definition"),
+                ("basic_info.main_business", "business_composition", "financial_metrics.revenue", "financial_metrics.gross_margin"),
+                "Revenue exposure is not realized commodity price sensitivity by itself.",
+                "What share of revenue and gross margin comes from each commodity, and what segment definitions support the exposure?",
+                "Check commodity segment name, revenue, revenue ratio, period, gross margin, and total revenue.",
+                True,
+            ),
+            DriverSpec(
+                "company",
+                "production volume",
+                "company / asset / operation",
+                "Production volume is required before assessing mine output or ramp-up.",
+                ("mine / product output", "concentrate / metal content", "period", "production vs capacity", "production disruption"),
+                ("basic_info.main_business", "business_composition", "missing_fields", "unknown_or_missing_evidence"),
+                "Do not treat resource amount, revenue, reserves, capex, or capacity as production.",
+                "What production volume by commodity and mine validates operating output, and how does it compare with capacity and sales volume?",
+                "Check product output, mine output, metal content, production period, capacity comparison, and disruption disclosure.",
+            ),
+            DriverSpec(
+                "company",
+                "sales volume",
+                "company / asset / operation",
+                "Sales volume and realized price are required to reconcile commodity revenue.",
+                ("product sales volume", "realized selling price", "revenue reconciliation", "inventory movement", "customer / region split"),
+                ("business_composition", "financial_metrics.revenue", "financial_metrics.inventory", "missing_fields", "unknown_or_missing_evidence"),
+                "Do not treat production volume as sales volume unless both are disclosed and reconciled.",
+                "What sales volume and realized price reconcile reported commodity revenue, and what inventory movement explains production-sales gaps?",
+                "Check sales volume, realized selling price, revenue reconciliation, inventory movement, and customer / region split.",
+            ),
+            DriverSpec(
+                "company",
+                "grade / resource quality",
+                "company / asset / operation",
+                "Ore grade and recovery determine resource quality and cost position only when disclosed.",
+                ("ore grade", "recovery rate", "concentrate grade", "mine dilution", "by-product credit", "cost and margin bridge"),
+                ("business_composition", "financial_metrics.gross_margin", "missing_fields", "unknown_or_missing_evidence"),
+                "Absence of grade data is not proof of poor resource quality; missing data supports only missing / not_assessable.",
+                "What ore grade and recovery evidence supports resource quality and cost position by mine or product?",
+                "Check ore grade, recovery rate, concentrate grade, dilution, by-product credit, cost, and margin bridge.",
+            ),
+            DriverSpec(
+                "company",
+                "reserves / resources",
+                "company / asset / operation",
+                "Reserves and resources inform mine-life questions, but they are not production volume.",
+                ("reserves and resources by mine", "reporting standard", "commodity content", "grade", "update date", "depletion and conversion"),
+                ("basic_info.main_business", "business_composition", "missing_fields", "unknown_or_missing_evidence"),
+                "Do not treat reserves or resources as production, sales, or near-term cash flow.",
+                "What reserves / resources are disclosed by mine, and how do grade, depletion, and conversion affect mine life?",
+                "Check reserves, resources, reporting standard, commodity content, grade, update date, depletion, and conversion.",
+            ),
+            DriverSpec(
+                "company",
+                "mine / smelter / processing capacity",
+                "company / asset / operation",
+                "Capacity must be evidenced by asset, permit, utilization, and production bridge before use in resource analysis.",
+                ("mine capacity", "processing capacity", "smelting capacity", "utilization", "bottleneck", "expansion status", "product bridge"),
+                ("basic_info.main_business", "business_composition", "financial_metrics.capex", "missing_fields", "unknown_or_missing_evidence"),
+                "Capex and business descriptions cannot substitute for accepted capacity, utilization, or output evidence.",
+                "What mine, smelter, or processing capacity is available and utilized, and where are bottlenecks?",
+                "Check mine capacity, processing capacity, smelting capacity, utilization, bottleneck, expansion status, and product bridge.",
+            ),
+            DriverSpec(
+                "company",
+                "inventory",
+                "company / asset / operation",
+                "Inventory can signal working-capital pressure only after product split and production-sales reconciliation.",
+                (
+                    "inventory amount",
+                    "inventory type",
+                    "product inventory",
+                    "raw material / concentrate / finished goods split",
+                    "write-down",
+                    "sales volume",
+                    "production / sales reconciliation",
+                ),
+                ("basic_info.main_business", "business_composition", "financial_metrics.inventory", "financial_metrics.revenue", "financial_metrics.operating_cashflow"),
+                "Inventory decline plus revenue growth is still two financial observations, not an operating demand signal.",
+                "What inventory type is building or falling, and does it reflect production-sales timing, price movement, or demand / collection pressure?",
+                "Check inventory amount, product split, age, write-down, sales volume, production / sales reconciliation, revenue, and cash flow.",
+                True,
+            ),
+            DriverSpec(
+                "company",
+                "hedging / derivative exposure",
+                "company / asset / operation",
+                "Hedging can change price-risk transmission only when derivative details are disclosed.",
+                ("hedge notional", "commodity", "maturity", "hedge accounting", "fair value", "realized / unrealized gain or loss", "risk policy"),
+                ("risk_flags", "missing_fields", "unknown_or_missing_evidence"),
+                "Missing hedging disclosure means hedging status is not assessable; do not write risk as hedged or unhedged.",
+                "Does the company use commodity or FX hedges, and what mismatch, maturity, or fair-value risk remains?",
+                "Check hedge notional, commodity, maturity, hedge accounting, fair value, realized or unrealized gain/loss, and risk policy.",
+            ),
+            DriverSpec(
+                "company",
+                "cost curve position",
+                "company / asset / operation",
+                "Cost-curve position needs unit cost and peer evidence, not only gross margin.",
+                ("cash cost", "all-in sustaining cost", "unit mining / processing cost", "by-product credit", "grade", "peer comparison"),
+                ("business_composition", "financial_metrics.gross_margin", "financial_metrics.operating_cashflow", "missing_fields", "unknown_or_missing_evidence"),
+                "Do not infer low-cost position from gross margin alone.",
+                "Where does the company sit on the cost curve, and what evidence links grade, recovery, unit cost, and margin resilience?",
+                "Check cash cost, all-in sustaining cost, unit cost, by-product credit, grade, and peer cost curve.",
+            ),
+            DriverSpec(
+                "financial",
+                "revenue sensitivity to commodity price",
+                "financial",
+                "Revenue sensitivity requires realized selling price and sales volume, not revenue growth alone.",
+                ("product revenue ratio", "realized selling price", "sales volume", "commodity price series", "pricing formula", "pricing lag"),
+                ("basic_info.main_business", "business_composition", "financial_metrics.revenue", "financial_metrics.revenue_yoy", "financial_metrics.realized_selling_price", "financial_metrics.sales_volume", "commodity_prices"),
+                "Do not infer commodity price transmission from segment revenue plus revenue YoY. Revenue growth cannot be attributed to commodity price unless realized selling price and sales volume are both cited.",
+                "How sensitive is revenue to each commodity after considering product mix, realized price, sales volume, pricing formula, and pricing lag?",
+                "Check realized selling price, sales volume, pricing formula, pricing lag, product revenue ratio, and commodity price series.",
+                True,
+            ),
+            DriverSpec(
+                "financial",
+                "gross margin sensitivity",
+                "financial",
+                "Gross-margin sensitivity requires realized price, unit cost, and product margin bridge.",
+                ("product gross margin", "realized price", "unit cost", "energy / labor / treatment charge", "by-product credit", "inventory cost method"),
+                ("basic_info.main_business", "business_composition", "financial_metrics.gross_margin", "financial_metrics.revenue", "commodity_prices"),
+                "Do not infer margin leverage from commodity exposure alone.",
+                "Which price and cost variables explain gross margin movement by commodity or segment?",
+                "Check product gross margin, realized price, unit cost, treatment / refining charges, by-product credit, and inventory cost method.",
+                True,
+            ),
+            DriverSpec(
+                "financial",
+                "operating cash flow",
+                "financial",
+                "Operating cash flow tests whether commodity revenue converts into cash after working-capital effects.",
+                ("operating cash flow", "revenue", "receivables", "payables", "inventory", "capex separation", "commodity cycle bridge"),
+                ("basic_info.main_business", "business_composition", "financial_metrics.operating_cashflow", "financial_metrics.revenue", "financial_metrics.accounts_receivable", "financial_metrics.inventory", "financial_metrics.capex"),
+                "Cash flow is validation evidence, not proof of resource-core steadiness or commodity demand by itself.",
+                "Does operating cash flow validate commodity revenue quality after receivables, inventory, payables, and price-cycle effects?",
+                "Check operating cash flow, revenue, receivables, payables, inventory, capex separation, and commodity-cycle bridge.",
+                True,
+            ),
+            DriverSpec(
+                "financial",
+                "capex: sustaining vs expansionary",
+                "financial",
+                "Capex must be split and bridged to projects before any asset or output interpretation.",
+                ("capex total", "sustaining capex", "expansion capex", "project / mine mapping", "construction progress", "acceptance", "output bridge"),
+                ("basic_info.main_business", "business_composition", "financial_metrics.capex", "financial_metrics.revenue", "financial_metrics.operating_cashflow"),
+                "Aggregate capex is only cash outflow / investment observation; it is not mine ramp-up, smelter utilization, output growth, or revenue conversion.",
+                "What portion of capex maintains existing assets versus expands capacity, and what evidence links projects to accepted capacity and output?",
+                "Check total capex, sustaining vs expansionary split, project / mine mapping, progress, acceptance, utilization, output, revenue, and cash flow.",
+                True,
+            ),
+            DriverSpec(
+                "financial",
+                "debt / liquidity / refinancing pressure",
+                "financial",
+                "Debt and liquidity pressure require balance-sheet, interest, maturity, and cash-flow evidence.",
+                ("debt amount", "cash", "interest expense", "maturity schedule", "refinancing plan", "covenants", "operating cash flow", "capex"),
+                ("financial_metrics.operating_cashflow", "financial_metrics.capex", "missing_fields", "unknown_or_missing_evidence"),
+                "Do not infer refinancing risk without debt schedule, interest expense, and liquidity evidence.",
+                "Does debt maturity or financing cost pressure constrain mine operation, sustaining capex, expansion plans, or dividends?",
+                "Check debt amount, cash, interest expense, maturity schedule, refinancing plan, covenants, operating cash flow, and capex.",
+            ),
+            DriverSpec(
+                "financial",
+                "depreciation / depletion",
+                "financial",
+                "Depreciation, depletion, asset life, and reserve conversion affect reported profit quality.",
+                ("depreciation", "depletion", "amortization", "mine life", "asset base", "impairment", "production units method"),
+                ("financial_metrics.gross_margin", "financial_metrics.operating_cashflow", "missing_fields", "unknown_or_missing_evidence"),
+                "Do not compare profitability without checking depletion and asset-life policy.",
+                "How do depreciation, depletion, asset life, and reserve conversion affect reported profit and cash-flow quality?",
+                "Check depreciation, depletion, amortization, mine life, asset base, impairment, and production-units method.",
+            ),
+            DriverSpec(
+                "financial",
+                "working capital",
+                "financial",
+                "Working capital requires receivables, inventory, payables, product split, and operating-volume bridge.",
+                ("receivables", "inventory", "payables", "prepayments", "customer / supplier terms", "sales volume", "production / sales reconciliation"),
+                ("basic_info.main_business", "business_composition", "financial_metrics.accounts_receivable", "financial_metrics.inventory", "financial_metrics.revenue", "financial_metrics.operating_cashflow"),
+                "Lower inventory and higher revenue are not an operating demand signal; two financial observations are not operating demand evidence.",
+                "Are working-capital movements driven by price, volume, inventory timing, customer collection, or supplier terms?",
+                "Check receivables, inventory, payables, prepayments, product inventory, sales volume, production / sales reconciliation, customer terms, and supplier terms.",
+                True,
+            ),
+            DriverSpec(
+                "risk",
+                "commodity price volatility",
+                "risk",
+                "Commodity price volatility requires product exposure, realized price, sensitivity, and hedging status to assess risk transmission.",
+                ("product exposure", "commodity price history", "realized price", "hedging status", "margin and cash-flow sensitivity"),
+                ("basic_info.main_business", "business_composition", "financial_metrics.revenue", "financial_metrics.gross_margin", "financial_metrics.operating_cashflow", "commodity_prices", "risk_flags"),
+                "Do not claim price risk is hedged or unhedged beyond disclosed hedging evidence.",
+                "How does commodity price volatility flow through product revenue, margin, hedging gain/loss, and operating cash flow?",
+                "Check product exposure, commodity price history, realized price, hedging status, margin sensitivity, and cash-flow sensitivity.",
+                True,
+            ),
+            DriverSpec(
+                "risk",
+                "production disruption",
+                "risk",
+                "Production disruption needs event, output, permit, safety, or maintenance evidence.",
+                ("mine accident", "maintenance shutdown", "permit suspension", "grade decline", "equipment issue", "affected output", "financial impact"),
+                ("risk_flags", "missing_fields", "unknown_or_missing_evidence", "financial_metrics.revenue"),
+                "Revenue changes alone cannot identify production disruption or prove absence of disruption.",
+                "Have mine, smelter, processing, safety, or permit disruptions affected production, cost, revenue, or cash flow?",
+                "Check mine accident, maintenance shutdown, permit suspension, grade decline, equipment issue, affected output, and financial impact.",
+            ),
+            DriverSpec(
+                "risk",
+                "resource reserve depletion",
+                "risk",
+                "Reserve depletion requires reserve base, production, depletion rate, and exploration replacement.",
+                ("reserve base", "mine life", "annual production", "depletion rate", "exploration replacement", "impairment"),
+                ("basic_info.main_business", "business_composition", "missing_fields", "unknown_or_missing_evidence"),
+                "Do not treat resource quantity as production or mine-life proof without grade and depletion context.",
+                "Is reserve depletion or inadequate replacement affecting mine life, capex need, and long-term production visibility?",
+                "Check reserve base, mine life, annual production, depletion rate, exploration replacement, and impairment.",
+            ),
+            DriverSpec(
+                "risk",
+                "environmental / safety / regulatory risk",
+                "risk",
+                "Environmental, safety, and regulatory events can affect output, cost, permits, capex, and cash flow.",
+                ("environmental penalties", "safety accidents", "tailings / water / land permits", "production restrictions", "compliance cost", "remediation capex"),
+                ("risk_flags", "missing_fields", "unknown_or_missing_evidence", "basic_info.industry"),
+                "Absence of event data is not proof of compliant or safe operations.",
+                "What environmental, safety, or regulatory events could affect output, costs, permits, capex, or cash flow?",
+                "Check environmental penalties, safety accidents, tailings/water/land permits, restrictions, compliance cost, and remediation capex.",
+            ),
+            DriverSpec(
+                "risk",
+                "FX risk",
+                "risk",
+                "FX risk needs currency-denominated exposure or FX gain/loss evidence.",
+                ("foreign-currency revenue / cost / debt / cash", "FX gain/loss", "hedge notional", "sensitivity"),
+                ("business_composition.geography", "missing_fields", "unknown_or_missing_evidence", "risk_flags"),
+                "Do not infer FX risk magnitude without currency-denominated evidence.",
+                "What foreign-currency exposures create earnings, cash-flow, or debt-service risk, and are they hedged?",
+                "Check foreign-currency revenue, cost, debt, cash, FX gain/loss, hedge notional, and sensitivity.",
+            ),
+            DriverSpec(
+                "risk",
+                "hedging loss / mismatch risk",
+                "risk",
+                "Hedging mismatch can occur only if hedge and underlying physical exposure evidence are disclosed.",
+                ("hedge notional", "commodity / FX item hedged", "maturity", "fair value", "realized and unrealized gain/loss", "physical exposure match"),
+                ("risk_flags", "missing_fields", "unknown_or_missing_evidence"),
+                "Missing hedging disclosure means mismatch risk is not assessable; do not describe price risk as hedged or unhedged.",
+                "Do hedges match physical exposure in volume, timing, commodity, and currency, or could hedge losses / mismatch occur?",
+                "Check hedge notional, hedged item, maturity, fair value, realized and unrealized gain/loss, and physical exposure match.",
+            ),
+            DriverSpec(
+                "risk",
+                "capex overrun",
+                "risk",
+                "Capex overrun requires project budget, actual spend, progress, schedule, and acceptance evidence.",
+                ("project budget", "actual spend", "progress", "schedule", "funding", "acceptance", "revised budget", "output bridge"),
+                ("financial_metrics.capex", "missing_fields", "unknown_or_missing_evidence", "risk_flags"),
+                "Aggregate capex cannot show project overrun, completion, accepted capacity, utilization, output, or revenue bridge.",
+                "Are mine, smelter, or processing projects running over budget or behind schedule, and how does that affect funding and output?",
+                "Check project budget, actual spend, progress, schedule, funding, acceptance, revised budget, and output bridge.",
+            ),
+            DriverSpec(
+                "risk",
+                "debt-cycle risk",
+                "risk",
+                "Debt-cycle risk requires debt maturity, interest rate, liquidity, capex commitments, and commodity stress evidence.",
+                ("debt maturity", "refinancing", "interest rates", "commodity downturn stress", "liquidity", "capex commitments", "covenant risk"),
+                ("financial_metrics.operating_cashflow", "financial_metrics.capex", "missing_fields", "unknown_or_missing_evidence"),
+                "Do not infer debt-cycle risk without debt schedule, liquidity, and interest expense evidence.",
+                "Under commodity-cycle stress, do debt maturities, capex commitments, and liquidity create refinancing or covenant pressure?",
+                "Check debt maturity, refinancing, interest rates, liquidity, capex commitments, covenants, and commodity-stress sensitivity.",
+            ),
+        ]
+
+    def _build_resource_driver(self, pack: dict[str, Any], spec: DriverSpec) -> DriverFactor:
+        available = self._available_evidence(pack, spec.checked_paths)
+        missing = self._missing_evidence(pack, spec.required_evidence, spec.checked_paths)
+        business_nodes = self._prioritize_resource_business_nodes(
+            [item for item in available if self._is_resource_business_node(item)]
+        )
+        financial_nodes = [item for item in available if "evidence_pack.financial_metrics." in item]
+
+        hard_fallback_reason = ""
+        if spec.driver_factor == "revenue sensitivity to commodity price" and not self._has_realized_price_and_sales_volume(pack):
+            hard_fallback_reason = (
+                "Realized selling price and sales volume are both required; segment revenue and revenue YoY "
+                "must not be combined into commodity price transmission."
+            )
+        elif spec.driver_factor in {
+            "commodity price cycle",
+            "USD / RMB FX exposure",
+            "interest-rate / financing-cost pressure",
+            "global demand / inventory cycle",
+            "policy / supply constraint",
+            "production volume",
+            "sales volume",
+            "grade / resource quality",
+            "reserves / resources",
+            "mine / smelter / processing capacity",
+            "hedging / derivative exposure",
+            "cost curve position",
+            "debt / liquidity / refinancing pressure",
+            "depreciation / depletion",
+            "production disruption",
+            "resource reserve depletion",
+            "environmental / safety / regulatory risk",
+            "FX risk",
+            "hedging loss / mismatch risk",
+            "capex overrun",
+            "debt-cycle risk",
+        }:
+            hard_fallback_reason = "Current evidence pack lacks the required resource-specific operating or risk evidence."
+
+        if spec.concrete_path_allowed and not hard_fallback_reason:
+            if business_nodes and financial_nodes:
+                path_nodes = [business_nodes[0], *financial_nodes[:2]]
+                path = " -> ".join(path_nodes)
+                status = "partial" if missing else "available"
+                cap = "low" if missing else "medium"
+                reason = ""
+            elif business_nodes:
+                path_nodes = [business_nodes[0]]
+                path = business_nodes[0]
+                status = "partial"
+                cap = "low"
+                reason = ""
+            else:
+                path_nodes = []
+                path = TRANSMISSION_PATH_FALLBACK
+                status = "not_assessable"
+                cap = "not_assessable"
+                reason = (
+                    "Resource transmission requires a product / segment business node; financial metrics alone "
+                    "cannot establish commodity or operating transmission."
+                )
+        else:
+            path_nodes = []
+            path = TRANSMISSION_PATH_FALLBACK
+            status = "not_assessable"
+            cap = "not_assessable"
+            reason = hard_fallback_reason or GENERIC_MISSING_BRIDGE_REASON
+
+        return DriverFactor(
+            layer=spec.layer,  # type: ignore[arg-type]
+            driver_factor=spec.driver_factor,
+            driver_scope=spec.driver_scope,
+            why_it_matters=spec.why_it_matters,
+            required_evidence=list(spec.required_evidence),
+            available_evidence=available,
+            missing_evidence=missing,
+            company_transmission_path=path,
+            data_availability_status=status,  # type: ignore[arg-type]
+            confidence_cap=cap,  # type: ignore[arg-type]
+            not_assessable_reason=reason,
+            what_was_checked=list(spec.checked_paths),
+            source_refs=[item.split("=")[0] for item in path_nodes],
+            research_question=spec.question,
+            interpretation_guard=spec.interpretation_guard,
+        )
+
+    def _is_resource_business_node(self, node: str) -> bool:
+        if "evidence_pack.business_composition" in node:
+            return True
+        if "evidence_pack.basic_info.main_business=" not in node:
+            return False
+        lowered = node.lower()
+        return any(term.lower() in lowered for term in RESOURCE_PRODUCT_TERMS)
+
+    def _prioritize_resource_business_nodes(self, nodes: list[str]) -> list[str]:
+        return sorted(nodes, key=lambda item: 0 if "evidence_pack.business_composition" in item else 1)
+
+    def _has_realized_price_and_sales_volume(self, pack: dict[str, Any]) -> bool:
+        price_paths = (
+            "financial_metrics.realized_selling_price",
+            "resource_metrics.realized_selling_price",
+            "operation_metrics.realized_selling_price",
+            "realized_selling_price",
+        )
+        volume_paths = (
+            "financial_metrics.sales_volume",
+            "resource_metrics.sales_volume",
+            "operation_metrics.sales_volume",
+            "sales_volume",
+        )
+        return any(_is_present(self._value_at_path(pack, path)) for path in price_paths) and any(
+            _is_present(self._value_at_path(pack, path)) for path in volume_paths
         )
 
     def _ai_datacenter_drivers(self, pack: dict[str, Any], sub_type: str) -> list[DriverFactor]:
@@ -1499,6 +2052,31 @@ class ResearchIntelligenceP1Builder:
             return "financial_metrics.net_margin=" in available_text
         if requirement in {"business composition segment", "period"}:
             return "business_composition" in available_text
+        if requirement in {
+            "main commodity products",
+            "product exposure",
+            "revenue by commodity",
+            "product definition",
+        }:
+            return "business_composition" in available_text or "basic_info.main_business=" in available_text
+        if requirement in {"product revenue ratio", "revenue ratio"}:
+            return "revenue_ratio" in available_text
+        if requirement == "segment gross margin":
+            return "gross_margin" in available_text
+        if requirement == "inventory":
+            return "financial_metrics.inventory=" in available_text
+        if requirement == "inventory amount":
+            return "financial_metrics.inventory=" in available_text
+        if requirement == "capex total":
+            return "financial_metrics.capex=" in available_text
+        if requirement == "commodity price series":
+            return "commodity_prices=" in available_text
+        if requirement == "revenue reconciliation":
+            return "financial_metrics.revenue=" in available_text
+        if requirement == "sales volume":
+            return "sales_volume=" in available_text
+        if requirement == "realized selling price":
+            return "realized_selling_price=" in available_text
         if requirement in {
             "service-line revenue bridge",
             "service-line revenue",

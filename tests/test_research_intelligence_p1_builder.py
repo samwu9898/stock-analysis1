@@ -194,6 +194,74 @@ def build_low_altitude_outputs(code="000099"):
     return ResearchIntelligenceP1Builder().build(build_low_altitude_pack(code))
 
 
+def build_resource_pack(code="000426", *, strategy_type="resource_swing"):
+    fundamental = sample_fundamental(strategy_type)
+    fundamental["stock_code"] = code
+    fundamental["stock_name"] = "Xingye Silver & Tin"
+    fundamental["sub_type"] = None
+    fundamental["status"] = "supportive"
+    fundamental["confidence"] = "high"
+    fundamental["fundamental_score"] = 76
+    raw = sample_raw()
+    raw["meta"] = {"code": code, "stock_name": "Xingye Silver & Tin"}
+    raw["blocks"]["basic_info"] = [
+        {
+            "stock_code": code,
+            "stock_name": "Xingye Silver & Tin",
+            "industry": "non-ferrous metal mining and processing",
+            "main_business": "silver, tin, lead-zinc ore mining and processing",
+        }
+    ]
+    raw["blocks"]["financial_indicator"][0].update(
+        {
+            "period": "2026-03-31",
+            "revenue": 1775000000.0,
+            "revenue_yoy": 28.0,
+            "gross_margin": 52.5,
+            "net_margin": 24.0,
+            "operating_cashflow": 620000000.0,
+            "accounts_receivable": 360000000.0,
+            "inventory": 420000000.0,
+            "capex": 229152931.6,
+        }
+    )
+    raw["blocks"]["business_composition"] = [
+        {
+            "period": "2025-12-31",
+            "classification_type": "by product",
+            "segment_name": "silver concentrate",
+            "revenue": 950000000.0,
+            "revenue_ratio": 0.50,
+            "gross_margin": 0.61,
+        },
+        {
+            "period": "2025-12-31",
+            "classification_type": "by product",
+            "segment_name": "tin concentrate",
+            "revenue": 550000000.0,
+            "revenue_ratio": 0.29,
+            "gross_margin": 0.48,
+        },
+    ]
+    raw["fetch_status"]["basic_info"] = {
+        "success": True,
+        "missing_fields": [],
+        "warnings": [],
+        "source_trace": [{"function_name": "stock_individual_info_em", "source_period": "2026-05-20"}],
+    }
+    raw["fetch_status"]["business_composition"] = {
+        "success": True,
+        "missing_fields": [],
+        "warnings": [],
+        "source_trace": [{"function_name": "stock_zygc_ym", "source_period": "2025-12-31"}],
+    }
+    return EvidencePackBuilder().build(fundamental, raw)
+
+
+def build_resource_outputs(code="000426", *, strategy_type="resource_swing"):
+    return ResearchIntelligenceP1Builder().build(build_resource_pack(code, strategy_type=strategy_type))
+
+
 def driver_names(pack):
     return {item.driver_factor for item in pack.driver_matrix}
 
@@ -691,6 +759,208 @@ def test_cxo_outputs_do_not_include_forbidden_safety_terms():
 
 def test_p1_outputs_do_not_include_forbidden_safety_terms():
     pack, questions = build_outputs("datacenter_operator")
+    text = json.dumps({"pack": pack.model_dump(), "questions": questions.model_dump()}, ensure_ascii=False)
+
+    assert pack.safety_boundary.safe
+    assert questions.safety_boundary.safe
+    assert not any(term in text for term in FORBIDDEN_TERMS)
+
+
+def test_resource_swing_driver_matrix_contains_required_four_groups():
+    pack, questions = build_resource_outputs()
+    names = driver_names(pack)
+
+    assert pack.strategy_type == "resource_swing"
+    assert {
+        "core commodity price exposure",
+        "commodity price cycle",
+        "USD / RMB FX exposure",
+        "interest-rate / financing-cost pressure",
+        "global demand / inventory cycle",
+        "policy / supply constraint",
+        "commodity revenue exposure",
+        "production volume",
+        "sales volume",
+        "grade / resource quality",
+        "reserves / resources",
+        "mine / smelter / processing capacity",
+        "inventory",
+        "hedging / derivative exposure",
+        "cost curve position",
+        "revenue sensitivity to commodity price",
+        "gross margin sensitivity",
+        "operating cash flow",
+        "capex: sustaining vs expansionary",
+        "debt / liquidity / refinancing pressure",
+        "depreciation / depletion",
+        "working capital",
+        "commodity price volatility",
+        "production disruption",
+        "resource reserve depletion",
+        "environmental / safety / regulatory risk",
+        "FX risk",
+        "hedging loss / mismatch risk",
+        "capex overrun",
+        "debt-cycle risk",
+    }.issubset(names)
+    assert "dividend capacity for resource_core" not in names
+    assert questions.questions
+
+
+def test_resource_core_remains_design_only_unsupported():
+    pack, questions = build_resource_outputs(strategy_type="resource_core")
+
+    assert len(pack.driver_matrix) == 1
+    row = pack.driver_matrix[0]
+    assert row.driver_factor == "unsupported_pilot_strategy"
+    assert row.company_transmission_path == TRANSMISSION_PATH_FALLBACK
+    assert row.confidence_cap == "not_assessable"
+    assert "design-only" in row.not_assessable_reason
+    assert "stability" not in questions.questions[0].question.lower()
+
+
+def test_resource_swing_non_primary_sample_is_unsupported():
+    pack, _ = build_resource_outputs(code="603993")
+
+    assert len(pack.driver_matrix) == 1
+    row = pack.driver_matrix[0]
+    assert row.driver_factor == "unsupported_pilot_strategy"
+    assert row.company_transmission_path == TRANSMISSION_PATH_FALLBACK
+    assert row.confidence_cap == "not_assessable"
+    assert "000426 only" in row.not_assessable_reason
+
+
+def test_resource_commodity_price_exposure_is_not_company_revenue():
+    pack, _ = build_resource_outputs()
+    row = {item.driver_factor: item for item in pack.driver_matrix}["core commodity price exposure"]
+
+    assert row.company_transmission_path != TRANSMISSION_PATH_FALLBACK
+    assert "evidence_pack.business_composition" in row.company_transmission_path
+    assert "evidence_pack.financial_metrics.revenue=" in row.company_transmission_path
+    assert "not company revenue" in row.interpretation_guard
+    assert "realized selling price" in row.missing_evidence
+
+
+def test_resource_revenue_sensitivity_requires_realized_price_and_sales_volume():
+    pack, _ = build_resource_outputs()
+    row = {item.driver_factor: item for item in pack.driver_matrix}["revenue sensitivity to commodity price"]
+
+    assert row.company_transmission_path == TRANSMISSION_PATH_FALLBACK
+    assert row.confidence_cap == "not_assessable"
+    assert row.data_availability_status == "not_assessable"
+    assert "Realized selling price and sales volume are both required" in row.not_assessable_reason
+    assert "realized price" in row.research_question
+    assert "sales volume" in row.research_question
+    assert "pricing formula" in row.research_question
+    assert "pricing lag" in row.research_question
+
+
+def test_resource_segment_revenue_and_revenue_yoy_do_not_infer_price_transmission():
+    pack, _ = build_resource_outputs()
+    row = {item.driver_factor: item for item in pack.driver_matrix}["revenue sensitivity to commodity price"]
+
+    assert any("financial_metrics.revenue_yoy=" in item for item in row.available_evidence)
+    assert any("business_composition" in item for item in row.available_evidence)
+    assert row.company_transmission_path == TRANSMISSION_PATH_FALLBACK
+    assert "segment revenue plus revenue YoY" in row.interpretation_guard
+
+
+def test_resource_inventory_decline_and_revenue_growth_do_not_infer_demand():
+    pack, _ = build_resource_outputs()
+    rows = {item.driver_factor: item for item in pack.driver_matrix}
+
+    for name in ["inventory", "working capital"]:
+        row = rows[name]
+        assert "not an operating demand signal" in row.interpretation_guard
+        assert "sales volume" in row.missing_evidence
+        assert "production / sales reconciliation" in row.missing_evidence
+
+
+def test_resource_missing_grade_data_does_not_infer_quality_good_or_bad():
+    pack, _ = build_resource_outputs()
+    row = {item.driver_factor: item for item in pack.driver_matrix}["grade / resource quality"]
+
+    assert row.company_transmission_path == TRANSMISSION_PATH_FALLBACK
+    assert row.confidence_cap == "not_assessable"
+    assert "Absence of grade data is not proof of poor resource quality" in row.interpretation_guard
+    assert "poor resource quality" not in row.research_question
+
+
+def test_resource_capex_aggregate_only_does_not_infer_capacity_or_output():
+    pack, _ = build_resource_outputs()
+    row = {item.driver_factor: item for item in pack.driver_matrix}["capex: sustaining vs expansionary"]
+    text = json.dumps(row.model_dump(), ensure_ascii=False)
+
+    assert row.company_transmission_path != TRANSMISSION_PATH_FALLBACK
+    assert "evidence_pack.financial_metrics.capex=" in row.company_transmission_path
+    assert "cash outflow / investment observation" in row.interpretation_guard
+    assert not any(term in text for term in ["产能释放", "投产", "释放", "产量增长"])
+
+
+def test_resource_hedging_disclosure_missing_keeps_status_not_assessable():
+    pack, _ = build_resource_outputs()
+    rows = {item.driver_factor: item for item in pack.driver_matrix}
+
+    for name in ["hedging / derivative exposure", "hedging loss / mismatch risk"]:
+        row = rows[name]
+        assert row.company_transmission_path == TRANSMISSION_PATH_FALLBACK
+        assert row.confidence_cap == "not_assessable"
+        assert "not assessable" in row.interpretation_guard
+        assert "hedged" in row.interpretation_guard
+        assert "unhedged" in row.interpretation_guard
+
+
+def test_resource_missing_data_does_not_become_not_applicable():
+    pack, _ = build_resource_outputs()
+
+    assert all(row.data_availability_status != "not_applicable" for row in pack.driver_matrix)
+    assert {row.data_availability_status for row in pack.driver_matrix}.issubset({"partial", "available", "not_assessable"})
+
+
+def test_resource_company_transmission_path_minimum_standard_applies():
+    builder = ResearchIntelligenceP1Builder()
+    financial_only_pack = {
+        "stock": {"code": "000426", "name": "No Business Node", "strategy_type": "resource_swing"},
+        "financial_metrics": {"revenue": 100, "gross_margin": 20},
+    }
+    business_only_pack = {
+        "stock": {"code": "000426", "name": "Business Node Only", "strategy_type": "resource_swing"},
+        "basic_info": {"main_business": "silver and tin mining"},
+        "business_composition": [{"segment_name": "silver concentrate", "revenue_ratio": 0.5}],
+    }
+
+    financial_pack, _ = builder.build(financial_only_pack)
+    financial_row = {item.driver_factor: item for item in financial_pack.driver_matrix}["commodity revenue exposure"]
+    assert financial_row.company_transmission_path == TRANSMISSION_PATH_FALLBACK
+    assert financial_row.confidence_cap == "not_assessable"
+
+    business_pack, _ = builder.build(business_only_pack)
+    business_row = {item.driver_factor: item for item in business_pack.driver_matrix}["commodity revenue exposure"]
+    assert business_row.company_transmission_path != TRANSMISSION_PATH_FALLBACK
+    assert business_row.confidence_cap == "low"
+    assert "financial_metrics" not in business_row.company_transmission_path
+
+
+def test_resource_source_bucket_counting_uses_existing_bucket_rules():
+    builder = ResearchIntelligenceP1Builder()
+    pack, _ = builder.build(
+        {
+            "stock": {"code": "000426", "name": "Resource", "strategy_type": "resource_swing"},
+            "source_trace_summary": [
+                {"block_name": "news", "trace_count": 3},
+                {"block_name": "news", "trace_count": 2},
+            ],
+        }
+    )
+
+    assert pack.source_bucket_summary.source_buckets == ["news_media"]
+    assert pack.source_bucket_summary.independent_source_count == 1
+    assert pack.source_bucket_summary.consensus_assessment_status == "not_assessable"
+    assert pack.source_bucket_summary.not_assessable_reason == LESS_THAN_TWO_BUCKETS_REASON
+
+
+def test_resource_outputs_do_not_include_forbidden_safety_terms():
+    pack, questions = build_resource_outputs()
     text = json.dumps({"pack": pack.model_dump(), "questions": questions.model_dump()}, ensure_ascii=False)
 
     assert pack.safety_boundary.safe
