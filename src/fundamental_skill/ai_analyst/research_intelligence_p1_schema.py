@@ -62,6 +62,15 @@ VAGUE_TRANSMISSION_PHRASES = {
     "capex increased, so capacity has been released",
     "inventory declined, so demand is strong",
     "missing hedging disclosure means risk is hedged",
+    "Semiconductor cycle recovers, so the company benefits.",
+    "Domestic substitution accelerates, so revenue will grow.",
+    "Customer qualification means batch revenue.",
+    "Contract liabilities mean backlog.",
+    "Capex increased, so capacity has been released.",
+    "Inventory decreased and revenue increased, so demand is strong.",
+    "R&D ratio is high, so the technology moat is strong.",
+    "Export controls benefit domestic leaders.",
+    "Export controls and supply-chain restrictions, so company will face supply disruption or revenue decline.",
 }
 
 FORBIDDEN_SAFETY_TERMS = {

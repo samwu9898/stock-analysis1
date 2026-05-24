@@ -262,6 +262,85 @@ def build_resource_outputs(code="000426", *, strategy_type="resource_swing"):
     return ResearchIntelligenceP1Builder().build(build_resource_pack(code, strategy_type=strategy_type))
 
 
+def build_semiconductor_pack(
+    code="002371",
+    *,
+    strategy_type="semiconductor_cycle",
+    operating_cashflow=748055666.52,
+    include_customer_qualification=False,
+):
+    indicators = [
+        {"indicator_name": "inventory", "current_status": "available", "current_value": 28602898183.2},
+        {"indicator_name": "order / contract liabilities", "current_status": "partial_proxy", "current_value": 4202521948.54},
+        {"indicator_name": "localization revenue", "current_status": "missing", "current_value": None},
+        {"indicator_name": "R&D expense ratio", "current_status": "available", "current_value": "13.59%"},
+        {"indicator_name": "capex", "current_status": "available", "current_value": 468631710.94},
+    ]
+    if include_customer_qualification:
+        indicators.append({"indicator_name": "customer qualification", "current_status": "available", "current_value": "pilot validation"})
+    return {
+        "stock": {"code": code, "name": "NAURA", "strategy_type": strategy_type, "status": "neutral", "confidence": "medium", "fundamental_score": 67},
+        "basic_info": {
+            "stock_code": code,
+            "stock_name": "NAURA",
+            "industry": "specialized equipment manufacturing",
+            "main_business": "semiconductor equipment and integrated-circuit manufacturing equipment",
+        },
+        "financial_metrics": {
+            "period": "20260331",
+            "revenue": 10322863908.82,
+            "revenue_yoy": {"raw_value": 25.79609, "display_value": "25.80%"},
+            "gross_margin": {"raw_value": 40.772789, "display_value": "40.77%"},
+            "net_profit": 1634739048.68,
+            "operating_cashflow": operating_cashflow,
+            "inventory": 28602898183.2,
+            "accounts_receivable": 8780279745.35,
+            "contract_liabilities": 4202521948.54,
+            "r_and_d_expense": 1402436311.27,
+            "r_and_d_expense_ratio": {"raw_value": 13.585728957171844, "display_value": "13.59%"},
+            "capex": 468631710.94,
+        },
+        "business_composition": [
+            {
+                "period": "2025-12-31",
+                "classification_type": "by product",
+                "segment_name": "electronic process equipment",
+                "revenue": 36731219888.81,
+                "revenue_ratio": {"raw_value": 0.933375, "display_value": "93.34%"},
+                "gross_margin": {"raw_value": 0.39177, "display_value": "39.18%"},
+            },
+            {
+                "period": "2025-12-31",
+                "classification_type": "by product",
+                "segment_name": "electronic components",
+                "revenue": 2579277891.07,
+                "revenue_ratio": {"raw_value": 0.065542, "display_value": "6.55%"},
+                "gross_margin": {"raw_value": 0.529509, "display_value": "52.95%"},
+            },
+        ],
+        "enhanced_must_track_indicators": indicators,
+        "risk_flags": [
+            {"name": "semiconductor cycle volatility risk", "severity": "medium"},
+            {"name": "localization realization risk", "severity": "medium"},
+        ],
+        "unknown_or_missing_evidence": [
+            {"evidence_name": "new business revenue or order", "evidence_value": None},
+            {"evidence_name": "large customer revenue share", "evidence_value": None},
+        ],
+        "source_trace_summary": [
+            {"block_name": "business_composition", "trace_count": 1},
+            {"block_name": "financial_indicator", "trace_count": 16},
+            {"block_name": "news", "trace_count": 0},
+        ],
+    }
+
+
+def build_semiconductor_outputs(code="002371", *, strategy_type="semiconductor_cycle", operating_cashflow=748055666.52):
+    return ResearchIntelligenceP1Builder().build(
+        build_semiconductor_pack(code, strategy_type=strategy_type, operating_cashflow=operating_cashflow)
+    )
+
+
 def driver_names(pack):
     return {item.driver_factor for item in pack.driver_matrix}
 
@@ -966,3 +1045,216 @@ def test_resource_outputs_do_not_include_forbidden_safety_terms():
     assert pack.safety_boundary.safe
     assert questions.safety_boundary.safe
     assert not any(term in text for term in FORBIDDEN_TERMS)
+
+
+def test_semiconductor_driver_matrix_contains_required_factors():
+    pack, questions = build_semiconductor_outputs()
+    names = driver_names(pack)
+
+    assert pack.strategy_type == "semiconductor_cycle"
+    assert pack.stock_code == "002371"
+    assert {
+        "semiconductor capex cycle",
+        "downstream demand cycle",
+        "inventory cycle",
+        "localization / domestic substitution",
+        "export control / sanctions / overseas restriction",
+        "equipment sub-chain classification",
+        "semiconductor-related revenue contribution",
+        "product / equipment / material segment exposure",
+        "customer qualification / customer adoption",
+        "order visibility",
+        "backlog / contract liabilities as partial proxy only",
+        "localization revenue evidence",
+        "R&D intensity and product conversion",
+        "revenue growth quality",
+        "gross margin recovery or pressure",
+        "inventory level and inventory turnover",
+        "receivables and cash conversion",
+        "operating cash flow",
+        "capex discipline",
+        "R&D expense and R&D ratio as input evidence only",
+        "impairment / inventory write-down risk",
+        "inventory overbuild",
+        "downstream capex slowdown",
+        "customer qualification failure",
+        "localization narrative without revenue",
+        "R&D overread commercialization risk",
+        "export control / supply-chain restriction",
+        "margin pressure from product mix or price competition",
+        "capex without utilization or revenue bridge",
+        "contract liabilities / operating cash flow signal consistency",
+    }.issubset(names)
+    assert questions.questions
+
+
+def test_semiconductor_002371_equipment_first_version_and_other_subchains_boundary():
+    pack, _ = build_semiconductor_outputs()
+    rows = {item.driver_factor: item for item in pack.driver_matrix}
+
+    equipment = rows["equipment sub-chain classification"]
+    assert equipment.company_transmission_path != TRANSMISSION_PATH_FALLBACK
+    assert "evidence_pack.business_composition" in equipment.company_transmission_path
+    assert "evidence_pack.financial_metrics.revenue=" in equipment.company_transmission_path
+
+    for name in ["materials sub-chain boundary", "fabless sub-chain boundary", "foundry sub-chain boundary", "OSAT sub-chain boundary"]:
+        row = rows[name]
+        assert row.data_availability_status == "not_assessable"
+        assert row.confidence_cap == "not_assessable"
+        assert row.data_availability_status != "not_applicable"
+        assert "Do not apply equipment order logic" in row.interpretation_guard
+
+
+def test_semiconductor_revenue_yoy_and_margin_do_not_create_cycle_or_demand_conclusion():
+    pack, _ = build_semiconductor_outputs()
+    rows = {item.driver_factor: item for item in pack.driver_matrix}
+    text = json.dumps(pack.model_dump(), ensure_ascii=False).lower()
+
+    assert rows["revenue growth quality"].company_transmission_path != TRANSMISSION_PATH_FALLBACK
+    assert "not semiconductor cycle transmission" in rows["revenue growth quality"].interpretation_guard
+    assert "cycle recovery" not in text
+    assert "strong demand" not in text
+
+
+def test_semiconductor_contract_liabilities_remain_partial_proxy_not_backlog():
+    pack, _ = build_semiconductor_outputs()
+    rows = {item.driver_factor: item for item in pack.driver_matrix}
+
+    order_visibility = rows["order visibility"]
+    contract_proxy = rows["backlog / contract liabilities as partial proxy only"]
+
+    assert order_visibility.company_transmission_path == TRANSMISSION_PATH_FALLBACK
+    assert order_visibility.data_availability_status == "missing"
+    assert order_visibility.confidence_cap == "not_assessable"
+    assert "not backlog" in order_visibility.interpretation_guard
+    assert contract_proxy.company_transmission_path != TRANSMISSION_PATH_FALLBACK
+    assert contract_proxy.data_availability_status == "partial"
+    assert contract_proxy.confidence_cap == "low"
+    assert "partial proxy only" in contract_proxy.interpretation_guard
+    assert "not backlog or confirmed delivery" in contract_proxy.interpretation_guard
+
+
+def test_semiconductor_rd_ratio_does_not_output_moat_or_technology_barrier():
+    pack, questions = build_semiconductor_outputs()
+    rows = {item.driver_factor: item for item in pack.driver_matrix}
+    text = json.dumps({"pack": pack.model_dump(), "questions": questions.model_dump()}, ensure_ascii=False).lower()
+
+    assert rows["R&D expense and R&D ratio as input evidence only"].confidence_cap == "low"
+    assert "input evidence only" in rows["R&D expense and R&D ratio as input evidence only"].interpretation_guard
+    assert "moat" not in text
+    assert "护城河" not in text
+    assert "技术壁垒" not in text
+
+
+def test_semiconductor_export_control_without_company_impact_is_not_operating_fact():
+    pack, _ = build_semiconductor_outputs()
+    rows = {item.driver_factor: item for item in pack.driver_matrix}
+    text = json.dumps(pack.model_dump(), ensure_ascii=False).lower()
+
+    for name in ["export control / sanctions / overseas restriction", "export control / supply-chain restriction"]:
+        row = rows[name]
+        assert row.company_transmission_path == TRANSMISSION_PATH_FALLBACK
+        assert row.confidence_cap == "not_assessable"
+        assert "company-level" in row.not_assessable_reason or "Company-level" in row.not_assessable_reason
+    assert "export controls benefit domestic leaders" not in text
+    assert "supply disruption" not in text
+    assert "revenue decline" not in text
+
+
+def test_semiconductor_customer_qualification_absent_is_missing_not_assessable():
+    pack, _ = build_semiconductor_outputs()
+    rows = {item.driver_factor: item for item in pack.driver_matrix}
+
+    for name in ["customer qualification / customer adoption", "customer qualification failure"]:
+        row = rows[name]
+        assert row.data_availability_status == "missing"
+        assert row.confidence_cap == "not_assessable"
+        assert row.company_transmission_path == TRANSMISSION_PATH_FALLBACK
+        assert "Do not infer" in row.interpretation_guard
+
+
+def test_semiconductor_inventory_and_capex_are_observations_not_demand_or_capacity():
+    pack, _ = build_semiconductor_outputs()
+    rows = {item.driver_factor: item for item in pack.driver_matrix}
+    text = json.dumps(pack.model_dump(), ensure_ascii=False).lower()
+
+    assert rows["inventory cycle"].company_transmission_path != TRANSMISSION_PATH_FALLBACK
+    assert "working-capital observation only" in rows["inventory cycle"].interpretation_guard
+    assert "strong demand" not in text
+    assert "demand deterioration" not in text
+
+    assert rows["capex discipline"].company_transmission_path != TRANSMISSION_PATH_FALLBACK
+    assert "cash outflow / investment observation only" in rows["capex discipline"].interpretation_guard
+    assert "capacity release" not in text
+
+
+def test_semiconductor_contradictory_signals_are_partial_low_and_list_both_signals():
+    pack, _ = build_semiconductor_outputs(operating_cashflow=-1000000.0)
+    row = {item.driver_factor: item for item in pack.driver_matrix}[
+        "contract liabilities / operating cash flow signal consistency"
+    ]
+
+    assert row.data_availability_status == "partial"
+    assert row.confidence_cap == "low"
+    assert any("financial_metrics.contract_liabilities=" in item for item in row.available_evidence)
+    assert any("financial_metrics.operating_cashflow=" in item for item in row.available_evidence)
+    assert "manual review" in row.interpretation_guard
+    assert "manual review" in row.research_question
+
+
+def test_semiconductor_company_transmission_path_minimum_standard_applies():
+    builder = ResearchIntelligenceP1Builder()
+    financial_only_pack = {
+        "stock": {"code": "002371", "name": "Financial Only", "strategy_type": "semiconductor_cycle"},
+        "financial_metrics": {"revenue": 100, "gross_margin": 20},
+    }
+    business_only_pack = {
+        "stock": {"code": "002371", "name": "Business Only", "strategy_type": "semiconductor_cycle"},
+        "business_composition": [{"segment_name": "electronic process equipment", "revenue_ratio": 0.93}],
+    }
+
+    financial_pack, _ = builder.build(financial_only_pack)
+    financial_row = {item.driver_factor: item for item in financial_pack.driver_matrix}[
+        "semiconductor-related revenue contribution"
+    ]
+    assert financial_row.company_transmission_path == TRANSMISSION_PATH_FALLBACK
+    assert financial_row.confidence_cap == "not_assessable"
+
+    business_pack, _ = builder.build(business_only_pack)
+    business_row = {item.driver_factor: item for item in business_pack.driver_matrix}[
+        "semiconductor-related revenue contribution"
+    ]
+    assert business_row.company_transmission_path != TRANSMISSION_PATH_FALLBACK
+    assert business_row.confidence_cap == "low"
+    assert "financial_metrics" not in business_row.company_transmission_path
+
+
+def test_semiconductor_source_bucket_counting_uses_existing_bucket_rules():
+    pack, _ = build_semiconductor_outputs()
+
+    assert pack.source_bucket_summary.consensus_assessment_status == "not_assessable"
+    assert pack.source_bucket_summary.source_buckets == ["company_disclosure", "financial_statement"]
+    assert pack.source_bucket_summary.independent_source_count == 2
+
+
+def test_semiconductor_non_primary_samples_remain_unsupported():
+    for code in ["688012", "688981", "603501", "300604", "300308", "300476", "688008"]:
+        pack, _ = build_semiconductor_outputs(code=code)
+
+        assert len(pack.driver_matrix) == 1
+        row = pack.driver_matrix[0]
+        assert row.driver_factor == "unsupported_pilot_strategy"
+        assert row.company_transmission_path == TRANSMISSION_PATH_FALLBACK
+        assert row.confidence_cap == "not_assessable"
+        assert "002371 only" in row.not_assessable_reason
+
+
+def test_semiconductor_outputs_do_not_include_forbidden_safety_terms():
+    pack, questions = build_semiconductor_outputs()
+    text = json.dumps({"pack": pack.model_dump(), "questions": questions.model_dump()}, ensure_ascii=False)
+
+    assert pack.safety_boundary.safe
+    assert questions.safety_boundary.safe
+    assert not any(term in text for term in FORBIDDEN_TERMS)
+    assert "technical_skill" not in text
+    assert "trader_skill" not in text

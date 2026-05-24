@@ -28,12 +28,15 @@ LOW_ALTITUDE_STRATEGY_TYPE = "low_altitude_economy_infrastructure"
 LOW_ALTITUDE_SUB_TYPES = {"aviation_operations_service"}
 RESOURCE_SWING_STRATEGY_TYPE = "resource_swing"
 RESOURCE_CORE_STRATEGY_TYPE = "resource_core"
+SEMICONDUCTOR_CYCLE_STRATEGY_TYPE = "semiconductor_cycle"
+SEMICONDUCTOR_PRIMARY_SAMPLE = "002371"
 SUPPORTED_STRATEGY_TYPES = {
     AI_DATACENTER_STRATEGY_TYPE,
     CXO_STRATEGY_TYPE,
     SATELLITE_STRATEGY_TYPE,
     LOW_ALTITUDE_STRATEGY_TYPE,
     RESOURCE_SWING_STRATEGY_TYPE,
+    SEMICONDUCTOR_CYCLE_STRATEGY_TYPE,
 }
 
 GENERIC_MISSING_BRIDGE_REASON = "Current evidence pack lacks concrete company transmission nodes for this driver."
@@ -161,6 +164,9 @@ class ResearchIntelligenceP1Builder:
         elif strategy_type == RESOURCE_CORE_STRATEGY_TYPE:
             drivers = [self._resource_core_design_only_driver(sub_type)]
             summary_scope = "P1.1 resource core design-only boundary"
+        elif strategy_type == SEMICONDUCTOR_CYCLE_STRATEGY_TYPE and stock_code == SEMICONDUCTOR_PRIMARY_SAMPLE:
+            drivers = self._semiconductor_cycle_drivers(evidence_pack)
+            summary_scope = "P1.1 semiconductor expansion"
         else:
             drivers = [self._unsupported_driver(strategy_type, sub_type)]
             summary_scope = "P1.1 unsupported pilot boundary"
@@ -248,7 +254,7 @@ class ResearchIntelligenceP1Builder:
                 (
                     "strategy_type=ai_datacenter_infrastructure, life_science_cxo_services, "
                     "satellite_communication_infrastructure, low_altitude_economy_infrastructure, "
-                    "or resource_swing primary sample 000426"
+                    "resource_swing primary sample 000426, or semiconductor_cycle primary sample 002371"
                 ),
                 "supported pilot sub_type such as aviation_operations_service for low altitude",
             ],
@@ -261,7 +267,7 @@ class ResearchIntelligenceP1Builder:
                 "Current P1.1 implementation only supports ai_datacenter_infrastructure, "
                 "life_science_cxo_services, satellite_communication_infrastructure, and "
                 "low_altitude_economy_infrastructure / aviation_operations_service pilot templates, plus "
-                "resource_swing for primary sample 000426 only."
+                "resource_swing for primary sample 000426 only, and semiconductor_cycle for primary sample 002371 only."
             ),
             what_was_checked=["stock.strategy_type", "stock.sub_type"],
             source_refs=[],
@@ -777,6 +783,510 @@ class ResearchIntelligenceP1Builder:
         return any(_is_present(self._value_at_path(pack, path)) for path in price_paths) and any(
             _is_present(self._value_at_path(pack, path)) for path in volume_paths
         )
+
+    def _semiconductor_cycle_drivers(self, pack: dict[str, Any]) -> list[DriverFactor]:
+        rows: list[DriverFactor] = []
+        for payload in self._semiconductor_driver_payloads():
+            rows.append(self._build_semiconductor_driver(pack, payload))
+        return rows
+
+    def _semiconductor_driver_payloads(self) -> list[dict[str, Any]]:
+        return [
+            {
+                "layer": "macro",
+                "driver_factor": "semiconductor capex cycle",
+                "driver_scope": "macro / industry / cycle",
+                "why_it_matters": "Fab capex can affect equipment demand, but external capex is not company orders or revenue.",
+                "required_evidence": [
+                    "semiconductor wafer-fab capex by customer / node / category",
+                    "equipment segment exposure",
+                    "customer order / shipment / revenue bridge",
+                    "margin and cash-flow bridge",
+                ],
+                "checked_paths": ("business_composition", "basic_info.main_business", "financial_metrics.revenue", "financial_metrics.gross_margin", "financial_metrics.operating_cashflow"),
+                "path_policy": "business_financial_observation",
+                "missing_evidence": ["fab capex cycle data", "customer capex by fab", "product-category order / shipment", "delivery and acceptance schedule"],
+                "interpretation_guard": "External semiconductor capex is background only; do not convert it into company order, shipment, revenue, margin, or cash-flow facts without company bridge evidence.",
+                "research_question": "Which fab capex categories map to the company's disclosed equipment segments, customers, orders, revenue, receivables, and cash conversion?",
+            },
+            {
+                "layer": "industry",
+                "driver_factor": "downstream demand cycle",
+                "driver_scope": "macro / industry / cycle",
+                "why_it_matters": "End demand can affect fabs and equipment orders, but downstream demand is not company demand without customer or shipment evidence.",
+                "required_evidence": ["end-demand by application", "customer mix", "product shipments", "order / receivable / cash-flow bridge"],
+                "checked_paths": ("business_composition", "financial_metrics.revenue", "financial_metrics.gross_margin", "financial_metrics.operating_cashflow"),
+                "path_policy": "fallback",
+                "status": "not_assessable",
+                "missing_evidence": ["downstream demand series", "customer production utilization", "shipment volume", "order pull-in / pushout evidence"],
+                "not_assessable_reason": "Customer, order, shipment, and product bridge evidence is absent; financial co-movement cannot prove semiconductor demand transmission.",
+                "interpretation_guard": "Downstream demand is not company demand unless company customer, order, shipment, revenue, receivable, and cash-flow evidence is present.",
+                "research_question": "Has downstream demand translated into company orders, shipments, revenue, receivables, and operating cash flow?",
+            },
+            {
+                "layer": "industry",
+                "driver_factor": "inventory cycle",
+                "driver_scope": "macro / industry / cycle",
+                "why_it_matters": "Aggregate inventory is a working-capital observation; demand-cycle interpretation needs product-level and operating evidence.",
+                "required_evidence": ["aggregate inventory", "product-level inventory", "inventory turnover", "order / shipment evidence", "write-down detail"],
+                "checked_paths": ("business_composition", "financial_metrics.inventory", "financial_metrics.revenue", "financial_metrics.gross_margin", "financial_metrics.operating_cashflow"),
+                "path_policy": "business_financial_observation",
+                "missing_evidence": ["product-level inventory split", "inventory aging", "inventory turnover", "order / shipment evidence", "inventory write-down detail"],
+                "interpretation_guard": "Inventory movement is a working-capital observation only; do not infer demand strength or demand weakness from aggregate inventory movement.",
+                "research_question": "Is inventory movement driven by demand, production ramp, long-cycle equipment delivery, safety stock, product mix, write-down, or customer timing?",
+            },
+            {
+                "layer": "industry",
+                "driver_factor": "localization / domestic substitution",
+                "driver_scope": "macro / industry / cycle",
+                "why_it_matters": "Localization context matters only after it is tied to disclosed revenue, customer adoption, accepted orders, and collection evidence.",
+                "required_evidence": ["localized product revenue", "domestic customer adoption", "accepted orders", "collection evidence"],
+                "checked_paths": ("business_composition", "enhanced_must_track_indicators", "financial_metrics.revenue"),
+                "path_policy": "fallback",
+                "status": "missing",
+                "missing_evidence": ["localization revenue split", "domestic customer adoption", "accepted orders", "collection evidence"],
+                "not_assessable_reason": "Localization revenue / domestic customer adoption evidence is missing in the current evidence pack.",
+                "interpretation_guard": "Localization narrative is not realized revenue without company localization revenue, customer adoption, orders, and collection evidence.",
+                "research_question": "What disclosed revenue, customers, orders, adoption, and collection evidence proves localization conversion?",
+            },
+            {
+                "layer": "risk",
+                "driver_factor": "export control / sanctions / overseas restriction",
+                "driver_scope": "macro / policy / risk",
+                "why_it_matters": "Restrictions are risk or constraint context unless company-level affected product, supplier, customer, cost, order, or revenue impact is disclosed.",
+                "required_evidence": ["official restriction", "affected product / supplier / customer / geography", "company exposure", "order / cost / revenue impact"],
+                "checked_paths": ("risk_flags", "missing_fields", "unknown_or_missing_evidence", "business_composition", "financial_metrics.revenue"),
+                "path_policy": "fallback",
+                "status": "not_assessable",
+                "missing_evidence": ["company-level affected product", "supplier exposure", "customer exposure", "cost / order / revenue impact evidence"],
+                "not_assessable_reason": "Current evidence lacks company-level restriction impact nodes.",
+                "interpretation_guard": "Export-control context must remain risk / constraint context; do not state realized positive or negative company operating impact without company impact evidence.",
+                "research_question": "Which products, suppliers, customers, or geographies are exposed to restrictions, and what realized impact is visible in orders, costs, revenue, or cash flow?",
+            },
+            {
+                "layer": "supply_chain",
+                "driver_factor": "equipment sub-chain classification",
+                "driver_scope": "equipment / materials / foundry / fabless / OSAT",
+                "why_it_matters": "Sub-chain classification decides which operating variables are relevant; equipment logic must not be applied to other sub-chains.",
+                "required_evidence": ["explicit sub-chain classification", "segment revenue", "equipment product exposure", "financial bridge"],
+                "checked_paths": ("business_composition", "basic_info.industry", "basic_info.main_business", "financial_metrics.revenue"),
+                "path_policy": "business_financial_observation",
+                "missing_evidence": ["equipment-type split such as etch / deposition / cleaning", "customer fab use case", "order / shipment bridge"],
+                "interpretation_guard": "The first version treats 002371 as equipment only when disclosed business nodes support it; do not apply equipment order logic to materials, foundry, fabless, or OSAT.",
+                "research_question": "Which disclosed segment proves equipment sub-chain exposure, and which equipment-type operating variables still need follow-up evidence?",
+            },
+            *[
+                {
+                    "layer": "supply_chain",
+                    "driver_factor": f"{sub_chain} sub-chain boundary",
+                    "driver_scope": "equipment / materials / foundry / fabless / OSAT",
+                    "why_it_matters": f"{sub_chain} requires its own operating metrics and is not fully implemented in semiconductor P1.1 v1.",
+                    "required_evidence": [f"explicit {sub_chain} business exposure", f"{sub_chain} segment revenue", f"{sub_chain} operating metrics"],
+                    "checked_paths": ("business_composition", "basic_info.main_business"),
+                    "path_policy": "fallback",
+                    "status": "not_assessable",
+                    "missing_evidence": [f"explicit {sub_chain} exposure", f"{sub_chain} segment revenue", f"{sub_chain} operating metrics"],
+                    "not_assessable_reason": f"Current 002371 evidence does not provide a complete {sub_chain} implementation basis; absence is not treated as not_applicable.",
+                    "interpretation_guard": f"Do not apply equipment order logic to {sub_chain}; use not_applicable only when explicit evidence shows irrelevance.",
+                    "research_question": f"Does the company have explicit {sub_chain} exposure, and what segment revenue and operating metrics would be required before assessing it?",
+                }
+                for sub_chain in ("materials", "fabless", "foundry", "OSAT")
+            ],
+            {
+                "layer": "company",
+                "driver_factor": "semiconductor-related revenue contribution",
+                "driver_scope": "company / business",
+                "why_it_matters": "Segment revenue contribution is the first exposure node, but exposure is not cycle transmission.",
+                "required_evidence": ["segment revenue", "revenue ratio", "segment definition", "period", "total revenue bridge"],
+                "checked_paths": ("business_composition", "financial_metrics.revenue", "financial_metrics.gross_margin"),
+                "path_policy": "business_financial_observation",
+                "missing_evidence": ["more granular semiconductor-only revenue", "product-level revenue", "customer split"],
+                "interpretation_guard": "Segment exposure can support exposure only; it does not prove demand, localization conversion, or semiconductor-cycle transmission.",
+                "research_question": "What share of revenue is directly semiconductor-related, and what segment definition supports that exposure?",
+            },
+            {
+                "layer": "company",
+                "driver_factor": "product / equipment / material segment exposure",
+                "driver_scope": "company / business",
+                "why_it_matters": "Product and equipment segment labels decide what evidence can be used for transmission.",
+                "required_evidence": ["product category", "equipment type or material type", "revenue ratio", "margin", "customer use case"],
+                "checked_paths": ("business_composition", "basic_info.main_business", "financial_metrics.revenue", "financial_metrics.gross_margin"),
+                "path_policy": "business_financial_observation",
+                "missing_evidence": ["etch / deposition / cleaning / materials split", "process-node coverage", "customer application"],
+                "interpretation_guard": "A broad electronic process equipment label does not imply exposure to every semiconductor equipment or material category.",
+                "research_question": "Which product or equipment/material segment drives revenue and margin, and what customer fab use case does it address?",
+            },
+            {
+                "layer": "company",
+                "driver_factor": "customer qualification / customer adoption",
+                "driver_scope": "company / business",
+                "why_it_matters": "Qualification and adoption evidence is required before customer progress can be connected to batch economics.",
+                "required_evidence": ["customer qualification status", "production-line adoption", "acceptance", "batch order", "repeat order", "revenue and collection"],
+                "checked_paths": ("enhanced_must_track_indicators", "missing_fields", "unknown_or_missing_evidence"),
+                "path_policy": "fallback",
+                "status": "missing",
+                "missing_evidence": ["customer qualification status", "customer adoption", "accepted order", "repeat order", "revenue and collection"],
+                "not_assessable_reason": "Customer qualification / adoption evidence is expected but entirely absent.",
+                "interpretation_guard": "Do not infer qualification success or qualification failure when qualification / adoption evidence is absent.",
+                "research_question": "Which customers have qualified and adopted the product, and has adoption converted into accepted orders, revenue, and collection?",
+            },
+            {
+                "layer": "company",
+                "driver_factor": "order visibility",
+                "driver_scope": "company / business",
+                "why_it_matters": "Order visibility requires signed orders, true backlog, delivery schedule, cancellation, shipment, and revenue-recognition evidence.",
+                "required_evidence": ["signed orders", "true backlog", "delivery schedule", "cancellation history", "shipment", "revenue recognition"],
+                "checked_paths": ("financial_metrics.contract_liabilities", "financial_metrics.revenue", "financial_metrics.operating_cashflow", "enhanced_must_track_indicators"),
+                "path_policy": "fallback",
+                "status": "missing",
+                "missing_evidence": ["true backlog", "new signed orders", "delivery schedule", "customer / order table", "cancellation history"],
+                "not_assessable_reason": "True backlog and signed-order evidence is absent; contract liabilities alone cannot establish order visibility.",
+                "interpretation_guard": "Contract liabilities are partial proxy only and are not backlog or confirmed delivery.",
+                "research_question": "What order, backlog, delivery, cancellation, and shipment evidence supports revenue visibility?",
+            },
+            {
+                "layer": "company",
+                "driver_factor": "backlog / contract liabilities as partial proxy only",
+                "driver_scope": "company / business",
+                "why_it_matters": "Contract liabilities can be a partial prepayment proxy, but they are not true backlog or confirmed delivery.",
+                "required_evidence": ["contract liabilities", "prepayment terms", "linked customer / order / project", "revenue-recognition terms"],
+                "checked_paths": ("business_composition", "financial_metrics.contract_liabilities", "financial_metrics.revenue", "financial_metrics.operating_cashflow"),
+                "path_policy": "business_financial_observation",
+                "missing_evidence": ["contract note parser", "order disclosure", "customer / project mapping", "revenue-recognition schedule"],
+                "force_cap": "low",
+                "interpretation_guard": "Contract liabilities are partial proxy only, not backlog or confirmed delivery; order visibility must not exceed partial.",
+                "research_question": "What customer, order, or project do contract liabilities correspond to, and what evidence prevents treating them as true backlog?",
+            },
+            {
+                "layer": "company",
+                "driver_factor": "localization revenue evidence",
+                "driver_scope": "company / business",
+                "why_it_matters": "Localization conversion requires company revenue, customer adoption, accepted orders, and collection evidence.",
+                "required_evidence": ["localization-specific revenue", "domestic customer adoption", "product acceptance", "repeat orders", "collection"],
+                "checked_paths": ("enhanced_must_track_indicators", "business_composition", "financial_metrics.revenue"),
+                "path_policy": "fallback",
+                "status": "missing",
+                "missing_evidence": ["localization-specific revenue", "domestic customer adoption", "product acceptance", "repeat orders", "collection"],
+                "not_assessable_reason": "Localization revenue / domestic customer adoption / accepted-order evidence is missing.",
+                "interpretation_guard": "Company localization wording cannot substitute for disclosed localization revenue and customer evidence.",
+                "research_question": "Which disclosed revenue and customer evidence proves that localization has converted into company economics?",
+            },
+            {
+                "layer": "financial",
+                "driver_factor": "R&D intensity and product conversion",
+                "driver_scope": "company / business / financial",
+                "why_it_matters": "R&D expense and ratio are input evidence; commercialization requires product conversion and customer adoption evidence.",
+                "required_evidence": ["R&D expense", "R&D ratio", "product launch", "customer validation", "order revenue", "margin contribution"],
+                "checked_paths": ("business_composition", "financial_metrics.r_and_d_expense", "financial_metrics.r_and_d_expense_ratio", "financial_metrics.revenue"),
+                "path_policy": "business_financial_observation",
+                "missing_evidence": ["R&D project list", "product milestone", "customer validation", "order revenue", "margin contribution"],
+                "force_cap": "low",
+                "interpretation_guard": "R&D expense and ratio are input evidence only; do not convert them into a technology-barrier conclusion without product conversion and customer adoption evidence.",
+                "research_question": "Which R&D projects have converted into products, customer validation, order revenue, and margin contribution?",
+            },
+            {
+                "layer": "financial",
+                "driver_factor": "revenue growth quality",
+                "driver_scope": "financial",
+                "why_it_matters": "Revenue growth quality needs segment, order, receivable, and cash-flow validation rather than financial co-movement alone.",
+                "required_evidence": ["revenue", "revenue_yoy", "segment revenue", "orders / shipments", "receivables", "operating cash flow"],
+                "checked_paths": ("business_composition", "financial_metrics.revenue", "financial_metrics.revenue_yoy", "financial_metrics.accounts_receivable", "financial_metrics.operating_cashflow"),
+                "path_policy": "business_financial_observation",
+                "missing_evidence": ["independent order evidence", "shipment evidence", "customer adoption evidence", "receivable aging"],
+                "interpretation_guard": "Positive revenue_yoy plus stable or improving gross margin is not semiconductor cycle transmission and is not demand-strength evidence without independent operating nodes.",
+                "research_question": "Does revenue growth reconcile with segment revenue, orders, shipments, receivables, and operating cash flow rather than only financial co-movement?",
+            },
+            {
+                "layer": "financial",
+                "driver_factor": "gross margin recovery or pressure",
+                "driver_scope": "financial",
+                "why_it_matters": "Gross margin must be tied to product mix, pricing, cost, and order evidence before it can explain business transmission.",
+                "required_evidence": ["gross margin", "product mix", "pricing", "cost", "order / shipment bridge"],
+                "checked_paths": ("business_composition", "financial_metrics.gross_margin", "financial_metrics.revenue", "financial_metrics.operating_cashflow"),
+                "path_policy": "business_financial_observation",
+                "missing_evidence": ["product-mix bridge", "pricing evidence", "cost evidence", "order / shipment bridge"],
+                "interpretation_guard": "Gross margin observation cannot be combined with revenue_yoy to claim cycle transmission; product mix, pricing, cost, and operating evidence are required.",
+                "research_question": "Which product mix, pricing, cost, order, and shipment evidence explains gross margin movement?",
+            },
+            {
+                "layer": "financial",
+                "driver_factor": "inventory level and inventory turnover",
+                "driver_scope": "financial",
+                "why_it_matters": "Inventory and turnover diagnose working capital and write-down risk, not demand health by themselves.",
+                "required_evidence": ["inventory", "inventory turnover", "product-level inventory", "orders", "revenue", "gross margin"],
+                "checked_paths": ("business_composition", "financial_metrics.inventory", "financial_metrics.revenue", "financial_metrics.gross_margin"),
+                "path_policy": "business_financial_observation",
+                "missing_evidence": ["inventory turnover", "product-level inventory", "order evidence", "write-down detail"],
+                "interpretation_guard": "Aggregate inventory is only a working-capital observation; do not infer demand health or deterioration without product-level and operating evidence.",
+                "research_question": "What inventory turnover, product-level inventory, order, revenue, gross margin, and write-down evidence explains the inventory level?",
+            },
+            {
+                "layer": "financial",
+                "driver_factor": "receivables and cash conversion",
+                "driver_scope": "financial",
+                "why_it_matters": "Receivables and operating cash flow test whether revenue converts into cash.",
+                "required_evidence": ["accounts receivable", "receivable aging", "operating cash flow", "collection terms", "customer concentration"],
+                "checked_paths": ("business_composition", "financial_metrics.accounts_receivable", "financial_metrics.operating_cashflow", "financial_metrics.revenue"),
+                "path_policy": "business_financial_observation",
+                "missing_evidence": ["receivable aging", "payment terms", "customer-specific collection", "cash conversion cycle"],
+                "interpretation_guard": "Revenue observation needs receivable and cash conversion checks; receivables alone do not prove order quality.",
+                "research_question": "Do receivables, aging, collection terms, and operating cash flow support revenue cash conversion?",
+            },
+            {
+                "layer": "financial",
+                "driver_factor": "operating cash flow",
+                "driver_scope": "financial",
+                "why_it_matters": "Operating cash flow validates whether accounting profit and revenue are converting into cash.",
+                "required_evidence": ["operating cash flow", "revenue", "net profit", "receivables", "inventory"],
+                "checked_paths": ("business_composition", "financial_metrics.operating_cashflow", "financial_metrics.revenue", "financial_metrics.net_profit", "financial_metrics.accounts_receivable", "financial_metrics.inventory"),
+                "path_policy": "business_financial_observation",
+                "missing_evidence": ["cash conversion cycle", "receivable aging", "inventory turnover"],
+                "interpretation_guard": "Operating cash flow is a financial validation node; it does not independently prove semiconductor demand or order visibility.",
+                "research_question": "How do operating cash flow, revenue, net profit, receivables, and inventory reconcile for cash-conversion quality?",
+            },
+            {
+                "layer": "financial",
+                "driver_factor": "capex discipline",
+                "driver_scope": "financial",
+                "why_it_matters": "Aggregate capex observes investment cash outflow; project mapping is required before operating implications can be assessed.",
+                "required_evidence": ["capex", "project mapping", "acceptance", "utilization", "shipment bridge", "revenue and cash-flow bridge"],
+                "checked_paths": ("business_composition", "financial_metrics.capex", "financial_metrics.operating_cashflow", "financial_metrics.revenue"),
+                "path_policy": "business_financial_observation",
+                "missing_evidence": ["project mapping", "acceptance", "utilization", "shipment bridge", "revenue and cash-flow bridge"],
+                "interpretation_guard": "Aggregate capex is cash outflow / investment observation only; do not infer utilization, shipment, or revenue bridge without project evidence.",
+                "research_question": "Which projects or assets does capex correspond to, and is there acceptance, utilization, shipment, revenue, or cash-flow evidence?",
+            },
+            {
+                "layer": "financial",
+                "driver_factor": "R&D expense and R&D ratio as input evidence only",
+                "driver_scope": "financial",
+                "why_it_matters": "R&D expense and ratio can be tracked as inputs but require conversion evidence to support product economics.",
+                "required_evidence": ["R&D expense", "R&D ratio", "product conversion", "customer adoption", "order revenue", "margin contribution"],
+                "checked_paths": ("business_composition", "financial_metrics.r_and_d_expense", "financial_metrics.r_and_d_expense_ratio", "financial_metrics.revenue"),
+                "path_policy": "business_financial_observation",
+                "missing_evidence": ["product conversion", "customer adoption", "order revenue", "margin contribution"],
+                "force_cap": "low",
+                "interpretation_guard": "R&D expense and ratio are input evidence only; no technology-barrier conclusion is allowed without product conversion and customer adoption evidence.",
+                "research_question": "Do R&D expense and R&D ratio connect to product conversion, customer adoption, order revenue, and margin contribution?",
+            },
+            {
+                "layer": "financial",
+                "driver_factor": "impairment / inventory write-down risk",
+                "driver_scope": "financial / risk",
+                "why_it_matters": "Inventory write-down and impairment detail is needed to assess obsolete inventory or project asset risk.",
+                "required_evidence": ["inventory", "inventory aging", "write-down detail", "impairment detail", "product-level inventory"],
+                "checked_paths": ("business_composition", "financial_metrics.inventory", "financial_metrics.gross_margin", "risk_flags"),
+                "path_policy": "business_financial_observation",
+                "missing_evidence": ["inventory aging", "inventory write-down detail", "impairment detail", "product-level inventory"],
+                "interpretation_guard": "Aggregate inventory cannot identify obsolete product, impairment, or demand weakness without write-down and product-level evidence.",
+                "research_question": "Are inventory aging, write-down, impairment, and product-level inventory details sufficient to assess inventory risk?",
+            },
+            {
+                "layer": "risk",
+                "driver_factor": "inventory overbuild",
+                "driver_scope": "risk",
+                "why_it_matters": "Inventory overbuild risk requires product-level inventory, turnover, order, margin, and write-down evidence.",
+                "required_evidence": ["product-level inventory", "turnover", "orders", "gross margin", "write-down"],
+                "checked_paths": ("business_composition", "financial_metrics.inventory", "financial_metrics.revenue", "financial_metrics.gross_margin"),
+                "path_policy": "business_financial_observation",
+                "missing_evidence": ["product-level inventory", "inventory turnover", "orders", "write-down detail"],
+                "interpretation_guard": "Inventory increase is not direct demand weakness, and inventory decline plus revenue growth is not demand-strength proof.",
+                "research_question": "Does product-level inventory, turnover, orders, gross margin, and write-down evidence indicate overbuild risk?",
+            },
+            {
+                "layer": "risk",
+                "driver_factor": "downstream capex slowdown",
+                "driver_scope": "risk",
+                "why_it_matters": "Customer capex slowdown risk needs customer capex, order, shipment, revenue, and cash-flow evidence.",
+                "required_evidence": ["customer capex", "customer order / shipment", "revenue bridge", "cash-flow bridge"],
+                "checked_paths": ("business_composition", "financial_metrics.revenue", "risk_flags"),
+                "path_policy": "fallback",
+                "status": "not_assessable",
+                "missing_evidence": ["customer capex data", "customer order / shipment", "revenue bridge", "cash-flow bridge"],
+                "not_assessable_reason": "Customer capex and company order / shipment bridge evidence is absent.",
+                "interpretation_guard": "Do not infer company impact from downstream capex context without customer and company bridge evidence.",
+                "research_question": "Would downstream capex slowdown appear in company order, shipment, revenue, receivable, and cash-flow evidence?",
+            },
+            {
+                "layer": "risk",
+                "driver_factor": "customer qualification failure",
+                "driver_scope": "risk",
+                "why_it_matters": "Qualification failure risk cannot be inferred without qualification/adoption evidence and failure indicators.",
+                "required_evidence": ["qualification status", "adoption status", "failure / delay disclosure", "order impact", "revenue impact"],
+                "checked_paths": ("enhanced_must_track_indicators", "risk_flags", "unknown_or_missing_evidence"),
+                "path_policy": "fallback",
+                "status": "missing",
+                "missing_evidence": ["qualification status", "adoption status", "failure / delay disclosure", "order impact", "revenue impact"],
+                "not_assessable_reason": "Customer qualification / adoption evidence is expected but absent; neither success nor failure can be inferred.",
+                "interpretation_guard": "Do not infer customer qualification failure or success from missing data.",
+                "research_question": "What qualification or adoption evidence would reveal customer delay, failure, accepted order, or revenue impact?",
+            },
+            {
+                "layer": "risk",
+                "driver_factor": "localization narrative without revenue",
+                "driver_scope": "risk",
+                "why_it_matters": "Localization narrative can remain unrealized if revenue, adoption, accepted orders, and collection evidence are missing.",
+                "required_evidence": ["localization revenue", "domestic customer adoption", "accepted orders", "collection"],
+                "checked_paths": ("enhanced_must_track_indicators", "risk_flags", "business_composition"),
+                "path_policy": "fallback",
+                "status": "missing",
+                "missing_evidence": ["localization revenue", "domestic customer adoption", "accepted orders", "collection"],
+                "not_assessable_reason": "Localization realization evidence is missing; risk row records narrative-not-realized risk only.",
+                "interpretation_guard": "This risk row flags narrative-not-realized risk and must not duplicate a company localization revenue conclusion.",
+                "research_question": "What evidence would show whether localization narrative remains unconverted into revenue, orders, adoption, and collection?",
+            },
+            {
+                "layer": "risk",
+                "driver_factor": "R&D overread commercialization risk",
+                "driver_scope": "risk",
+                "why_it_matters": "R&D input metrics can be overread if product conversion and customer adoption evidence is missing.",
+                "required_evidence": ["R&D expense", "R&D ratio", "product conversion", "customer adoption", "order revenue"],
+                "checked_paths": ("business_composition", "financial_metrics.r_and_d_expense", "financial_metrics.r_and_d_expense_ratio"),
+                "path_policy": "business_financial_observation",
+                "missing_evidence": ["product conversion", "customer adoption", "order revenue", "margin contribution"],
+                "force_cap": "low",
+                "interpretation_guard": "R&D input metrics should not be overread as commercialized product strength without conversion evidence.",
+                "research_question": "Where could R&D input metrics be overread because product conversion, customer adoption, order revenue, or margin evidence is missing?",
+            },
+            {
+                "layer": "risk",
+                "driver_factor": "export control / supply-chain restriction",
+                "driver_scope": "risk",
+                "why_it_matters": "Supply-chain restriction risk requires company product, supplier, customer, cost, order, or revenue impact nodes.",
+                "required_evidence": ["restricted supplier / component", "affected product", "affected customer", "cost impact", "order / revenue impact"],
+                "checked_paths": ("risk_flags", "missing_fields", "unknown_or_missing_evidence", "business_composition"),
+                "path_policy": "fallback",
+                "status": "not_assessable",
+                "missing_evidence": ["restricted supplier / component", "affected product", "affected customer", "cost / order / revenue impact"],
+                "not_assessable_reason": "Company-level product, supplier, customer, cost, order, and revenue impact nodes are absent.",
+                "interpretation_guard": "Treat restrictions as risk / constraint context only until company impact evidence is disclosed.",
+                "research_question": "Which suppliers, components, products, customers, costs, orders, or revenue lines would evidence restriction exposure?",
+            },
+            {
+                "layer": "risk",
+                "driver_factor": "margin pressure from product mix or price competition",
+                "driver_scope": "risk",
+                "why_it_matters": "Margin pressure needs product mix, pricing, cost, and competition evidence beyond gross margin alone.",
+                "required_evidence": ["gross margin", "product mix", "pricing", "cost", "competition evidence"],
+                "checked_paths": ("business_composition", "financial_metrics.gross_margin", "financial_metrics.revenue"),
+                "path_policy": "business_financial_observation",
+                "missing_evidence": ["product-mix detail", "pricing evidence", "cost detail", "competition evidence"],
+                "interpretation_guard": "Gross margin alone cannot identify product-mix or price-competition pressure.",
+                "research_question": "Is margin pressure tied to product mix, pricing, costs, or competition, and what evidence supports that link?",
+            },
+            {
+                "layer": "risk",
+                "driver_factor": "capex without utilization or revenue bridge",
+                "driver_scope": "risk",
+                "why_it_matters": "Capex can create execution and cash-flow risk if project utilization and revenue bridge remain unverified.",
+                "required_evidence": ["capex", "project mapping", "acceptance", "utilization", "revenue bridge", "cash-flow bridge"],
+                "checked_paths": ("business_composition", "financial_metrics.capex", "financial_metrics.operating_cashflow", "financial_metrics.revenue"),
+                "path_policy": "business_financial_observation",
+                "missing_evidence": ["project mapping", "acceptance", "utilization", "revenue bridge"],
+                "interpretation_guard": "Aggregate capex is not proof of utilization, shipment, or revenue bridge.",
+                "research_question": "Could capex remain unverified because project mapping, acceptance, utilization, revenue, and cash-flow evidence are missing?",
+            },
+            {
+                "layer": "risk",
+                "driver_factor": "contract liabilities / operating cash flow signal consistency",
+                "driver_scope": "risk / contradiction",
+                "why_it_matters": "Concrete company signals must be listed together when they could point in different directions.",
+                "required_evidence": ["contract liabilities", "operating cash flow", "revenue", "orders / backlog mapping"],
+                "checked_paths": ("business_composition", "financial_metrics.contract_liabilities", "financial_metrics.operating_cashflow", "financial_metrics.revenue"),
+                "path_policy": "business_financial_observation",
+                "missing_evidence": ["order / backlog mapping", "prepayment terms", "customer / project mapping", "receivable aging"],
+                "force_cap": "low",
+                "interpretation_guard": "If contract liabilities and operating cash flow conflict, list both signals and require manual review; do not selectively cite one signal.",
+                "research_question": "Do contract liabilities, operating cash flow, revenue, and customer/order mapping point to consistent visibility, or do conflicting signals require manual review?",
+            },
+        ]
+
+    def _build_semiconductor_driver(self, pack: dict[str, Any], payload: dict[str, Any]) -> DriverFactor:
+        checked_paths = tuple(payload["checked_paths"])
+        available = self._available_evidence(pack, checked_paths)
+        missing = list(payload.get("missing_evidence") or self._missing_evidence(pack, tuple(payload["required_evidence"]), checked_paths))
+        business_nodes = self._prioritize_semiconductor_business_nodes(
+            [item for item in available if self._is_semiconductor_business_node(item)]
+        )
+        financial_nodes = [item for item in available if "evidence_pack.financial_metrics." in item]
+
+        path_policy = payload.get("path_policy", "fallback")
+        path_nodes: list[str] = []
+        status = payload.get("status")
+        cap = payload.get("force_cap")
+        reason = payload.get("not_assessable_reason", "")
+        if path_policy == "business_financial_observation":
+            if business_nodes and financial_nodes:
+                path_nodes = [business_nodes[0], *financial_nodes[:3]]
+                status = status or "partial"
+                cap = cap or "low"
+                path = " -> ".join(path_nodes)
+            elif business_nodes:
+                path_nodes = [business_nodes[0]]
+                status = status or "partial"
+                cap = cap or "low"
+                path = business_nodes[0]
+            else:
+                status = "not_assessable"
+                cap = "not_assessable"
+                path = TRANSMISSION_PATH_FALLBACK
+                reason = (
+                    "Semiconductor transmission requires a business / segment starting node; "
+                    "financial metrics alone cannot establish company transmission."
+                )
+        else:
+            status = status or "not_assessable"
+            cap = "not_assessable"
+            path = TRANSMISSION_PATH_FALLBACK
+            path_nodes = []
+            reason = reason or GENERIC_MISSING_BRIDGE_REASON
+
+        if path == TRANSMISSION_PATH_FALLBACK:
+            cap = "not_assessable"
+        elif not financial_nodes and cap != "low":
+            cap = "low"
+
+        return DriverFactor(
+            layer=payload["layer"],
+            driver_factor=payload["driver_factor"],
+            driver_scope=payload["driver_scope"],
+            why_it_matters=payload["why_it_matters"],
+            required_evidence=list(payload["required_evidence"]),
+            available_evidence=available,
+            missing_evidence=missing,
+            company_transmission_path=path,
+            data_availability_status=status,
+            confidence_cap=cap,
+            not_assessable_reason=reason,
+            what_was_checked=list(checked_paths),
+            source_refs=[item.split("=")[0] for item in path_nodes],
+            research_question=payload["research_question"],
+            interpretation_guard=payload["interpretation_guard"],
+        )
+
+    def _is_semiconductor_business_node(self, node: str) -> bool:
+        if "evidence_pack.business_composition" in node:
+            lowered = node.lower()
+            geography_terms = ("geography", "region", "by geography", "鎸夊湴", "鍦板尯")
+            return not any(term in lowered for term in geography_terms)
+        if "evidence_pack.basic_info." not in node:
+            return False
+        lowered = node.lower()
+        terms = (
+            "semiconductor",
+            "electronic process",
+            "equipment",
+            "integrated circuit",
+            "wafer",
+            "鐢靛瓙宸ヨ壓",
+            "瑁呭",
+            "闆嗘垚鐢佃矾",
+            "鍗婂浣",
+        )
+        return any(term in lowered for term in terms)
+
+    def _prioritize_semiconductor_business_nodes(self, nodes: list[str]) -> list[str]:
+        return sorted(nodes, key=lambda item: 0 if "evidence_pack.business_composition" in item else 1)
 
     def _ai_datacenter_drivers(self, pack: dict[str, Any], sub_type: str) -> list[DriverFactor]:
         specs = [*self._common_specs()]

@@ -187,6 +187,49 @@ def _resource_pack():
     return EvidencePackBuilder().build(fundamental, raw)
 
 
+def _semiconductor_pack():
+    return {
+        "stock": {"code": "002371", "name": "NAURA", "strategy_type": "semiconductor_cycle"},
+        "basic_info": {
+            "stock_code": "002371",
+            "stock_name": "NAURA",
+            "industry": "specialized equipment manufacturing",
+            "main_business": "semiconductor equipment and integrated-circuit manufacturing equipment",
+        },
+        "financial_metrics": {
+            "period": "20260331",
+            "revenue": 10322863908.82,
+            "revenue_yoy": {"raw_value": 25.79609, "display_value": "25.80%"},
+            "gross_margin": {"raw_value": 40.772789, "display_value": "40.77%"},
+            "operating_cashflow": 748055666.52,
+            "accounts_receivable": 8780279745.35,
+            "inventory": 28602898183.2,
+            "contract_liabilities": 4202521948.54,
+            "r_and_d_expense": 1402436311.27,
+            "r_and_d_expense_ratio": {"raw_value": 13.585728957171844, "display_value": "13.59%"},
+            "capex": 468631710.94,
+        },
+        "business_composition": [
+            {
+                "period": "2025-12-31",
+                "classification_type": "by product",
+                "segment_name": "electronic process equipment",
+                "revenue": 36731219888.81,
+                "revenue_ratio": {"raw_value": 0.933375, "display_value": "93.34%"},
+                "gross_margin": {"raw_value": 0.39177, "display_value": "39.18%"},
+            }
+        ],
+        "enhanced_must_track_indicators": [
+            {"indicator_name": "localization revenue", "current_status": "missing", "current_value": None},
+            {"indicator_name": "order / contract liabilities", "current_status": "partial_proxy", "current_value": 4202521948.54},
+        ],
+        "source_trace_summary": [
+            {"block_name": "business_composition", "trace_count": 1},
+            {"block_name": "financial_indicator", "trace_count": 16},
+        ],
+    }
+
+
 def test_research_intelligence_p1_runner_writes_independent_json_and_markdown(tmp_path):
     evidence_path = tmp_path / "evidence_pack_002837.json"
     evidence_path.write_text(json.dumps(_pack(), ensure_ascii=False), encoding="utf-8")
@@ -287,4 +330,20 @@ def test_research_intelligence_p1_runner_writes_resource_swing_expansion_artifac
     assert any(item["driver_factor"] == "core commodity price exposure" for item in matrix)
     assert any(item["driver_factor"] == "revenue sensitivity to commodity price" for item in matrix)
     assert not any(item["driver_factor"] == "dividend capacity for resource_core" for item in matrix)
+    assert not (tmp_path / "reports").exists()
+
+
+def test_research_intelligence_p1_runner_writes_semiconductor_expansion_artifacts(tmp_path):
+    evidence_path = tmp_path / "evidence_pack_002371.json"
+    evidence_path.write_text(json.dumps(_semiconductor_pack(), ensure_ascii=False), encoding="utf-8")
+
+    result = run_research_intelligence_p1("002371", evidence_pack_path=evidence_path, output_dir=tmp_path)
+    matrix = result["research_intelligence_p1"]["driver_matrix"]
+
+    assert (tmp_path / "research_intelligence_p1_002371.json").exists()
+    assert (tmp_path / "research_questions_p1_002371.json").exists()
+    assert (tmp_path / "research_questions_p1_002371.md").exists()
+    assert result["research_intelligence_p1"]["strategy_type"] == "semiconductor_cycle"
+    assert any(item["driver_factor"] == "semiconductor capex cycle" for item in matrix)
+    assert any(item["driver_factor"] == "equipment sub-chain classification" for item in matrix)
     assert not (tmp_path / "reports").exists()
