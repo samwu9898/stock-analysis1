@@ -42,7 +42,7 @@ Core modules:
 - `FundamentalResultAssembler`: assembles the final structured fundamental result.
 - `AI Analyst Layer`: builds evidence packs and model-ready prompts; current primary mode is `prompt_only`.
 - `Research Intelligence P0/P0.1`: independent AI analyst artifact builder that reads only `evidence_pack`, builds a research intelligence pack and research question set, and acts as a research-question discovery layer rather than a report renderer or trading system. P0.1 sharpens generic missing-evidence prompts into strategy-type-aware research questions.
-- `Research Intelligence P1.1`: independent driver-factor matrix artifact builder for `ai_datacenter_infrastructure`, `life_science_cxo_services`, `satellite_communication_infrastructure`, and `low_altitude_economy_infrastructure`. It reads `evidence_pack` plus an optional P0 pack, writes `research_intelligence_p1` and `research_questions_p1` artifacts, enforces `company_transmission_path` and source-bucket independence, keeps missing evidence `not_assessable` first, and stays outside the HTML / Dashboard main chain.
+- `Research Intelligence P1.1`: independent driver-factor matrix artifact builder for `ai_datacenter_infrastructure`, `life_science_cxo_services`, `satellite_communication_infrastructure`, `low_altitude_economy_infrastructure`, and the first Resource slice `resource_swing + 000426`. It reads `evidence_pack` plus an optional P0 pack, writes `research_intelligence_p1` and `research_questions_p1` artifacts, enforces `company_transmission_path` and source-bucket independence, keeps missing evidence `not_assessable` first, and stays outside the HTML / Dashboard main chain.
 - `Fundamental HTML Report Generator v2.1`: upper AI analyst display capability that creates a model prompt for structured `FundamentalHtmlReport` JSON and renders an existing formal JSON into self-contained HTML.
 - `HTML Report Visual Audit Tool v1`: local Playwright / Chromium screenshot and manifest tool for existing HTML reports.
 - `Dashboard v3`: local Streamlit fundamental AI report reader / auditor. The main view is Chinese-first and highlights the top conclusion, one-line conclusion, strategy / sub-type explanations, evidence map, risks, evidence gaps, must-track indicators, confidence breakdown, data quality, report stale / mismatch status, and schema / safety / garbled guard state. Evidence Pack, Source Trace, Raw JSON, Prompt, and legacy fields are collapsed as audit material.
@@ -78,7 +78,7 @@ stock_code
 - `ExternalCommodityPriceConnector v1.1`
 - `AI Analyst Layer prompt_only`
 - `Research Intelligence P0/P0.1`
-- `Research Intelligence P1.1 AI Datacenter / CXO / Satellite / Low Altitude expansions`
+- `Research Intelligence P1.1 AI Datacenter / CXO / Satellite / Low Altitude / Resource expansions`
 - `Fundamental HTML Report Generator v2.1`
 - `HTML Report Visual Audit Tool v1`
 - `Dashboard v3`
@@ -119,8 +119,8 @@ Missing data must be recorded as missing, warnings, source-trace gaps, or data l
 
 ## 7. Current Industry Framework Status
 
-- `resource_swing`: for resource companies whose profit is highly sensitive to commodity prices and cycles. Representative samples include `000426`, `603993`. Main boundary: commodity-price exposure and business composition must be evidenced; price context does not become a trading signal.
-- `resource_core`: for large resource leaders with multi-resource assets, cash flow, reserve / production scale, and distribution characteristics. Representative sample includes `601899`. Main boundary: do not analyze a cyclical small resource stock as a core resource allocation company.
+- `resource_swing`: for resource companies whose profit is highly sensitive to commodity prices and cycles. Representative samples include `000426`, `603993`. P1.1 Resource first implementation supports only `000426`; `603993` remains a later validation / boundary sample. Main boundary: commodity-price exposure and business composition must be evidenced; price context does not become company revenue, company performance, or a trading signal.
+- `resource_core`: for large resource leaders with multi-resource assets, cash flow, reserve / production scale, and distribution characteristics. Representative sample includes `601899`. Main boundary: do not analyze a cyclical small resource stock as a core resource allocation company. P1.1 Resource first implementation does not support `resource_core`; it remains design-only until operating cash flow history, sustaining-vs-expansionary capex split, debt / liquidity fields, and dividend history or payout ratio are stably available.
 - `right_trend_growth`: for high-prosperity growth chains such as AI compute, optical modules, PCB, servers, liquid cooling, and data centers. Representative samples include `300308`, `300476`. Main boundary: theme heat or supply-chain narrative is not order or revenue realization.
 - `semiconductor_cycle`: for semiconductor equipment, chips, wafers, storage, domestic substitution, and cycle-sensitive names. Representative samples include `002371`, `688008`. Main boundary: R&D and domestic substitution narratives need revenue/order validation; inventory cycle risk remains central.
 - `stable_growth`: for steadier growth companies such as grid and electrical equipment where orders, cash flow, ROE, and receivables matter. Representative samples include `002028`, `600406`. Main boundary: do not apply high-beta theme-stock logic or ignore cash conversion.
@@ -172,6 +172,7 @@ python -m src.fundamental_skill.real_stock_runner --code 601698 --output output/
 python -m src.fundamental_skill.ai_analyst.runner --code 601698 --mode prompt_only
 python -m src.fundamental_skill.ai_analyst.research_intelligence_runner --code 002837
 python -m src.fundamental_skill.ai_analyst.research_intelligence_p1_runner --code 000099
+python -m src.fundamental_skill.ai_analyst.research_intelligence_p1_runner --code 000426
 python -m src.fundamental_skill.ai_analyst.html_report_runner --code 002050 --mode prompt_only
 python -m src.fundamental_skill.ai_analyst.html_report_runner --code 002050 --mode render_existing
 python scripts/visual_audit_html_report.py --html output/reports/fundamental_report_002050.html --code 002050 --output-dir output/visual_audit/002050
@@ -218,6 +219,7 @@ Interpretation boundaries:
 - Capex is not confirmed capacity release.
 - R&D ratio is not confirmation of a technology barrier.
 - Theme heat is not fundamental realization.
+- Resource P1.1 guardrails: commodity price is not company revenue; commodity cycle is not company performance; reserves are not production; production is not sales unless both are disclosed and reconciled; capex is not capacity release; inventory movement is not demand judgment; missing hedging disclosure is neither hedged nor unhedged; `resource_core` steadiness / dividend capacity must not be written as fact.
 
 AI datacenter score-semantics note:
 
@@ -260,7 +262,7 @@ Do not add a new industry framework only because one stock is popular or difficu
 - AI report generation is currently mainly `prompt_only`; API mode is not the primary implemented workflow.
 - Research Intelligence P0 has been accepted as a baseline research-question discovery artifact.
 - Research Intelligence P0.1 Template Sharpening and Fallback Template Cleanup have passed final acceptance. The latest acceptance refreshed and reviewed `002837`, `002050`, `603259`, and `300442`; pytest recorded `379 passed`, and the regression suite recorded `passed=47 failed=0 total=47`.
-- Research Intelligence P1.1 AI Datacenter pilot, CXO expansion, Satellite expansion, and Low Altitude expansion have been implemented and accepted. Current P1.1 support is intentionally limited to `ai_datacenter_infrastructure`, `life_science_cxo_services`, `satellite_communication_infrastructure`, and `low_altitude_economy_infrastructure`; it does not expand to all `strategy_type` values. AI Datacenter acceptance covered `002837` and `300442`; Satellite primary acceptance covered `601698`; Low Altitude primary acceptance covered `000099`. Latest recorded pytest result is `434 passed`, and latest recorded regression suite result is `passed=47 failed=0 total=47`.
+- Research Intelligence P1.1 AI Datacenter pilot, CXO expansion, Satellite expansion, Low Altitude expansion, and Resource first implementation have been implemented and accepted. Current P1.1 support is intentionally limited to `ai_datacenter_infrastructure`, `life_science_cxo_services`, `satellite_communication_infrastructure`, `low_altitude_economy_infrastructure`, and `resource_swing` for primary sample `000426`; it does not expand to all `strategy_type` values. AI Datacenter acceptance covered `002837` and `300442`; Satellite primary acceptance covered `601698`; Low Altitude primary acceptance covered `000099`; Resource primary acceptance covered `000426`. `resource_core` is design-only, and `601899 / 603993` remain later validation / boundary samples. Latest recorded pytest result is `450 passed`, and latest recorded regression suite result is `passed=47 failed=0 total=47`.
 - P0.1 sample acceptance coverage:
   - `002837` Envicool: liquid-cooling customer validation, batch-order distinction, room cooling versus ordinary thermal-control boundary.
   - `002050` Sanhua Intelligent Controls: robotics / new-business revenue, orders, customers, major-customer revenue share, and valuation digestion evidence.
@@ -276,7 +278,7 @@ Do not add a new industry framework only because one stock is popular or difficu
 
 - Keep `README.md` and `docs/PROJECT_CONTEXT_HANDOFF.md` synchronized after major project changes.
 - Research Intelligence P0.1 baseline does not need more repair unless new samples reveal generic fallback wording or weak industry context. Next useful directions are multi-sample real use, P1 design, or longitudinal resolved-question workflows.
-- For Research Intelligence P1.1, the preferred next step is Low Altitude multi-sample observation first, then deciding the next narrow P1.1 expansion. Do not jump directly into P1.2 or P1.3 before Low Altitude artifact behavior is observed across more samples.
+- For Research Intelligence P1.1, the accepted Resource baseline should remain frozen at `resource_swing + 000426` until later validation is explicitly designed. Do not expand `resource_core`, `601899`, or `603993` in P1.1 without a new design / implementation / acceptance cycle, and do not jump directly into P1.2 or P1.3 before current P1.1 artifact behavior is observed across more samples.
 - HTML Report Generator v2.1 baseline does not need more repair unless the user reports a specific visual or content issue.
 - Based on user feedback, continue refining the HTML research-report experience, or generate formal HTML reports for other stocks using the existing v2.1 chain.
 - Keep AI Datacenter v1 conservative unless public data sources can reliably validate orders / backlog, customer structure, cabinet / MW / PUE / rack utilization, liquid-cooling revenue, datacenter revenue split, and customer capex-cycle evidence.

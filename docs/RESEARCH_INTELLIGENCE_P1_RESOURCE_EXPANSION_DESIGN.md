@@ -12,9 +12,11 @@ Primary sample: `000426` Xingye Silver & Tin / 兴业银锡, current `strategy_t
 
 Future validation / boundary samples: `601899` Zijin Mining and `603993` CMOC may be retained for later `resource_core` / diversified-resource boundary validation, but P1.1 implementation first version should use only `resource_swing` and only `000426` as the primary sample.
 
+Implementation / acceptance status: P1.1 Resource first implementation has been accepted after this v1.1 design. Accepted scope is strictly `resource_swing + 000426`. `resource_core` remains design-only and unsupported in the first implementation. `601899 / 603993` remain later validation / boundary samples only. Latest recorded validation after Resource acceptance: pytest `450 passed`; regression suite `passed=47 failed=0 total=47`.
+
 ## 1. Expansion Positioning
 
-P1.1 has already accepted AI Datacenter, CXO, Satellite, and Low Altitude expansions after observation. This document designs the next narrow P1.1 expansion for resource companies.
+P1.1 has already accepted AI Datacenter, CXO, Satellite, Low Altitude, and Resource first implementation after observation. This document records the Resource v1.1 design and the accepted first implementation boundary.
 
 The expansion remains an independent Research Intelligence artifact:
 
@@ -352,7 +354,7 @@ Future connector or parser phases may add evidence, but they are not part of thi
 
 ## 11. Implementation Gate Recommendation
 
-Recommendation: proceed to P1.1 Resource implementation only after this design is externally reviewed and accepted.
+Recommendation status: completed. P1.1 Resource first implementation has proceeded and passed acceptance with the scope below.
 
 First implementation scope is narrowed as follows:
 
@@ -381,9 +383,21 @@ Acceptance expectation:
 - If only aggregate capex is available, with no project, acceptance, capacity, output, utilization, or revenue bridge, output must not contain inferences equivalent to "产能释放", "投产", "释放", "产量增长", or capacity/output realization. Capex may be described only as cash outflow / investment observation.
 - The artifact must remain independent and must not affect deterministic status, confidence, score, strategy type, subtype, reports, or dashboards.
 
-## 12. External Audit Recommendation
+Accepted runner example:
 
-Recommendation: ask Claude to perform an external design audit before implementation.
+```bash
+python -m src.fundamental_skill.ai_analyst.research_intelligence_p1_runner --code 000426
+```
+
+Generated P1.1 Resource files are runtime artifacts and should not be committed:
+
+- `output/research_intelligence_p1_000426.json`
+- `output/research_questions_p1_000426.json`
+- `output/research_questions_p1_000426.md`
+
+## 12. External Audit Record
+
+External design audit was completed before implementation, and the required v1.1 revisions were incorporated before Resource implementation and acceptance.
 
 Audit focus:
 

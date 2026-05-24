@@ -70,8 +70,8 @@ Current accepted behavior:
 - P0.1 preserves `evidence_trigger` enforcement for every P0 question;
 - P0.1 preserves proxy guards: contract liabilities are only a partial proxy, capex is not capacity release, R&D ratio is not proof of a technology barrier, liquid-cooling POC / certification is not a batch order, and customer capex is not company revenue;
 - final acceptance covered `002837`, `002050`, `603259`, and `300442`;
-- latest recorded pytest result: `379 passed`;
-- latest recorded regression suite result: `passed=47 failed=0 total=47`;
+- P0.1 acceptance pytest result: `379 passed`;
+- P0.1 acceptance regression suite result: `passed=47 failed=0 total=47`;
 - generated `output/` artifacts remain runtime products and should not be committed.
 
 This documentation sync stage is documentation-only, so pytest and the regression suite are not rerun here.
@@ -87,19 +87,19 @@ P0.1 final acceptance refreshed and reviewed four runtime samples:
 
 ### 2.3 P1.1 Driver Matrix Baseline
 
-Research Intelligence P1.1 has entered implementation, and the AI Datacenter pilot, CXO expansion, Satellite expansion, and Low Altitude expansion have been accepted. This does not change the P0 / P0.1 / P0.2 definitions above.
+Research Intelligence P1.1 has entered implementation, and the AI Datacenter pilot, CXO expansion, Satellite expansion, Low Altitude expansion, and Resource first implementation have been accepted. This does not change the P0 / P0.1 / P0.2 definitions above.
 
 Accepted P1.1 behavior:
 
-- supports only `strategy_type=ai_datacenter_infrastructure`, `life_science_cxo_services`, `satellite_communication_infrastructure`, and `low_altitude_economy_infrastructure`;
+- supports only `strategy_type=ai_datacenter_infrastructure`, `life_science_cxo_services`, `satellite_communication_infrastructure`, `low_altitude_economy_infrastructure`, and `resource_swing` for primary sample `000426`;
 - reads `output/evidence_pack_<code>.json` and may read the optional P0 pack;
 - writes independent `output/research_intelligence_p1_<code>.json`, `output/research_questions_p1_<code>.json`, and `output/research_questions_p1_<code>.md`;
 - does not call LLMs, use network access, connect new data sources, mutate deterministic pipeline outputs, or connect to HTML / Dashboard;
 - enforces `company_transmission_path` in schema and builder logic;
 - counts independent sources by source bucket;
-- preserves `not_assessable` for missing AI Datacenter PUE / MW / cabinet / utilization / liquid-cooling revenue / customer-contract bridges, CXO order / backlog / utilization / regulatory bridges, Satellite transponder / bandwidth resources, utilization, contract duration, pricing, customer concentration, remaining life, launch / failure / insurance, and replacement-capex bridges, and Low Altitude policy-pilot, airspace / route approval, flight-hour, flight-sortie, platform-dispatch, project-acceptance, customer-type, government / SOE collection-cycle, capex bridge, and safety / regulatory bridges.
+- preserves `not_assessable` for missing AI Datacenter PUE / MW / cabinet / utilization / liquid-cooling revenue / customer-contract bridges, CXO order / backlog / utilization / regulatory bridges, Satellite transponder / bandwidth resources, utilization, contract duration, pricing, customer concentration, remaining life, launch / failure / insurance, and replacement-capex bridges, Low Altitude policy-pilot, airspace / route approval, flight-hour, flight-sortie, platform-dispatch, project-acceptance, customer-type, government / SOE collection-cycle, capex bridge, and safety / regulatory bridges, and Resource realized-price / sales-volume / production / reserve / grade / capacity / hedging / cost-curve / capex-split / debt-maturity / environmental-safety bridges.
 
-Accepted AI Datacenter pilot samples: `002837` and `300442`. Accepted Satellite primary sample: `601698`. Accepted Low Altitude primary sample: `000099`. Latest recorded validation after Low Altitude acceptance: `pytest` `434 passed`; regression suite `passed=47 failed=0 total=47`.
+Accepted AI Datacenter pilot samples: `002837` and `300442`. Accepted Satellite primary sample: `601698`. Accepted Low Altitude primary sample: `000099`. Accepted Resource primary sample: `000426`. `resource_core` is design-only; `601899 / 603993` remain later validation / boundary samples. Latest recorded validation after Resource acceptance: `pytest` `450 passed`; regression suite `passed=47 failed=0 total=47`.
 
 ## 3. P0 Scope
 
@@ -414,6 +414,20 @@ Validation path:
 - reserves / production / cost curve where available;
 - capex vs sustaining or expansion needs;
 - debt and cash flow vs cycle resilience.
+
+P1.1 Resource status:
+
+- first accepted implementation supports only `resource_swing + 000426`;
+- `resource_core` remains design-only and is not implemented in the first Resource slice;
+- `601899 / 603993` remain later validation / boundary samples only;
+- commodity price is not company revenue;
+- commodity cycle is not company performance;
+- reserves are not production;
+- production is not sales unless both are disclosed and reconciled;
+- capex is not capacity release;
+- inventory movement is not demand judgment;
+- missing hedging disclosure is neither hedged nor unhedged;
+- `resource_core` steadiness / dividend capacity must not be written as fact.
 
 Typical P0 questions:
 
