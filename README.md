@@ -57,6 +57,7 @@ Research Intelligence P1.1 is an independent AI analyst-layer driver-factor matr
 - `satellite_communication_infrastructure`
 - `low_altitude_economy_infrastructure`
 - `resource_swing`
+- `semiconductor_cycle`
 
 Outputs:
 
@@ -69,6 +70,7 @@ Command:
 ```bash
 python -m src.fundamental_skill.ai_analyst.research_intelligence_p1_runner --code 000099
 python -m src.fundamental_skill.ai_analyst.research_intelligence_p1_runner --code 000426
+python -m src.fundamental_skill.ai_analyst.research_intelligence_p1_runner --code 002371
 ```
 
 P1.1 reads `output/evidence_pack_<code>.json` and may read the optional P0 pack. It does not call LLMs, use network access, connect new data sources, mutate the deterministic pipeline, change `status`, `confidence`, `score`, `strategy_type`, or `sub_type`, write `output/reports/`, or connect to the HTML Report / Dashboard main chain.
@@ -78,6 +80,10 @@ The P1.1 baseline includes schema + builder enforcement for `company_transmissio
 P1.1 Low Altitude expansion has been accepted with `000099` as the primary sample. It is evidence-pack-only and `not_assessable` first: policy pilots, airspace / route approval, local-government spending, flight hours, flight sorties, platform dispatch volume, project contracts / acceptance, customer type, government / SOE collection cycle, capex bridge, and safety / regulatory events remain missing or `not_assessable` unless concrete evidence-pack fields support them.
 
 P1.1 Resource first implementation has been accepted for `resource_swing` only, with `000426` as the primary sample. It does not support `resource_core`; `601899` and `603993` remain later validation / boundary samples only. Resource guardrails are strict: commodity price is not company revenue, commodity cycle is not company performance, reserves are not production, production is not sales unless both are disclosed and reconciled, capex is not capacity release, inventory movement is not demand judgment, missing hedging disclosure is neither hedged nor unhedged, and `resource_core` steadiness / dividend capacity must not be written as fact.
+
+P1.1 Semiconductor first implementation has been accepted for `semiconductor_cycle` only, with `002371` as the primary sample and equipment sub-chain as the first-version path. The multi-sample Semiconductor observation is now complete: `688012`, `688981`, `603501`, and `300604` were refreshed through upstream raw / fundamental / evidence-pack generation and then run through P1.1; `300308` / `300476` remained boundary / negative samples. The validation samples were not force-fit into the `002371` equipment first-version order logic; when outside first-version support, P1.1 kept `unsupported_pilot_strategy` / `not_assessable`, the exact `company_transmission_path=传导路径无法从当前证据包验证`, source-bucket independence, and the safety boundary. This closes the Semiconductor observation. Data-side caveat: the validation run still had `latest_news` missing because the raw news block reported `Invalid regular expression: invalid escape sequence: \u`; this is an upstream/news issue and does not affect the P1.1 boundary smoke conclusion. Materials / fabless / foundry / OSAT are still not fully implemented and remain `not_applicable` / `not_assessable` boundaries under the first version. Semiconductor guardrails are strict: semiconductor cycle is not company performance, localization narrative is not revenue realization, R&D ratio is not a technology barrier or moat, customer introduction / certification / qualification is not batch revenue, contract liabilities are not backlog, capex is not capacity release / utilization / delivery / revenue conversion, inventory movement is not demand judgment, and export controls / sanctions are not company operating benefit or damage facts without company-level impact evidence.
+
+Next P1.1 step: do a Research Intelligence P1.1 Expansion Baseline Check tomorrow (2026-05-26). Do not directly continue into the next industry expansion; after the baseline check passes, decide whether `advanced_manufacturing_growth`, `stable_growth`, `right_trend_growth`, or P1.2 should take priority.
 
 `output/research_intelligence_p1_*` and `output/research_questions_p1_*` are generated runtime artifacts and should not be committed.
 
@@ -265,6 +271,7 @@ python -m src.fundamental_skill.ai_analyst.runner --code 601698 --mode prompt_on
 python -m src.fundamental_skill.ai_analyst.research_intelligence_runner --code 002837
 python -m src.fundamental_skill.ai_analyst.research_intelligence_p1_runner --code 000099
 python -m src.fundamental_skill.ai_analyst.research_intelligence_p1_runner --code 000426
+python -m src.fundamental_skill.ai_analyst.research_intelligence_p1_runner --code 002371
 python -m src.fundamental_skill.ai_analyst.html_report_runner --code 002050 --mode prompt_only
 python -m src.fundamental_skill.ai_analyst.html_report_runner --code 002050 --mode render_existing
 python scripts/visual_audit_html_report.py --html output/reports/fundamental_report_002050.html --code 002050 --output-dir output/visual_audit/002050

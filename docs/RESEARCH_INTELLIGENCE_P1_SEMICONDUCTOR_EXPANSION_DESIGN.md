@@ -4,17 +4,19 @@ Date: 2026-05-25
 
 Revision: v1.1
 
-Stage: Design audit only. This document adds design guidance only. It must not change code, tests, P1 schema, deterministic pipeline behavior, classifier rules, connectors, scoring, readiness, HTML renderer, Dashboard, generated output, regression fixtures, or existing artifact semantics.
+Stage: Design audit plus accepted implementation sync. This document is documentation-only in the sync stage. It must not change code, tests, P1 schema, deterministic pipeline behavior, classifier rules, connectors, scoring, readiness, HTML renderer, Dashboard, generated output, regression fixtures, or existing artifact semantics.
 
 Target expansion: `semiconductor_cycle` only.
 
 Primary sample: `002371` NAURA / 北方华创, current `strategy_type=semiconductor_cycle`.
 
-Future validation samples: `688012`, `688981`, `603501`, and `300604` may be retained for later validation if current repository data is sufficient. Boundary / negative samples such as `300308` and `300476` must not be forced into `semiconductor_cycle`.
+Observation samples: `002371` is the positive primary sample; `688012`, `688981`, `603501`, and `300604` are validation samples; boundary / negative samples such as `300308` and `300476` must not be forced into `semiconductor_cycle`.
+
+Implementation status: P1.1 Semiconductor first implementation has been implemented and accepted for `semiconductor_cycle + 002371` only. Equipment sub-chain is the first-version path. The multi-sample observation has completed: `688012 / 688981 / 603501 / 300604` were refreshed through upstream raw / fundamental / evidence-pack generation and run through P1.1, while `300308 / 300476` remained boundary / negative samples. The validation samples were not force-fit into the `002371` equipment first-version order logic; `company_transmission_path`, `not_assessable`, source-bucket independence, and the safety boundary behaved as expected. The Semiconductor observation can be formally closed. Materials / fabless / foundry / OSAT are not fully implemented and remain `not_applicable` / `not_assessable` boundaries under the first version. Data-side caveat: the validation samples still had `latest_news` missing because the raw news block reported `Invalid regular expression: invalid escape sequence: \u`; this is an upstream/news data issue and does not affect the P1.1 boundary smoke conclusion. Latest recorded validation after acceptance: pytest `464 passed`; regression suite `passed=47 failed=0 total=47`.
 
 ## 1. Expansion Positioning
 
-P1.1 has already accepted AI Datacenter, CXO, Satellite, Low Altitude, and Resource first implementation. This document designs the next narrow P1.1 expansion for `semiconductor_cycle`.
+P1.1 has already accepted AI Datacenter, CXO, Satellite, Low Altitude, Resource first implementation, and Semiconductor first implementation. This document records the narrow accepted P1.1 expansion for `semiconductor_cycle`.
 
 The expansion remains an independent Research Intelligence artifact:
 
@@ -26,7 +28,7 @@ evidence_pack_<code>.json
 -> research_questions_p1_<code>.md
 ```
 
-The expansion should convert semiconductor cycle, capex, demand, inventory, localization, export-control, company business, financial, and risk assumptions into evidence-gated driver-factor rows and research questions. It must not become a trading system, valuation model, semiconductor industry report, technology-roadmap report, connector project, dashboard panel, technical-analysis layer, or deterministic scoring input.
+The accepted expansion converts semiconductor cycle, capex, demand, inventory, localization, export-control, company business, financial, and risk assumptions into evidence-gated driver-factor rows and research questions. It must not become a trading system, valuation model, semiconductor industry report, technology-roadmap report, connector project, dashboard panel, technical-analysis layer, or deterministic scoring input.
 
 ## 2. Non-Negotiable Boundaries
 
@@ -140,6 +142,8 @@ For this expansion, every driver must define:
 
 The matrix is evidence-pack-only for P1.1 implementation. Future connector needs are recorded as missing evidence, not implemented in this phase.
 
+Generated `output/research_intelligence_p1_*` and `output/research_questions_p1_*` artifacts are runtime products and should not be committed.
+
 ## 5. Semiconductor Driver Factor Matrix
 
 ### 5.1 Macro / Industry / Cycle Drivers
@@ -237,18 +241,21 @@ Expected sample behavior:
 - Capex may be included only as investment / cash outflow observation and must not imply capacity release, utilization, delivery, or revenue conversion.
 - Inventory may be included only as working-capital observation and must not become direct demand judgment.
 
-## 8. Future Validation / Boundary Samples
+## 8. Completed Observation / Boundary Samples
 
-Use future samples only after first implementation design is accepted and current repository data availability is checked:
+The multi-sample observation is complete. These samples document the accepted first-version boundary; they do not expand first-version support beyond `semiconductor_cycle + 002371`.
 
-| Sample | Candidate role | Validation purpose |
+| Sample | Observation role | Result |
 | --- | --- | --- |
-| `688012` | Equipment validation | Stress-test equipment order visibility, customer qualification, capex cycle transmission, R&D conversion, and localization evidence. |
-| `688981` | Foundry validation | Stress-test foundry capacity, utilization, process-node mix, capex-to-revenue bridge, export-control risk, and customer concentration. |
-| `603501` | Fabless validation | Stress-test fabless product cycle, downstream demand, channel/customer inventory, margin pressure, and R&D-to-product conversion. |
-| `300604` | Materials / semiconductor supply-chain validation | Stress-test materials qualification, recurring supply, product-level revenue, inventory, gross margin, and customer adoption. |
-| `300308` | Boundary / negative | AI Datacenter optical module exposure; must not be forced into `semiconductor_cycle` without classifier evidence. |
-| `300476` | Boundary / negative | PCB / electronics manufacturing boundary; must not be forced into `semiconductor_cycle` without classifier evidence. |
+| `002371` | Positive primary sample | Accepted first-version `semiconductor_cycle` primary sample. Equipment sub-chain is the first-version path. |
+| `688012` | Equipment validation | Upstream raw / fundamental / evidence-pack was refreshed and P1.1 was rerun. The sample was not force-fit into `002371` equipment order logic outside first-version support. |
+| `688981` | Foundry validation | Upstream raw / fundamental / evidence-pack was refreshed and P1.1 was rerun. Foundry-specific capacity / utilization / process-node logic was not fabricated from insufficient evidence. |
+| `603501` | Fabless validation | Upstream raw / fundamental / evidence-pack was refreshed and P1.1 was rerun. Fabless product-cycle / inventory / R&D conversion conclusions were not fabricated from insufficient evidence. |
+| `300604` | Materials / semiconductor supply-chain validation | Upstream raw / fundamental / evidence-pack was refreshed and P1.1 was rerun. Materials / supply-chain qualification and revenue-conversion conclusions were not fabricated from insufficient evidence. |
+| `300308` | Boundary / negative | AI Datacenter optical module exposure; was not forced into `semiconductor_cycle` without classifier evidence. |
+| `300476` | Boundary / negative | PCB / electronics manufacturing boundary; was not forced into `semiconductor_cycle` without classifier evidence. |
+
+Observation caveat: the validation sample refresh still left `latest_news` missing because the raw news block reported `Invalid regular expression: invalid escape sequence: \u`. Treat this as an upstream/news data caveat, not a P1.1 boundary or matrix failure.
 
 ## 9. Company Transmission Path Constraint
 
@@ -356,20 +363,20 @@ Future connector or parser phases may add evidence, but they are not part of thi
 - Impairment, inventory write-down, obsolete product, warranty, and after-sales cost disclosures.
 - Longitudinal disclosure store for prior periods and prior P0/P1 outputs.
 
-## 12. Implementation Gate Recommendation
+## 12. Accepted Implementation Scope
 
-Recommendation: enter P1.1 Semiconductor implementation only after this design is accepted and, preferably, externally audited.
+Status: P1.1 Semiconductor implementation has been accepted for the first version. This section preserves the original gate as historical context and records the frozen accepted scope.
 
-Pre-implementation confirmations required before coding:
+Historical pre-implementation confirmations:
 
 - Confirm `002371` `evidence_pack.business_composition[]` granularity: whether it is equipment-type level, such as etch / deposition / cleaning / process equipment, or only broad semiconductor equipment / electronic process equipment.
 - Confirm whether `002371` `financial_metrics.contract_liabilities` exists as an actual numeric value in the current evidence pack. If present, it remains partial proxy only; if absent, order visibility must be `missing` or `not_assessable`.
 - Confirm whether `002371` `enhanced_must_track_indicators[]` contains customer qualification / adoption or localization-related statuses. If absent, qualification and localization conversion rows must remain `missing` or `not_assessable`.
 
-Minimum implementation should:
+Accepted first-version implementation scope:
 
-- Implement first version only for `semiconductor_cycle`.
-- Add a `semiconductor_cycle` driver template inside the existing P1.1 builder boundary.
+- First version supports only `semiconductor_cycle`.
+- A `semiconductor_cycle` driver template stays inside the existing P1.1 builder boundary.
 - Reuse the existing P1 schema without adding fields.
 - Keep the current independent P1 artifact relationship.
 - Read only current `evidence_pack` and optional P0 artifacts.
@@ -379,7 +386,7 @@ Minimum implementation should:
 - Use `002371` NAURA / 北方华创 as the only primary implementation sample.
 - Treat equipment sub-chain as the first-version primary validation object.
 - Keep materials / fabless / foundry / OSAT out of full first implementation; under the `002371` sample, handle them only through explicit `not_applicable` or `not_assessable` boundary behavior.
-- Keep `688012`, `688981`, `603501`, and `300604` only as later validation samples until data availability is checked.
+- Treat `688012`, `688981`, `603501`, and `300604` as completed validation observation samples, not first-version support. They must not inherit the `002371` equipment first-version order logic without a new design / implementation / acceptance cycle.
 - Keep `300308` and `300476` as boundary / negative samples and do not force them into `semiconductor_cycle`.
 
 Do not implement in this phase:
@@ -399,7 +406,7 @@ Do not implement in this phase:
 - Technical analysis or K-line logic.
 - Trading advice or account actions.
 
-Acceptance expectation:
+Accepted behavior:
 
 - `002371` should produce many `missing` or `not_assessable` rows because current evidence lacks product-level inventory, true backlog, customer qualification/adoption, localization revenue, export-control impact, capex utilization, and R&D conversion detail.
 - Rows using business composition and financial metrics may be `partial`, but must not become semiconductor-cycle recovery conclusions.
@@ -414,7 +421,7 @@ Acceptance expectation:
 
 ## 13. External Audit Recommendation
 
-Recommendation: ask Claude or another external reviewer to audit this design before implementation.
+Recommendation: for any later Semiconductor expansion beyond `semiconductor_cycle + 002371`, ask Claude or another external reviewer to audit the design before implementation.
 
 Audit focus:
 
@@ -426,7 +433,7 @@ Audit focus:
 
 ## 14. Design Acceptance Criteria
 
-This semiconductor expansion design is acceptable when:
+This semiconductor expansion design and accepted first implementation remain synchronized when:
 
 - The expansion is limited to `semiconductor_cycle`.
 - Every driver has required evidence, available evidence, missing evidence, company transmission rule, not-assessable condition, research question, and interpretation guard.
@@ -435,7 +442,7 @@ This semiconductor expansion design is acceptable when:
 - First implementation scope is narrowed to `semiconductor_cycle + 002371` only.
 - Equipment sub-chain is the first-version primary validation object.
 - Materials / fabless / foundry / OSAT are not fully implemented in the first version and are handled only as `not_applicable` / `not_assessable` boundaries under `002371`.
-- Future validation and boundary samples are listed only for later validation and do not expand P1.1 implementation scope.
+- Validation and boundary samples are documented as completed observation coverage and do not expand P1.1 implementation scope.
 - Semiconductor capex cycle is never treated as company orders, revenue, or margin without company evidence.
 - Downstream demand is never treated as company demand without company customer/order/shipment/revenue/cash evidence.
 - Positive `revenue_yoy` plus stable or improving gross margin is never treated as cycle recovery transmission or strong demand without independent order / shipment / customer adoption evidence.
