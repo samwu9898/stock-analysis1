@@ -426,9 +426,17 @@ def test_replay_marks_stale_and_missing_columns_without_crashing():
     assert missing_price not in summary["copper_tin_freshness"]["fresh_candidates"]["tin"]
 
 
-def test_probe_detects_freshness_metadata_for_payloads():
+def test_probe_detects_freshness_metadata_for_payloads(monkeypatch):
     pandas = __import__("pandas")
     module = _load_probe_module()
+    real_datetime = module.datetime
+
+    class FixedDateTime(real_datetime):
+        @classmethod
+        def now(cls):
+            return real_datetime(2026, 5, 20, 10, 0, 0)
+
+    monkeypatch.setattr(module, "datetime", FixedDateTime)
     frame = pandas.DataFrame(
         [
             {"date": "2026-05-11", "close": 80000.0},
@@ -441,6 +449,7 @@ def test_probe_detects_freshness_metadata_for_payloads():
     assert summary["detected_date_columns"] == ["date"]
     assert "close" in summary["detected_price_columns"]
     assert summary["latest_date_detected"] == "2026-05-18"
+    assert summary["freshness_days"] == 2
     assert summary["is_fresh_candidate"] is True
 
 
