@@ -2,17 +2,19 @@
 
 Date: 2026-05-25
 
-Revision: v1.0
+Revision: v1.1
 
-Stage: Design audit only. This document adds design guidance only. It must not change code, tests, P1 schema, deterministic pipeline behavior, classifier rules, connectors, scoring, readiness, HTML renderer, Dashboard, generated output, regression fixtures, or existing artifact semantics.
+Stage: Design revision only. This document updates design guidance after external audit and Sample Gate audit. It must not change code, tests, P1 schema, deterministic pipeline behavior, classifier rules, connectors, scoring, readiness, HTML renderer, Dashboard, generated output, regression fixtures, or existing artifact semantics.
 
 Target expansion: `stable_growth` design only.
 
-Implementation status: not started. Do not implement until the implementation gate in section 8 is satisfied.
+Implementation status: Sample Gate passed. P1.1 Stable Growth implementation may begin only after this v1.1 design revision is complete, and only within the narrowed implementation scope in sections 8 and 11.
 
-Primary sample: no primary implementation sample is selected in this design phase.
+Primary implementation sample: `600406` NARI Technology / 国电南瑞.
 
-Candidate samples for later gate checks: `600406` NARI Technology / 国电南瑞, `002028` Sieyuan Electric / 思源电气, `600276` Hengrui Pharmaceuticals / 恒瑞医药, and other companies that the current evidence-pack and classifier chain can stably identify as `stable_growth`.
+Validation sample: `002028` Sieyuan Electric / 思源电气.
+
+Excluded sample: `600276` Hengrui Pharmaceuticals / 恒瑞医药 is excluded from first implementation because the refreshed classifier result remains `unknown / insufficient_data`.
 
 ## 1. Expansion Positioning
 
@@ -70,6 +72,7 @@ Preserve the P1.1 interpretation guards:
 - Contract liabilities are partial proxy only and are not backlog, confirmed orders, or future revenue.
 - Receivable growth is not high-quality revenue.
 - Single-period operating cash-flow improvement is not long-term cash-flow stability.
+- Single-period positive `revenue_yoy` plus same-direction `operating_cashflow` is only a financial observation, not stable-growth quality or multi-period stability evidence.
 - Dividend or payout ratio is not sustainable shareholder return unless free cash flow, debt, capex, and earnings-quality evidence support it.
 - Capex is not capacity release, utilization, future revenue, or growth conversion.
 - Single-period high ROE is not long-term competitiveness.
@@ -143,6 +146,16 @@ Universal transmission rule:
 - The corresponding `confidence_cap` must be `not_assessable`.
 - The row must explain the missing bridge through `missing_evidence`, `not_assessable_reason`, and `research_question`.
 - Generic labels, industry identity, or `strategy_type=stable_growth` cannot be used as transmission evidence.
+- Industry type, product attributes, rigid demand, necessity wording, infrastructure attributes, policy protection, SOE / central-SOE ownership, or similar generic business attributes must not be used as company_transmission_path evidence for demand durability or revenue stability.
+- Demand durability and revenue stability must come from company-level evidence such as multi-period revenue, customer retention, repeat order, pricing renewal, collection, or cash conversion evidence.
+- Do not write transmission paths equivalent to "grid equipment is rigid-demand infrastructure, therefore company demand is stable". Industry context can frame a research question, but it cannot replace company-level evidence.
+
+Research-question de-duplication rule:
+
+- Contract-liability-related drivers must either be merged or clearly separated by missing bridge: order visibility, contract liabilities as partial proxy, and contract liabilities overread must not generate three duplicate questions about the same field.
+- Receivable-related drivers must either be merged or clearly separated by missing bridge: collection quality and receivables masking collection risk must not generate duplicate questions unless one asks for aging / DSO / overdue evidence and another asks for customer or revenue bridge evidence.
+- Free-cash-flow, dividend, and payout drivers should collapse into a small number of integrated questions, such as FCF quality and dividend sustainability. They must not generate four repetitive shareholder-return questions.
+- If multiple driver rows are retained, generated questions must avoid obvious repetition and explicitly identify the different missing bridge for each row.
 
 ## 5. Stable Growth Driver Factor Matrix
 
@@ -152,7 +165,7 @@ Universal transmission rule:
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Recurring revenue or repeat-order quality | Revenue by product / service; repeat-order or renewal rate; customer cohort; contract duration; revenue recognition; collection | `business_composition[]`, `financial_metrics.revenue`, `contract_liabilities`, `operating_cashflow`, and receivables may exist | Renewal / repeat-order rate; churn; customer cohort; order-to-revenue and collection bridge | Valid only when the path cites concrete product / service revenue plus repeat-order, renewal, or contract evidence. If only revenue growth or company label exists, use `传导路径无法从当前证据包验证`. | Mark `not_assessable` when repeat-order / renewal / cohort evidence is absent. | Is recurring or repeat revenue supported by disclosed renewal, repeat-order, contract, revenue-recognition, and collection evidence? | Do not treat revenue growth, historical size, or `stable_growth` label as recurring revenue. |
 | Customer stability | Top customer revenue share; customer tenure; renewal / retention; customer payment behavior; receivable by customer | Aggregate revenue, receivables, operating cash flow, and business segments may exist | Top customer list; concentration trend; customer tenure; collection by customer; customer churn | Valid only when customer-specific or concentration evidence exists. Aggregate receivables and revenue can only show financial observations. | Mark `not_assessable` when customer names, concentration, tenure, or payment behavior are missing. | Which customers support stable revenue, and is their retention visible in orders, revenue, receivables, and cash collection? | Do not infer customer stability from industry position or aggregate revenue. |
-| Product / service demand durability | Product / service segment revenue; end-market demand; replacement / maintenance demand; price / volume; customer use case; multi-period demand evidence | `basic_info.main_business`, `business_composition[]`, revenue and margin may exist | End-market demand series; price / volume split; product lifecycle; replacement demand; customer order evidence | A concrete path may cite segment and financial fields as exposure only. Durability needs multi-period demand, order, customer, or price / volume evidence. | Mark `not_assessable` when demand durability lacks multi-period product, customer, order, or price / volume support. | Is demand durable because of repeat use, replacement need, regulation, mission-critical use, or customer budgets, and what company evidence proves it? | Do not treat stable industry wording or one-period revenue growth as durable demand. |
+| Product / service demand durability | Product / service segment revenue; end-market demand; replacement / maintenance demand; price / volume; customer use case; multi-period demand evidence | `basic_info.main_business`, `business_composition[]`, revenue and margin may exist | End-market demand series; price / volume split; product lifecycle; replacement demand; customer order evidence | A concrete path may cite segment and financial fields as exposure only. Durability needs multi-period demand, order, customer, collection, cash-conversion, or price / volume evidence. | Mark `not_assessable` when demand durability lacks multi-period product, customer, order, collection, cash-conversion, or price / volume support. | Is demand durable because company-level multi-period revenue, repeat-order, customer retention, pricing renewal, collection, or cash-conversion evidence proves it? | Do not treat industry type, product attribute, rigid demand, infrastructure, policy protection, SOE / central-SOE status, stable industry wording, or one-period revenue growth as durable demand. |
 | Order visibility | Signed orders; true backlog; delivery schedule; cancellation history; shipment / acceptance; revenue recognition; collection | Contract liabilities may exist as partial proxy; revenue and cash flow may exist | True backlog; signed order table; order duration; cancellation; shipment; revenue recognition terms | Valid only when true orders / backlog or signed contract evidence exists. Contract liabilities can only create a partial-proxy path and must not be called backlog. | Mark `not_assessable` when true order / backlog evidence is absent, or when only contract liabilities exist. | What true order, backlog, delivery, cancellation, shipment, and revenue-recognition evidence supports visibility? | Contract liabilities are partial proxy only, not backlog or confirmed future revenue. |
 | Contract liabilities as partial proxy only | Contract liabilities; linked customer / order / project; prepayment terms; revenue-recognition schedule; comparison with revenue and cash flow | `financial_metrics.contract_liabilities` may exist; revenue and operating cash flow may exist | Customer / order mapping; prepayment terms; project mapping; revenue-recognition schedule | Valid only as "partial proxy" when contract liabilities exist. If no linked order / customer / terms exist, path must state only the financial field, or fallback if field is absent. | Mark `not_assessable` for backlog / order visibility when contract liabilities are unlinked or absent. | What customer, order, or project do contract liabilities correspond to, and why should they remain only a partial visibility proxy? | Do not convert contract liabilities into backlog, signed orders, future revenue, or stability proof. |
 | Customer concentration | Top customer revenue share; top-five customer share; segment / customer mapping; receivable by customer; trend | Business composition and aggregate receivables may exist | Top customer revenue share; customer-level receivables; concentration trend; dependency risk | Valid only when customer concentration fields or customer-specific evidence exist. | Mark `not_assessable` when top customer / top-five fields and customer receivable data are missing. | Does customer concentration support stability, or does it create dependency and collection risk? | Do not infer diversification from broad business segments alone. |
@@ -163,7 +176,7 @@ Universal transmission rule:
 
 | Driver factor | required_evidence | available_evidence from current evidence_pack | missing_evidence / future data need | company_transmission_path rule | not_assessable condition | research_question | interpretation_guard |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Revenue growth quality | Revenue; revenue YoY; segment revenue; price / volume; customer orders; receivables; operating cash flow; multi-period trend | `financial_metrics.revenue`, `revenue_yoy`, segment revenue, receivables, and operating cash flow may exist | Price / volume split; customer / order bridge; multi-period revenue and collection trend | Valid only when revenue is checked together with cash flow, receivables, and business / customer bridge. If only revenue growth exists, use fallback for quality. | Mark `not_assessable` when revenue growth lacks cash-flow, collection, customer, or segment bridge. | Is revenue growth supported by cash collection, customer / order evidence, and stable business mix rather than receivable build or one-off items? | Revenue growth is not stable growth or revenue quality by itself. |
+| Revenue growth quality | Revenue; revenue YoY; segment revenue; price / volume; customer orders; receivables; operating cash flow; multi-period trend | `financial_metrics.revenue`, `revenue_yoy`, segment revenue, receivables, and operating cash flow may exist | Price / volume split; customer / order bridge; multi-period revenue, cash conversion, receivables, inventory, and collection trend | Valid only when revenue is checked together with cash flow, receivables, inventory, and business / customer bridge. If only revenue growth exists, use fallback for quality. | Mark `not_assessable` when revenue growth lacks multi-period cash-flow, collection, receivables, inventory, customer, order, or segment bridge. | Is revenue growth supported by cash collection, customer / order evidence, receivables / inventory discipline, and stable business mix rather than receivable build or one-off items? | Revenue growth is not stable growth or revenue quality by itself. Single-period revenue and same-direction operating cash flow remain a financial observation unless multi-period cash conversion, receivables, inventory, customer, or order evidence supports stability. |
 | Gross margin stability | Multi-period gross margin; segment margin; product mix; price / cost / volume; cost pass-through; inventory accounting | Current gross margin and segment gross margin may exist | Multi-period margin series; product cost; price / volume; mix shift; cost pass-through terms | Valid only for current-period margin observation unless multi-period and driver evidence exists. | Mark `not_assessable` for stability or pricing conclusion when only one-period margin exists. | Is gross margin stable because of product mix, pricing, cost control, or temporary factors, and what evidence separates them? | Do not infer product advantage or pricing power from margin stability without product / price / cost evidence. |
 | Net margin stability | Multi-period net margin; gross margin; expense ratio; tax; non-recurring items; impairment; interest expense | `net_margin`, gross margin, net profit, deducted net profit may exist | Expense breakdown; tax; impairment; non-recurring item bridge; multi-period trend | Valid only when net margin and profit fields are cited; stability needs multi-period and one-off item evidence. | Mark `not_assessable` when expense / one-off / multi-period evidence is missing. | Does net margin stability come from operating quality rather than expense timing, subsidy, asset disposal, impairment reversal, or tax effects? | Do not treat one-period net margin as durable profitability. |
 | Operating cash flow conversion | Operating cash flow; revenue; net profit; receivables; inventory; payables; customer payment terms; multi-period conversion | Operating cash flow, revenue, net profit, receivables, inventory may exist | Payables; cash conversion cycle; customer terms; multi-period operating cash-flow conversion | A concrete path may cite current cash flow, revenue, profit, receivables, and inventory; long-term stability needs multi-period conversion. | Mark `not_assessable` for durable conversion when only one-period operating cash flow exists. | Does operating cash flow validate revenue and profit quality after receivables, inventory, payables, and customer payment terms? | Single-period cash-flow improvement is not long-term cash-flow stability. |
@@ -189,7 +202,7 @@ Universal transmission rule:
 
 | Driver factor | required_evidence | available_evidence from current evidence_pack | missing_evidence / future data need | company_transmission_path rule | not_assessable condition | research_question | interpretation_guard |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Revenue growth without cash-flow support | Revenue growth; operating cash flow; receivables; inventory; payables; customer payment terms; multi-period trend | Revenue YoY, operating cash flow, receivables, inventory may exist | Payables; customer terms; cash conversion cycle; multi-period trend | Valid only when revenue and cash-flow / working-capital fields are cited together. | Mark `not_assessable` when cash-flow or working-capital fields are missing. | Is revenue growth accompanied by cash conversion, or is growth absorbed by receivables, inventory, or payment delays? | Revenue growth without cash-flow support must be treated as a risk question, not a stable-growth conclusion. |
+| Revenue growth without cash-flow support | Revenue growth; operating cash flow; receivables; inventory; payables; customer payment terms; multi-period trend | Revenue YoY, operating cash flow, receivables, inventory may exist | Payables; customer terms; cash conversion cycle; multi-period trend; customer / order bridge | Valid only when revenue and cash-flow / working-capital fields are cited together as observations. Stability requires multi-period revenue, cash conversion, receivables, inventory, customer, or order support. | Mark `not_assessable` when cash-flow or working-capital fields are missing; mark only `partial / low` or `not_assessable` when revenue and operating cash flow are single-period only. | Is revenue growth accompanied by repeatable cash conversion, or is growth absorbed by receivables, inventory, or payment delays? | Even if single-period `revenue_yoy` is positive and `operating_cashflow` moves in the same direction, do not combine them into stable-growth quality. Single-period revenue plus OCF is a financial observation, not multi-period stability evidence; confidence can rise only with multi-period revenue, cash conversion, receivables, inventory, customer, or order support. |
 | Margin stability without product / pricing evidence | Gross margin; net margin; product price; unit cost; mix; renewal pricing; customer acceptance | Gross margin and net margin may exist | Price / volume; unit cost; product mix; pricing formula; competitor pricing | Valid only as margin observation unless product / price / cost evidence exists. | Mark `not_assessable` when pricing and product evidence is missing. | Does margin stability have product, pricing, cost, and mix support, or is it an unexplained accounting observation? | Margin stability does not prove pricing power or product moat. |
 | Receivables growth masking collection risk | Receivables; revenue; operating cash flow; aging; overdue; bad-debt provision; customer concentration | Receivables, revenue, operating cash flow may exist | Aging; overdue; bad-debt provision; customer receivables; DSO trend | Valid only as aggregate collection-risk observation unless aging / customer data exists. | Mark `not_assessable` for collection quality when aging and customer evidence is absent. | Are rising receivables masking weaker collection quality despite revenue growth? | Receivable growth is not revenue quality and may be a negative working-capital signal. |
 | Inventory build without sales bridge | Inventory; revenue; sales volume; product inventory split; production / sales reconciliation; write-downs | Inventory and revenue may exist | Product inventory; sales volume; production volume; aging; write-down; turnover | Valid only as aggregate inventory observation unless product and sales bridge exists. | Mark `not_assessable` for demand interpretation when sales bridge is missing. | Is inventory build tied to confirmed sales / delivery timing, or does it signal demand mismatch and write-down risk? | Inventory build without sales bridge cannot be interpreted as future demand. |
@@ -208,7 +221,7 @@ Universal transmission rule:
 - Receivables: aggregate receivable change is a collection-risk clue, not proof of revenue quality. Aging, overdue, bad-debt provision, customer mix, and DSO are needed.
 - Capex: aggregate capex is cash outflow, not capacity release, utilization, order conversion, or future revenue. Maintenance vs expansion capex must be separated before making discipline judgments.
 - Contract liabilities: can only be an order-visibility partial proxy. It is not backlog, signed orders, delivery schedule, or revenue conversion.
-- Valuation: PE / PB / PS or other valuation metrics may frame evidence sufficiency only. They must not become target price, upside / downside, buy / sell timing, or position language.
+- Valuation: PE / PB / PS or other valuation metrics may frame evidence sufficiency only. Chinese questions that cite `valuation_metrics` must use an evidence-sufficiency wording such as "当前 evidence pack 中哪些证据足以支撑或解释当前估值背景，哪些证据仍缺失？". They must not ask whether valuation is reasonable, high, low, or supported by the current price, and must not mention upside, downside, target price, buy, sell, or hold.
 
 ## 7. Differentiation From Adjacent Strategy Types
 
@@ -238,22 +251,51 @@ Key boundary:
 
 ## 8. Primary Sample Gate
 
-No primary implementation sample is selected in this design phase.
+Sample Gate has passed for first implementation, with a narrow implementation target and conservative evidence expectations.
 
-Implementation may begin only after all of the following are true:
+Stable Growth Sample Gate results:
 
-1. At least one real `evidence_pack` is found where the existing classifier stably identifies `stock.strategy_type` as `stable_growth`.
-2. The sample remains `stable_growth` across reruns without modifying classifier rules, connector behavior, scoring, readiness, pipeline output, `strategy_type`, or `sub_type`.
-3. The sample has enough concrete evidence-pack fields to produce at least a conservative P1.1 driver matrix with partial financial-quality observations and explicit missing / not_assessable rows.
-4. Candidate samples such as `600406`, `002028`, and `600276` are allowed only as gate candidates. They are not primary implementation samples until the real evidence pack and classifier output satisfy this gate.
-5. If all candidate samples are classified as `unknown` or `insufficient_data`, implementation must not start.
-6. Do not force `strategy_type=stable_growth` for P1.1 expansion.
-7. Do not modify the classifier to create a sample for implementation.
+- `600406` 国电南瑞: refreshed result is `strategy_type=stable_growth`, `status=neutral`, `confidence=high`; `financial_metrics` are available; `business_composition` has 11 segments. This is the primary implementation sample.
+- `002028` 思源电气: refreshed result is `strategy_type=stable_growth`, `status=neutral`, `confidence=high`; `financial_metrics` are available; `business_composition` has 12 segments. This is the validation sample.
+- `600276` 恒瑞医药: refreshed result remains `unknown / insufficient_data`. It must not be used as the primary or validation sample for first Stable Growth implementation.
 
-Expected gate behavior:
+First implementation scope:
 
-- If a candidate is stable_growth but lacks multi-period, customer, order, receivable aging, capex split, and dividend support, implementation may still be possible only as a conservative evidence-gated matrix with many `missing` / `not_assessable` rows.
-- If no candidate is stable_growth under the current pipeline, the correct next step is observation and data audit, not implementation.
+- `strategy_type=stable_growth` only.
+- Primary sample: `600406` 国电南瑞.
+- Validation sample: `002028` 思源电气.
+- Excluded sample: `600276` 恒瑞医药.
+- Do not modify classifier rules or force `strategy_type`.
+- Do not modify connector behavior, add data sources, or bypass current evidence-pack availability.
+- Do not modify deterministic pipeline behavior, scoring, readiness, status, confidence, score, `sub_type`, HTML, Dashboard, or generated output semantics.
+
+Implementation pre-checks for `600406`:
+
+- Confirm which of the 11 `business_composition` segments have non-zero `revenue`, `revenue_ratio`, or `gross_margin`.
+- Confirm whether `financial_metrics.roe` has an actual numeric value.
+- Confirm whether `net_profit` and `deducted_net_profit` are both present, as the minimum one-off item proxy.
+- Confirm actual field status for `operating_cashflow`, `accounts_receivable`, `inventory`, `capex`, `contract_liabilities`, and debt / liquidity fields.
+- Confirm whether dividend / payout fields exist. If they do not exist, dividend / payout drivers must be `missing / not_assessable`.
+
+Implementation acceptance expectations:
+
+- For `600406`, more than 55% `missing / not_assessable` rows is expected and correct. It is not an implementation failure.
+- The `stable_growth` label must not appear inside `company_transmission_path`.
+- "经营稳健" or "稳定增长" must not be used as a non-fallback conclusion.
+- Industry rigid demand, infrastructure attributes, policy protection, or SOE / central-SOE ownership must not be used as demand durability evidence.
+- Single-period `revenue_yoy` plus `operating_cashflow` must not generate a conclusion that growth quality is stable.
+- Contract liabilities must not be written as backlog.
+- Dividend / payout must not be written as sustainable shareholder return unless free cash flow, debt, capex, and earnings-quality evidence support it.
+- Single-period high ROE must not be written as long-term competitiveness.
+- Capex must not be written as capacity release or future revenue.
+- Valuation must not be written as valuation high / low, target price, upside, or trading judgment.
+
+Pharmaceutical / biotech exclusion caution:
+
+- `600276` is excluded because the current classifier output remains `unknown / insufficient_data`.
+- Even if a pharmaceutical company is later reclassified, innovative-drug or biotech R&D pipelines may make it unsuitable for the ordinary `stable_growth` framework.
+- If a candidate has significant innovative-drug / biotech pipeline exposure, such as high R&D ratio or material clinical-stage pipeline, implementation must separately assess whether pipeline risk invalidates the `stable_growth` analytical premise.
+- Do not assume that pharmaceutical companies are suitable for `stable_growth`.
 
 ## 9. Not-Assessable / Missing Evidence Rules
 
@@ -268,17 +310,38 @@ Use `not_assessable` when:
 - The driver conclusion would require a company-specific transmission path that cannot be verified from evidence-pack fields.
 - The row would otherwise rely on label deduction, industry narrative, generic stability wording, or a proxy beyond its boundary.
 - The current evidence is single-period but the driver requires multi-period stability.
+- Single-period positive `revenue_yoy` and same-direction `operating_cashflow` are the only supportive fields for a stability conclusion.
+- Single-period revenue plus OCF direction is available but multi-period revenue, cash conversion, receivables, inventory, customer, or order evidence is absent.
 - Contract liabilities are the only order-visibility evidence.
 - Dividends or payout are present but free cash flow, debt, capex, and earnings-quality support is incomplete.
+- Dividend or payout fields are absent; in this case dividend / payout drivers must be `missing / not_assessable`.
 - ROE is present only as a single-period number.
 - Capex exists only as an aggregate cash-outflow field.
 - Receivables exist only as aggregate balance-sheet values without aging, customer, DSO, overdue, or provision evidence.
+- `valuation_metrics` are present but the question would require valuation judgment rather than evidence-sufficiency framing.
 
 When a driver is `not_assessable`, `confidence_cap` must be `not_assessable` and `company_transmission_path` must use the exact fallback phrase when no concrete field-level bridge exists:
 
 ```text
 传导路径无法从当前证据包验证
 ```
+
+Status mapping table:
+
+| Evidence condition | `data_availability_status` | `confidence_cap` | Required behavior |
+| --- | --- | --- | --- |
+| Specific segment evidence plus financial fields, but only one period | `partial` | `low` | State the segment and financial observation only; do not conclude stability. |
+| Aggregate financial fields only, with no segment bridge | `partial` | `low` | Treat as financial observation; generate a missing bridge question for segment / customer / order support. |
+| Only `strategy_type=stable_growth` label, with no concrete fields | `not_assessable` | `not_assessable` | Use the fallback transmission path and do not generate a stability conclusion. |
+| Driver requires multi-period evidence but only one period exists | `not_assessable` | `not_assessable` | Explain that multi-period stability cannot be assessed. |
+| Expected evidence type is entirely absent | `missing` | `not_assessable` | State the absent field or evidence type and generate a research question. |
+| Contradictory signals exist, such as revenue growth with worsening OCF, receivables materially increasing, inventory build, or capex pressure | `partial` | `low` | List the contradictory signals explicitly and generate a research question about the conflict. |
+
+Valuation question rule:
+
+- If `valuation_metrics` are referenced, Chinese generated questions must use evidence-sufficiency wording, for example: "当前 evidence pack 中哪些证据足以支撑或解释当前估值背景，哪些证据仍缺失？"
+- The following valuation / trading phrasings are forbidden: "估值是否合理", "估值是否偏高/偏低", "是否支撑当前价格", "上涨空间", "下跌空间", "目标价", "买入", "卖出", and "持有".
+- `valuation_metrics` can only be evidence-sufficiency context. They must not become trading judgment, valuation judgment, target-price logic, or upside / downside framing.
 
 ## 10. Future Data Needs
 
@@ -299,31 +362,33 @@ Future versions may need these data fields, but P1.1 design must not add new dat
 
 ## 11. Implementation Recommendation
 
-Do not enter P1.1 Stable Growth implementation yet.
+Proceed to P1.1 Stable Growth implementation after this v1.1 revision is complete.
 
 Rationale:
 
-- The design matrix is ready, but the primary sample gate is not satisfied in this phase.
-- `stable_growth` requires multi-period and customer / collection evidence, while current P1.1 can only use the current evidence pack.
-- Without a real evidence pack that the current classifier stably identifies as `stable_growth`, implementation would risk force-fitting a strategy type or weakening the classifier boundary.
-- The correct next step is a sample gate check using existing evidence packs and existing classifier output only.
+- The Sample Gate has passed for `600406` as the primary sample and `002028` as the validation sample.
+- `600276` remains `unknown / insufficient_data` and is excluded from first implementation.
+- `stable_growth` still requires multi-period and customer / collection evidence, while current P1.1 can only use the current evidence pack. Therefore first implementation must be conservative and must preserve many `missing / not_assessable` rows.
+- Implementation must not force-fit the strategy type, weaken classifier boundaries, add data sources, or reinterpret one-period observations as stable-growth conclusions.
 
 Recommended next phase:
 
-1. Run a sample gate audit for `600406`, `002028`, `600276`, and any other existing evidence packs likely to classify as `stable_growth`.
-2. Confirm at least one real sample is stably classified as `stable_growth`.
-3. Confirm the sample can produce conservative driver rows without modifying classifier, connector, scoring, readiness, deterministic pipeline, HTML, Dashboard, or output semantics.
-4. Only then start a narrow implementation.
+1. Start a narrow implementation for `strategy_type=stable_growth` only.
+2. Use `600406` 国电南瑞 as the primary implementation sample and `002028` 思源电气 as the validation sample.
+3. Keep `600276` 恒瑞医药 excluded unless a future gate separately addresses classifier status and innovative-drug / biotech pipeline suitability.
+4. Confirm the `600406` pre-check fields listed in section 8 before interpreting driver output.
+5. Preserve the exact safety boundaries: no classifier changes, no forced `strategy_type`, no new data source, no deterministic pipeline changes, no scoring / readiness changes, no HTML / Dashboard work, and no output semantics changes.
+6. During implementation, enforce research-question de-duplication for contract liabilities, receivables, FCF, dividend, and payout drivers.
+7. During implementation, enforce valuation question wording as evidence-sufficiency context only.
 
-## 12. External Audit Recommendation
+## 12. External Audit Incorporation
 
-Yes. Before implementation, request an external Claude audit or equivalent independent review.
+The external Claude audit has been incorporated into v1.1 before implementation.
 
-Audit focus:
+Implemented audit focus:
 
 - Whether the `stable_growth` matrix remains an evidence-gated research-question matrix rather than a low-risk recommendation engine.
 - Whether the implementation gate prevents forced classification and sample fitting.
 - Whether proxy boundaries for dividend, ROE, free cash flow, receivables, capex, and contract liabilities are strict enough.
 - Whether `company_transmission_path` fallback and `confidence_cap=not_assessable` are enforceable for every row without concrete evidence-pack support.
 - Whether the design clearly separates `stable_growth` from `resource_core` and `right_trend_growth`.
-
