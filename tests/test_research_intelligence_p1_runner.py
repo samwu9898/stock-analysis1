@@ -415,3 +415,60 @@ def test_research_intelligence_p1_runner_writes_advanced_manufacturing_expansion
     assert any(item["driver_factor"] == "core business revenue contribution" for item in matrix)
     assert any(item["driver_factor"] == "valuation explainability as evidence sufficiency only" for item in matrix)
     assert not (tmp_path / "reports").exists()
+
+
+def test_research_intelligence_p1_runner_writes_stable_growth_expansion_artifacts(tmp_path):
+    evidence_pack = {
+        "stock": {"code": "600406", "name": "NARI Technology", "strategy_type": "stable_growth", "status": "neutral", "confidence": "high"},
+        "basic_info": {
+            "stock_code": "600406",
+            "stock_name": "NARI Technology",
+            "industry": "power grid equipment and software",
+            "main_business": "power automation and grid intelligence",
+        },
+        "financial_metrics": {
+            "period": "20260331",
+            "revenue": 12300000000.0,
+            "revenue_yoy": {"raw_value": 8.5, "display_value": "8.50%"},
+            "gross_margin": {"raw_value": 25.7, "display_value": "25.70%"},
+            "net_margin": {"raw_value": 12.1, "display_value": "12.10%"},
+            "net_profit": 721291973.43,
+            "deducted_net_profit": 641986345.23,
+            "operating_cashflow": 2100000000.0,
+            "accounts_receivable": 26652280492.48,
+            "inventory": 16590949099.58,
+            "contract_liabilities": 8634661875.03,
+            "capex": 451693205.88,
+            "roe": {"raw_value": 1.36, "display_value": "1.36%"},
+            "debt_to_asset": {"raw_value": 40.194985, "display_value": "40.19%"},
+        },
+        "valuation_metrics": {"pe_ttm": 24.0, "pb": 3.1, "ps": 2.7, "market_cap": 210000000000},
+        "business_composition": [
+            {
+                "period": "2025-12-31",
+                "classification_type": "by product",
+                "segment_name": "grid intelligence",
+                "revenue": 33422155368.42,
+                "revenue_ratio": {"raw_value": 0.504646, "display_value": "50.46%"},
+                "gross_margin": {"raw_value": 0.301197, "display_value": "30.12%"},
+            }
+        ],
+        "source_trace_summary": [
+            {"block_name": "business_composition", "trace_count": 1},
+            {"block_name": "financial_indicator", "trace_count": 16},
+            {"block_name": "valuation", "trace_count": 4},
+        ],
+    }
+    evidence_path = tmp_path / "evidence_pack_600406.json"
+    evidence_path.write_text(json.dumps(evidence_pack, ensure_ascii=False), encoding="utf-8")
+
+    result = run_research_intelligence_p1("600406", evidence_pack_path=evidence_path, output_dir=tmp_path)
+    matrix = result["research_intelligence_p1"]["driver_matrix"]
+
+    assert (tmp_path / "research_intelligence_p1_600406.json").exists()
+    assert (tmp_path / "research_questions_p1_600406.json").exists()
+    assert (tmp_path / "research_questions_p1_600406.md").exists()
+    assert result["research_intelligence_p1"]["strategy_type"] == "stable_growth"
+    assert any(item["driver_factor"] == "recurring revenue or repeat-order quality" for item in matrix)
+    assert any(item["driver_factor"] == "valuation explainability as evidence sufficiency only" for item in matrix)
+    assert not (tmp_path / "reports").exists()

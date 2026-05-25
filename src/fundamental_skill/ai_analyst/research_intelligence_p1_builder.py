@@ -32,6 +32,10 @@ SEMICONDUCTOR_CYCLE_STRATEGY_TYPE = "semiconductor_cycle"
 SEMICONDUCTOR_PRIMARY_SAMPLE = "002371"
 ADVANCED_MANUFACTURING_STRATEGY_TYPE = "advanced_manufacturing_growth"
 ADVANCED_MANUFACTURING_PRIMARY_SAMPLE = "002050"
+STABLE_GROWTH_STRATEGY_TYPE = "stable_growth"
+STABLE_GROWTH_PRIMARY_SAMPLE = "600406"
+STABLE_GROWTH_VALIDATION_SAMPLE = "002028"
+STABLE_GROWTH_EXCLUDED_SAMPLE = "600276"
 SUPPORTED_STRATEGY_TYPES = {
     AI_DATACENTER_STRATEGY_TYPE,
     CXO_STRATEGY_TYPE,
@@ -40,6 +44,7 @@ SUPPORTED_STRATEGY_TYPES = {
     RESOURCE_SWING_STRATEGY_TYPE,
     SEMICONDUCTOR_CYCLE_STRATEGY_TYPE,
     ADVANCED_MANUFACTURING_STRATEGY_TYPE,
+    STABLE_GROWTH_STRATEGY_TYPE,
 }
 
 GENERIC_MISSING_BRIDGE_REASON = "Current evidence pack lacks concrete company transmission nodes for this driver."
@@ -184,6 +189,12 @@ class ResearchIntelligenceP1Builder:
         elif strategy_type == ADVANCED_MANUFACTURING_STRATEGY_TYPE and stock_code == ADVANCED_MANUFACTURING_PRIMARY_SAMPLE:
             drivers = self._advanced_manufacturing_drivers(evidence_pack)
             summary_scope = "P1.1 advanced manufacturing expansion"
+        elif strategy_type == STABLE_GROWTH_STRATEGY_TYPE and stock_code == STABLE_GROWTH_PRIMARY_SAMPLE:
+            drivers = self._stable_growth_drivers(evidence_pack)
+            summary_scope = "P1.1 stable growth expansion"
+        elif strategy_type == STABLE_GROWTH_STRATEGY_TYPE:
+            drivers = [self._stable_growth_boundary_driver(stock_code, sub_type)]
+            summary_scope = "P1.1 stable growth validation / boundary sample"
         else:
             drivers = [self._unsupported_driver(strategy_type, sub_type)]
             summary_scope = "P1.1 unsupported pilot boundary"
@@ -802,6 +813,642 @@ class ResearchIntelligenceP1Builder:
         return any(_is_present(self._value_at_path(pack, path)) for path in price_paths) and any(
             _is_present(self._value_at_path(pack, path)) for path in volume_paths
         )
+
+    def _stable_growth_boundary_driver(self, stock_code: str, sub_type: Any) -> DriverFactor:
+        reason = "stable_growth P1.1 first implementation supports primary sample 600406 only."
+        if stock_code == STABLE_GROWTH_VALIDATION_SAMPLE:
+            reason = "002028 is a validation sample for boundary behavior and is not in the first-version positive path."
+        elif stock_code == STABLE_GROWTH_EXCLUDED_SAMPLE:
+            reason = "600276 is excluded from the first implementation and must not be force-fit into stable_growth."
+        return DriverFactor(
+            layer="risk",
+            driver_factor="unsupported_pilot_strategy",
+            driver_scope="stable_growth_first_version_boundary",
+            why_it_matters="P1.1 Stable Growth first implementation is intentionally narrowed to one primary sample.",
+            required_evidence=[
+                "strategy_type=stable_growth",
+                "stock.code=600406 for first implementation",
+                "current evidence pack with field-level financial and segment evidence",
+            ],
+            available_evidence=[
+                f"input.stock_code={stock_code}",
+                f"input.strategy_type={STABLE_GROWTH_STRATEGY_TYPE}",
+                f"input.sub_type={sub_type}",
+            ],
+            missing_evidence=["accepted first-version stable_growth positive path for this sample"],
+            company_transmission_path=TRANSMISSION_PATH_FALLBACK,
+            data_availability_status="not_assessable",
+            confidence_cap="not_assessable",
+            not_assessable_reason=reason,
+            what_was_checked=["stock.code", "stock.strategy_type", "stock.sub_type"],
+            source_refs=[],
+            research_question=(
+                "This stable_growth sample is outside the first implementation path; what later gate evidence "
+                "would be needed before adding a separate template?"
+            ),
+            interpretation_guard="Do not extend stable_growth beyond 600406 or force-fit validation / excluded samples.",
+        )
+
+    def _stable_growth_drivers(self, pack: dict[str, Any]) -> list[DriverFactor]:
+        return [self._build_stable_growth_driver(pack, payload) for payload in self._stable_growth_payloads()]
+
+    def _stable_growth_payloads(self) -> list[dict[str, Any]]:
+        valuation_question = "当前 evidence pack 中哪些证据足以支撑或解释当前估值背景，哪些证据仍缺失？"
+        return [
+            {
+                "layer": "business",
+                "driver_factor": "recurring revenue or repeat-order quality",
+                "driver_scope": "business / demand",
+                "why_it_matters": "Repeatability must be proven by renewal, repeat-order, cohort, contract, revenue-recognition, and collection evidence.",
+                "required_evidence": ["product / service revenue", "repeat-order or renewal rate", "customer cohort", "contract duration", "collection"],
+                "checked_paths": ("business_composition", "financial_metrics.revenue", "financial_metrics.contract_liabilities", "financial_metrics.operating_cashflow", "financial_metrics.accounts_receivable"),
+                "path_policy": "fallback",
+                "status": "not_assessable",
+                "missing_evidence": ["renewal / repeat-order rate", "customer cohort", "contract duration", "order-to-revenue bridge", "collection bridge"],
+                "not_assessable_reason": "Current evidence has segment and financial observations but no repeat-order, renewal, cohort, or contract-duration evidence.",
+                "interpretation_guard": "Do not treat revenue growth, historical size, or the stable_growth label as recurring revenue.",
+                "research_question": "What renewal, repeat-order, customer cohort, contract-duration, revenue-recognition, and collection evidence supports recurring revenue?",
+            },
+            {
+                "layer": "business",
+                "driver_factor": "customer stability",
+                "driver_scope": "business / demand",
+                "why_it_matters": "Customer stability requires customer-level retention, tenure, concentration, renewal, and payment behavior evidence.",
+                "required_evidence": ["top customer revenue share", "customer tenure", "renewal / retention", "customer payment behavior", "receivable by customer"],
+                "checked_paths": ("financial_metrics.revenue", "financial_metrics.accounts_receivable", "financial_metrics.operating_cashflow", "business_composition"),
+                "path_policy": "fallback",
+                "status": "not_assessable",
+                "missing_evidence": ["top customer list", "customer tenure", "retention / churn", "customer payment behavior", "customer-level receivables"],
+                "not_assessable_reason": "Customer-specific evidence is absent; aggregate revenue and receivables are financial observations only.",
+                "interpretation_guard": "Do not infer customer stability from industry position, broad segment labels, or aggregate revenue.",
+                "research_question": "Which customers support revenue stability, and is retention visible in orders, revenue, receivables, and cash collection?",
+            },
+            {
+                "layer": "business",
+                "driver_factor": "product / service demand durability",
+                "driver_scope": "business / demand",
+                "why_it_matters": "Demand durability must come from company-level multi-period revenue, retention, repeat order, renewal pricing, collection, or cash conversion.",
+                "required_evidence": ["multi-period product / service revenue", "customer retention", "repeat order", "pricing renewal", "collection or cash conversion"],
+                "checked_paths": ("basic_info.industry", "basic_info.main_business", "business_composition", "financial_metrics.revenue", "financial_metrics.operating_cashflow"),
+                "path_policy": "fallback",
+                "status": "not_assessable",
+                "missing_evidence": ["multi-period product demand", "customer retention", "repeat-order evidence", "pricing-renewal evidence", "cash-conversion evidence"],
+                "not_assessable_reason": "Industry, infrastructure, ownership, or product-attribute wording cannot verify company-level demand durability.",
+                "interpretation_guard": "Industry type, rigid demand, infrastructure, policy protection, and SOE / central-SOE attributes are not demand durability evidence.",
+                "research_question": "What company-level multi-period revenue, retention, repeat-order, pricing-renewal, collection, or cash-conversion evidence proves demand durability?",
+            },
+            {
+                "layer": "business",
+                "driver_factor": "order visibility",
+                "driver_scope": "business / demand",
+                "why_it_matters": "Order visibility requires signed orders, delivery schedule, cancellation history, shipment, revenue recognition, and collection evidence.",
+                "required_evidence": ["signed orders", "true order table", "delivery schedule", "cancellation history", "shipment / acceptance", "collection"],
+                "checked_paths": ("financial_metrics.contract_liabilities", "financial_metrics.revenue", "financial_metrics.operating_cashflow"),
+                "path_policy": "fallback",
+                "status": "missing",
+                "missing_evidence": ["signed orders", "true order table", "delivery schedule", "cancellation history", "shipment / acceptance", "revenue-recognition terms"],
+                "not_assessable_reason": "Signed-order and delivery evidence is absent; contract liabilities alone cannot establish order visibility.",
+                "interpretation_guard": "Contract liabilities are partial proxy only; they are not backlog, signed orders, delivery schedule, or future revenue.",
+                "research_question": "Which signed orders, delivery schedules, cancellations, shipments, revenue-recognition terms, and collections support order visibility?",
+            },
+            {
+                "layer": "business",
+                "driver_factor": "contract liabilities as partial proxy only",
+                "driver_scope": "business / demand",
+                "why_it_matters": "Contract liabilities can be a limited financial proxy only when kept separate from signed orders and delivery evidence.",
+                "required_evidence": ["contract liabilities", "linked customer / order / project", "prepayment terms", "revenue-recognition schedule"],
+                "checked_paths": ("financial_metrics.contract_liabilities", "financial_metrics.revenue", "financial_metrics.operating_cashflow"),
+                "path_policy": "contract_liability_proxy",
+                "missing_evidence": ["customer / order mapping", "project mapping", "prepayment terms", "revenue-recognition schedule"],
+                "interpretation_guard": "Contract liabilities are partial proxy only; they are not backlog, signed orders, delivery schedule, future revenue, or stability proof.",
+                "research_question": "Which customer, order, project mapping, prepayment terms, and revenue-recognition schedule explain contract liabilities as a partial proxy?",
+            },
+            {
+                "layer": "business",
+                "driver_factor": "customer concentration",
+                "driver_scope": "business / demand",
+                "why_it_matters": "Concentration can support or weaken stability only with customer share, customer-level receivables, and trend evidence.",
+                "required_evidence": ["top customer revenue share", "top-five customer share", "customer-level receivables", "concentration trend"],
+                "checked_paths": ("business_composition", "financial_metrics.accounts_receivable", "risk_flags", "unknown_or_missing_evidence"),
+                "path_policy": "fallback",
+                "status": "not_assessable",
+                "missing_evidence": ["top customer revenue share", "top-five customer share", "customer-level receivables", "concentration trend"],
+                "not_assessable_reason": "Top-customer and customer-receivable fields are absent.",
+                "interpretation_guard": "Do not infer diversification from broad business segments alone.",
+                "research_question": "Does customer concentration support stability or create dependency and collection risk, and what customer-level evidence proves it?",
+            },
+            {
+                "layer": "business",
+                "driver_factor": "pricing power evidence",
+                "driver_scope": "business / demand",
+                "why_it_matters": "Pricing power needs price, cost, volume, renewal, and customer-acceptance evidence beyond margin observations.",
+                "required_evidence": ["price changes", "price formula", "volume", "unit cost", "renewal pricing", "customer acceptance"],
+                "checked_paths": ("business_composition", "financial_metrics.gross_margin", "financial_metrics.revenue"),
+                "path_policy": "fallback",
+                "status": "not_assessable",
+                "missing_evidence": ["product price / volume", "unit cost", "pricing formula", "renewal-pricing terms", "customer acceptance"],
+                "not_assessable_reason": "Current margin and segment fields are observations only; price / volume and renewal-pricing evidence is absent.",
+                "interpretation_guard": "Do not infer pricing power from stable or high gross margin alone.",
+                "research_question": "Is margin supported by pricing power, cost pass-through, product mix, or temporary cost movement, and what price / volume evidence separates them?",
+            },
+            {
+                "layer": "business",
+                "driver_factor": "business mix stability",
+                "driver_scope": "business / demand",
+                "why_it_matters": "Business mix needs multi-period segment and product/customer mix evidence before any stability conclusion.",
+                "required_evidence": ["multi-period revenue mix", "segment margins", "product / customer mix", "new / old business split"],
+                "checked_paths": ("business_composition", "financial_metrics.revenue", "financial_metrics.gross_margin"),
+                "path_policy": "segment_financial_observation",
+                "missing_evidence": ["multi-period segment mix", "customer mix trend", "product-line trend", "segment restatement history"],
+                "interpretation_guard": "One-period segment composition is an observation only, not long-term mix stability.",
+                "research_question": "Has business mix remained stable across periods, and which product / service lines drive revenue and margin quality?",
+            },
+            {
+                "layer": "financial",
+                "driver_factor": "revenue growth quality",
+                "driver_scope": "financial quality",
+                "why_it_matters": "Revenue quality needs multi-period revenue, cash conversion, receivables, inventory, customer, order, and segment bridge evidence.",
+                "required_evidence": ["multi-period revenue", "revenue YoY", "segment revenue", "cash conversion", "receivables", "inventory", "customer / order bridge"],
+                "checked_paths": ("business_composition", "financial_metrics.revenue", "financial_metrics.revenue_yoy", "financial_metrics.operating_cashflow", "financial_metrics.accounts_receivable", "financial_metrics.inventory"),
+                "path_policy": "fallback",
+                "status": "not_assessable",
+                "missing_evidence": ["multi-period revenue trend", "cash-conversion trend", "receivable trend", "inventory trend", "customer / order bridge"],
+                "not_assessable_reason": "Single-period revenue and operating cash-flow observations cannot establish multi-period stability.",
+                "interpretation_guard": "Single-period revenue plus same-direction operating cash flow is only a financial observation, not multi-period stability evidence.",
+                "research_question": "Is revenue growth supported by cash collection, receivables / inventory discipline, customer / order evidence, and stable business mix rather than one-period movement?",
+            },
+            {
+                "layer": "financial",
+                "driver_factor": "gross margin stability",
+                "driver_scope": "financial quality",
+                "why_it_matters": "Gross-margin stability requires multi-period margin and product price / cost / volume evidence.",
+                "required_evidence": ["multi-period gross margin", "segment margin", "product mix", "price / cost / volume", "cost pass-through"],
+                "checked_paths": ("business_composition", "financial_metrics.gross_margin", "financial_metrics.revenue"),
+                "path_policy": "fallback",
+                "status": "not_assessable",
+                "missing_evidence": ["multi-period margin series", "product cost", "price / volume", "mix shift", "cost pass-through terms"],
+                "not_assessable_reason": "Only current-period margin observations are available.",
+                "interpretation_guard": "Do not infer product advantage or pricing power from one-period margin.",
+                "research_question": "Is gross margin stable because of product mix, pricing, cost control, or temporary factors, and what multi-period evidence separates them?",
+            },
+            {
+                "layer": "financial",
+                "driver_factor": "net margin stability",
+                "driver_scope": "financial quality",
+                "why_it_matters": "Net-margin stability needs expense, tax, one-off item, and multi-period evidence.",
+                "required_evidence": ["multi-period net margin", "expense ratio", "tax", "non-recurring items", "impairment", "interest expense"],
+                "checked_paths": ("financial_metrics.net_margin", "financial_metrics.net_profit", "financial_metrics.deducted_net_profit", "financial_metrics.operating_cashflow"),
+                "path_policy": "fallback",
+                "status": "not_assessable",
+                "missing_evidence": ["expense breakdown", "tax bridge", "impairment detail", "non-recurring item bridge", "multi-period trend"],
+                "not_assessable_reason": "Net margin and profit fields are current-period observations without full expense and one-off bridge.",
+                "interpretation_guard": "Do not treat one-period net margin as durable profitability.",
+                "research_question": "Does net margin come from operating quality rather than expense timing, subsidy, disposal gain, impairment reversal, or tax effects?",
+            },
+            {
+                "layer": "financial",
+                "driver_factor": "operating cash flow conversion",
+                "driver_scope": "financial quality",
+                "why_it_matters": "Cash conversion requires multi-period conversion, receivables, inventory, payables, and customer payment terms.",
+                "required_evidence": ["operating cash flow", "revenue", "net profit", "receivables", "inventory", "payables", "multi-period conversion"],
+                "checked_paths": ("financial_metrics.operating_cashflow", "financial_metrics.revenue", "financial_metrics.net_profit", "financial_metrics.accounts_receivable", "financial_metrics.inventory"),
+                "path_policy": "fallback",
+                "status": "not_assessable",
+                "missing_evidence": ["payables", "cash conversion cycle", "customer terms", "multi-period operating cash-flow conversion"],
+                "not_assessable_reason": "Single-period operating cash flow is not long-term cash-flow stability.",
+                "interpretation_guard": "Single-period operating cash-flow improvement or weakness is not long-term cash-flow stability.",
+                "research_question": "Does operating cash flow validate revenue and profit quality after receivables, inventory, payables, and customer payment terms?",
+            },
+            {
+                "layer": "financial",
+                "driver_factor": "accounts receivable / collection quality",
+                "driver_scope": "financial quality",
+                "why_it_matters": "Collection quality needs aging, overdue, bad-debt, DSO, customer receivable, and payment-term evidence.",
+                "required_evidence": ["receivables", "receivable aging", "overdue amount", "bad-debt provision", "DSO", "customer mix"],
+                "checked_paths": ("financial_metrics.accounts_receivable", "financial_metrics.revenue", "financial_metrics.operating_cashflow"),
+                "path_policy": "fallback",
+                "status": "missing",
+                "missing_evidence": ["receivable aging", "overdue receivables", "bad-debt provision", "DSO trend", "customer-specific receivables"],
+                "not_assessable_reason": "Aggregate receivables are available, but aging, overdue, provision, DSO, and customer data are absent.",
+                "interpretation_guard": "Receivable growth is not high-quality revenue and may signal collection risk.",
+                "research_question": "What receivable aging, overdue, bad-debt provision, DSO, customer receivable, and payment-term evidence is needed to assess collection quality?",
+            },
+            {
+                "layer": "financial",
+                "driver_factor": "inventory / working-capital discipline",
+                "driver_scope": "financial quality",
+                "why_it_matters": "Inventory discipline requires product inventory split, aging, write-down, turnover, payables, and sales bridge.",
+                "required_evidence": ["inventory", "revenue", "inventory breakdown", "aging", "write-down", "turnover", "product sales bridge"],
+                "checked_paths": ("financial_metrics.inventory", "financial_metrics.revenue", "financial_metrics.operating_cashflow", "financial_metrics.accounts_receivable"),
+                "path_policy": "financial_observation",
+                "missing_evidence": ["inventory breakdown", "aging", "write-down", "turnover", "payables", "product sales bridge"],
+                "interpretation_guard": "Inventory build or decline is not direct demand proof without sales and product bridge.",
+                "research_question": "Does inventory reflect working-capital timing, demand mismatch, production timing, or cost movement, and what product sales bridge is missing?",
+            },
+            {
+                "layer": "financial",
+                "driver_factor": "free cash flow",
+                "driver_scope": "financial quality",
+                "why_it_matters": "Derived free cash flow is only an observation unless capex split, working capital, debt service, and multi-period support exist.",
+                "required_evidence": ["operating cash flow", "capex", "maintenance vs expansion capex", "working capital", "debt service", "multi-period free cash flow"],
+                "checked_paths": ("financial_metrics.operating_cashflow", "financial_metrics.capex", "financial_metrics.accounts_receivable", "financial_metrics.inventory", "financial_metrics.debt_to_asset"),
+                "path_policy": "financial_observation",
+                "missing_evidence": ["maintenance vs expansion capex split", "working-capital detail", "debt service", "multi-period free-cash-flow trend"],
+                "interpretation_guard": "operating_cashflow - capex is a derived observation only; it is not shareholder-return capacity without capex, debt, and earnings-quality support.",
+                "research_question": "Is derived free cash flow repeatable after maintenance capex, working-capital needs, and debt service, or only a one-period observation?",
+            },
+            {
+                "layer": "financial",
+                "driver_factor": "ROE / ROIC stability",
+                "driver_scope": "financial quality",
+                "why_it_matters": "Return quality requires multi-period ROE / ROIC, DuPont drivers, leverage, asset turnover, margin, and one-off adjustments.",
+                "required_evidence": ["multi-period ROE", "ROIC", "DuPont drivers", "invested capital", "leverage", "one-off adjustments"],
+                "checked_paths": ("financial_metrics.roe", "financial_metrics.net_margin", "financial_metrics.revenue", "financial_metrics.debt_to_asset", "financial_metrics.net_profit", "financial_metrics.deducted_net_profit"),
+                "path_policy": "fallback",
+                "status": "not_assessable",
+                "missing_evidence": ["ROIC", "invested capital", "multi-period return series", "DuPont components", "one-off adjustments"],
+                "not_assessable_reason": "Only single-period ROE and related financial fields are available.",
+                "interpretation_guard": "Single-period high ROE is a current return observation only, not long-term competitiveness.",
+                "research_question": "Are ROE and ROIC stable because of operating return quality rather than leverage, one-off profit, or accounting effects?",
+            },
+            {
+                "layer": "financial",
+                "driver_factor": "debt / liquidity / interest burden",
+                "driver_scope": "financial quality",
+                "why_it_matters": "Financing resilience requires debt, liquidity, interest expense, maturity, covenants, and cash-flow evidence.",
+                "required_evidence": ["debt amount", "cash", "interest expense", "debt maturity", "interest coverage", "liquidity", "operating cash flow"],
+                "checked_paths": ("financial_metrics.debt_to_asset", "financial_metrics.operating_cashflow", "financial_metrics.capex"),
+                "path_policy": "financial_observation",
+                "missing_evidence": ["cash / liquidity field", "interest expense", "debt maturity", "restricted cash", "covenants", "refinancing schedule"],
+                "interpretation_guard": "Do not infer balance-sheet resilience without debt, liquidity, maturity, interest, and cash-flow evidence.",
+                "research_question": "Can the balance sheet support operations, capex, and shareholder-return decisions through a downturn, and which liquidity / maturity evidence is missing?",
+            },
+            {
+                "layer": "financial",
+                "driver_factor": "capex discipline: maintenance vs expansion",
+                "driver_scope": "financial quality",
+                "why_it_matters": "Capex discipline requires maintenance vs expansion split, project mapping, utilization, and revenue / cash-flow bridge.",
+                "required_evidence": ["capex total", "maintenance capex", "expansion capex", "project mapping", "utilization", "revenue / cash-flow bridge"],
+                "checked_paths": ("financial_metrics.capex", "financial_metrics.revenue", "financial_metrics.operating_cashflow"),
+                "path_policy": "fallback",
+                "status": "missing",
+                "missing_evidence": ["maintenance capex", "expansion capex", "project list", "acceptance", "utilization", "revenue bridge"],
+                "not_assessable_reason": "Aggregate capex is available, but maintenance / expansion split and project bridge are absent.",
+                "interpretation_guard": "Aggregate capex is cash outflow only; it is not capacity release, utilization, future revenue, or growth conversion.",
+                "research_question": "Is capex maintaining existing earnings power, expanding capacity, or consuming cash without visible project, utilization, revenue, and cash-flow bridge?",
+            },
+            {
+                "layer": "company",
+                "driver_factor": "dividend capacity",
+                "driver_scope": "shareholder-return / durability",
+                "why_it_matters": "Dividend capacity needs dividend fields plus repeatable FCF, debt, capex, working-capital, and earnings-quality support.",
+                "required_evidence": ["dividend amount", "operating cash flow", "free cash flow", "capex split", "debt / liquidity", "profit quality"],
+                "checked_paths": ("financial_metrics.operating_cashflow", "financial_metrics.capex", "financial_metrics.debt_to_asset", "financial_metrics.net_profit", "financial_metrics.deducted_net_profit"),
+                "path_policy": "dividend_missing",
+                "missing_evidence": ["dividend amount / history", "payout ratio", "free-cash-flow coverage", "debt maturity", "capex plan", "capital-allocation policy"],
+                "not_assessable_reason": "Dividend / payout fields are absent from financial_metrics, and support legs are incomplete.",
+                "interpretation_guard": "Do not write dividend capacity as sustainable shareholder return without free cash flow, debt, capex, and earnings-quality support.",
+                "research_question": "Are dividend amount or history fields present, and are they covered by repeatable free cash flow, debt capacity, capex needs, and earnings quality?",
+            },
+            {
+                "layer": "company",
+                "driver_factor": "payout sustainability",
+                "driver_scope": "shareholder-return / durability",
+                "why_it_matters": "Payout sustainability requires payout history, FCF coverage, debt maturity, capex commitments, and policy evidence.",
+                "required_evidence": ["payout ratio", "earnings quality", "free cash flow", "capex needs", "debt maturity", "management policy"],
+                "checked_paths": ("financial_metrics.net_profit", "financial_metrics.operating_cashflow", "financial_metrics.capex", "financial_metrics.debt_to_asset"),
+                "path_policy": "dividend_missing",
+                "missing_evidence": ["payout ratio history", "dividend policy", "repurchase history", "capex commitments", "debt maturity"],
+                "not_assessable_reason": "Payout fields and multi-period coverage evidence are absent.",
+                "interpretation_guard": "Payout ratio is not shareholder-return quality by itself.",
+                "research_question": "What payout policy, payout history, FCF coverage, debt maturity, and capex commitment evidence is missing before sustainability can be assessed?",
+            },
+            {
+                "layer": "company",
+                "driver_factor": "earnings quality",
+                "driver_scope": "shareholder-return / durability",
+                "why_it_matters": "Earnings quality needs cash conversion, non-recurring item detail, impairment, subsidy, disposal gain, and multi-period bridge.",
+                "required_evidence": ["net profit", "deducted net profit", "cash conversion", "non-recurring items", "impairment", "subsidy", "receivables"],
+                "checked_paths": ("financial_metrics.net_profit", "financial_metrics.deducted_net_profit", "financial_metrics.operating_cashflow", "financial_metrics.accounts_receivable"),
+                "path_policy": "financial_observation",
+                "missing_evidence": ["non-recurring item detail", "impairment", "subsidy split", "asset-disposal gains", "multi-period bridge"],
+                "interpretation_guard": "Profit growth is not earnings quality without cash-flow and one-off item checks.",
+                "research_question": "Are earnings supported by operating profit and cash conversion rather than one-off gains or accounting items?",
+            },
+            {
+                "layer": "company",
+                "driver_factor": "balance-sheet resilience",
+                "driver_scope": "shareholder-return / durability",
+                "why_it_matters": "Resilience requires debt, cash, liquidity, maturity, obligations, capex commitments, and working-capital stress evidence.",
+                "required_evidence": ["debt", "cash", "liquidity", "maturity", "capex commitments", "off-balance-sheet obligations"],
+                "checked_paths": ("financial_metrics.debt_to_asset", "financial_metrics.operating_cashflow", "financial_metrics.accounts_receivable", "financial_metrics.inventory", "financial_metrics.capex"),
+                "path_policy": "fallback",
+                "status": "not_assessable",
+                "missing_evidence": ["cash / liquidity detail", "debt maturity", "restricted cash", "covenants", "off-balance commitments"],
+                "not_assessable_reason": "Debt-to-asset and working-capital fields are observations only; liquidity and maturity detail is incomplete.",
+                "interpretation_guard": "Low apparent leverage is not resilience if maturity, liquidity, and obligations are missing.",
+                "research_question": "Can the balance sheet absorb weaker demand, collection delays, or capex pressure, and what maturity / liquidity evidence is missing?",
+            },
+            {
+                "layer": "company",
+                "driver_factor": "cyclicality / downturn resilience",
+                "driver_scope": "shareholder-return / durability",
+                "why_it_matters": "Downturn resilience requires multi-period performance through weak periods plus customer, pricing, order, and working-capital evidence.",
+                "required_evidence": ["downturn-period revenue", "downturn-period margin", "downturn-period cash flow", "customer retention", "stress-period collection"],
+                "checked_paths": ("financial_metrics.revenue", "financial_metrics.gross_margin", "financial_metrics.operating_cashflow", "financial_metrics.accounts_receivable", "financial_metrics.capex"),
+                "path_policy": "fallback",
+                "status": "not_assessable",
+                "missing_evidence": ["downturn-period series", "customer retention through downturn", "price / volume through downturn", "order cancellation", "stress-period collection"],
+                "not_assessable_reason": "Current evidence pack lacks downturn-period and multi-period stability evidence.",
+                "interpretation_guard": "The stable_growth label is not downturn resilience without multi-period evidence.",
+                "research_question": "How did revenue, margin, cash flow, receivables, and capex behave during weak demand periods?",
+            },
+            {
+                "layer": "company",
+                "driver_factor": "one-off profit / non-recurring item risk",
+                "driver_scope": "shareholder-return / durability",
+                "why_it_matters": "Net profit vs deducted net profit is a minimum one-off proxy but does not replace detailed non-recurring item notes.",
+                "required_evidence": ["net profit", "deducted net profit", "asset disposal", "subsidy", "fair-value gain", "impairment", "tax effects"],
+                "checked_paths": ("financial_metrics.net_profit", "financial_metrics.deducted_net_profit", "financial_metrics.operating_cashflow"),
+                "path_policy": "financial_observation",
+                "missing_evidence": ["detailed non-recurring item note", "asset disposal", "subsidy", "impairment", "fair-value movements", "tax reconciliation"],
+                "interpretation_guard": "Do not treat reported net profit as recurring earnings without non-recurring item checks.",
+                "research_question": "How much of profit depends on non-recurring items, and does recurring operating profit support the observed earnings base?",
+            },
+            {
+                "layer": "risk",
+                "driver_factor": "revenue growth without cash-flow support",
+                "driver_scope": "risk",
+                "why_it_matters": "Revenue, OCF, receivables, and inventory must be read together as signals that may conflict.",
+                "required_evidence": ["revenue growth", "operating cash flow", "receivables", "inventory", "payables", "customer payment terms", "multi-period trend"],
+                "checked_paths": ("financial_metrics.revenue_yoy", "financial_metrics.operating_cashflow", "financial_metrics.accounts_receivable", "financial_metrics.inventory", "financial_metrics.revenue"),
+                "path_policy": "financial_observation",
+                "missing_evidence": ["payables", "customer terms", "cash conversion cycle", "multi-period trend", "customer / order bridge"],
+                "force_cap": "low",
+                "interpretation_guard": "Even if single-period revenue_yoy is positive and OCF moves in the same direction, do not combine them into a stability conclusion.",
+                "research_question": "Do revenue growth, operating cash flow, receivables, inventory, customer terms, and order evidence show repeatable cash conversion or a working-capital conflict?",
+            },
+            {
+                "layer": "risk",
+                "driver_factor": "margin stability without product / pricing evidence",
+                "driver_scope": "risk",
+                "why_it_matters": "Margin stability is a risk question when product price, cost, volume, and renewal-pricing evidence are absent.",
+                "required_evidence": ["gross margin", "net margin", "product price", "unit cost", "mix", "renewal pricing", "customer acceptance"],
+                "checked_paths": ("business_composition", "financial_metrics.gross_margin", "financial_metrics.net_margin", "financial_metrics.revenue"),
+                "path_policy": "segment_financial_observation",
+                "missing_evidence": ["price / volume", "unit cost", "product mix detail", "pricing formula", "competitor pricing"],
+                "interpretation_guard": "Margin stability does not prove pricing power or product advantage.",
+                "research_question": "Does margin have product, pricing, cost, and mix support, or is it only an unexplained accounting observation?",
+            },
+            {
+                "layer": "risk",
+                "driver_factor": "receivables growth masking collection risk",
+                "driver_scope": "risk",
+                "why_it_matters": "Receivables can mask collection pressure when revenue or profit looks positive.",
+                "required_evidence": ["receivables", "revenue", "operating cash flow", "aging", "overdue", "bad-debt provision", "customer concentration"],
+                "checked_paths": ("financial_metrics.accounts_receivable", "financial_metrics.revenue", "financial_metrics.operating_cashflow"),
+                "path_policy": "financial_observation",
+                "missing_evidence": ["aging", "overdue", "bad-debt provision", "customer receivables", "DSO trend"],
+                "force_cap": "low",
+                "interpretation_guard": "Receivable growth is not revenue quality and may be a negative working-capital signal.",
+                "research_question": "Do aggregate receivables and OCF raise a collection-risk question pending aging, overdue, provision, DSO, and customer-receivable evidence?",
+            },
+            {
+                "layer": "risk",
+                "driver_factor": "inventory build without sales bridge",
+                "driver_scope": "risk",
+                "why_it_matters": "Inventory risk needs product split, sales volume, production reconciliation, aging, write-down, and turnover evidence.",
+                "required_evidence": ["inventory", "revenue", "sales volume", "product inventory split", "production / sales reconciliation", "write-downs"],
+                "checked_paths": ("financial_metrics.inventory", "financial_metrics.revenue", "financial_metrics.operating_cashflow"),
+                "path_policy": "financial_observation",
+                "missing_evidence": ["product inventory", "sales volume", "production volume", "aging", "write-down", "turnover"],
+                "force_cap": "low",
+                "interpretation_guard": "Inventory build without sales bridge cannot be interpreted as future demand.",
+                "research_question": "Is inventory tied to confirmed sales / delivery timing, or does missing product and sales bridge leave demand mismatch and write-down risk unresolved?",
+            },
+            {
+                "layer": "risk",
+                "driver_factor": "capex expansion without revenue / utilization bridge",
+                "driver_scope": "risk",
+                "why_it_matters": "Capex risk remains when project-level capex, acceptance, utilization, revenue contribution, and funding evidence are missing.",
+                "required_evidence": ["capex", "project list", "maintenance vs expansion split", "acceptance", "utilization", "revenue contribution"],
+                "checked_paths": ("financial_metrics.capex", "financial_metrics.revenue", "financial_metrics.operating_cashflow"),
+                "path_policy": "financial_observation",
+                "missing_evidence": ["project-level capex", "utilization", "acceptance", "revenue contribution", "funding source"],
+                "force_cap": "low",
+                "interpretation_guard": "Capex is cash outflow only; no capacity, utilization, or revenue conversion may be inferred.",
+                "research_question": "Is expansion consuming cash before project mapping, acceptance, utilization, revenue contribution, and funding evidence are verified?",
+            },
+            {
+                "layer": "risk",
+                "driver_factor": "contract liabilities overread as backlog",
+                "driver_scope": "risk",
+                "why_it_matters": "This risk row prevents contract liabilities from being overread as signed orders or future revenue.",
+                "required_evidence": ["contract liabilities", "true order table", "signed orders", "customer / order mapping", "revenue-recognition schedule"],
+                "checked_paths": ("financial_metrics.contract_liabilities", "financial_metrics.revenue", "financial_metrics.operating_cashflow"),
+                "path_policy": "contract_liability_proxy",
+                "missing_evidence": ["true order table", "signed orders", "customer mapping", "delivery / cancellation evidence", "revenue-recognition schedule"],
+                "force_cap": "low",
+                "interpretation_guard": "Contract liabilities are partial proxy only and must not be written as backlog or confirmed future revenue.",
+                "research_question": "What true order table, signed-order, customer mapping, delivery / cancellation, and revenue-recognition evidence prevents overreading contract liabilities?",
+            },
+            {
+                "layer": "risk",
+                "driver_factor": "dividend overread without free cash flow",
+                "driver_scope": "risk",
+                "why_it_matters": "Dividend or payout language is unsafe without dividend fields and support from FCF, debt, capex, liquidity, and earnings quality.",
+                "required_evidence": ["dividend / payout", "operating cash flow", "capex", "free cash flow", "debt", "liquidity", "earnings quality"],
+                "checked_paths": ("financial_metrics.operating_cashflow", "financial_metrics.capex", "financial_metrics.debt_to_asset", "financial_metrics.net_profit", "financial_metrics.deducted_net_profit"),
+                "path_policy": "dividend_missing",
+                "missing_evidence": ["dividend / payout history", "debt maturity", "capex split", "non-recurring items", "multi-period free-cash-flow trend"],
+                "not_assessable_reason": "Dividend / payout fields are absent and support legs are incomplete.",
+                "interpretation_guard": "Dividend or payout alone is not shareholder-return sustainability.",
+                "research_question": "Could dividend or payout be overstated without dividend fields plus free cash flow, debt, capex, liquidity, and earnings-quality support?",
+            },
+            {
+                "layer": "risk",
+                "driver_factor": "stable label overread without multi-period evidence",
+                "driver_scope": "risk",
+                "why_it_matters": "The routing label must never become evidence of operating steadiness or stability.",
+                "required_evidence": ["multi-period revenue", "multi-period margin", "multi-period cash flow", "ROE / ROIC trend", "customer evidence", "payout trend"],
+                "checked_paths": ("stock.strategy_type", "financial_metrics.revenue", "financial_metrics.operating_cashflow", "business_composition"),
+                "path_policy": "fallback",
+                "status": "not_assessable",
+                "missing_evidence": ["multi-period trend tables", "customer retention", "order visibility", "downturn performance"],
+                "not_assessable_reason": "stable_growth is a routing label and current evidence lacks multi-period stability support.",
+                "interpretation_guard": "stable_growth is a routing label, not evidence of stability.",
+                "research_question": "What multi-period revenue, margin, cash-flow, ROE / ROIC, customer, order, and payout evidence is required before using stability as an analytical conclusion?",
+            },
+            {
+                "layer": "financial",
+                "driver_factor": "valuation explainability as evidence sufficiency only",
+                "driver_scope": "valuation context",
+                "why_it_matters": "Valuation metrics can frame evidence sufficiency only and cannot become valuation or transaction judgment.",
+                "required_evidence": ["valuation metrics", "profit quality", "cash conversion", "segment evidence", "risk flags"],
+                "checked_paths": ("valuation_metrics.pe_ttm", "valuation_metrics.pb", "valuation_metrics.ps", "valuation_metrics.market_cap", "financial_metrics.net_profit", "financial_metrics.operating_cashflow", "business_composition"),
+                "path_policy": "valuation_context",
+                "missing_evidence": ["forward earnings bridge", "multi-period cash conversion", "segment quality history", "risk-adjusted operating evidence"],
+                "force_cap": "low",
+                "interpretation_guard": "Valuation metrics are evidence-sufficiency context only and must not become valuation level, price, upside, or transaction framing.",
+                "research_question": valuation_question,
+            },
+        ]
+
+    def _build_stable_growth_driver(self, pack: dict[str, Any], payload: dict[str, Any]) -> DriverFactor:
+        checked_paths = tuple(payload["checked_paths"])
+        available = self._stable_growth_available_evidence(pack, checked_paths)
+        missing = list(payload.get("missing_evidence") or self._missing_evidence(pack, tuple(payload["required_evidence"]), checked_paths))
+        financial_nodes = [item for item in available if "evidence_pack.financial_metrics." in item]
+        valuation_nodes = [item for item in available if "evidence_pack.valuation_metrics." in item]
+        business_nodes = [item for item in available if "evidence_pack.business_composition" in item]
+        contract_nodes = [item for item in financial_nodes if "financial_metrics.contract_liabilities=" in item]
+        dividend_nodes = self._stable_growth_dividend_nodes(pack)
+
+        path_policy = payload.get("path_policy", "fallback")
+        path_nodes: list[str] = []
+        status = payload.get("status")
+        cap = payload.get("force_cap")
+        reason = payload.get("not_assessable_reason", "")
+
+        if path_policy == "segment_financial_observation":
+            if business_nodes and financial_nodes:
+                path_nodes = [business_nodes[0], *financial_nodes[:3]]
+                status = status or "partial"
+                cap = cap or "low"
+                path = " -> ".join(path_nodes)
+            elif financial_nodes:
+                path_nodes = financial_nodes[:3]
+                status = status or "partial"
+                cap = cap or "low"
+                path = " -> ".join(path_nodes)
+                reason = reason or "Only aggregate financial fields are available; segment / customer / order bridge is missing."
+            else:
+                status = status or "not_assessable"
+                cap = "not_assessable"
+                path = TRANSMISSION_PATH_FALLBACK
+                reason = reason or "No concrete segment or financial node is available."
+        elif path_policy == "financial_observation":
+            if financial_nodes:
+                path_nodes = financial_nodes[:5]
+                status = status or "partial"
+                cap = cap or "low"
+                path = " -> ".join(path_nodes)
+            else:
+                status = status or "not_assessable"
+                cap = "not_assessable"
+                path = TRANSMISSION_PATH_FALLBACK
+                reason = reason or "Financial observation node is absent."
+        elif path_policy == "contract_liability_proxy":
+            if contract_nodes:
+                path_nodes = [*contract_nodes[:1], *[node for node in financial_nodes if node not in contract_nodes][:2]]
+                status = status or "partial"
+                cap = cap or "low"
+                path = " -> ".join(path_nodes)
+            else:
+                status = status or "missing"
+                cap = "not_assessable"
+                path = TRANSMISSION_PATH_FALLBACK
+                reason = reason or "Contract liabilities field is absent."
+        elif path_policy == "dividend_missing":
+            if dividend_nodes:
+                path_nodes = [*dividend_nodes[:1], *financial_nodes[:3]]
+                status = status or "not_assessable"
+                cap = cap or "not_assessable"
+                path = TRANSMISSION_PATH_FALLBACK
+                reason = reason or "Dividend / payout fields exist but free cash flow, debt, capex, and earnings-quality support is incomplete."
+            else:
+                status = status or "missing"
+                cap = "not_assessable"
+                path = TRANSMISSION_PATH_FALLBACK
+                reason = reason or "Dividend / payout fields are absent from financial_metrics."
+        elif path_policy == "valuation_context":
+            path_nodes = [*valuation_nodes[:2], *financial_nodes[:2], *business_nodes[:1]]
+            if path_nodes:
+                status = status or "partial"
+                cap = cap or "low"
+                path = " -> ".join(path_nodes)
+            else:
+                status = status or "not_assessable"
+                cap = "not_assessable"
+                path = TRANSMISSION_PATH_FALLBACK
+                reason = reason or "Valuation context fields are absent."
+        else:
+            status = status or "not_assessable"
+            cap = "not_assessable"
+            path = TRANSMISSION_PATH_FALLBACK
+            reason = reason or GENERIC_MISSING_BRIDGE_REASON
+
+        if path == TRANSMISSION_PATH_FALLBACK:
+            cap = "not_assessable"
+            path_nodes = []
+
+        return DriverFactor(
+            layer=payload["layer"],
+            driver_factor=payload["driver_factor"],
+            driver_scope=payload["driver_scope"],
+            why_it_matters=payload["why_it_matters"],
+            required_evidence=list(payload["required_evidence"]),
+            available_evidence=available,
+            missing_evidence=missing,
+            company_transmission_path=path,
+            data_availability_status=status,
+            confidence_cap=cap,
+            not_assessable_reason=reason,
+            what_was_checked=list(checked_paths),
+            source_refs=[item.split("=")[0] for item in path_nodes],
+            research_question=payload["research_question"],
+            interpretation_guard=payload["interpretation_guard"],
+        )
+
+    def _stable_growth_available_evidence(self, pack: dict[str, Any], checked_paths: tuple[str, ...]) -> list[str]:
+        available: list[str] = []
+        for path in checked_paths:
+            if path == "business_composition":
+                available.extend(self._stable_growth_business_segment_nodes(pack))
+            elif path in {"basic_info.industry", "basic_info.main_business", "stock.strategy_type"}:
+                value = self._value_at_path(pack, path)
+                if _is_present(value):
+                    available.append(f"evidence_pack.{path}={_safe_text(_display_value(value))}")
+            elif path in {"missing_fields", "unknown_or_missing_evidence", "risk_flags", "data_limitations"}:
+                continue
+            else:
+                value = self._value_at_path(pack, path)
+                if _is_present(value):
+                    available.append(f"evidence_pack.{path}={_safe_text(_display_value(value))}")
+        return available
+
+    def _stable_growth_business_segment_nodes(self, pack: dict[str, Any]) -> list[str]:
+        nodes: list[str] = []
+        for index, row in enumerate(_as_list(pack.get("business_composition"))):
+            if not isinstance(row, dict):
+                continue
+            name = row.get("segment_name")
+            if not name:
+                continue
+            bits = [f"segment_name:{name}"]
+            revenue = row.get("revenue")
+            ratio = row.get("revenue_ratio")
+            margin = row.get("gross_margin")
+            period = row.get("period")
+            if _is_present(revenue):
+                bits.append(f"revenue:{_display_value(revenue)}")
+            if _is_present(ratio):
+                bits.append(f"revenue_ratio:{_display_value(ratio)}")
+            if _is_present(margin):
+                bits.append(f"gross_margin:{_display_value(margin)}")
+            if period:
+                bits.append(f"period:{period}")
+            nodes.append(f"evidence_pack.business_composition[{index}]={'; '.join(bits)}")
+        return nodes[:12]
+
+    def _stable_growth_dividend_nodes(self, pack: dict[str, Any]) -> list[str]:
+        nodes: list[str] = []
+        financial_metrics = pack.get("financial_metrics") if isinstance(pack.get("financial_metrics"), dict) else {}
+        for key, value in financial_metrics.items():
+            lowered = str(key).lower()
+            if ("dividend" in lowered or "payout" in lowered) and _is_present(value):
+                nodes.append(f"evidence_pack.financial_metrics.{key}={_safe_text(_display_value(value))}")
+        return nodes
 
     def _advanced_manufacturing_drivers(self, pack: dict[str, Any]) -> list[DriverFactor]:
         return [self._build_advanced_manufacturing_driver(pack, payload) for payload in self._advanced_manufacturing_payloads()]

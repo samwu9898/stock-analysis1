@@ -81,6 +81,16 @@ VAGUE_TRANSMISSION_PHRASES = {
     "Customer nomination has been obtained, so batch revenue is confirmed.",
     "Design-win has been obtained, so batch revenue is confirmed.",
     "Customer capex increases, so company revenue will grow.",
+    "公司属于 stable_growth，所以经营稳健",
+    "公司属于stable_growth，所以经营稳健",
+    "电网设备属于基础设施刚需，所以需求稳定",
+    "收入增长且现金流好转，所以稳定增长质量好",
+    "合同负债代表 backlog",
+    "ROE 高说明长期竞争力强",
+    "分红可持续",
+    "估值合理",
+    "估值偏高",
+    "估值偏低",
 }
 
 FORBIDDEN_SAFETY_TERMS = {

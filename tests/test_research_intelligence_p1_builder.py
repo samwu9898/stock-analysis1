@@ -1552,3 +1552,264 @@ def test_advanced_manufacturing_generated_questions_avoid_obvious_robotics_dupli
     assert not any(term in text for term in FORBIDDEN_TERMS)
     assert "technical_skill" not in text
     assert "trader_skill" not in text
+
+
+def build_stable_growth_pack(code="600406", *, strategy_type="stable_growth", operating_cashflow=2100000000.0):
+    return {
+        "stock": {
+            "code": code,
+            "name": "NARI Technology",
+            "strategy_type": strategy_type,
+            "status": "neutral" if strategy_type == "stable_growth" else "insufficient_data",
+            "confidence": "high" if strategy_type == "stable_growth" else "low",
+            "fundamental_score": 70,
+        },
+        "basic_info": {
+            "stock_code": code,
+            "stock_name": "NARI Technology",
+            "industry": "power grid equipment and software",
+            "main_business": "power automation, grid intelligence, energy low-carbon, digital energy integration",
+        },
+        "financial_metrics": {
+            "period": "20260331",
+            "revenue": 12300000000.0,
+            "revenue_yoy": {"raw_value": 8.5, "display_value": "8.50%"},
+            "gross_margin": {"raw_value": 25.7, "display_value": "25.70%"},
+            "net_margin": {"raw_value": 12.1, "display_value": "12.10%"},
+            "net_profit": 721291973.43,
+            "deducted_net_profit": 641986345.23,
+            "operating_cashflow": operating_cashflow,
+            "accounts_receivable": 26652280492.48,
+            "inventory": 16590949099.58,
+            "contract_liabilities": 8634661875.03,
+            "capex": 451693205.88,
+            "roe": {"raw_value": 1.36, "display_value": "1.36%"},
+            "debt_to_asset": {"raw_value": 40.194985, "display_value": "40.19%"},
+        },
+        "valuation_metrics": {"pe_ttm": 24.0, "pb": 3.1, "ps": 2.7, "market_cap": 210000000000},
+        "business_composition": [
+            {
+                "period": "2025-12-31",
+                "classification_type": "by industry",
+                "segment_name": "electrical equipment manufacturing",
+                "revenue": 66156250303.69,
+                "revenue_ratio": {"raw_value": 0.998902, "display_value": "99.89%"},
+                "gross_margin": {"raw_value": 0.257916, "display_value": "25.79%"},
+            },
+            {
+                "period": "2025-12-31",
+                "classification_type": "by product",
+                "segment_name": "grid intelligence",
+                "revenue": 33422155368.42,
+                "revenue_ratio": {"raw_value": 0.504646, "display_value": "50.46%"},
+                "gross_margin": {"raw_value": 0.301197, "display_value": "30.12%"},
+            },
+            {
+                "period": "2025-12-31",
+                "classification_type": "by product",
+                "segment_name": "energy low carbon",
+                "revenue": 16729807029.41,
+                "revenue_ratio": {"raw_value": 0.252606, "display_value": "25.26%"},
+                "gross_margin": {"raw_value": 0.202078, "display_value": "20.21%"},
+            },
+        ],
+        "source_trace_summary": [
+            {"block_name": "business_composition", "trace_count": 1},
+            {"block_name": "financial_indicator", "trace_count": 16},
+            {"block_name": "valuation", "trace_count": 4},
+        ],
+    }
+
+
+def build_stable_growth_outputs(**kwargs):
+    return ResearchIntelligenceP1Builder().build(build_stable_growth_pack(**kwargs))
+
+
+def test_stable_growth_600406_driver_matrix_contains_required_factors():
+    pack, questions = build_stable_growth_outputs()
+    names = driver_names(pack)
+
+    assert pack.strategy_type == "stable_growth"
+    assert pack.stock_code == "600406"
+    assert {
+        "recurring revenue or repeat-order quality",
+        "customer stability",
+        "product / service demand durability",
+        "order visibility",
+        "contract liabilities as partial proxy only",
+        "customer concentration",
+        "pricing power evidence",
+        "business mix stability",
+        "revenue growth quality",
+        "gross margin stability",
+        "net margin stability",
+        "operating cash flow conversion",
+        "accounts receivable / collection quality",
+        "inventory / working-capital discipline",
+        "free cash flow",
+        "ROE / ROIC stability",
+        "debt / liquidity / interest burden",
+        "capex discipline: maintenance vs expansion",
+        "dividend capacity",
+        "payout sustainability",
+        "earnings quality",
+        "balance-sheet resilience",
+        "cyclicality / downturn resilience",
+        "one-off profit / non-recurring item risk",
+        "revenue growth without cash-flow support",
+        "margin stability without product / pricing evidence",
+        "receivables growth masking collection risk",
+        "inventory build without sales bridge",
+        "capex expansion without revenue / utilization bridge",
+        "contract liabilities overread as backlog",
+        "dividend overread without free cash flow",
+        "stable label overread without multi-period evidence",
+        "valuation explainability as evidence sufficiency only",
+    }.issubset(names)
+    assert questions.questions
+    assert len(pack.not_assessable_drivers) / len(pack.driver_matrix) > 0.55
+
+
+def test_stable_growth_validation_and_excluded_samples_stay_boundary_only():
+    validation, _ = build_stable_growth_outputs(code="002028")
+    excluded, _ = ResearchIntelligenceP1Builder().build(build_stable_growth_pack(code="600276", strategy_type="unknown"))
+
+    assert len(validation.driver_matrix) == 1
+    assert validation.driver_matrix[0].driver_factor == "unsupported_pilot_strategy"
+    assert validation.driver_matrix[0].company_transmission_path == TRANSMISSION_PATH_FALLBACK
+    assert "validation sample" in validation.driver_matrix[0].not_assessable_reason
+
+    assert len(excluded.driver_matrix) == 1
+    assert excluded.driver_matrix[0].driver_factor == "unsupported_pilot_strategy"
+    assert excluded.driver_matrix[0].company_transmission_path == TRANSMISSION_PATH_FALLBACK
+
+
+def test_stable_growth_transmission_path_guards_do_not_use_label_or_industry_attributes():
+    pack, _ = build_stable_growth_outputs()
+    rows = {item.driver_factor: item for item in pack.driver_matrix}
+    demand = rows["product / service demand durability"]
+
+    assert demand.company_transmission_path == TRANSMISSION_PATH_FALLBACK
+    assert demand.confidence_cap == "not_assessable"
+    for row in pack.driver_matrix:
+        assert "stable_growth" not in row.company_transmission_path
+        assert "rigid demand" not in row.company_transmission_path.lower()
+        assert "infrastructure" not in row.company_transmission_path.lower()
+        assert "SOE" not in row.company_transmission_path
+
+
+def test_stable_growth_revenue_yoy_and_same_direction_ocf_are_not_stability_evidence():
+    pack, _ = build_stable_growth_outputs(operating_cashflow=2100000000.0)
+    rows = {item.driver_factor: item for item in pack.driver_matrix}
+    revenue_quality = rows["revenue growth quality"]
+    risk_row = rows["revenue growth without cash-flow support"]
+    text = json.dumps(pack.model_dump(), ensure_ascii=False).lower()
+
+    assert revenue_quality.data_availability_status == "not_assessable"
+    assert revenue_quality.company_transmission_path == TRANSMISSION_PATH_FALLBACK
+    assert risk_row.data_availability_status == "partial"
+    assert risk_row.confidence_cap == "low"
+    assert "multi-period stability" in revenue_quality.interpretation_guard
+    assert "stable growth quality" not in text
+
+
+def test_stable_growth_contract_liabilities_receivables_dividend_roe_capex_guards():
+    pack, _ = build_stable_growth_outputs()
+    rows = {item.driver_factor: item for item in pack.driver_matrix}
+    contract_proxy = rows["contract liabilities as partial proxy only"]
+    order_visibility = rows["order visibility"]
+    receivable = rows["accounts receivable / collection quality"]
+    dividend = rows["dividend capacity"]
+    payout = rows["payout sustainability"]
+    roe = rows["ROE / ROIC stability"]
+    capex = rows["capex discipline: maintenance vs expansion"]
+
+    assert contract_proxy.data_availability_status == "partial"
+    assert contract_proxy.confidence_cap == "low"
+    assert "financial_metrics.contract_liabilities=" in contract_proxy.company_transmission_path
+    assert "not backlog" in contract_proxy.interpretation_guard
+    assert order_visibility.company_transmission_path == TRANSMISSION_PATH_FALLBACK
+
+    assert receivable.data_availability_status == "missing"
+    assert receivable.confidence_cap == "not_assessable"
+    assert "receivable aging" in receivable.missing_evidence
+
+    assert dividend.data_availability_status == "missing"
+    assert dividend.confidence_cap == "not_assessable"
+    assert payout.data_availability_status == "missing"
+    assert payout.confidence_cap == "not_assessable"
+
+    assert roe.company_transmission_path == TRANSMISSION_PATH_FALLBACK
+    assert "current return observation only" in roe.interpretation_guard
+    assert capex.data_availability_status == "missing"
+    assert capex.company_transmission_path == TRANSMISSION_PATH_FALLBACK
+    assert "capacity release" in capex.interpretation_guard
+    assert "future revenue" not in rows["capex discipline: maintenance vs expansion"].company_transmission_path
+
+
+def test_stable_growth_valuation_fixed_wording_and_forbidden_phrases():
+    pack, questions = build_stable_growth_outputs()
+    row = {item.driver_factor: item for item in pack.driver_matrix}["valuation explainability as evidence sufficiency only"]
+    text = json.dumps({"pack": pack.model_dump(), "questions": questions.model_dump()}, ensure_ascii=False)
+
+    assert row.research_question == "当前 evidence pack 中哪些证据足以支撑或解释当前估值背景，哪些证据仍缺失？"
+    forbidden = FORBIDDEN_TERMS + [
+        "估值是否合理",
+        "估值是否偏高",
+        "估值是否偏低",
+        "是否支撑当前价格",
+        "上涨空间",
+        "下跌空间",
+        "目标价",
+        "买入",
+        "卖出",
+        "持有",
+        "target price",
+        "technical_skill",
+        "trader_skill",
+    ]
+    assert not any(term in text for term in forbidden)
+
+
+def test_stable_growth_status_mapping_and_question_deduplication():
+    pack, questions = build_stable_growth_outputs()
+    rows = {item.driver_factor: item for item in pack.driver_matrix}
+
+    assert rows["business mix stability"].data_availability_status == "partial"
+    assert rows["business mix stability"].confidence_cap == "low"
+    assert rows["stable label overread without multi-period evidence"].data_availability_status == "not_assessable"
+    assert rows["stable label overread without multi-period evidence"].confidence_cap == "not_assessable"
+    assert rows["dividend capacity"].data_availability_status == "missing"
+    assert rows["revenue growth without cash-flow support"].data_availability_status == "partial"
+    assert rows["revenue growth without cash-flow support"].confidence_cap == "low"
+
+    contract_questions = [
+        item.question
+        for item in questions.questions
+        if "contract liabilities" in item.driver_factor or "order visibility" in item.driver_factor
+    ]
+    receivable_questions = [item.question for item in questions.questions if "receivable" in item.driver_factor]
+    return_questions = [
+        item.question
+        for item in questions.questions
+        if any(token in item.driver_factor for token in ("free cash flow", "dividend", "payout"))
+    ]
+    assert len(contract_questions) == len(set(contract_questions))
+    assert len(receivable_questions) == len(set(receivable_questions))
+    assert len(return_questions) == len(set(return_questions))
+
+
+def test_stable_growth_source_bucket_counting_and_safety_boundaries():
+    pack, questions = build_stable_growth_outputs()
+    text = json.dumps({"pack": pack.model_dump(), "questions": questions.model_dump()}, ensure_ascii=False)
+
+    assert pack.source_bucket_summary.consensus_assessment_status == "not_assessable"
+    assert pack.source_bucket_summary.source_buckets == ["company_disclosure", "financial_statement", "structured_data"]
+    assert pack.source_bucket_summary.independent_source_count == 3
+    assert pack.safety_boundary.safe
+    assert questions.safety_boundary.safe
+    assert not any(term in text for term in FORBIDDEN_TERMS)
+    assert "technical_skill" not in text
+    assert "trader_skill" not in text
+    assert "K线" not in text
+    assert "技术面" not in text
