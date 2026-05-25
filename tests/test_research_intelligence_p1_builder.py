@@ -542,7 +542,13 @@ def test_unsupported_strategy_type_outputs_unsupported_pilot_strategy():
     assert row.driver_factor == "unsupported_pilot_strategy"
     assert row.data_availability_status == "not_assessable"
     assert row.confidence_cap == "not_assessable"
-    assert "does not support this strategy_type" in questions.questions[0].question
+    assert row.company_transmission_path == TRANSMISSION_PATH_FALLBACK
+    assert "stable_growth" in row.not_assessable_reason
+    assert "600406" in row.not_assessable_reason
+    assert "resource_core remains design-only / deferred" in row.not_assessable_reason
+    assert "right_trend_growth, theme_only, and unknown remain unsupported / not_assessable" in row.not_assessable_reason
+    assert "Which accepted P1.1 expansion, if any" in questions.questions[0].question
+    assert "what expansion template would be required before assessment" not in questions.questions[0].question
 
 
 def test_satellite_driver_matrix_contains_required_four_groups():
@@ -1678,6 +1684,8 @@ def test_stable_growth_validation_and_excluded_samples_stay_boundary_only():
     assert validation.driver_matrix[0].driver_factor == "unsupported_pilot_strategy"
     assert validation.driver_matrix[0].company_transmission_path == TRANSMISSION_PATH_FALLBACK
     assert "validation sample" in validation.driver_matrix[0].not_assessable_reason
+    assert "Which accepted P1.1 expansion, if any" in validation.driver_matrix[0].research_question
+    assert "what later gate evidence" not in validation.driver_matrix[0].research_question
 
     assert len(excluded.driver_matrix) == 1
     assert excluded.driver_matrix[0].driver_factor == "unsupported_pilot_strategy"

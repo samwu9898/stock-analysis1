@@ -280,10 +280,18 @@ class ResearchIntelligenceP1Builder:
             why_it_matters="P1.1 implementation is intentionally limited to accepted pilot strategy types.",
             required_evidence=[
                 (
-                    "strategy_type=ai_datacenter_infrastructure, life_science_cxo_services, "
-                    "satellite_communication_infrastructure, low_altitude_economy_infrastructure, "
-                    "resource_swing primary sample 000426, semiconductor_cycle primary sample 002371, "
-                    "or advanced_manufacturing_growth primary sample 002050"
+                    "accepted P1.1 support scope: ai_datacenter_infrastructure, "
+                    "life_science_cxo_services, satellite_communication_infrastructure, "
+                    "low_altitude_economy_infrastructure, resource_swing, semiconductor_cycle, "
+                    "advanced_manufacturing_growth, stable_growth"
+                ),
+                (
+                    "first-version sample boundaries: Resource=000426 only, Semiconductor=002371 only, "
+                    "Advanced Manufacturing=002050 only, Stable Growth=600406 only"
+                ),
+                (
+                    "resource_core remains design-only / deferred; right_trend_growth, theme_only, and "
+                    "unknown remain unsupported / not_assessable"
                 ),
                 "supported pilot sub_type such as aviation_operations_service for low altitude",
             ],
@@ -293,17 +301,21 @@ class ResearchIntelligenceP1Builder:
             data_availability_status="not_assessable",
             confidence_cap="not_assessable",
             not_assessable_reason=(
-                "Current P1.1 implementation only supports ai_datacenter_infrastructure, "
-                "life_science_cxo_services, satellite_communication_infrastructure, and "
-                "low_altitude_economy_infrastructure / aviation_operations_service pilot templates, plus "
-                "resource_swing for primary sample 000426 only, and semiconductor_cycle for primary sample 002371 only."
-                " advanced_manufacturing_growth is supported for primary sample 002050 only."
+                "Current P1.1 accepted support scope is ai_datacenter_infrastructure, "
+                "life_science_cxo_services, satellite_communication_infrastructure, "
+                "low_altitude_economy_infrastructure, resource_swing, semiconductor_cycle, "
+                "advanced_manufacturing_growth, and stable_growth. First-version sample boundaries remain: "
+                "Resource first-version only supports 000426 (000426 only); Semiconductor first-version only "
+                "supports 002371 (002371 only); Advanced Manufacturing first-version only supports 002050 "
+                "(002050 only); Stable Growth first-version only supports 600406 (600406 only). resource_core "
+                "remains design-only / deferred; right_trend_growth, theme_only, and unknown remain unsupported "
+                "/ not_assessable."
             ),
             what_was_checked=["stock.strategy_type", "stock.sub_type"],
             source_refs=[],
             research_question=(
-                "Current P1.1 pilot boundary does not support this strategy_type / sub_type; "
-                "what expansion template would be required before assessment?"
+                "Which accepted P1.1 expansion, if any, can assess this company under the current first-version "
+                "scope, and what concrete evidence would be required before support can be widened?"
             ),
             interpretation_guard="Do not expand unsupported strategy types by free-form inference.",
         )
@@ -815,11 +827,18 @@ class ResearchIntelligenceP1Builder:
         )
 
     def _stable_growth_boundary_driver(self, stock_code: str, sub_type: Any) -> DriverFactor:
-        reason = "stable_growth P1.1 first implementation supports primary sample 600406 only."
+        boundary_scope = "stable_growth P1.1 first implementation supports primary sample 600406 only."
+        reason = boundary_scope
         if stock_code == STABLE_GROWTH_VALIDATION_SAMPLE:
-            reason = "002028 is a validation sample for boundary behavior and is not in the first-version positive path."
+            reason = (
+                "002028 is a validation sample for boundary behavior and is not in the first-version positive path; "
+                f"{boundary_scope}"
+            )
         elif stock_code == STABLE_GROWTH_EXCLUDED_SAMPLE:
-            reason = "600276 is excluded from the first implementation and must not be force-fit into stable_growth."
+            reason = (
+                "600276 is excluded from the first implementation and must not be force-fit into stable_growth; "
+                f"{boundary_scope}"
+            )
         return DriverFactor(
             layer="risk",
             driver_factor="unsupported_pilot_strategy",
@@ -843,8 +862,8 @@ class ResearchIntelligenceP1Builder:
             what_was_checked=["stock.code", "stock.strategy_type", "stock.sub_type"],
             source_refs=[],
             research_question=(
-                "This stable_growth sample is outside the first implementation path; what later gate evidence "
-                "would be needed before adding a separate template?"
+                "Which accepted P1.1 expansion, if any, can assess this stable_growth boundary sample under the "
+                "current first-version scope, and what concrete evidence would be required before support can be widened?"
             ),
             interpretation_guard="Do not extend stable_growth beyond 600406 or force-fit validation / excluded samples.",
         )
