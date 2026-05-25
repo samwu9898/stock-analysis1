@@ -230,6 +230,58 @@ def _semiconductor_pack():
     }
 
 
+def _advanced_manufacturing_pack():
+    return {
+        "stock": {"code": "002050", "name": "三花智控", "strategy_type": "advanced_manufacturing_growth"},
+        "basic_info": {
+            "stock_code": "002050",
+            "stock_name": "三花智控",
+            "industry": "通用设备制造业",
+            "main_business": "制冷空调控制元器件、汽车热管理零部件，并积极布局机器人执行器相关零部件。",
+        },
+        "financial_metrics": {
+            "period": "20260331",
+            "revenue": 7773555419.29,
+            "revenue_yoy": {"raw_value": 1.357397, "display_value": "1.36%"},
+            "gross_margin": {"raw_value": 27.796688, "display_value": "27.80%"},
+            "operating_cashflow": 1105790187.12,
+            "accounts_receivable": 7010919404.89,
+            "contract_liabilities": 80754056.98,
+            "inventory": 5879322018.99,
+            "capex": 521898492.14,
+            "r_and_d_expense": 367461670.95,
+            "r_and_d_expense_ratio": {"raw_value": 4.727073406309647, "display_value": "4.73%"},
+        },
+        "valuation_metrics": {"pe_ttm": 40.1, "pb": 6.2},
+        "business_composition": [
+            {
+                "period": "2025-12-31",
+                "classification_type": "按产品分类",
+                "segment_name": "制冷空调电器零部件",
+                "revenue": 18584743718.09,
+                "revenue_ratio": {"raw_value": 0.599281, "display_value": "59.93%"},
+                "gross_margin": {"raw_value": 0.287687, "display_value": "28.77%"},
+            },
+            {
+                "period": "2025-12-31",
+                "classification_type": "按产品分类",
+                "segment_name": "汽车零部件",
+                "revenue": 12427000792.18,
+                "revenue_ratio": {"raw_value": 0.400719, "display_value": "40.07%"},
+                "gross_margin": {"raw_value": 0.287894, "display_value": "28.79%"},
+            },
+        ],
+        "enhanced_must_track_indicators": [
+            {"indicator_name": "新业务收入或订单", "current_status": "missing", "current_value": None},
+            {"indicator_name": "合同负债", "current_status": "partial_proxy", "current_value": 80754056.98},
+        ],
+        "source_trace_summary": [
+            {"block_name": "business_composition", "trace_count": 1},
+            {"block_name": "financial_indicator", "trace_count": 16},
+        ],
+    }
+
+
 def test_research_intelligence_p1_runner_writes_independent_json_and_markdown(tmp_path):
     evidence_path = tmp_path / "evidence_pack_002837.json"
     evidence_path.write_text(json.dumps(_pack(), ensure_ascii=False), encoding="utf-8")
@@ -346,4 +398,20 @@ def test_research_intelligence_p1_runner_writes_semiconductor_expansion_artifact
     assert result["research_intelligence_p1"]["strategy_type"] == "semiconductor_cycle"
     assert any(item["driver_factor"] == "semiconductor capex cycle" for item in matrix)
     assert any(item["driver_factor"] == "equipment sub-chain classification" for item in matrix)
+    assert not (tmp_path / "reports").exists()
+
+
+def test_research_intelligence_p1_runner_writes_advanced_manufacturing_expansion_artifacts(tmp_path):
+    evidence_path = tmp_path / "evidence_pack_002050.json"
+    evidence_path.write_text(json.dumps(_advanced_manufacturing_pack(), ensure_ascii=False), encoding="utf-8")
+
+    result = run_research_intelligence_p1("002050", evidence_pack_path=evidence_path, output_dir=tmp_path)
+    matrix = result["research_intelligence_p1"]["driver_matrix"]
+
+    assert (tmp_path / "research_intelligence_p1_002050.json").exists()
+    assert (tmp_path / "research_questions_p1_002050.json").exists()
+    assert (tmp_path / "research_questions_p1_002050.md").exists()
+    assert result["research_intelligence_p1"]["strategy_type"] == "advanced_manufacturing_growth"
+    assert any(item["driver_factor"] == "core business revenue contribution" for item in matrix)
+    assert any(item["driver_factor"] == "valuation explainability as evidence sufficiency only" for item in matrix)
     assert not (tmp_path / "reports").exists()

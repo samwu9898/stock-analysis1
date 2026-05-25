@@ -71,6 +71,16 @@ VAGUE_TRANSMISSION_PHRASES = {
     "R&D ratio is high, so the technology moat is strong.",
     "Export controls benefit domestic leaders.",
     "Export controls and supply-chain restrictions, so company will face supply disruption or revenue decline.",
+    "机器人行业空间大，公司受益",
+    "高端制造景气，公司成长确定",
+    "客户定点已取得，批量收入确认",
+    "capex 增加，所以产能释放",
+    "合同负债增加，所以 backlog 强",
+    "Robotics industry space is large, so the company benefits.",
+    "High-end manufacturing is booming, so company growth is certain.",
+    "Customer nomination has been obtained, so batch revenue is confirmed.",
+    "Design-win has been obtained, so batch revenue is confirmed.",
+    "Customer capex increases, so company revenue will grow.",
 }
 
 FORBIDDEN_SAFETY_TERMS = {
