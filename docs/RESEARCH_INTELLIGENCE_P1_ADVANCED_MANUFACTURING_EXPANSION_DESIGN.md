@@ -4,7 +4,7 @@ Date: 2026-05-25
 
 Revision: v1.1
 
-Stage: Design audit only. This document adds design guidance only. It must not change code, tests, P1 schema, deterministic pipeline behavior, classifier rules, connectors, scoring, readiness, HTML renderer, Dashboard, generated output, regression fixtures, or existing artifact semantics.
+Stage: Design audit accepted and documentation sync. This document records the accepted P1.1 Advanced Manufacturing first implementation and must not change code, tests, P1 schema, deterministic pipeline behavior, classifier rules, connectors, scoring, readiness, HTML renderer, Dashboard, generated output, regression fixtures, or existing artifact semantics.
 
 Target expansion: `advanced_manufacturing_growth` only.
 
@@ -12,9 +12,11 @@ Primary sample: `002050` Sanhua Intelligent Controls / 三花智控, current `st
 
 Future validation / boundary samples: `601689` Tuopu Group / 拓普集团 should be retained as the first future validation and boundary sample. Other later candidates may include advanced manufacturing companies with automotive thermal-management, actuator, robotics component, industrial automation, or precision manufacturing exposure, but P1.1 first implementation should use only `002050` as the primary sample.
 
+Acceptance status: implemented and accepted for `advanced_manufacturing_growth + 002050` only. Advanced Manufacturing multi-sample observation is complete, and the `601689` boundary data completion smoke is complete. `601689` remains unsupported in the first version and is reserved for a later validation / boundary cycle. In the boundary smoke, `601689` was classified as `advanced_manufacturing_growth` but correctly returned `unsupported_pilot_strategy` / `not_assessable`, preserved fallback `company_transmission_path`, source-bucket independence, and the safety boundary, and was not force-fit into the `002050` refrigeration / air-conditioning, automotive thermal-management, and robotics / actuator / emerging-business matrix. Tuopu large-customer and robotics narratives were not written as realized revenue. Data-side caveat: `601689` `news` / `latest_news` still reports `Invalid regular expression: invalid escape sequence: \u`; this is an upstream/news data issue and does not affect the P1.1 boundary smoke conclusion. Latest recorded validation after acceptance: `pytest` `475 passed`; regression suite `passed=47 failed=0 total=47`.
+
 ## 1. Expansion Positioning
 
-P1.1 has already frozen the accepted baseline for AI Datacenter, CXO, Satellite, Low Altitude, Resource Swing, and Semiconductor. This document designs the next narrow P1.1 expansion for `advanced_manufacturing_growth`.
+P1.1 has already frozen the accepted baseline for AI Datacenter, CXO, Satellite, Low Altitude, Resource Swing, Semiconductor, and Advanced Manufacturing. This document records the narrow accepted Advanced Manufacturing expansion for `advanced_manufacturing_growth + 002050`.
 
 The expansion remains an independent Research Intelligence artifact:
 
@@ -150,6 +152,12 @@ For this expansion, every driver must define:
 The matrix is evidence-pack-only for P1.1 implementation. Future connector needs are recorded as missing evidence, not implemented in this phase.
 
 Generated `output/research_intelligence_p1_*` and `output/research_questions_p1_*` artifacts are runtime products and should not be committed.
+
+Accepted runner example:
+
+```bash
+python -m src.fundamental_skill.ai_analyst.research_intelligence_p1_runner --code 002050
+```
 
 Driver de-duplication rules:
 
@@ -391,7 +399,7 @@ Do not include in first implementation:
 | Sample | Role | Validation purpose |
 | --- | --- | --- |
 | `002050` Sanhua Intelligent Controls | Primary sample | Tests core refrigeration / air-conditioning base, automotive thermal-management segment, robotics narrative risk, big-customer exposure gaps, receivable / inventory / operating-cash-flow checks, and valuation evidence sufficiency. |
-| `601689` Tuopu Group | Future validation / boundary sample | Primary boundary test for coexistence of large-customer concentration and robotics narrative: the system must generate both customer concentration risk questions and robotics realization evidence questions without one masking the other. If automotive core business and robotics business segments are not clearly separated, trigger "层归属不可确认" or `not_assessable`. |
+| `601689` Tuopu Group | Future validation / boundary sample; completed boundary data completion smoke | Primary boundary test for coexistence of large-customer concentration and robotics narrative: the system must generate both customer concentration risk questions and robotics realization evidence questions without one masking the other. The completed smoke confirmed that `601689` can be classified as `advanced_manufacturing_growth` while still being correctly stopped at `unsupported_pilot_strategy` / `not_assessable` because first-version support is only `advanced_manufacturing_growth + 002050`. It must not reuse the `002050` three-business-layer matrix or write Tuopu large-customer / robotics narrative as realized revenue. If automotive core business and robotics business segments are not clearly separated, trigger "层归属不可确认" or `not_assessable`. `news` / `latest_news` may still show `Invalid regular expression: invalid escape sequence: \u`; that caveat is upstream/news data only and does not affect the P1.1 boundary conclusion. |
 | Later advanced-manufacturing samples | Optional future candidates | Use only after `002050` first implementation is accepted; select companies with distinct sub-chain exposure such as industrial automation, precision components, or robotics components. |
 
 ## 12. External Audit Incorporation
@@ -408,9 +416,9 @@ Mandatory audit outcomes now embedded in this design:
 
 ## 13. Go / No-Go Recommendation
 
-Recommendation: proceed to P1.1 Advanced Manufacturing implementation after the Section 10 implementation gate confirms the actual `002050` evidence-pack fields and the implementation preserves the v1.1 audit constraints.
+Recommendation: freeze the accepted P1.1 Advanced Manufacturing baseline after the Section 10 implementation gate and acceptance confirmed the actual `002050` evidence-pack fields and the implementation preserved the v1.1 audit constraints.
 
-Implementation is suitable because the design has a narrow first-version target:
+Implementation is accepted because the design has a narrow first-version target:
 
 - `advanced_manufacturing_growth + 002050` only.
 - Evidence-pack-only.
@@ -419,7 +427,7 @@ Implementation is suitable because the design has a narrow first-version target:
 - No HTML / Dashboard integration.
 - No change to status, confidence, score, strategy_type, or sub_type.
 
-The implementation should not proceed if it cannot enforce:
+The accepted baseline should not expand beyond `002050` unless a later design / implementation / acceptance cycle can still enforce:
 
 - exact fallback `company_transmission_path=传导路径无法从当前证据包验证`;
 - `confidence_cap=not_assessable` for fallback rows;
@@ -429,3 +437,5 @@ The implementation should not proceed if it cannot enforce:
 - customer qualification / design-win / capex / contract-liability proxy guards;
 - valuation explainability as fixed evidence-sufficiency wording only;
 - no trading, target-price, technical-analysis, or K-line output.
+
+Next P1.1 step: run a Research Intelligence P1.1 Expansion Baseline Check before any new industry expansion. After the baseline check passes, decide whether `stable_growth`, `right_trend_growth`, or P1.2 should take priority.
