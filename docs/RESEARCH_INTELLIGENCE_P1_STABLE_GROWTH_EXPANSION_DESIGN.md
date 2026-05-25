@@ -4,11 +4,11 @@ Date: 2026-05-25
 
 Revision: v1.1
 
-Stage: Design revision only. This document updates design guidance after external audit and Sample Gate audit. It must not change code, tests, P1 schema, deterministic pipeline behavior, classifier rules, connectors, scoring, readiness, HTML renderer, Dashboard, generated output, regression fixtures, or existing artifact semantics.
+Stage: Documentation sync after implementation and acceptance. This document records the accepted Stable Growth first-version baseline and must not change code, tests, P1 schema, deterministic pipeline behavior, classifier rules, connectors, scoring, readiness, HTML renderer, Dashboard, generated output, regression fixtures, or existing artifact semantics.
 
-Target expansion: `stable_growth` design only.
+Target expansion: accepted `stable_growth` first-version baseline only.
 
-Implementation status: Sample Gate passed. P1.1 Stable Growth implementation may begin only after this v1.1 design revision is complete, and only within the narrowed implementation scope in sections 8 and 11.
+Implementation status: implemented and accepted. P1.1 Stable Growth first-version support is frozen at `stable_growth + 600406` unless a future design / implementation / acceptance cycle expands it. Acceptance recorded `missing / not_assessable = 19/33 = 57.58%`, which is expected and correct; latest recorded validation after Stable Growth acceptance is `pytest` `484 passed` and regression suite `passed=47 failed=0 total=47`.
 
 Primary implementation sample: `600406` NARI Technology / 国电南瑞.
 
@@ -18,7 +18,7 @@ Excluded sample: `600276` Hengrui Pharmaceuticals / 恒瑞医药 is excluded fro
 
 ## 1. Expansion Positioning
 
-P1.1 has already frozen the accepted baseline for AI Datacenter, CXO, Satellite, Low Altitude, Resource Swing, Semiconductor, and Advanced Manufacturing. This document designs the next narrow expansion candidate: `stable_growth`.
+P1.1 has already frozen the accepted baseline for AI Datacenter, CXO, Satellite, Low Altitude, Resource Swing, Semiconductor, Advanced Manufacturing, and Stable Growth. This document now records the accepted narrow Stable Growth baseline: `stable_growth + 600406`.
 
 `stable_growth` must not be interpreted as a low-risk stock recommendation, defensive-stock label, dividend-stock screen, or valuation shortcut. It is an evidence-gated research-question matrix that asks whether stable growth is actually supported by revenue quality, margin quality, cash-flow quality, collection quality, capex discipline, balance-sheet resilience, and shareholder-return durability.
 
@@ -31,6 +31,8 @@ evidence_pack_<code>.json
 -> research_questions_p1_<code>.json
 -> research_questions_p1_<code>.md
 ```
+
+`output/research_intelligence_p1_*` and `output/research_questions_p1_*` are generated runtime artifacts and should not be committed.
 
 It must not become a trading system, valuation model, technical-analysis layer, dashboard panel, connector project, or deterministic scoring input.
 
@@ -251,7 +253,7 @@ Key boundary:
 
 ## 8. Primary Sample Gate
 
-Sample Gate has passed for first implementation, with a narrow implementation target and conservative evidence expectations.
+Sample Gate, implementation, and acceptance have passed for first implementation, with a narrow implementation target and conservative evidence expectations.
 
 Stable Growth Sample Gate results:
 
@@ -280,6 +282,7 @@ Implementation pre-checks for `600406`:
 Implementation acceptance expectations:
 
 - For `600406`, more than 55% `missing / not_assessable` rows is expected and correct. It is not an implementation failure.
+- Accepted output recorded `missing / not_assessable = 19/33 = 57.58%`.
 - The `stable_growth` label must not appear inside `company_transmission_path`.
 - "经营稳健" or "稳定增长" must not be used as a non-fallback conclusion.
 - Industry rigid demand, infrastructure attributes, policy protection, or SOE / central-SOE ownership must not be used as demand durability evidence.
@@ -362,28 +365,28 @@ Future versions may need these data fields, but P1.1 design must not add new dat
 
 ## 11. Implementation Recommendation
 
-Proceed to P1.1 Stable Growth implementation after this v1.1 revision is complete.
+P1.1 Stable Growth implementation and acceptance are complete. Keep the first-version baseline frozen at `stable_growth + 600406` unless a future design / implementation / acceptance cycle expands it.
 
 Rationale:
 
-- The Sample Gate has passed for `600406` as the primary sample and `002028` as the validation sample.
+- The Sample Gate, implementation, and acceptance have passed for `600406` as the primary sample and `002028` as the validation / boundary sample.
 - `600276` remains `unknown / insufficient_data` and is excluded from first implementation.
 - `stable_growth` still requires multi-period and customer / collection evidence, while current P1.1 can only use the current evidence pack. Therefore first implementation must be conservative and must preserve many `missing / not_assessable` rows.
 - Implementation must not force-fit the strategy type, weaken classifier boundaries, add data sources, or reinterpret one-period observations as stable-growth conclusions.
+- Acceptance recorded `missing / not_assessable = 19/33 = 57.58%`, which is expected and correct.
 
-Recommended next phase:
+Frozen first-version scope:
 
-1. Start a narrow implementation for `strategy_type=stable_growth` only.
+1. Keep `strategy_type=stable_growth` first-version support limited to primary sample `600406`.
 2. Use `600406` 国电南瑞 as the primary implementation sample and `002028` 思源电气 as the validation sample.
 3. Keep `600276` 恒瑞医药 excluded unless a future gate separately addresses classifier status and innovative-drug / biotech pipeline suitability.
-4. Confirm the `600406` pre-check fields listed in section 8 before interpreting driver output.
-5. Preserve the exact safety boundaries: no classifier changes, no forced `strategy_type`, no new data source, no deterministic pipeline changes, no scoring / readiness changes, no HTML / Dashboard work, and no output semantics changes.
-6. During implementation, enforce research-question de-duplication for contract liabilities, receivables, FCF, dividend, and payout drivers.
-7. During implementation, enforce valuation question wording as evidence-sufficiency context only.
+4. Preserve the exact safety boundaries: no classifier changes, no forced `strategy_type`, no new data source, no deterministic pipeline changes, no scoring / readiness changes, no HTML / Dashboard work, and no output semantics changes.
+5. Preserve research-question de-duplication for contract liabilities, receivables, FCF, dividend, and payout drivers.
+6. Preserve valuation question wording as evidence-sufficiency context only.
 
 ## 12. External Audit Incorporation
 
-The external Claude audit has been incorporated into v1.1 before implementation.
+The external Claude audit was incorporated into v1.1 before implementation; this sync records the post-acceptance baseline.
 
 Implemented audit focus:
 
