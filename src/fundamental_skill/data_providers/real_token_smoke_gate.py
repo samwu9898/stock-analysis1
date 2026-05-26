@@ -13,12 +13,23 @@ import json
 import re
 import shutil
 import subprocess
+from collections.abc import Mapping as MappingABC
 from dataclasses import dataclass
-from pathlib import Path
+from datetime import date
+from pathlib import Path, PurePosixPath
 from typing import Any, Iterable, Mapping, Sequence
 
 from .comparison_artifacts import BASE_ARTIFACT_NAMES, P1_ARTIFACT_NAMES, default_comparison_timestamp
-from .token_leak_scanner import TokenLeakError, assert_no_token_leaks, scan_for_token_leaks
+from .token_leak_scanner import (
+    SOURCE_CODE_TOKEN_LEAK_POLICY,
+    STRICT_TOKEN_LEAK_POLICY,
+    TRACKED_DOCS_TOKEN_LEAK_POLICY,
+    TRACKED_TESTS_TOKEN_LEAK_POLICY,
+    TokenLeakError,
+    TokenLeakScanPolicy,
+    assert_no_token_leaks,
+    scan_for_token_leaks,
+)
 from .token_safety import sanitize_text
 
 
@@ -38,6 +49,12 @@ SCAN_TEXT_SUFFIXES = {
     ".yaml",
     ".yml",
 }
+ALLOWLIST_DEFAULT_PATH = "config/token_leak_allowlist.yaml"
+ALLOWLIST_REQUIRED_FIELDS = frozenset(
+    {"path", "line_content_hash", "reason", "category", "owner", "review_date", "expiry"}
+)
+ALLOWLIST_CATEGORIES = frozenset({"doc_example", "test_fixture"})
+ALLOWLIST_FORBIDDEN_PREFIXES = ("src/", "output/", "artifact/", "artifacts/", "logs/")
 
 
 class RealTokenSmokeGateError(RuntimeError):
@@ -66,6 +83,43 @@ class RealTokenSmokePrecheck:
     default_output_snapshot: BaselineSnapshot
 
 
+@dataclass(frozen=True)
+class TokenLeakAllowlistEntry:
+    path: str
+    line_content_hash: str
+    reason: str
+    category: str
+    owner: str
+    review_date: str
+    expiry: str
+
+
+@dataclass(frozen=True)
+class TokenLeakAllowlist:
+    entries: Mapping[tuple[str, str], TokenLeakAllowlistEntry]
+
+    @classmethod
+    def load(cls, repo_root: Path, allowlist_path: Path | None) -> "TokenLeakAllowlist":
+        if allowlist_path is None or not allowlist_path.exists():
+            return cls({})
+        data = _read_allowlist_data(allowlist_path)
+        if isinstance(data, MappingABC):
+            raw_entries = data.get("entries", ())
+        elif isinstance(data, list):
+            raw_entries = data
+        else:
+            raise RealTokenSmokeGateError("token_allowlist", "allowlist must be a list or contain entries")
+        today = date.today()
+        entries: dict[tuple[str, str], TokenLeakAllowlistEntry] = {}
+        for raw_entry in raw_entries:
+            entry = _validate_allowlist_entry(raw_entry, today=today)
+            entries[(entry.path, entry.line_content_hash)] = entry
+        return cls(entries)
+
+    def allows(self, *, rel_path: str, line_content_hash: str) -> bool:
+        return (rel_path, line_content_hash) in self.entries
+
+
 class RealTokenSmokeGate:
     """Precheck / runtime / postcheck helper for the real-token smoke path."""
 
@@ -77,12 +131,15 @@ class RealTokenSmokeGate:
         timestamp: str | None = None,
         codes: Sequence[str] = (),
         secret_refs: Iterable[str | None] | None = None,
+        allowlist_path: str | Path | None = ALLOWLIST_DEFAULT_PATH,
     ) -> None:
         self.repo_root = Path(repo_root).resolve(strict=False)
         self.output_dir = _repo_path(self.repo_root, output_dir)
         self.timestamp = timestamp or default_comparison_timestamp()
         self.codes = tuple(str(code) for code in codes)
         self.secret_refs = tuple(secret for secret in (secret_refs or ()) if secret)
+        self.allowlist_path = _repo_path(self.repo_root, allowlist_path) if allowlist_path is not None else None
+        self._token_allowlist: TokenLeakAllowlist | None = None
         self.blockers: list[str] = []
 
     @property
@@ -220,24 +277,40 @@ class RealTokenSmokeGate:
             _validate_code(code)
 
     def _scan_repo_tracked_files(self) -> None:
+        allowlist = self._load_token_allowlist()
         for rel_path in self._git_lines("ls-files"):
-            if rel_path.replace("\\", "/").endswith(".mcp.json"):
+            normalized_rel = rel_path.replace("\\", "/")
+            if normalized_rel.endswith(".mcp.json"):
                 continue
             path = self.repo_root / rel_path
-            self._scan_file(path, context=f"tracked_file:{_safe_relpath(path, self.repo_root)}")
+            self._scan_file(
+                path,
+                context=f"tracked_file:{_safe_relpath(path, self.repo_root)}",
+                policy=_policy_for_relpath(normalized_rel),
+                rel_path=normalized_rel,
+                allowlist=allowlist if _allowlist_allowed_for_relpath(normalized_rel) else None,
+            )
 
     def _scan_staged_diff(self) -> None:
         diff_text = self._git_text("diff", "--cached", "--no-ext-diff", "--")
         self._scan_text(diff_text, context="staged_diff")
 
     def _scan_docs_tests_source(self) -> None:
+        allowlist = self._load_token_allowlist()
         for dirname in ("docs", "tests", "src"):
             root = self.repo_root / dirname
             if not root.exists():
                 continue
             for path in root.rglob("*"):
                 if path.is_file() and path.suffix.lower() in SCAN_TEXT_SUFFIXES:
-                    self._scan_file(path, context=f"{dirname}_source:{_safe_relpath(path, self.repo_root)}")
+                    rel_path = _safe_relpath(path, self.repo_root)
+                    self._scan_file(
+                        path,
+                        context=f"{dirname}_source:{rel_path}",
+                        policy=_policy_for_relpath(rel_path),
+                        rel_path=rel_path,
+                        allowlist=allowlist if _allowlist_allowed_for_relpath(rel_path) else None,
+                    )
 
     def _scan_target_output_dir(self) -> None:
         if not self.output_dir.exists():
@@ -266,19 +339,44 @@ class RealTokenSmokeGate:
         if staged:
             self._block("postcheck_git_tracking", "comparison artifacts must not be staged")
 
-    def _scan_file(self, path: Path, *, context: str) -> None:
+    def _scan_file(
+        self,
+        path: Path,
+        *,
+        context: str,
+        policy: TokenLeakScanPolicy = STRICT_TOKEN_LEAK_POLICY,
+        rel_path: str | None = None,
+        allowlist: TokenLeakAllowlist | None = None,
+    ) -> None:
         if not path.exists() or not path.is_file():
             return
         try:
             text = path.read_text(encoding="utf-8", errors="ignore")
         except OSError as exc:
             self._block("file_scan", exc)
-        self._scan_text(text, context=context)
+        for line_number, line in enumerate(text.splitlines(), start=1):
+            result = scan_for_token_leaks(line, secret_refs=self.secret_refs, policy=policy)
+            if result.ok:
+                continue
+            line_hash = _sha256_text(line)
+            if rel_path and allowlist and allowlist.allows(rel_path=rel_path, line_content_hash=line_hash):
+                continue
+            self._block("token_scan", f"{context}:{line_number} contains secret-like data: {result}")
 
     def _scan_text(self, text: str, *, context: str) -> None:
         result = scan_for_token_leaks(text, secret_refs=self.secret_refs)
         if not result.ok:
             self._block("token_scan", f"{context} contains secret-like data: {result}")
+
+    def _load_token_allowlist(self) -> TokenLeakAllowlist:
+        if self._token_allowlist is None:
+            try:
+                self._token_allowlist = TokenLeakAllowlist.load(self.repo_root, self.allowlist_path)
+            except RealTokenSmokeGateError:
+                raise
+            except Exception as exc:  # pragma: no cover - defensive fail-closed path
+                self._block("token_allowlist", type(exc).__name__)
+        return self._token_allowlist
 
     def _git_lines(self, *args: str) -> list[str]:
         text = self._git_text(*args)
@@ -382,6 +480,115 @@ def _sha256(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _sha256_text(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _read_allowlist_data(path: Path) -> object:
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise RealTokenSmokeGateError("token_allowlist", "allowlist file could not be read") from exc
+    if not text.strip():
+        return []
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+    try:
+        import yaml  # type: ignore
+    except ImportError as exc:
+        raise RealTokenSmokeGateError("token_allowlist", "allowlist YAML parser is unavailable") from exc
+    try:
+        return yaml.safe_load(text) or []
+    except Exception as exc:  # pragma: no cover - parser-specific errors vary
+        raise RealTokenSmokeGateError("token_allowlist", "allowlist file could not be parsed") from exc
+
+
+def _validate_allowlist_entry(raw_entry: object, *, today: date) -> TokenLeakAllowlistEntry:
+    if not isinstance(raw_entry, MappingABC):
+        raise RealTokenSmokeGateError("token_allowlist", "allowlist entry must be a mapping")
+    missing = ALLOWLIST_REQUIRED_FIELDS - set(raw_entry)
+    if missing:
+        raise RealTokenSmokeGateError("token_allowlist", "allowlist entry is missing required fields")
+    path = _validate_allowlist_path(raw_entry["path"])
+    line_hash = str(raw_entry["line_content_hash"]).strip().lower()
+    if not re.fullmatch(r"[0-9a-f]{64}", line_hash):
+        raise RealTokenSmokeGateError("token_allowlist", "allowlist line hash must be SHA-256")
+    category = str(raw_entry["category"]).strip()
+    if category not in ALLOWLIST_CATEGORIES:
+        raise RealTokenSmokeGateError("token_allowlist", "allowlist category is not supported")
+    if category == "doc_example" and not path.startswith("docs/"):
+        raise RealTokenSmokeGateError("token_allowlist", "doc_example allowlist path must be under docs")
+    if category == "test_fixture" and not path.startswith("tests/"):
+        raise RealTokenSmokeGateError("token_allowlist", "test_fixture allowlist path must be under tests")
+    reason = str(raw_entry["reason"]).strip()
+    owner = str(raw_entry["owner"]).strip()
+    review_date = str(raw_entry["review_date"]).strip()
+    expiry = str(raw_entry["expiry"]).strip()
+    if not reason:
+        raise RealTokenSmokeGateError("token_allowlist", "allowlist reason is required")
+    if not owner:
+        raise RealTokenSmokeGateError("token_allowlist", "allowlist owner is required")
+    _parse_allowlist_date(review_date, field_name="review_date")
+    expiry_date = _parse_allowlist_date(expiry, field_name="expiry")
+    if expiry_date < today:
+        raise RealTokenSmokeGateError("token_allowlist", "allowlist entry has expired")
+    return TokenLeakAllowlistEntry(
+        path=path,
+        line_content_hash=line_hash,
+        reason=reason,
+        category=category,
+        owner=owner,
+        review_date=review_date,
+        expiry=expiry,
+    )
+
+
+def _validate_allowlist_path(value: object) -> str:
+    raw_path = str(value).strip()
+    if not raw_path or raw_path != str(value):
+        raise RealTokenSmokeGateError("token_allowlist", "allowlist path must be exact")
+    if "\\" in raw_path or any(char in raw_path for char in "*?[]"):
+        raise RealTokenSmokeGateError("token_allowlist", "allowlist path may not use wildcard syntax")
+    rel = PurePosixPath(raw_path)
+    if rel.is_absolute() or any(part in ("", ".", "..") for part in rel.parts):
+        raise RealTokenSmokeGateError("token_allowlist", "allowlist path must be a relative repo path")
+    normalized = rel.as_posix()
+    if normalized != raw_path:
+        raise RealTokenSmokeGateError("token_allowlist", "allowlist path must be normalized")
+    if raw_path.startswith(ALLOWLIST_FORBIDDEN_PREFIXES):
+        raise RealTokenSmokeGateError("token_allowlist", "allowlist path is forbidden")
+    if not _allowlist_allowed_for_relpath(raw_path):
+        raise RealTokenSmokeGateError("token_allowlist", "allowlist path must be under docs or tests")
+    return raw_path
+
+
+def _parse_allowlist_date(value: str, *, field_name: str) -> date:
+    if not value:
+        raise RealTokenSmokeGateError("token_allowlist", f"allowlist {field_name} is required")
+    try:
+        return date.fromisoformat(value)
+    except ValueError as exc:
+        raise RealTokenSmokeGateError("token_allowlist", f"allowlist {field_name} must be YYYY-MM-DD") from exc
+
+
+def _policy_for_relpath(rel_path: str) -> TokenLeakScanPolicy:
+    normalized = rel_path.replace("\\", "/")
+    if normalized == "README.md" or normalized.startswith("docs/"):
+        return TRACKED_DOCS_TOKEN_LEAK_POLICY
+    if normalized.startswith("tests/"):
+        return TRACKED_TESTS_TOKEN_LEAK_POLICY
+    if normalized.startswith("src/") or normalized.startswith("scripts/") or normalized.endswith(".py"):
+        return SOURCE_CODE_TOKEN_LEAK_POLICY
+    return STRICT_TOKEN_LEAK_POLICY
+
+
+def _allowlist_allowed_for_relpath(rel_path: str) -> bool:
+    normalized = rel_path.replace("\\", "/")
+    return normalized.startswith("docs/") or normalized.startswith("tests/")
 
 
 def _validate_code(code: str) -> str:

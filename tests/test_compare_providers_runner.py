@@ -16,6 +16,11 @@ def _fake_secret():
     return "Qq1Ww2Ee3Rr4Tt5" + "Yy6Uu7Ii8Oo9Pp0" + "Aa2Ss3Dd4Ff5Gg6"
 
 
+def _assert_secret_not_rendered(secret: str, text: str) -> None:
+    if secret in text:
+        raise AssertionError("secret-like value was rendered")
+
+
 def test_cli_default_dry_run_plans_only_and_does_not_write(tmp_path, capsys):
     output_dir = tmp_path / "output" / "provider_comparison"
 
@@ -96,7 +101,7 @@ def test_token_cli_argument_is_rejected_without_echoing_value(capsys):
     captured = capsys.readouterr()
     assert exit_code == 2
     assert "--token CLI parameter is not allowed" in captured.out
-    assert fake_secret not in captured.out
+    _assert_secret_not_rendered(fake_secret, captured.out)
 
 
 def test_real_token_sdk_path_missing_token_fails_before_sdk_call():

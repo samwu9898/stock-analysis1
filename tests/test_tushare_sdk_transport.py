@@ -12,6 +12,16 @@ def _fake_secret():
     return "Zz9Yy8Xx7Ww6Vv5" + "Uu4Tt3Ss2Rr1Qq0" + "Pp9Oo8Ii7Uu6Yy5"
 
 
+def _assert_secret_not_rendered(secret: str, text: str) -> None:
+    if secret in text:
+        raise AssertionError("secret-like value was rendered")
+
+
+def _assert_secret_forwarded(actual: str | None, expected: str) -> None:
+    if actual != expected:
+        raise AssertionError("secret-like value was not forwarded")
+
+
 class _FakePro:
     def __init__(self, response=None, exc=None):
         self.response = response if response is not None else [{"ts_code": "600406.SH", "name": "Safe"}]
@@ -55,8 +65,8 @@ def test_sdk_transport_uses_injected_sdk_and_masks_repr():
 
     assert rows == [{"ts_code": "600406.SH", "name": "Safe"}]
     assert pro.calls == [("stock_basic", {"ts_code": "600406.SH"})]
-    assert sdk.token_seen == fake_secret
-    assert fake_secret not in repr(transport)
+    _assert_secret_forwarded(sdk.token_seen, fake_secret)
+    _assert_secret_not_rendered(fake_secret, repr(transport))
     assert "_token" not in vars(transport)
 
 
@@ -71,7 +81,7 @@ def test_sdk_transport_sanitizes_sdk_exception_at_source_boundary():
     message = str(exc_info.value)
     assert exc_info.value.code == "sdk_call_error"
     assert "RuntimeError" in message
-    assert fake_secret not in message
+    _assert_secret_not_rendered(fake_secret, message)
     assert "Bearer" not in message
     assert "API body" not in message
 
@@ -85,7 +95,7 @@ def test_sdk_transport_blocks_token_like_response_before_provider_storage():
         transport.call("stock_basic", ts_code="600406.SH")
 
     assert exc_info.value.code == "token_leak_blocker"
-    assert fake_secret not in str(exc_info.value)
+    _assert_secret_not_rendered(fake_secret, str(exc_info.value))
 
 
 def test_sdk_transport_rejects_secret_like_request_params():
@@ -96,4 +106,4 @@ def test_sdk_transport_rejects_secret_like_request_params():
         transport.call("stock_basic", api_key=fake_secret)
 
     assert exc_info.value.code == "secret_in_request_params"
-    assert fake_secret not in str(exc_info.value)
+    _assert_secret_not_rendered(fake_secret, str(exc_info.value))

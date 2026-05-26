@@ -346,7 +346,7 @@ Out-of-Sample Audit
 
 - `docs/FUNDAMENTAL_SKILL_SPEC.md`：`fundamental_skill` 输出契约、模块边界和 pipeline 说明。
 - `docs/FUNDAMENTAL_AI_ANALYST_LAYER_SPEC.md`：Evidence Pack、AI Prompt、AI Report、Research Intelligence P0 和 Dashboard v3 说明。
-- `docs/RESEARCH_INTELLIGENCE_FRAMEWORK_V1_SPEC.md`：Research Intelligence P0 设计、实现状态、artifact 边界和 roadmap。
+- Research Intelligence Framework v1 spec：Research Intelligence P0 设计、实现状态、artifact 边界和 roadmap。
 - `docs/HTML_REPORT_VISUAL_AUDIT_TOOL_SPEC.md`：HTML Report Visual Audit Tool v1 的使用方式、输出产物和验收边界。
 - `docs/REAL_DATA_CONNECTOR_AUDIT.md`：真实公开数据连接器版本、字段映射、source trace 和限制。
 - `docs/INDUSTRY_FRAMEWORK_DEVELOPMENT_WORKFLOW.md`：新增行业框架的标准流程。

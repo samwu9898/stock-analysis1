@@ -12,10 +12,10 @@ does not execute a real token smoke, does not request credentials, does not read
 call real Tushare, does not use the network, and does not generate output
 artifacts.
 
-Latest recorded verification after safety skeleton acceptance:
+Latest recorded verification after v1.1 false-positive strategy patch:
 
-- targeted tests: `42 passed, 1 skipped`
-- pytest: `589 passed, 1 skipped`
+- targeted tests: `33 passed, 1 skipped`
+- pytest: `604 passed, 1 skipped`
 - regression: `passed=47 failed=0 total=47`
 
 ## 1. Current Executability
@@ -111,7 +111,7 @@ Runtime safety requirements:
 - Every payload must pass token scan before it is written.
 - Every diff report, including field names, values, notes, descriptions, and
   metadata, must pass token scan before it is written.
-- If raw token text, Bearer credential text, `mcp?token`, or raw MCP URL text is
+- If raw token text, raw authorization credential text, `mcp?token`, or raw MCP URL text is
   detected, the runner must fail closed immediately.
 
 ## 5. Post-Run Gate
@@ -205,7 +205,7 @@ The scanner must detect:
 
 - exact fake-token references in tests
 - keyed secret patterns
-- Bearer credential patterns
+- authorization credential patterns
 - MCP URL / `mcp?token`
 - realistic 32+ character token-like values
 - token-like values near case-insensitive `token`, `key`, `secret`, `auth`, or
@@ -214,6 +214,35 @@ The scanner must detect:
 - URL query parameters
 
 Findings must show only location and `<masked>`.
+
+### v1.1 False-Positive Policy
+
+The gate uses path-aware tracked-file scanning without weakening runtime
+scanner sensitivity.
+
+- `src/`, staged diff, generated artifacts, target output, payloads, diff
+  reports, and logs remain strict fail-closed surfaces. Allowlist entries are
+  never applied to those surfaces.
+- `docs/` and `README.md` may contain safe placeholders such as
+  `<TUSHARE_TOKEN>`, `<YOUR_TOKEN>`, `<YOUR_TUSHARE_TOKEN>`, `<REDACTED>`, and
+  `<masked>`, plus scanner pattern names such as `token_like_value`.
+- `tests/` may contain obvious invalid fake-token fixtures with `FAKE_`,
+  `TEST_`, or `EXAMPLE_` prefixes. These prefixes are allowed only for tracked
+  docs/tests policy scans, not for runtime payloads or artifacts.
+- Documentation examples may use placeholder forms such as
+  `token=<YOUR_TOKEN>`, `Bearer <REDACTED>`, and `mcp?token=<TUSHARE_TOKEN>`.
+  They must not use real-style long random values.
+- Realistic long token-like static literals in docs/tests still block unless a
+  narrow line-hash allowlist entry exists.
+- Root README false positives should be rewritten into prose rather than
+  allowlisted.
+
+If an allowlist is needed, each entry must use an exact relative `docs/` or
+`tests/` path and a SHA-256 hash of the exact line content. Every entry must
+include `path`, `line_content_hash`, `reason`, `category`, `owner`,
+`review_date`, and `expiry`. The only categories are `doc_example` and
+`test_fixture`. Wildcards, missing fields, expired entries, `src/`, `output/`,
+artifact, and log paths fail closed.
 
 Scanner enforcement points:
 

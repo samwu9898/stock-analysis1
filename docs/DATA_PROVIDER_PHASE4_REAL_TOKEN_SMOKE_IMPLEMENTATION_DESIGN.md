@@ -20,10 +20,10 @@ revision, the local-only SDK real-token smoke gate safety skeleton was
 implemented and accepted. This still does not authorize real smoke execution or
 any primary-provider switch.
 
-Latest recorded verification after safety skeleton acceptance:
+Latest recorded verification after v1.1 false-positive strategy patch:
 
-- targeted tests: `42 passed, 1 skipped`
-- pytest: `589 passed, 1 skipped`
+- targeted tests: `33 passed, 1 skipped`
+- pytest: `604 passed, 1 skipped`
 - regression: `passed=47 failed=0 total=47`
 
 ## 0. Implementation Acceptance Record
@@ -528,6 +528,32 @@ Fake token tests must use realistic token-like strings, not weak placeholder
 values. Use random long alphanumeric strings, for example 32 or more
 characters, so tests verify realistic token-like detection. Test failure
 messages must not print the fake token value.
+
+### v1.1 False-Positive Strategy Patch
+
+The real-token smoke gate now separates tracked-file scan policy by path while
+keeping runtime and artifact scanning strict.
+
+- `src/` tracked files use the strict scanner. Token-like hits are hard
+  blockers and cannot be allowlisted.
+- Staged diff, runtime payloads, diff reports, generated artifacts, target
+  output, and logs use the strict scanner. Allowlist entries never apply.
+- `docs/` and root `README.md` use a documentation policy that permits safe
+  placeholders such as `<TUSHARE_TOKEN>`, `<YOUR_TOKEN>`, `<REDACTED>`, and
+  `<masked>`, scanner pattern names such as `token_like_value`, and ordinary
+  documentation file identifiers. Real-style long random values still block.
+- `tests/` use a fixture policy that permits obvious invalid fake-token
+  prefixes: `FAKE_`, `TEST_`, and `EXAMPLE_`. Runtime payloads and artifacts do
+  not get this exemption.
+- README false positives should be rewritten into prose placeholders or
+  ordinary prose, not allowlisted.
+
+The optional token-leak allowlist is fail-closed and intentionally narrow. It
+accepts only exact relative paths under `docs/` or `tests/`, a SHA-256 hash of
+the exact line content, a non-empty reason, category `doc_example` or
+`test_fixture`, owner, review date, and expiry. Missing fields, wildcards,
+expired entries, `src/`, staged diff, output, artifact, payload, diff-report,
+or log paths are blockers.
 
 ## 12. Claude / External Audit
 

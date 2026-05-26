@@ -8,6 +8,11 @@ from src.fundamental_skill.data_providers.diff_classifier import (
 )
 
 
+def _assert_secret_not_rendered(secret: str, text: str) -> None:
+    if secret in text:
+        raise AssertionError("secret-like value was rendered")
+
+
 def test_exact_match_category():
     item = classify_field_diff("raw.blocks.basic_info", [{"name": "A"}], [{"name": "A"}])
 
@@ -59,13 +64,13 @@ def test_permission_and_failed_akshare_categories():
 
 
 def test_token_risk_is_blocker_and_masks_values():
-    fake_secret = "fake-token-for-tests-1234567890abcdef"
+    fake_secret = "FAKE_TOKEN_FOR_TESTING_ONLY__NOT_REAL__XYZ_1234567890"
     item = classify_field_diff("raw.fetch_status.error", f"token={fake_secret}", "ok")
 
     assert item.category == DiffCategory.TOKEN_OR_SECRET_RISK.value
     assert item.severity == "blocker"
     assert item.review_required is True
-    assert fake_secret not in str(item)
+    _assert_secret_not_rendered(fake_secret, str(item))
 
 
 def test_make_diff_item_supports_all_required_categories():

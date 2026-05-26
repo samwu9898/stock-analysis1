@@ -13,6 +13,11 @@ from src.fundamental_skill.data_providers.tushare_client import TushareClient
 from src.fundamental_skill.data_providers.tushare_provider import TushareProvider
 
 
+def _assert_secret_not_rendered(secret: str, text: str) -> None:
+    if secret in text:
+        raise AssertionError("secret-like value was rendered")
+
+
 def test_provider_mode_from_config_reads_supported_keys():
     assert provider_mode_from_config({"provider": "akshare"}) == ProviderMode.AKSHARE
     assert provider_mode_from_config({"provider_mode": "tushare"}) == ProviderMode.TUSHARE
@@ -97,7 +102,7 @@ def test_tushare_mode_without_token_fails_closed():
 
 
 def test_tushare_mode_without_provider_fails_closed_and_masks_token():
-    fake_token = "fake-token-for-tests-1234567890"
+    fake_token = "FAKE_TOKEN_FOR_TESTING_ONLY__NOT_REAL__XYZ_1234567890"
     router = ProviderRouter(mode="tushare", tushare_token=fake_token)
 
     with pytest.raises(ProviderRoutingError) as exc_info:
@@ -105,8 +110,8 @@ def test_tushare_mode_without_provider_fails_closed_and_masks_token():
 
     message = str(exc_info.value)
     assert "requires an injected Tushare provider" in message
-    assert fake_token not in message
-    assert fake_token not in repr(router)
+    _assert_secret_not_rendered(fake_token, message)
+    _assert_secret_not_rendered(fake_token, repr(router))
     assert "<masked>" in repr(router)
 
 
@@ -188,7 +193,7 @@ def test_dual_compare_remains_plan_only_for_phase4_dry_run_boundary():
 
 
 def test_provider_failure_error_is_sanitized():
-    fake_token = "fake-token-for-tests-abcdef"
+    fake_token = "FAKE_TOKEN_FOR_TESTING_ONLY__NOT_REAL__XYZ_1234567890"
     failing = FakeDataProvider(
         name="tushare",
         fail_message=f"token={fake_token} failed",
@@ -203,5 +208,5 @@ def test_provider_failure_error_is_sanitized():
         router.fetch_to_raw_json("002050")
 
     message = str(exc_info.value)
-    assert fake_token not in message
+    _assert_secret_not_rendered(fake_token, message)
     assert "token=<masked>" in message

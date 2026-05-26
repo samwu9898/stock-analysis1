@@ -6,6 +6,11 @@ from src.fundamental_skill.data_providers.akshare_provider import AKSHARE_RAW_BL
 from src.fundamental_skill.data_providers.schemas import CANONICAL_RAW_BLOCKS, raw_has_canonical_shape
 
 
+def _assert_secret_not_rendered(secret: str, text: str) -> None:
+    if secret in text:
+        raise AssertionError("secret-like value was rendered")
+
+
 class FakeRealDataConnector:
     def __init__(self, raw=None):
         self.raw = raw if raw is not None else _canonical_raw()
@@ -105,11 +110,11 @@ def test_akshare_capabilities_describe_current_adapter_without_realtime_claims()
 
 
 def test_akshare_provider_metadata_does_not_expose_sensitive_values():
-    secret = "fake-token-for-tests-1234567890"
+    secret = "FAKE_TOKEN_FOR_TESTING_ONLY__NOT_REAL__XYZ_1234567890"
     provider = AkShareProvider(connector=FakeRealDataConnector())
     metadata_text = repr(provider.capabilities()) + repr(provider)
 
-    assert secret not in metadata_text
+    _assert_secret_not_rendered(secret, metadata_text)
     assert "token" not in metadata_text.lower()
     assert "mcp" not in metadata_text.lower()
 

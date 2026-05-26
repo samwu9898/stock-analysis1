@@ -17,6 +17,11 @@ from src.fundamental_skill.data_providers.tushare_provider import (
 )
 
 
+def _assert_secret_not_rendered(secret: str, text: str) -> None:
+    if secret in text:
+        raise AssertionError("secret-like value was rendered")
+
+
 def _transport(**overrides):
     base = {
         "stock_basic": [
@@ -91,7 +96,7 @@ def _transport(**overrides):
     return base
 
 
-def _provider(transport=None, *, token="fake-token-for-tests-provider"):
+def _provider(transport=None, *, token="FAKE_TOKEN_FOR_TESTING_ONLY__NOT_REAL__XYZ_1234567890"):
     client = TushareClient(transport=transport or _transport(), token=token)
     return TushareProvider(client=client, token=token)
 
@@ -200,7 +205,7 @@ def test_tushare_provider_records_field_missing_without_turning_it_into_fact():
 
 
 def test_tushare_provider_records_permission_denied_with_sanitized_error():
-    secret = "fake-token-for-tests-permission"
+    secret = "FAKE_TOKEN_FOR_TESTING_ONLY__NOT_REAL__XYZ_1234567890"
     raw = _provider(
         _transport(stock_basic=TusharePermissionError(f"token={secret} permission denied")),
         token=secret,
@@ -211,8 +216,8 @@ def test_tushare_provider_records_permission_denied_with_sanitized_error():
     assert raw["blocks"]["basic_info"] == []
     assert status["success"] is False
     assert "permission_denied" in status["error"]
-    assert secret not in status["error"]
-    assert secret not in repr(raw)
+    _assert_secret_not_rendered(secret, status["error"])
+    _assert_secret_not_rendered(secret, repr(raw))
 
 
 def test_tushare_provider_records_empty_business_composition():
@@ -236,7 +241,7 @@ def test_tushare_provider_records_malformed_response():
 
 
 def test_tushare_provider_records_rate_limit_with_sanitized_error():
-    secret = "fake-token-for-tests-rate-limit"
+    secret = "FAKE_TOKEN_FOR_TESTING_ONLY__NOT_REAL__XYZ_1234567890"
     raw = _provider(
         _transport(daily_basic=TushareRateLimitError(f"{'TUSHARE_' + 'TOKEN'}={secret} rate limit")),
         token=secret,
@@ -246,8 +251,8 @@ def test_tushare_provider_records_rate_limit_with_sanitized_error():
 
     assert status["success"] is False
     assert "rate_limit" in status["error"]
-    assert secret not in status["error"]
-    assert secret not in repr(raw)
+    _assert_secret_not_rendered(secret, status["error"])
+    _assert_secret_not_rendered(secret, repr(raw))
 
 
 def test_tushare_provider_no_token_fails_closed_before_fetch():
@@ -260,15 +265,15 @@ def test_tushare_provider_no_token_fails_closed_before_fetch():
 
 
 def test_tushare_provider_masks_token_in_repr_and_provider_errors():
-    secret = "fake-token-for-tests-provider-repr"
+    secret = "FAKE_TOKEN_FOR_TESTING_ONLY__NOT_REAL__XYZ_1234567890"
     provider = TushareProvider(token=secret)
 
     with pytest.raises(TushareProviderError) as exc_info:
         provider.fetch_to_raw_json("002050")
 
-    assert secret not in repr(provider)
+    _assert_secret_not_rendered(secret, repr(provider))
     assert "<masked>" in repr(provider)
-    assert secret not in str(exc_info.value)
+    _assert_secret_not_rendered(secret, str(exc_info.value))
 
 
 def test_tushare_provider_source_traces_are_non_secret_and_field_based():
