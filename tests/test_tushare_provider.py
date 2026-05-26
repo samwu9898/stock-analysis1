@@ -14,6 +14,7 @@ from src.fundamental_skill.data_providers.tushare_provider import (
     TUSHARE_PROVIDER_VERSION,
     TushareProvider,
     TushareProviderError,
+    normalize_ts_code,
 )
 
 
@@ -96,18 +97,59 @@ def _transport(**overrides):
     return base
 
 
+class _RecordingTransport:
+    def __init__(self, **overrides):
+        self.responses = _transport(**overrides)
+        self.calls = []
+
+    def call(self, endpoint, **params):
+        self.calls.append({"endpoint": endpoint, "params": params})
+        response = self.responses.get(endpoint, [])
+        if isinstance(response, BaseException):
+            raise response
+        return response
+
+
 def _provider(transport=None, *, token="FAKE_TOKEN_FOR_TESTING_ONLY__NOT_REAL__XYZ_1234567890"):
     client = TushareClient(transport=transport or _transport(), token=token)
     return TushareProvider(client=client, token=token)
 
 
+@pytest.mark.parametrize(
+    ("code", "expected"),
+    [
+        ("600406", "600406.SH"),
+        ("603259", "603259.SH"),
+        ("002050", "002050.SZ"),
+        ("002371", "002371.SZ"),
+        ("000426", "000426.SZ"),
+        ("002837", "002837.SZ"),
+        ("900001", "900001.BJ"),
+    ],
+)
+def test_normalize_ts_code_maps_supported_a_share_prefixes(code, expected):
+    assert normalize_ts_code(code) == expected
+
+
+@pytest.mark.parametrize("code", ["sz002050", "12345", "700000", "abc002050", " 002050"])
+def test_normalize_ts_code_fails_closed_for_non_strict_or_unknown_codes(code):
+    with pytest.raises(TushareProviderError) as exc_info:
+        normalize_ts_code(code)
+
+    message = str(exc_info.value).lower()
+    assert "stock_code" in message
+    assert "token" not in message
+    assert "http" not in message
+
+
 def test_tushare_provider_returns_canonical_raw_shape_and_capabilities():
     provider = _provider()
-    raw = provider.fetch_to_raw_json("sz002050")
+    raw = provider.fetch_to_raw_json("002050")
     capabilities = provider.capabilities()
 
     assert raw_has_canonical_shape(raw)
     assert raw["meta"]["code"] == "002050"
+    assert raw["meta"]["ts_code"] == "002050.SZ"
     assert raw["meta"]["data_source"] == "tushare"
     assert raw["meta"]["connector_version"] == TUSHARE_PROVIDER_VERSION
     assert set(CANONICAL_RAW_BLOCKS) == set(raw["blocks"])
@@ -117,6 +159,77 @@ def test_tushare_provider_returns_canonical_raw_shape_and_capabilities():
     assert capabilities.news is False
     assert capabilities.commodity_prices is False
     assert capabilities.realtime_market_data is False
+
+
+def test_tushare_provider_fails_closed_for_invalid_code_before_transport_call():
+    transport = _RecordingTransport()
+    provider = TushareProvider(client=TushareClient(transport=transport), token_available=True)
+
+    with pytest.raises(TushareProviderError):
+        provider.fetch_to_raw_json("sz002050")
+
+    assert transport.calls == []
+
+
+def test_tushare_provider_passes_normalized_ts_code_to_all_sdk_endpoints_and_keeps_canonical_code():
+    transport = _RecordingTransport(
+        stock_basic=[
+            {
+                "ts_code": "002837.SZ",
+                "name": "Mock Envicool",
+                "industry": "mock datacenter thermal",
+                "list_date": "2016-12-29",
+            }
+        ]
+    )
+    provider = TushareProvider(client=TushareClient(transport=transport), token_available=True)
+
+    raw = provider.fetch_to_raw_json("002837")
+
+    expected_endpoints = [
+        "stock_basic",
+        "income",
+        "balancesheet",
+        "cashflow",
+        "fina_indicator",
+        "daily_basic",
+        "fina_mainbz",
+    ]
+    assert [call["endpoint"] for call in transport.calls] == expected_endpoints
+    assert all(call["params"] == {"ts_code": "002837.SZ"} for call in transport.calls)
+    assert raw["meta"]["code"] == "002837"
+    assert raw["meta"]["ts_code"] == "002837.SZ"
+    assert raw["blocks"]["basic_info"][0]["stock_code"] == "002837"
+
+    statuses = raw["fetch_status"]
+    assert all(statuses[block]["ts_code"] == "002837.SZ" for block in CANONICAL_RAW_BLOCKS)
+    endpoint_traces = [
+        trace
+        for status in statuses.values()
+        for trace in status["source_trace"]
+        if trace["field_name"] == "__endpoint_call__"
+    ]
+    assert [trace["endpoint"] for trace in endpoint_traces] == expected_endpoints
+    assert {trace["ts_code"] for trace in endpoint_traces} == {"002837.SZ"}
+    assert all(trace["request_period"] == "omitted" for trace in endpoint_traces)
+    assert all(trace["request_start_date"] == "omitted" for trace in endpoint_traces)
+    assert all(trace["request_end_date"] == "omitted" for trace in endpoint_traces)
+    assert all(trace["request_trade_date"] == "omitted" for trace in endpoint_traces)
+    assert any(trace["selected_row_period"] == "20251231" for trace in endpoint_traces)
+
+
+def test_tushare_provider_source_trace_records_normalized_ts_code_without_sensitive_metadata():
+    secret = "FAKE_TOKEN_FOR_TESTING_ONLY__NOT_REAL__XYZ_1234567890"
+    local_tool_url = "http://127.0.0.1:9999/local-tool"
+    raw = _provider(token=secret).fetch_to_raw_json("002050")
+
+    trace_text = repr(raw["fetch_status"])
+
+    assert raw["fetch_status"]["valuation"]["endpoints"] == ["daily_basic"]
+    assert raw["fetch_status"]["valuation"]["row_count"] == 1
+    assert "002050.SZ" in trace_text
+    _assert_secret_not_rendered(secret, trace_text)
+    assert local_tool_url not in trace_text
 
 
 def test_tushare_provider_maps_basic_info_with_main_business_missing_until_verified():

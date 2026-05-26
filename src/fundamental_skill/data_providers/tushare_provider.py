@@ -22,6 +22,8 @@ from .tushare_client import (
 
 
 TUSHARE_PROVIDER_VERSION = "tushare_provider.phase3_mocked_mvp"
+SH_TS_CODE_PREFIXES = ("600", "601", "603", "605", "688", "689")
+SZ_TS_CODE_PREFIXES = ("000", "001", "002", "003", "300", "301")
 
 
 class TushareProviderError(RuntimeError):
@@ -78,10 +80,14 @@ class TushareProvider:
         self._require_token_ready()
 
         code = _normalize_code(stock_code)
-        raw = self._empty_raw(code)
+        ts_code = normalize_ts_code(code)
+        raw = self._empty_raw(code, ts_code)
         client = self._get_client()
 
-        block_builders: dict[str, Callable[[TushareClient, str], list[dict[str, Any]]]] = {
+        block_builders: dict[
+            str,
+            Callable[[TushareClient, str, str], tuple[list[dict[str, Any]], list[dict[str, Any]]]],
+        ] = {
             "basic_info": self._fetch_basic_info,
             "financial_indicator": self._fetch_financial_indicator,
             "valuation": self._fetch_valuation,
@@ -89,7 +95,7 @@ class TushareProvider:
         }
         for block_name, builder in block_builders.items():
             try:
-                rows = builder(client, code)
+                rows, source_trace = builder(client, code, ts_code)
                 raw["blocks"][block_name] = rows
                 missing = self._missing_fields_for_block(block_name, rows)
                 raw["fetch_status"][block_name] = self._status(
@@ -98,8 +104,11 @@ class TushareProvider:
                     error=None if rows else "empty_response",
                     missing_fields=missing,
                     fetched_at=raw["meta"]["generated_at"],
-                    source_trace=self._source_trace_for_rows(block_name, rows),
+                    source_trace=source_trace,
                     warnings=[] if rows else [f"{block_name} returned no mocked rows"],
+                    ts_code=ts_code,
+                    row_count=len(rows),
+                    endpoints=_endpoints_from_trace(source_trace),
                 )
                 if not rows:
                     raw["errors"].append(f"{block_name}: empty_response")
@@ -112,8 +121,11 @@ class TushareProvider:
                     error=error_text,
                     missing_fields=self._expected_fields(block_name),
                     fetched_at=raw["meta"]["generated_at"],
-                    source_trace=[],
+                    source_trace=[self._source_trace_for_error(block_name, ts_code, exc)],
                     warnings=[],
+                    ts_code=ts_code,
+                    row_count=0,
+                    endpoints=[_endpoint_for_error(block_name, exc)],
                 )
                 raw["errors"].append(f"{block_name}: {error_text}")
 
@@ -126,6 +138,9 @@ class TushareProvider:
             fetched_at=raw["meta"]["generated_at"],
             source_trace=[],
             warnings=["TushareProvider Phase 3 MVP does not replace news; use future news provider fallback"],
+            ts_code=ts_code,
+            row_count=0,
+            endpoints=[],
         )
         raw["errors"].append("news: news_missing_fallback")
 
@@ -145,28 +160,44 @@ class TushareProvider:
             return self._client
         raise TushareProviderError("TushareProvider Phase 3 requires an injected mocked TushareClient", secrets=(self._token,))
 
-    def _fetch_basic_info(self, client: TushareClient, code: str) -> list[dict[str, Any]]:
-        rows = _records(client.stock_basic(ts_code=code), endpoint="stock_basic")
+    def _fetch_basic_info(self, client: TushareClient, code: str, ts_code: str) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+        rows = _records(client.stock_basic(ts_code=ts_code), endpoint="stock_basic")
         row = rows[0] if rows else {}
+        source_trace = [self._source_trace_for_endpoint("basic_info", "stock_basic", ts_code, rows)]
         if not row:
-            return []
-        return [
+            return [], source_trace
+        mapped = [
             {
-                "stock_code": _first_present(row, ("stock_code", "symbol", "code", "ts_code")) or code,
+                "stock_code": _canonical_code_from_row(row, fallback=code),
                 "stock_name": _first_present(row, ("stock_name", "name")),
                 "industry": _first_present(row, ("industry", "classi_name")),
                 "main_business": _first_present(row, ("main_business", "business_scope", "operating_scope")),
                 "listing_date": _first_present(row, ("listing_date", "list_date")),
             }
         ]
+        source_trace.extend(self._source_trace_for_rows("basic_info", mapped))
+        return mapped, source_trace
 
-    def _fetch_financial_indicator(self, client: TushareClient, code: str) -> list[dict[str, Any]]:
-        income = _first_record(client.income(ts_code=code), endpoint="income")
-        balance = _first_record(client.balancesheet(ts_code=code), endpoint="balancesheet")
-        cashflow = _first_record(client.cashflow(ts_code=code), endpoint="cashflow")
-        indicator = _first_record(client.fina_indicator(ts_code=code), endpoint="fina_indicator")
+    def _fetch_financial_indicator(
+        self, client: TushareClient, code: str, ts_code: str
+    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+        del code
+        income_rows = _records(client.income(ts_code=ts_code), endpoint="income")
+        balance_rows = _records(client.balancesheet(ts_code=ts_code), endpoint="balancesheet")
+        cashflow_rows = _records(client.cashflow(ts_code=ts_code), endpoint="cashflow")
+        indicator_rows = _records(client.fina_indicator(ts_code=ts_code), endpoint="fina_indicator")
+        source_trace = [
+            self._source_trace_for_endpoint("financial_indicator", "income", ts_code, income_rows),
+            self._source_trace_for_endpoint("financial_indicator", "balancesheet", ts_code, balance_rows),
+            self._source_trace_for_endpoint("financial_indicator", "cashflow", ts_code, cashflow_rows),
+            self._source_trace_for_endpoint("financial_indicator", "fina_indicator", ts_code, indicator_rows),
+        ]
+        income = income_rows[0] if income_rows else {}
+        balance = balance_rows[0] if balance_rows else {}
+        cashflow = cashflow_rows[0] if cashflow_rows else {}
+        indicator = indicator_rows[0] if indicator_rows else {}
         if not any((income, balance, cashflow, indicator)):
-            return []
+            return [], source_trace
 
         metric: dict[str, Any] = {
             "period": _first_present(income, ("period", "end_date", "ann_date"))
@@ -190,14 +221,17 @@ class TushareProvider:
             "roe": _safe_float(_first_present(indicator, ("roe", "roe_weighted"))),
             "r_and_d_expense_ratio": _safe_float(_first_present(indicator, ("r_and_d_expense_ratio", "rd_exp_ratio"))),
         }
-        return [metric]
+        source_trace.extend(self._source_trace_for_rows("financial_indicator", [metric]))
+        return [metric], source_trace
 
-    def _fetch_valuation(self, client: TushareClient, code: str) -> list[dict[str, Any]]:
-        rows = _records(client.daily_basic(ts_code=code), endpoint="daily_basic")
+    def _fetch_valuation(self, client: TushareClient, code: str, ts_code: str) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+        del code
+        rows = _records(client.daily_basic(ts_code=ts_code), endpoint="daily_basic")
         row = rows[0] if rows else {}
+        source_trace = [self._source_trace_for_endpoint("valuation", "daily_basic", ts_code, rows)]
         if not row:
-            return []
-        return [
+            return [], source_trace
+        mapped = [
             {
                 "period": _first_present(row, ("period", "trade_date")),
                 "pe_ttm": _safe_float(_first_present(row, ("pe_ttm",))),
@@ -207,9 +241,15 @@ class TushareProvider:
                 "dividend_yield": _safe_float(_first_present(row, ("dividend_yield", "dv_ttm"))),
             }
         ]
+        source_trace.extend(self._source_trace_for_rows("valuation", mapped))
+        return mapped, source_trace
 
-    def _fetch_business_composition(self, client: TushareClient, code: str) -> list[dict[str, Any]]:
-        rows = _records(client.fina_mainbz(ts_code=code), endpoint="fina_mainbz")
+    def _fetch_business_composition(
+        self, client: TushareClient, code: str, ts_code: str
+    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+        del code
+        rows = _records(client.fina_mainbz(ts_code=ts_code), endpoint="fina_mainbz")
+        source_trace = [self._source_trace_for_endpoint("business_composition", "fina_mainbz", ts_code, rows)]
         segments = []
         for row in rows:
             segments.append(
@@ -225,7 +265,8 @@ class TushareProvider:
                     "profit_ratio": _safe_float(_first_present(row, ("profit_ratio", "bz_profit_ratio"))),
                 }
             )
-        return segments
+        source_trace.extend(self._source_trace_for_rows("business_composition", segments))
+        return segments, source_trace
 
     def _status(
         self,
@@ -237,6 +278,9 @@ class TushareProvider:
         fetched_at: str,
         source_trace: list[dict[str, Any]],
         warnings: list[str],
+        ts_code: str | None = None,
+        row_count: int | None = None,
+        endpoints: list[str] | None = None,
     ) -> dict[str, Any]:
         return {
             "success": success,
@@ -244,8 +288,66 @@ class TushareProvider:
             "missing_fields": missing_fields,
             "fetched_at": fetched_at,
             "source_name": self.name,
+            "endpoints": endpoints or [],
+            "ts_code": ts_code,
+            "row_count": row_count,
             "source_trace": source_trace,
             "warnings": [sanitize_text(warning, secrets=(self._token,)) for warning in warnings],
+        }
+
+    def _source_trace_for_endpoint(
+        self,
+        block_name: str,
+        endpoint: str,
+        ts_code: str,
+        rows: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        selected_row = rows[0] if rows else {}
+        selected_period = _first_present(selected_row, ("period", "end_date", "trade_date"))
+        selected_ann_date = _first_present(selected_row, ("ann_date",))
+        selected_trade_date = _first_present(selected_row, ("trade_date",))
+        return {
+            "field_name": "__endpoint_call__",
+            "block_name": block_name,
+            "function_name": endpoint,
+            "source_function": endpoint,
+            "endpoint": endpoint,
+            "ts_code": ts_code,
+            "row_count": len(rows),
+            "request_period": "omitted",
+            "request_start_date": "omitted",
+            "request_end_date": "omitted",
+            "request_trade_date": "omitted",
+            "selected_row_period": selected_period or "missing",
+            "selected_row_ann_date": selected_ann_date or "missing",
+            "selected_row_trade_date": selected_trade_date or "missing",
+            "source_period": selected_period,
+            "value": len(rows),
+            "derived": False,
+            "derivation_method": None,
+        }
+
+    def _source_trace_for_error(self, block_name: str, ts_code: str, exc: TushareClientError) -> dict[str, Any]:
+        endpoint = _endpoint_for_error(block_name, exc)
+        return {
+            "field_name": "__endpoint_call__",
+            "block_name": block_name,
+            "function_name": endpoint,
+            "source_function": endpoint,
+            "endpoint": endpoint,
+            "ts_code": ts_code,
+            "row_count": 0,
+            "request_period": "omitted",
+            "request_start_date": "omitted",
+            "request_end_date": "omitted",
+            "request_trade_date": "omitted",
+            "selected_row_period": "missing",
+            "selected_row_ann_date": "missing",
+            "selected_row_trade_date": "missing",
+            "source_period": None,
+            "value": None,
+            "derived": False,
+            "derivation_method": None,
         }
 
     def _source_trace_for_rows(self, block_name: str, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -266,7 +368,7 @@ class TushareProvider:
                         "function_name": endpoint,
                         "source_function": endpoint,
                         "source_period": row.get("period") or row.get("listing_date"),
-                        "value": value,
+                        "value": sanitize_text(value, secrets=(self._token,)) if isinstance(value, str) else value,
                         "derived": False,
                         "derivation_method": None,
                     }
@@ -325,11 +427,12 @@ class TushareProvider:
         message = sanitize_exception_message(exc, secrets=(self._token,))
         return f"{exc.code}: {message}" if exc.code not in message else message
 
-    def _empty_raw(self, code: str) -> dict[str, Any]:
+    def _empty_raw(self, code: str, ts_code: str) -> dict[str, Any]:
         generated_at = _now_iso()
         return {
             "meta": {
                 "code": code,
+                "ts_code": ts_code,
                 "generated_at": generated_at,
                 "data_source": self.name,
                 "connector_version": TUSHARE_PROVIDER_VERSION,
@@ -355,11 +458,34 @@ def _now_iso() -> str:
     return datetime.now().replace(microsecond=0).isoformat()
 
 
+def normalize_ts_code(code: str) -> str:
+    """Return the strict Tushare ``ts_code`` for a supported 6 digit A-share code."""
+
+    text = str(code)
+    if len(text) != 6 or not text.isdigit():
+        raise TushareProviderError("stock_code must be a strict 6 digit A-share code")
+    if text.startswith(SH_TS_CODE_PREFIXES):
+        return f"{text}.SH"
+    if text.startswith(SZ_TS_CODE_PREFIXES):
+        return f"{text}.SZ"
+    if text.startswith("9"):
+        return f"{text}.BJ"
+    raise TushareProviderError("stock_code has unsupported A-share exchange prefix")
+
+
 def _normalize_code(stock_code: str) -> str:
-    digits = "".join(ch for ch in str(stock_code) if ch.isdigit())
-    if len(digits) < 6:
-        raise TushareProviderError("stock_code must contain a 6 digit A-share code")
-    return digits[-6:]
+    ts_code = normalize_ts_code(stock_code)
+    return ts_code.split(".", 1)[0]
+
+
+def _canonical_code_from_row(row: dict[str, Any], *, fallback: str) -> str:
+    value = _first_present(row, ("stock_code", "symbol", "code", "ts_code"))
+    if value is None:
+        return fallback
+    text = str(value).strip()
+    if len(text) >= 6 and text[:6].isdigit():
+        return text[:6]
+    return fallback
 
 
 def _safe_float(value: Any) -> float | None:
@@ -430,3 +556,23 @@ def _first_value(rows: list[dict[str, Any]], key: str) -> Any:
         if value not in (None, ""):
             return value
     return None
+
+
+def _endpoints_from_trace(source_trace: list[dict[str, Any]]) -> list[str]:
+    endpoints = []
+    for trace in source_trace:
+        endpoint = trace.get("endpoint")
+        if isinstance(endpoint, str) and endpoint and endpoint not in endpoints:
+            endpoints.append(endpoint)
+    return endpoints
+
+
+def _endpoint_for_error(block_name: str, exc: TushareClientError) -> str:
+    if exc.endpoint:
+        return exc.endpoint
+    return {
+        "basic_info": "stock_basic",
+        "financial_indicator": "financial_statements_and_indicators",
+        "valuation": "daily_basic",
+        "business_composition": "fina_mainbz",
+    }.get(block_name, block_name)
