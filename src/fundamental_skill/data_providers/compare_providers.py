@@ -32,6 +32,7 @@ from .real_token_smoke_gate import (
     RealTokenSmokeGateError,
     validate_real_token_smoke_flags,
 )
+from .score_confidence_explainability import build_score_confidence_explainability
 from .schemas import raw_has_canonical_shape
 from .token_leak_scanner import assert_no_token_leaks
 from .token_safety import sanitize_text
@@ -128,12 +129,15 @@ def run_provider_comparison(
     output_dir_explicit: bool = True,
     token_reader: Callable[[], str | None] | None = None,
     sdk_factory: Callable[[], Any] | None = None,
+    explainability: bool = False,
 ) -> dict[str, Any]:
     """Run a Phase 4 comparison with injected providers or return a plan-only dry-run."""
 
     provider_names = tuple(str(provider).strip().lower() for provider in providers)
     if provider_names != DEFAULT_PROVIDERS:
         raise ProviderComparisonError("Phase 4 minimal supports only akshare,tushare comparison order")
+    if real_token_smoke and explainability:
+        raise ProviderComparisonError("--explainability is comparison-only and cannot be combined with --real-token-smoke in V1")
     try:
         validate_real_token_smoke_flags(
             real_token_smoke=real_token_smoke,
@@ -166,6 +170,7 @@ def run_provider_comparison(
         output_dir=output_dir,
         timestamp=timestamp,
         include_p1=include_p1,
+        include_explainability=explainability,
     )
     response: dict[str, Any] = {
         "mode": "dry_run" if dry_run else "comparison",
@@ -178,6 +183,8 @@ def run_provider_comparison(
         "wrote_artifacts": False,
         "provider_execution": "not_run",
     }
+    if explainability:
+        response["explainability"] = True
     for code, code_plan in plan.codes.items():
         response["codes"][code] = {
             "code_dir": str(code_plan.code_dir),
@@ -208,9 +215,25 @@ def run_provider_comparison(
         markdown = render_diff_report_markdown(report)
         assert_no_token_leaks(report, context=f"{code} diff_report")
         assert_no_token_leaks(markdown, context=f"{code} diff_report.md")
+        explainability_payload = None
+        if explainability:
+            explainability_payload = build_score_confidence_explainability(
+                code=code,
+                akshare_raw=akshare_bundle.raw,
+                tushare_raw=tushare_bundle.raw,
+                akshare_fundamental=akshare_bundle.fundamental,
+                tushare_fundamental=tushare_bundle.fundamental,
+                akshare_evidence_pack=akshare_bundle.evidence_pack,
+                tushare_evidence_pack=tushare_bundle.evidence_pack,
+                diff_report=report,
+                artifact_refs=_explainability_artifact_refs(plan, code),
+            )
+            assert_no_token_leaks(explainability_payload, context=f"{code} score_confidence_explainability")
 
         if write_artifacts:
             _write_provider_artifacts(plan, code, akshare_bundle, tushare_bundle, report, markdown)
+            if explainability_payload is not None:
+                write_json_artifact(plan, code, "score_confidence_explainability.json", explainability_payload)
         response["codes"][code]["summary"] = report["summary"]
 
     return response
@@ -230,6 +253,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--include-p1", action="store_true", help="Plan P1.1 artifact paths only; no P1.1 execution in Phase 4 minimal")
     parser.add_argument("--real-token-smoke", action="store_true", help="Enable local-only real-token smoke gate")
     parser.add_argument("--provider-transport", help="Real-token smoke transport; only sdk is executable")
+    parser.add_argument("--explainability", action="store_true", default=False, help="Write comparison-only score/confidence explainability artifact")
     try:
         args, unknown = parser.parse_known_args(argv)
     except SystemExit:
@@ -250,6 +274,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             provider_transport=args.provider_transport,
             provider_instances=None,
             output_dir_explicit=_output_dir_was_explicit(raw_argv),
+            explainability=args.explainability,
         )
     except ProviderComparisonError as exc:
         print(f"provider_comparison_error: {exc}")
@@ -290,6 +315,22 @@ def _write_provider_artifacts(
 
 def _split_csv(value: str) -> list[str]:
     return [item.strip() for item in str(value).split(",") if item.strip()]
+
+
+def _explainability_artifact_refs(plan: ComparisonArtifactPlan, code: str) -> dict[str, dict[str, str]]:
+    code_plan = plan.codes[code]
+    return {
+        "akshare": {
+            "raw": code_plan.paths["akshare_raw.json"].name,
+            "fundamental": code_plan.paths["akshare_fundamental.json"].name,
+            "evidence_pack": code_plan.paths["akshare_evidence_pack.json"].name,
+        },
+        "tushare": {
+            "raw": code_plan.paths["tushare_raw.json"].name,
+            "fundamental": code_plan.paths["tushare_fundamental.json"].name,
+            "evidence_pack": code_plan.paths["tushare_evidence_pack.json"].name,
+        },
+    }
 
 
 def _run_real_token_smoke_comparison(

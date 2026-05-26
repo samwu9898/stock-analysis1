@@ -8,6 +8,7 @@ import pytest
 
 from src.fundamental_skill.data_providers.comparison_artifacts import (
     BASE_ARTIFACT_NAMES,
+    EXPLAINABILITY_ARTIFACT_NAMES,
     P1_ARTIFACT_NAMES,
     ComparisonArtifactError,
     plan_comparison_artifacts,
@@ -42,6 +43,24 @@ def test_plan_comparison_artifacts_can_plan_p1_paths_without_running_p1(tmp_path
         assert name in plan.codes["002050"].paths
 
 
+def test_plan_comparison_artifacts_can_plan_explainability_path_only_when_enabled(tmp_path):
+    default_plan = plan_comparison_artifacts(
+        ["002837"],
+        output_dir=tmp_path / "output" / "provider_comparison",
+        timestamp="default",
+    )
+    explainability_plan = plan_comparison_artifacts(
+        ["002837"],
+        output_dir=tmp_path / "output" / "provider_comparison",
+        timestamp="with_explainability",
+        include_explainability=True,
+    )
+
+    assert "score_confidence_explainability.json" not in default_plan.codes["002837"].paths
+    for name in EXPLAINABILITY_ARTIFACT_NAMES:
+        assert name in explainability_plan.codes["002837"].paths
+
+
 def test_artifact_writer_writes_only_inside_comparison_dir_and_can_delete_timestamp(tmp_path):
     plan = plan_comparison_artifacts(
         ["002371"],
@@ -63,6 +82,32 @@ def test_artifact_writer_writes_only_inside_comparison_dir_and_can_delete_timest
     assert not (tmp_path / "output" / "fundamental_002371.json").exists()
     assert not (tmp_path / "output" / "evidence_pack_002371.json").exists()
     assert not (tmp_path / "output" / "reports").exists()
+
+
+def test_explainability_artifact_name_allowlist_is_explicit(tmp_path):
+    default_plan = plan_comparison_artifacts(
+        ["000426"],
+        output_dir=tmp_path / "output" / "provider_comparison",
+        timestamp="default",
+    )
+    explainability_plan = plan_comparison_artifacts(
+        ["000426"],
+        output_dir=tmp_path / "output" / "provider_comparison",
+        timestamp="with_explainability",
+        include_explainability=True,
+    )
+
+    with pytest.raises(ComparisonArtifactError, match="not in artifact plan"):
+        write_json_artifact(default_plan, "000426", "score_confidence_explainability.json", {})
+
+    path = write_json_artifact(
+        explainability_plan,
+        "000426",
+        "score_confidence_explainability.json",
+        {"automatic_acceptance": False},
+    )
+    assert path.name == "score_confidence_explainability.json"
+    assert path.parent == explainability_plan.codes["000426"].code_dir
 
 
 def test_writer_rejects_paths_outside_timestamp_directory(tmp_path):

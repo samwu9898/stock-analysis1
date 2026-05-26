@@ -29,6 +29,10 @@ P1_ARTIFACT_NAMES: tuple[str, ...] = (
     "tushare_research_intelligence_p1.json",
 )
 
+EXPLAINABILITY_ARTIFACT_NAMES: tuple[str, ...] = (
+    "score_confidence_explainability.json",
+)
+
 
 class ComparisonArtifactError(RuntimeError):
     """Artifact boundary failure for comparison-only writes."""
@@ -52,6 +56,7 @@ class ComparisonArtifactPlan:
     timestamp_dir: Path
     codes: dict[str, CodeComparisonArtifacts]
     include_p1: bool = False
+    include_explainability: bool = False
 
 
 def default_comparison_timestamp() -> str:
@@ -73,13 +78,18 @@ def plan_comparison_artifacts(
     output_dir: str | Path = "output/provider_comparison",
     timestamp: str | None = None,
     include_p1: bool = False,
+    include_explainability: bool = False,
 ) -> ComparisonArtifactPlan:
     """Return provider-separated artifact paths without touching the filesystem."""
 
     out = Path(output_dir)
     ts = timestamp or default_comparison_timestamp()
     timestamp_dir = out / ts
-    names = BASE_ARTIFACT_NAMES + (P1_ARTIFACT_NAMES if include_p1 else ())
+    names = (
+        BASE_ARTIFACT_NAMES
+        + (P1_ARTIFACT_NAMES if include_p1 else ())
+        + (EXPLAINABILITY_ARTIFACT_NAMES if include_explainability else ())
+    )
     code_plans: dict[str, CodeComparisonArtifacts] = {}
     for code_value in codes:
         code = normalize_stock_code(code_value)
@@ -94,6 +104,7 @@ def plan_comparison_artifacts(
         timestamp_dir=timestamp_dir,
         codes=code_plans,
         include_p1=include_p1,
+        include_explainability=include_explainability,
     )
 
 

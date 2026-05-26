@@ -2,6 +2,7 @@
 
 from src.fundamental_skill.data_providers.diff_classifier import (
     DiffCategory,
+    DRIFT_SUBCATEGORY_VALUES,
     build_diff_report,
     classify_field_diff,
     make_diff_item,
@@ -105,6 +106,22 @@ def test_make_diff_item_supports_all_required_categories():
             "review_required",
             "note",
         }
+
+
+def test_drift_subcategories_are_reviewer_aids_not_diff_report_acceptance_fields():
+    assert set(DRIFT_SUBCATEGORY_VALUES) == {
+        "missing_field",
+        "unit_diff",
+        "provider_coverage_caveat",
+        "domain_evidence_missing",
+        "scoring_penalty_due_to_provider_gap",
+        "mapping_gap",
+        "readiness_cap",
+        "external_sidecar_missing",
+    }
+    item = classify_field_diff("fundamental.fundamental_score", 70, 60)
+    assert "drift_subcategory" not in item.to_dict()
+    assert item.review_required is True
 
 
 def test_build_diff_report_disables_automatic_acceptance():

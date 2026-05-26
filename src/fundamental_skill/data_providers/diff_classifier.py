@@ -29,6 +29,20 @@ class DiffCategory(str, Enum):
     TOKEN_OR_SECRET_RISK = "token_or_secret_risk"
 
 
+class DriftSubcategory(str, Enum):
+    MISSING_FIELD = "missing_field"
+    UNIT_DIFF = "unit_diff"
+    PROVIDER_COVERAGE_CAVEAT = "provider_coverage_caveat"
+    DOMAIN_EVIDENCE_MISSING = "domain_evidence_missing"
+    SCORING_PENALTY_DUE_TO_PROVIDER_GAP = "scoring_penalty_due_to_provider_gap"
+    MAPPING_GAP = "mapping_gap"
+    READINESS_CAP = "readiness_cap"
+    EXTERNAL_SIDECAR_MISSING = "external_sidecar_missing"
+
+
+DRIFT_SUBCATEGORY_VALUES: tuple[str, ...] = tuple(item.value for item in DriftSubcategory)
+
+
 REVIEW_REQUIRED_CATEGORIES = {
     DiffCategory.STRATEGY_TYPE_DRIFT,
     DiffCategory.CLASSIFICATION_DRIFT,
