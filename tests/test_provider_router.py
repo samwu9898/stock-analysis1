@@ -31,6 +31,40 @@ def test_auto_falls_back_to_injected_akshare_provider_without_tushare():
     assert akshare.calls == [{"stock_code": "002050", "force_refresh": True}]
 
 
+def test_auto_can_lazily_create_akshare_provider_when_tushare_is_unavailable():
+    created = []
+
+    def factory():
+        provider = FakeDataProvider(name="akshare")
+        created.append(provider)
+        return provider
+
+    router = ProviderRouter(mode="auto", akshare_provider_factory=factory)
+
+    selection = router.select()
+    raw = router.fetch_to_raw_json("002050", force_refresh=True)
+
+    assert selection.selected_provider == "akshare"
+    assert raw["meta"]["data_source"] == "akshare"
+    assert created[0].calls == [{"stock_code": "002050", "force_refresh": True}]
+
+
+def test_akshare_mode_can_lazily_create_registered_akshare_provider():
+    created = []
+
+    def factory():
+        provider = FakeDataProvider(name="akshare")
+        created.append(provider)
+        return provider
+
+    router = ProviderRouter(mode="akshare", akshare_provider_factory=factory)
+
+    raw = router.fetch_to_raw_json("002050")
+
+    assert raw["meta"]["data_source"] == "akshare"
+    assert created[0].calls == [{"stock_code": "002050", "force_refresh": False}]
+
+
 def test_auto_prefers_injected_tushare_when_token_available():
     akshare = FakeDataProvider(name="akshare")
     tushare = FakeDataProvider(name="tushare")
@@ -124,4 +158,3 @@ def test_provider_failure_error_is_sanitized():
     message = str(exc_info.value)
     assert fake_token not in message
     assert "token=<masked>" in message
-

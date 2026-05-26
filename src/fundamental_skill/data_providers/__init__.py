@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-"""Provider abstraction skeleton for future data-source migration.
+"""Provider abstraction package for data-source migration.
 
-Phase 1 intentionally does not wire this package into the production
-RealDataConnector flow.
+Phase 2 adds an optional AkShareProvider adapter while the production
+RealDataConnector runner path remains unchanged.
 """
 
+from .akshare_provider import AKSHARE_RAW_BLOCKS, AkShareProvider
 from .base import DataProvider
 from .provider_router import ProviderRouter, ProviderRoutingError
 from .schemas import (
@@ -21,6 +22,8 @@ from .token_safety import mask_secret, sanitize_exception_message, sanitize_text
 __all__ = [
     "CANONICAL_RAW_BLOCKS",
     "CANONICAL_RAW_TOP_LEVEL_KEYS",
+    "AKSHARE_RAW_BLOCKS",
+    "AkShareProvider",
     "DataProvider",
     "ProviderCapabilities",
     "ProviderMode",
@@ -33,4 +36,3 @@ __all__ = [
     "sanitize_exception_message",
     "sanitize_text",
 ]
-

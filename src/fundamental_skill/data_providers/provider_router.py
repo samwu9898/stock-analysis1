@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
-"""Provider routing skeleton for Phase 1.
+"""Provider routing for optional data-provider paths.
 
-The router works only with injected providers in Phase 1. It does not import or
-instantiate AkShare, Tushare, SDK clients, MCP tools, or network transports.
+The router may lazily instantiate the AkShare adapter, but it does not call
+Tushare, SDK clients, MCP tools, or network transports.
 """
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
+from .akshare_provider import AkShareProvider
 from .base import DataProvider
 from .schemas import ProviderMode, ProviderSelection, parse_provider_mode
 from .token_safety import mask_secret, sanitize_exception_message, sanitize_text
@@ -40,12 +41,14 @@ class ProviderRouter:
         *,
         mode: ProviderMode | str | None = ProviderMode.AUTO,
         akshare_provider: DataProvider | None = None,
+        akshare_provider_factory: Callable[[], DataProvider] = AkShareProvider,
         tushare_provider: DataProvider | None = None,
         tushare_token: str | None = None,
         tushare_token_available: bool = False,
     ) -> None:
         self.mode = parse_provider_mode(mode)
         self.akshare_provider = akshare_provider
+        self._akshare_provider_factory = akshare_provider_factory
         self.tushare_provider = tushare_provider
         self._tushare_token_available = bool(tushare_token_available or tushare_token)
         self._token_display = mask_secret(tushare_token) if tushare_token is not None else mask_secret(None)
@@ -56,6 +59,7 @@ class ProviderRouter:
         config: Mapping[str, Any] | None = None,
         *,
         akshare_provider: DataProvider | None = None,
+        akshare_provider_factory: Callable[[], DataProvider] = AkShareProvider,
         tushare_provider: DataProvider | None = None,
         tushare_token: str | None = None,
         tushare_token_available: bool = False,
@@ -63,6 +67,7 @@ class ProviderRouter:
         return cls(
             mode=provider_mode_from_config(config),
             akshare_provider=akshare_provider,
+            akshare_provider_factory=akshare_provider_factory,
             tushare_provider=tushare_provider,
             tushare_token=tushare_token,
             tushare_token_available=tushare_token_available,
@@ -160,10 +165,15 @@ class ProviderRouter:
         if self.tushare_provider is not None and selection.selected_provider == self.tushare_provider.name:
             return self.tushare_provider
         if selection.selected_provider == "akshare":
-            return self.akshare_provider
+            return self._get_akshare_provider()
         if selection.selected_provider == "tushare":
             return self.tushare_provider
         return None
+
+    def _get_akshare_provider(self) -> DataProvider:
+        if self.akshare_provider is None:
+            self.akshare_provider = self._akshare_provider_factory()
+        return self.akshare_provider
 
     def _can_use_tushare(self) -> bool:
         return self.tushare_provider is not None and self._tushare_token_available
@@ -173,4 +183,3 @@ class ProviderRouter:
             raise ProviderRoutingError("provider=tushare requires an available Tushare token")
         if self.tushare_provider is None:
             raise ProviderRoutingError("provider=tushare requires an injected Tushare provider in Phase 1")
-
