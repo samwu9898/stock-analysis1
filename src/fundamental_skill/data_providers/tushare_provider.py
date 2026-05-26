@@ -204,24 +204,198 @@ class TushareProvider:
             or _first_present(indicator, ("period", "end_date", "ann_date"))
             or _first_present(balance, ("period", "end_date", "ann_date"))
             or _first_present(cashflow, ("period", "end_date", "ann_date")),
-            "revenue": _safe_float(_first_present(income, ("revenue", "total_revenue"))),
-            "net_profit": _safe_float(_first_present(income, ("net_profit", "n_income_attr_p"))),
-            "deducted_net_profit": _safe_float(_first_present(income, ("deducted_net_profit", "dt_net_profit"))),
-            "r_and_d_expense": _safe_float(_first_present(income, ("r_and_d_expense", "rd_exp"))),
-            "debt_to_asset": _safe_float(_first_present(balance, ("debt_to_asset", "debt_to_assets"))),
-            "inventory": _safe_float(_first_present(balance, ("inventory", "inventories"))),
-            "accounts_receivable": _safe_float(_first_present(balance, ("accounts_receivable", "accounts_recv"))),
-            "contract_liabilities": _safe_float(_first_present(balance, ("contract_liabilities", "contract_liab"))),
-            "operating_cashflow": _safe_float(_first_present(cashflow, ("operating_cashflow", "n_cashflow_act"))),
-            "capex": _safe_float(_first_present(cashflow, ("capex", "c_pay_acq_const_fiolta"))),
-            "revenue_yoy": _safe_float(_first_present(indicator, ("revenue_yoy", "or_yoy"))),
-            "net_profit_yoy": _safe_float(_first_present(indicator, ("net_profit_yoy", "netprofit_yoy"))),
-            "gross_margin": _safe_float(_first_present(indicator, ("gross_margin", "grossprofit_margin"))),
-            "net_margin": _safe_float(_first_present(indicator, ("net_margin", "netprofit_margin"))),
-            "roe": _safe_float(_first_present(indicator, ("roe", "roe_weighted"))),
-            "r_and_d_expense_ratio": _safe_float(_first_present(indicator, ("r_and_d_expense_ratio", "rd_exp_ratio"))),
         }
-        source_trace.extend(self._source_trace_for_rows("financial_indicator", [metric]))
+        field_trace: dict[str, dict[str, Any]] = {}
+
+        def map_from_sources(
+            field_name: str,
+            sources: tuple[tuple[dict[str, Any], str, tuple[str, ...]], ...],
+        ) -> float | None:
+            for source_row, source_function, keys in sources:
+                value, source_field = _float_from_row(source_row, keys)
+                if value is not None:
+                    metric[field_name] = value
+                    field_trace[field_name] = _field_trace(
+                        source_function=source_function,
+                        source_field=source_field,
+                    )
+                    return value
+            metric[field_name] = None
+            return None
+
+        def map_percentage_from_sources(
+            field_name: str,
+            sources: tuple[tuple[dict[str, Any], str, tuple[str, ...], tuple[str, ...]], ...],
+        ) -> float | None:
+            for source_row, source_function, trusted_keys, fallback_keys in sources:
+                value, source_field = _percentage_from_row(source_row, trusted_keys, fallback_keys=fallback_keys)
+                if value is not None:
+                    metric[field_name] = value
+                    field_trace[field_name] = _field_trace(
+                        source_function=source_function,
+                        source_field=source_field,
+                        canonical_unit="%",
+                    )
+                    return value
+            metric[field_name] = None
+            return None
+
+        map_from_sources("revenue", ((income, "income", ("revenue", "total_revenue")),))
+        map_from_sources("net_profit", ((income, "income", ("net_profit", "n_income_attr_p", "n_income")),))
+        map_from_sources(
+            "deducted_net_profit",
+            (
+                (indicator, "fina_indicator", ("deducted_net_profit", "profit_dedt", "dt_net_profit")),
+                (income, "income", ("deducted_net_profit", "profit_dedt", "dt_net_profit")),
+            ),
+        )
+        map_from_sources("r_and_d_expense", ((income, "income", ("r_and_d_expense", "rd_exp")),))
+        map_from_sources("inventory", ((balance, "balancesheet", ("inventory", "inventories")),))
+        map_from_sources(
+            "accounts_receivable",
+            (
+                (
+                    balance,
+                    "balancesheet",
+                    (
+                        "accounts_receivable",
+                        "accounts_receiv",
+                        "accounts_recv",
+                        "acct_receiv",
+                        "acct_rcv",
+                        "notes_receiv",
+                    ),
+                ),
+            ),
+        )
+        map_from_sources(
+            "contract_liabilities",
+            ((balance, "balancesheet", ("contract_liabilities", "contract_liab", "contract_liabilities_current")),),
+        )
+        map_from_sources("operating_cashflow", ((cashflow, "cashflow", ("operating_cashflow", "n_cashflow_act")),))
+        map_from_sources(
+            "capex",
+            (
+                (
+                    cashflow,
+                    "cashflow",
+                    (
+                        "capex",
+                        "c_pay_acq_const_fiolta",
+                        "cash_pay_acq_const_fiolta",
+                        "purchase_fixed_assets",
+                    ),
+                ),
+            ),
+        )
+        map_from_sources("revenue_yoy", ((indicator, "fina_indicator", ("revenue_yoy", "or_yoy")),))
+        map_from_sources("net_profit_yoy", ((indicator, "fina_indicator", ("net_profit_yoy", "netprofit_yoy")),))
+        map_percentage_from_sources(
+            "gross_margin",
+            (
+                (
+                    indicator,
+                    "fina_indicator",
+                    ("grossprofit_margin", "gross_profit_margin", "gross_profit_rate", "sales_grossprofit_margin"),
+                    ("gross_margin",),
+                ),
+            ),
+        )
+        map_percentage_from_sources(
+            "net_margin",
+            (
+                (
+                    indicator,
+                    "fina_indicator",
+                    ("netprofit_margin", "net_profit_margin", "net_profit_rate", "sales_netprofit_margin"),
+                    ("net_margin",),
+                ),
+            ),
+        )
+        map_from_sources("roe", ((indicator, "fina_indicator", ("roe", "roe_weighted", "roe_waa")),))
+        map_from_sources(
+            "debt_to_asset",
+            (
+                (indicator, "fina_indicator", ("debt_to_asset", "debt_to_assets", "assets_liab_ratio")),
+                (balance, "balancesheet", ("debt_to_asset", "debt_to_assets", "assets_liab_ratio")),
+            ),
+        )
+        map_from_sources(
+            "r_and_d_expense_ratio",
+            (
+                (
+                    indicator,
+                    "fina_indicator",
+                    ("r_and_d_expense_ratio", "rd_exp_ratio", "rd_exp_to_revenue", "rd_exp_to_revenue_pct"),
+                ),
+            ),
+        )
+
+        revenue = metric.get("revenue")
+        if metric.get("gross_margin") is None:
+            cost, cost_field = _float_from_row(
+                income,
+                ("cost", "oper_cost", "operating_cost", "total_oper_cost", "total_cogs", "biz_cost"),
+            )
+            derived = _ratio_percentage(None if revenue is None or cost is None else revenue - cost, revenue)
+            if derived is not None:
+                metric["gross_margin"] = derived
+                field_trace["gross_margin"] = _field_trace(
+                    source_function="income",
+                    derived=True,
+                    derivation_method="(revenue - cost) / revenue * 100",
+                    source_fields=_source_field_refs(
+                        ("income", field_trace.get("revenue", {}).get("source_field")),
+                        ("income", cost_field),
+                    ),
+                    canonical_unit="%",
+                )
+        if metric.get("net_margin") is None:
+            derived = _ratio_percentage(metric.get("net_profit"), revenue)
+            if derived is not None:
+                metric["net_margin"] = derived
+                field_trace["net_margin"] = _field_trace(
+                    source_function="income",
+                    derived=True,
+                    derivation_method="net_profit / revenue * 100",
+                    source_fields=_source_field_refs(
+                        ("income", field_trace.get("net_profit", {}).get("source_field")),
+                        ("income", field_trace.get("revenue", {}).get("source_field")),
+                    ),
+                    canonical_unit="%",
+                )
+        if metric.get("debt_to_asset") is None:
+            total_liab, total_liab_field = _float_from_row(balance, ("total_liab", "total_liability", "total_liabilities"))
+            total_assets, total_assets_field = _float_from_row(balance, ("total_assets", "total_asset"))
+            derived = _ratio_percentage(total_liab, total_assets)
+            if derived is not None:
+                metric["debt_to_asset"] = derived
+                field_trace["debt_to_asset"] = _field_trace(
+                    source_function="balancesheet",
+                    derived=True,
+                    derivation_method="total_liab / total_assets * 100",
+                    source_fields=_source_field_refs(
+                        ("balancesheet", total_liab_field),
+                        ("balancesheet", total_assets_field),
+                    ),
+                    canonical_unit="%",
+                )
+        if metric.get("r_and_d_expense_ratio") is None:
+            derived = _ratio_percentage(metric.get("r_and_d_expense"), revenue)
+            if derived is not None:
+                metric["r_and_d_expense_ratio"] = derived
+                field_trace["r_and_d_expense_ratio"] = _field_trace(
+                    source_function="income",
+                    derived=True,
+                    derivation_method="r_and_d_expense / revenue * 100",
+                    source_fields=_source_field_refs(
+                        ("income", field_trace.get("r_and_d_expense", {}).get("source_field")),
+                        ("income", field_trace.get("revenue", {}).get("source_field")),
+                    ),
+                    canonical_unit="%",
+                )
+
+        source_trace.extend(self._source_trace_for_rows("financial_indicator", [metric], [field_trace]))
         return [metric], source_trace
 
     def _fetch_valuation(self, client: TushareClient, code: str, ts_code: str) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
@@ -231,17 +405,45 @@ class TushareProvider:
         source_trace = [self._source_trace_for_endpoint("valuation", "daily_basic", ts_code, rows)]
         if not row:
             return [], source_trace
-        mapped = [
-            {
-                "period": _first_present(row, ("period", "trade_date")),
-                "pe_ttm": _safe_float(_first_present(row, ("pe_ttm",))),
-                "pb": _safe_float(_first_present(row, ("pb",))),
-                "ps": _safe_float(_first_present(row, ("ps", "ps_ttm"))),
-                "market_cap": _safe_float(_first_present(row, ("market_cap", "total_mv"))),
-                "dividend_yield": _safe_float(_first_present(row, ("dividend_yield", "dv_ttm"))),
-            }
-        ]
-        source_trace.extend(self._source_trace_for_rows("valuation", mapped))
+        mapped_row: dict[str, Any] = {"period": _first_present(row, ("period", "trade_date"))}
+        field_trace: dict[str, dict[str, Any]] = {}
+        for field_name, keys in {
+            "pe_ttm": ("pe_ttm",),
+            "pb": ("pb",),
+            "ps": ("ps_ttm", "ps"),
+            "dividend_yield": ("dividend_yield", "dv_ttm"),
+        }.items():
+            value, source_field = _float_from_row(row, keys)
+            mapped_row[field_name] = value
+            if value is not None:
+                field_trace[field_name] = _field_trace(
+                    source_function="daily_basic",
+                    source_field=source_field,
+                    canonical_unit="ratio",
+                )
+
+        market_cap, source_field = _float_from_row(row, ("market_cap",))
+        if market_cap is not None:
+            mapped_row["market_cap"] = market_cap
+            field_trace["market_cap"] = _field_trace(
+                source_function="daily_basic",
+                source_field=source_field,
+                canonical_unit="RMB",
+            )
+        else:
+            market_cap_10k, source_field = _float_from_row(row, ("total_mv", "circ_mv"))
+            mapped_row["market_cap"] = market_cap_10k * 10000 if market_cap_10k is not None else None
+            if market_cap_10k is not None:
+                field_trace["market_cap"] = _field_trace(
+                    source_function="daily_basic",
+                    source_field=source_field,
+                    source_unit="10k RMB",
+                    canonical_unit="RMB",
+                    multiplier=10000,
+                )
+
+        mapped = [mapped_row]
+        source_trace.extend(self._source_trace_for_rows("valuation", mapped, [field_trace]))
         return mapped, source_trace
 
     def _fetch_business_composition(
@@ -251,21 +453,54 @@ class TushareProvider:
         rows = _records(client.fina_mainbz(ts_code=ts_code), endpoint="fina_mainbz")
         source_trace = [self._source_trace_for_endpoint("business_composition", "fina_mainbz", ts_code, rows)]
         segments = []
+        trace_metadata: list[dict[str, dict[str, Any]]] = []
         for row in rows:
-            segments.append(
-                {
-                    "period": _first_present(row, ("period", "end_date")),
-                    "classification_type": _first_present(row, ("classification_type", "bz_type", "type")),
-                    "segment_name": _first_present(row, ("segment_name", "bz_item", "name")),
-                    "revenue": _safe_float(_first_present(row, ("revenue", "bz_sales"))),
-                    "revenue_ratio": _safe_float(_first_present(row, ("revenue_ratio", "bz_sales_ratio"))),
-                    "gross_margin": _safe_float(_first_present(row, ("gross_margin", "bz_grossprofit_margin"))),
-                    "cost": _safe_float(_first_present(row, ("cost", "bz_cost"))),
-                    "profit": _safe_float(_first_present(row, ("profit", "bz_profit"))),
-                    "profit_ratio": _safe_float(_first_present(row, ("profit_ratio", "bz_profit_ratio"))),
-                }
+            segment: dict[str, Any] = {"period": _first_present(row, ("period", "end_date"))}
+            field_trace: dict[str, dict[str, Any]] = {}
+            classification_value, classification_field = _first_present_with_key(
+                row, ("classification_type", "bz_type", "type", "class_type", "category_type")
             )
-        source_trace.extend(self._source_trace_for_rows("business_composition", segments))
+            segment["classification_type"] = _normalize_classification_type(classification_value)
+            if segment["classification_type"] is not None:
+                field_trace["classification_type"] = _field_trace(
+                    source_function="fina_mainbz",
+                    source_field=classification_field,
+                )
+
+            name_value, name_field = _first_present_with_key(row, ("segment_name", "bz_item", "name"))
+            segment["segment_name"] = name_value
+            if name_value is not None:
+                field_trace["segment_name"] = _field_trace(source_function="fina_mainbz", source_field=name_field)
+
+            for field_name, keys in {
+                "revenue": ("revenue", "bz_sales", "sales"),
+                "cost": ("cost", "bz_cost"),
+                "profit": ("profit", "bz_profit", "gross_profit"),
+                "revenue_ratio": ("revenue_ratio", "bz_sales_ratio", "sales_ratio"),
+                "profit_ratio": ("profit_ratio", "bz_profit_ratio"),
+            }.items():
+                value, source_field = _float_from_row(row, keys)
+                segment[field_name] = value
+                if value is not None:
+                    field_trace[field_name] = _field_trace(source_function="fina_mainbz", source_field=source_field)
+
+            gross_margin, gross_margin_field = _percentage_from_row(
+                row,
+                ("bz_grossprofit_margin", "grossprofit_margin", "gross_profit_margin"),
+                fallback_keys=("gross_margin",),
+            )
+            segment["gross_margin"] = gross_margin
+            if gross_margin is not None:
+                field_trace["gross_margin"] = _field_trace(
+                    source_function="fina_mainbz",
+                    source_field=gross_margin_field,
+                    canonical_unit="%",
+                )
+            segments.append(segment)
+            trace_metadata.append(field_trace)
+
+        _derive_business_composition_fields(segments, trace_metadata)
+        source_trace.extend(self._source_trace_for_rows("business_composition", segments, trace_metadata))
         return segments, source_trace
 
     def _status(
@@ -286,6 +521,9 @@ class TushareProvider:
             "success": success,
             "error": sanitize_text(error, secrets=(self._token,)) if error else None,
             "missing_fields": missing_fields,
+            "missing_reasons": {
+                field: _missing_reason(success=success, error=error) for field in missing_fields
+            },
             "fetched_at": fetched_at,
             "source_name": self.name,
             "endpoints": endpoints or [],
@@ -350,28 +588,48 @@ class TushareProvider:
             "derivation_method": None,
         }
 
-    def _source_trace_for_rows(self, block_name: str, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _source_trace_for_rows(
+        self,
+        block_name: str,
+        rows: list[dict[str, Any]],
+        field_trace_metadata: list[dict[str, dict[str, Any]]] | None = None,
+    ) -> list[dict[str, Any]]:
         traces = []
-        endpoint = {
+        default_endpoint = {
             "basic_info": "stock_basic",
             "valuation": "daily_basic",
             "business_composition": "fina_mainbz",
         }.get(block_name, "financial_statements_and_indicators")
-        for row in rows:
+        field_trace_metadata = field_trace_metadata or [{} for _ in rows]
+        for row_index, row in enumerate(rows):
+            metadata_by_field = field_trace_metadata[row_index] if row_index < len(field_trace_metadata) else {}
             for field_name, value in row.items():
                 if value in (None, ""):
                     continue
+                metadata = metadata_by_field.get(field_name, {})
+                endpoint = metadata.get("source_function") or default_endpoint
+                trace = {
+                    "field_name": field_name,
+                    "block_name": block_name,
+                    "function_name": endpoint,
+                    "source_function": endpoint,
+                    "source_period": row.get("period") or row.get("listing_date"),
+                    "value": sanitize_text(value, secrets=(self._token,)) if isinstance(value, str) else value,
+                    "derived": bool(metadata.get("derived", False)),
+                    "derivation_method": metadata.get("derivation_method"),
+                }
+                for key in (
+                    "source_field",
+                    "source_fields",
+                    "source_unit",
+                    "canonical_unit",
+                    "multiplier",
+                    "denominator_scope",
+                ):
+                    if metadata.get(key) is not None:
+                        trace[key] = metadata[key]
                 traces.append(
-                    {
-                        "field_name": field_name,
-                        "block_name": block_name,
-                        "function_name": endpoint,
-                        "source_function": endpoint,
-                        "source_period": row.get("period") or row.get("listing_date"),
-                        "value": sanitize_text(value, secrets=(self._token,)) if isinstance(value, str) else value,
-                        "derived": False,
-                        "derivation_method": None,
-                    }
+                    trace
                 )
         return traces
 
@@ -504,6 +762,196 @@ def _safe_float(value: Any) -> float | None:
         except ValueError:
             return None
     return None
+
+
+def _first_present_with_key(row: dict[str, Any], keys: tuple[str, ...]) -> tuple[Any, str | None]:
+    for key in keys:
+        if key in row and row[key] not in (None, ""):
+            return row[key], key
+    lower = {str(key).lower(): (str(key), value) for key, value in row.items()}
+    for key in keys:
+        found = lower.get(key.lower())
+        if found is None:
+            continue
+        actual_key, value = found
+        if value not in (None, ""):
+            return value, actual_key
+    return None, None
+
+
+def _float_from_row(row: dict[str, Any], keys: tuple[str, ...]) -> tuple[float | None, str | None]:
+    value, source_field = _first_present_with_key(row, keys)
+    float_value = _safe_float(value)
+    if float_value is None or not math.isfinite(float_value):
+        return None, None
+    return float_value, source_field
+
+
+def _looks_like_percentage(value: float | None) -> bool:
+    return value is not None and math.isfinite(value) and -100.0 <= value <= 100.0
+
+
+def _percentage_from_row(
+    row: dict[str, Any],
+    trusted_keys: tuple[str, ...],
+    *,
+    fallback_keys: tuple[str, ...] = (),
+) -> tuple[float | None, str | None]:
+    for key in trusted_keys:
+        value, source_field = _float_from_row(row, (key,))
+        if value is not None:
+            return value, source_field
+    for key in fallback_keys:
+        value, source_field = _float_from_row(row, (key,))
+        if _looks_like_percentage(value):
+            return value, source_field
+    return None, None
+
+
+def _ratio_percentage(numerator: float | None, denominator: float | None) -> float | None:
+    if numerator is None or denominator in (None, 0):
+        return None
+    if not math.isfinite(numerator) or not math.isfinite(denominator):
+        return None
+    value = numerator / denominator * 100
+    return value if math.isfinite(value) else None
+
+
+def _field_trace(
+    *,
+    source_function: str,
+    source_field: str | None = None,
+    source_fields: list[str] | None = None,
+    source_unit: str | None = None,
+    canonical_unit: str | None = None,
+    multiplier: float | int | None = None,
+    derived: bool = False,
+    derivation_method: str | None = None,
+    denominator_scope: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "source_function": source_function,
+        "source_field": source_field,
+        "source_fields": source_fields,
+        "source_unit": source_unit,
+        "canonical_unit": canonical_unit,
+        "multiplier": multiplier,
+        "derived": derived,
+        "derivation_method": derivation_method,
+        "denominator_scope": denominator_scope,
+    }
+
+
+def _source_field_refs(*refs: tuple[str, Any]) -> list[str]:
+    out = []
+    for source_function, source_field in refs:
+        if source_field:
+            out.append(f"{source_function}.{source_field}")
+    return out
+
+
+def _normalize_classification_type(value: Any) -> str | None:
+    if value in (None, ""):
+        return None
+    text = str(value).strip()
+    normalized = text.lower()
+    mapping = {
+        "p": "product",
+        "product": "product",
+        "products": "product",
+        "by_product": "product",
+        "d": "region",
+        "area": "region",
+        "region": "region",
+        "district": "region",
+        "geography": "region",
+        "i": "industry",
+        "industry": "industry",
+        "industries": "industry",
+    }
+    return mapping.get(normalized, text)
+
+
+def _missing_reason(*, success: bool, error: str | None) -> str:
+    if not success:
+        return error or "not_fetched"
+    return "not_available_or_not_reliably_derivable"
+
+
+def _derive_business_composition_fields(
+    segments: list[dict[str, Any]],
+    trace_metadata: list[dict[str, dict[str, Any]]],
+) -> None:
+    grouped_indexes: dict[tuple[str, str], list[int]] = {}
+    for index, segment in enumerate(segments):
+        period = segment.get("period")
+        classification_type = segment.get("classification_type")
+        if period in (None, "") or classification_type in (None, ""):
+            continue
+        grouped_indexes.setdefault((str(period), str(classification_type)), []).append(index)
+
+    for index, segment in enumerate(segments):
+        if segment.get("gross_margin") is not None:
+            continue
+        gross_margin = _ratio_percentage(segment.get("profit"), segment.get("revenue"))
+        if gross_margin is None:
+            continue
+        segment["gross_margin"] = gross_margin
+        trace_metadata[index]["gross_margin"] = _field_trace(
+            source_function="fina_mainbz",
+            derived=True,
+            derivation_method="profit / revenue * 100",
+            source_fields=_source_field_refs(
+                ("fina_mainbz", trace_metadata[index].get("profit", {}).get("source_field")),
+                ("fina_mainbz", trace_metadata[index].get("revenue", {}).get("source_field")),
+            ),
+            canonical_unit="%",
+            denominator_scope="segment revenue",
+        )
+
+    for (period, classification_type), indexes in grouped_indexes.items():
+        total_revenue = sum(
+            segment["revenue"]
+            for segment in (segments[index] for index in indexes)
+            if isinstance(segment.get("revenue"), (int, float)) and math.isfinite(segment["revenue"])
+        )
+        total_profit = sum(
+            segment["profit"]
+            for segment in (segments[index] for index in indexes)
+            if isinstance(segment.get("profit"), (int, float)) and math.isfinite(segment["profit"])
+        )
+        revenue_scope = f"period={period};classification_type={classification_type};denominator=sum(revenue)"
+        profit_scope = f"period={period};classification_type={classification_type};denominator=sum(profit)"
+        for index in indexes:
+            segment = segments[index]
+            if segment.get("revenue_ratio") is None and total_revenue > 0:
+                revenue_ratio = _ratio_percentage(segment.get("revenue"), total_revenue)
+                if revenue_ratio is not None:
+                    segment["revenue_ratio"] = revenue_ratio
+                    trace_metadata[index]["revenue_ratio"] = _field_trace(
+                        source_function="fina_mainbz",
+                        derived=True,
+                        derivation_method="segment_revenue / group_total_revenue * 100",
+                        source_fields=_source_field_refs(
+                            ("fina_mainbz", trace_metadata[index].get("revenue", {}).get("source_field")),
+                        ),
+                        canonical_unit="%",
+                        denominator_scope=revenue_scope,
+                    )
+            if segment.get("profit_ratio") is None and total_profit != 0:
+                profit_ratio = _ratio_percentage(segment.get("profit"), total_profit)
+                if profit_ratio is not None:
+                    segment["profit_ratio"] = profit_ratio
+                    trace_metadata[index]["profit_ratio"] = _field_trace(
+                        source_function="fina_mainbz",
+                        derived=True,
+                        derivation_method="segment_profit / group_total_profit * 100",
+                        source_fields=_source_field_refs(
+                            ("fina_mainbz", trace_metadata[index].get("profit", {}).get("source_field")),
+                        ),
+                        canonical_unit="%",
+                        denominator_scope=profit_scope,
+                    )
 
 
 def _records(response: Any, *, endpoint: str) -> list[dict[str, Any]]:

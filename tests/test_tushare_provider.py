@@ -63,10 +63,10 @@ def _transport(**overrides):
                 "period": "20251231",
                 "revenue_yoy": 12.5,
                 "net_profit_yoy": 15.0,
-                "gross_margin": 30.0,
-                "net_margin": 12.0,
+                "grossprofit_margin": 30.0,
+                "netprofit_margin": 12.0,
                 "roe": 18.0,
-                "r_and_d_expense_ratio": 4.0,
+                "rd_exp_ratio": 4.0,
             }
         ],
         "daily_basic": [
@@ -75,7 +75,7 @@ def _transport(**overrides):
                 "pe_ttm": 20.0,
                 "pb": 3.0,
                 "ps": 2.5,
-                "market_cap": 3000,
+                "total_mv": 3000,
                 "dividend_yield": 1.2,
             }
         ],
@@ -113,6 +113,14 @@ class _RecordingTransport:
 def _provider(transport=None, *, token="FAKE_TOKEN_FOR_TESTING_ONLY__NOT_REAL__XYZ_1234567890"):
     client = TushareClient(transport=transport or _transport(), token=token)
     return TushareProvider(client=client, token=token)
+
+
+def _field_traces(raw, block_name, field_name):
+    return [
+        trace
+        for trace in raw["fetch_status"][block_name]["source_trace"]
+        if trace.get("field_name") == field_name
+    ]
 
 
 @pytest.mark.parametrize(
@@ -282,7 +290,7 @@ def test_tushare_provider_maps_valuation_and_business_composition():
         "pe_ttm": 20.0,
         "pb": 3.0,
         "ps": 2.5,
-        "market_cap": 3000.0,
+        "market_cap": 30000000.0,
         "dividend_yield": 1.2,
     }
     assert segment["period"] == "20251231"
@@ -294,6 +302,246 @@ def test_tushare_provider_maps_valuation_and_business_composition():
     assert segment["cost"] == 544.0
     assert segment["profit"] == 256.0
     assert segment["profit_ratio"] == 85.0
+
+
+def test_tushare_provider_gross_margin_prefers_margin_percentage_over_gross_profit_amount():
+    raw = _provider(
+        _transport(
+            fina_indicator=[
+                {
+                    "period": "20251231",
+                    "gross_margin": 700.0,
+                    "grossprofit_margin": 31.5,
+                    "netprofit_margin": 12.0,
+                }
+            ]
+        )
+    ).fetch_to_raw_json("002050")
+
+    metric = raw["blocks"]["financial_indicator"][0]
+    trace = _field_traces(raw, "financial_indicator", "gross_margin")[0]
+
+    assert metric["gross_margin"] == 31.5
+    assert trace["source_field"] == "grossprofit_margin"
+    assert trace["derived"] is False
+
+
+def test_tushare_provider_gross_margin_derives_from_revenue_and_cost_with_trace():
+    raw = _provider(
+        _transport(
+            income=[{"period": "20251231", "revenue": 1000, "oper_cost": 650, "net_profit": 120}],
+            fina_indicator=[{"period": "20251231", "gross_margin": 650000000.0}],
+        )
+    ).fetch_to_raw_json("002050")
+
+    metric = raw["blocks"]["financial_indicator"][0]
+    trace = _field_traces(raw, "financial_indicator", "gross_margin")[0]
+
+    assert metric["gross_margin"] == 35.0
+    assert trace["derived"] is True
+    assert trace["derivation_method"] == "(revenue - cost) / revenue * 100"
+    assert trace["source_fields"] == ["income.revenue", "income.oper_cost"]
+
+
+def test_tushare_provider_net_margin_derives_from_net_profit_and_revenue_with_trace():
+    raw = _provider(
+        _transport(
+            income=[{"period": "20251231", "revenue": 1000, "net_profit": 125}],
+            fina_indicator=[{"period": "20251231"}],
+        )
+    ).fetch_to_raw_json("002050")
+
+    metric = raw["blocks"]["financial_indicator"][0]
+    trace = _field_traces(raw, "financial_indicator", "net_margin")[0]
+
+    assert metric["net_margin"] == 12.5
+    assert trace["derived"] is True
+    assert trace["derivation_method"] == "net_profit / revenue * 100"
+
+
+def test_tushare_provider_debt_to_asset_derives_from_balance_totals_with_trace():
+    raw = _provider(
+        _transport(
+            balancesheet=[
+                {
+                    "period": "20251231",
+                    "total_liab": 400,
+                    "total_assets": 1000,
+                    "inventory": 210,
+                }
+            ]
+        )
+    ).fetch_to_raw_json("002050")
+
+    metric = raw["blocks"]["financial_indicator"][0]
+    trace = _field_traces(raw, "financial_indicator", "debt_to_asset")[0]
+
+    assert metric["debt_to_asset"] == 40.0
+    assert trace["derived"] is True
+    assert trace["derivation_method"] == "total_liab / total_assets * 100"
+
+
+def test_tushare_provider_r_and_d_expense_ratio_derives_from_expense_and_revenue_with_trace():
+    raw = _provider(
+        _transport(
+            income=[{"period": "20251231", "revenue": 1000, "net_profit": 120, "rd_exp": 45}],
+            fina_indicator=[{"period": "20251231"}],
+        )
+    ).fetch_to_raw_json("002050")
+
+    metric = raw["blocks"]["financial_indicator"][0]
+    trace = _field_traces(raw, "financial_indicator", "r_and_d_expense_ratio")[0]
+
+    assert metric["r_and_d_expense_ratio"] == 4.5
+    assert trace["derived"] is True
+    assert trace["derivation_method"] == "r_and_d_expense / revenue * 100"
+
+
+def test_tushare_provider_market_cap_converts_total_mv_10k_rmb_to_rmb_without_converting_ratios():
+    raw = _provider(
+        _transport(
+            daily_basic=[
+                {
+                    "period": "20260526",
+                    "pe_ttm": 10.0,
+                    "pb": 2.0,
+                    "ps_ttm": 3.5,
+                    "ps": 4.0,
+                    "total_mv": 123.45,
+                }
+            ]
+        )
+    ).fetch_to_raw_json("002050")
+
+    valuation = raw["blocks"]["valuation"][0]
+    trace = _field_traces(raw, "valuation", "market_cap")[0]
+
+    assert valuation["market_cap"] == 1234500.0
+    assert valuation["pe_ttm"] == 10.0
+    assert valuation["pb"] == 2.0
+    assert valuation["ps"] == 3.5
+    assert trace["source_field"] == "total_mv"
+    assert trace["source_unit"] == "10k RMB"
+    assert trace["canonical_unit"] == "RMB"
+    assert trace["multiplier"] == 10000
+
+
+def test_tushare_provider_business_composition_derives_group_ratios_and_gross_margin():
+    raw = _provider(
+        _transport(
+            fina_mainbz=[
+                {
+                    "period": "20251231",
+                    "type": "P",
+                    "bz_item": "segment A",
+                    "bz_sales": 300,
+                    "bz_cost": 180,
+                    "bz_profit": 120,
+                },
+                {
+                    "period": "20251231",
+                    "type": "P",
+                    "bz_item": "segment B",
+                    "bz_sales": 700,
+                    "bz_cost": 560,
+                    "bz_profit": 140,
+                },
+                {
+                    "period": "20251231",
+                    "type": "D",
+                    "bz_item": "region C",
+                    "bz_sales": 50,
+                    "bz_cost": 40,
+                    "bz_profit": 10,
+                },
+            ]
+        )
+    ).fetch_to_raw_json("002050")
+
+    first, second, third = raw["blocks"]["business_composition"]
+    revenue_ratio_trace = _field_traces(raw, "business_composition", "revenue_ratio")[0]
+    profit_ratio_trace = _field_traces(raw, "business_composition", "profit_ratio")[0]
+    gross_margin_trace = _field_traces(raw, "business_composition", "gross_margin")[0]
+
+    assert first["classification_type"] == "product"
+    assert second["classification_type"] == "product"
+    assert third["classification_type"] == "region"
+    assert first["revenue_ratio"] == 30.0
+    assert second["revenue_ratio"] == 70.0
+    assert first["profit_ratio"] == pytest.approx(46.1538461538)
+    assert second["profit_ratio"] == pytest.approx(53.8461538462)
+    assert first["gross_margin"] == 40.0
+    assert second["gross_margin"] == 20.0
+    assert revenue_ratio_trace["derived"] is True
+    assert revenue_ratio_trace["denominator_scope"] == "period=20251231;classification_type=product;denominator=sum(revenue)"
+    assert profit_ratio_trace["derived"] is True
+    assert gross_margin_trace["derived"] is True
+    assert gross_margin_trace["derivation_method"] == "profit / revenue * 100"
+
+
+def test_tushare_provider_business_classification_missing_keeps_group_ratios_missing_but_derives_segment_margin():
+    raw = _provider(
+        _transport(
+            fina_mainbz=[
+                {
+                    "period": "20251231",
+                    "bz_item": "untyped segment",
+                    "bz_sales": 300,
+                    "bz_cost": 180,
+                    "bz_profit": 120,
+                },
+                {
+                    "period": "20251231",
+                    "bz_item": "another untyped segment",
+                    "bz_sales": 700,
+                    "bz_cost": 560,
+                    "bz_profit": 140,
+                },
+            ]
+        )
+    ).fetch_to_raw_json("002050")
+
+    first = raw["blocks"]["business_composition"][0]
+
+    assert first["classification_type"] is None
+    assert first["revenue_ratio"] is None
+    assert first["profit_ratio"] is None
+    assert first["gross_margin"] == 40.0
+    assert "classification_type" in raw["fetch_status"]["business_composition"]["missing_fields"]
+    assert "revenue_ratio" in raw["fetch_status"]["business_composition"]["missing_fields"]
+    assert "profit_ratio" in raw["fetch_status"]["business_composition"]["missing_fields"]
+
+
+def test_tushare_provider_source_trace_contains_derived_and_conversion_metadata_without_sensitive_urls():
+    secret = "FAKE_TOKEN_FOR_TESTING_ONLY__NOT_REAL__XYZ_1234567890"
+    raw = _provider(
+        _transport(
+            income=[{"period": "20251231", "revenue": 1000, "oper_cost": 650, "net_profit": 120}],
+            fina_indicator=[{"period": "20251231"}],
+            daily_basic=[{"period": "20260526", "total_mv": 10, "pe_ttm": 1, "pb": 2, "ps": 3}],
+        ),
+        token=secret,
+    ).fetch_to_raw_json("002050")
+
+    trace_text = repr(raw["fetch_status"])
+
+    assert _field_traces(raw, "financial_indicator", "gross_margin")[0]["derived"] is True
+    assert _field_traces(raw, "valuation", "market_cap")[0]["source_unit"] == "10k RMB"
+    _assert_secret_not_rendered(secret, trace_text)
+    assert "mcp" not in trace_text.lower()
+    assert "http://127.0.0.1" not in trace_text
+
+
+def test_tushare_provider_does_not_generate_provider_comparison_output_or_require_real_token(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    transport = _RecordingTransport()
+    provider = TushareProvider(client=TushareClient(transport=transport), token_available=True)
+
+    raw = provider.fetch_to_raw_json("002050")
+
+    assert raw["meta"]["data_source"] == "tushare"
+    assert transport.calls
+    assert not (tmp_path / "output" / "provider_comparison").exists()
 
 
 def test_tushare_provider_marks_news_missing_and_fallback_without_replacement_claim():
@@ -412,6 +660,10 @@ def test_tushare_provider_module_has_no_real_provider_or_external_io_imports():
         "url" + "lib",
         "api." + "tushare" + ".pro",
         "m" + "cp",
+        "tushare" + "_token",
+        "en" + "viron",
+        "get" + "env",
+        "provider" + "_comparison",
     )
     for marker in forbidden:
         assert marker not in source.lower()
