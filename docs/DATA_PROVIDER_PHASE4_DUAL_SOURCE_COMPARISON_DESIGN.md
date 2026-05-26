@@ -2,23 +2,43 @@
 
 Date: 2026-05-26
 
-Status: Design documentation patch only.
+Status: Phase 4 dual-source comparison dry-run implementation accepted; Phase 4 real-token smoke gate safety skeleton implemented and accepted; documentation sync patch only.
 
-This document freezes the Phase 4 design for dual-source comparison smoke and
-local real-token acceptance planning after Phase 1 provider abstraction
-skeleton, Phase 2 `AkShareProvider` adapter, and Phase 3 mocked
-`TushareProvider` MVP were accepted.
+This document records the accepted Phase 4 implementation boundary for
+dual-source comparison dry-run tooling and local real-token acceptance planning
+after Phase 1 provider abstraction skeleton, Phase 2 `AkShareProvider` adapter,
+Phase 3 mocked `TushareProvider` MVP, Phase 4 comparison-only dry-run tooling,
+and the Phase 4 real-token smoke gate safety skeleton were accepted.
 
 This patch does not change code, tests, config, pipeline, classifier,
 connector, scoring / readiness, HTML / Dashboard, runtime output, or regression
 expected files.
 
+Accepted Phase 4 implementation inventory:
+
+- isolated `compare_providers` runner
+- `comparison_artifacts`
+- `diff_classifier`
+- `token_leak_scanner`
+- `real_token_smoke_gate`
+- `tushare_sdk_transport`
+- CLI interlock for `--real-token-smoke` and `--provider-transport`
+- strengthened token scanner
+- `strategy_type_drift` diff category
+
+Latest recorded verification after Phase 4 real-token smoke gate safety skeleton acceptance:
+
+- targeted tests `42 passed, 1 skipped`
+- full `pytest` `589 passed, 1 skipped`
+- regression suite `passed=47 failed=0 total=47`
+
 ## 1. Phase 4 Positioning
 
 Phase 4 is:
 
-- dual-source comparison smoke design
+- dual-source comparison dry-run tooling
 - local real-token acceptance planning
+- local real-token smoke gate safety skeleton
 - provider-separated artifact design
 - drift report design
 - token safety / local-only procedure design
@@ -32,14 +52,35 @@ Phase 4 is not:
 - automatic AkShare / Tushare merge
 - real token smoke execution
 - MCP integration execution
+- real Tushare execution
+- network execution
+- reading `TUSHARE_TOKEN`
+- reading local MCP config
 
 The accepted production path remains unchanged. `real_stock_runner` still uses
 the existing AkShare-backed `RealDataConnector` unless a later phase explicitly
 changes that behavior after review.
 
-## 2. Dual-Source Comparison Design
+Default Phase 4 runner behavior is dry-run / comparison-only: it does not
+generate `output/provider_comparison`, does not write production output, does
+not run HTML, and does not run Research Intelligence P1.1. `--include-p1` is
+off by default. The accepted real-token smoke gate safety skeleton requires
+explicit `--real-token-smoke --provider-transport sdk`, rejects `--token`,
+fails closed without a token, and has not executed a real smoke.
 
-The comparison chain should run the two providers independently and keep their
+Phase roadmap snapshot:
+
+- Phase 0 completed.
+- Phase 1 accepted.
+- Phase 2 accepted.
+- Phase 3 accepted.
+- Phase 4 dry-run accepted.
+- Phase 4 real-token smoke gate safety skeleton accepted.
+- Next: local real-token smoke execution acceptance review / external audit gate.
+
+## 2. Dual-Source Comparison Dry-Run Design
+
+The accepted comparison chain runs the two providers independently and keeps their
 artifacts separated:
 
 ```text
@@ -54,7 +95,7 @@ TushareProvider
   -> EvidencePackBuilder.build
 ```
 
-The comparison runner should compare at least:
+The comparison runner compares or is scoped to compare at least:
 
 - `basic_info`
 - `business_composition`
@@ -80,7 +121,9 @@ constructing a blended canonical payload.
 
 ## 3. Artifact Boundary
 
-Comparison artifacts must be written under an isolated timestamp directory:
+Default dry-run behavior must not create `output/provider_comparison`. When
+artifact writing is explicitly enabled, comparison artifacts must be written
+under an isolated timestamp directory:
 
 ```text
 output/provider_comparison/<timestamp>/<code>/
@@ -165,6 +208,7 @@ Required diff categories:
 - `stale_or_failed_akshare_field`
 - `tushare_permission_missing`
 - `canonical_mapping_issue`
+- `strategy_type_drift`
 - `classification_drift`
 - `confidence_drift`
 - `score_drift`
@@ -180,16 +224,46 @@ Suggested severity levels:
 - `blocker`: token / secret exposure, default-output overwrite, canonical shape
   breakage, or unreviewed classification / score / confidence / P1.1 drift
 
-Classification, confidence, score, and P1.1 question drift must not be accepted
-automatically. They require human review even if the raw-data difference appears
-reasonable.
+Accepted diff-classifier behavior:
 
-## 6. Acceptance Thresholds
+- `strategy_type_drift` must set `review_required=true`.
+- `classification_drift` must set `review_required=true`.
+- `confidence_drift` must set `review_required=true`.
+- `score_drift` must set `review_required=true`.
+- `P1_question_drift` must set `review_required=true`.
+- `token_or_secret_risk` must be `blocker`.
+- No drift is automatically accepted, even when the raw-data difference appears reasonable.
 
-Phase 4 local smoke passes only if:
+Strategy-type, classification, confidence, score, and P1.1 question drift
+require human review before any migration decision.
+
+## 6. Token Leak Scanner
+
+Accepted scanner behavior:
+
+- Supports scanning `dict`, `list`, and `str` payloads.
+- Supports exact token reference matching when a fake token reference is
+  intentionally injected by tests.
+- Detects `token=`.
+- Detects `api_key=`.
+- Detects `Bearer`.
+- Detects MCP URL / `mcp?token=`.
+- Detects realistic 32+ character token-like values, especially near
+  case-insensitive keywords such as `token`, `key`, `secret`, `auth`, and
+  `credential`.
+- Scans dict keys, dict values, nested metadata, and URL query parameters.
+- Emits only finding location and `<masked>` for detected secret-like values.
+
+Any token-like hit in comparison artifacts, logs, source traces, or diagnostics
+is a blocker for real-token acceptance.
+
+## 7. Acceptance Thresholds
+
+Phase 4 dry-run acceptance passed under these boundaries:
 
 - no token / MCP URL is leaked
 - comparison artifacts are not committed to git
+- default dry-run does not generate `output/provider_comparison`
 - default production output is unchanged
 - `output/reports` is unchanged
 - AkShare path still runs
@@ -200,15 +274,20 @@ Phase 4 local smoke passes only if:
 - score / confidence drift is not automatically accepted
 - P1.1 question drift is manually audited
 - there is no automatic primary-provider switch
+- `--include-p1` is off by default
+- real-token smoke remains local-only, explicitly gated, and not executed
+- regression expected files are unchanged
 
 Tushare does not need to win every field. A useful Phase 4 result may be a
 clear matrix of field-level wins, losses, permission gaps, unit differences, and
 mapping issues.
 
-## 7. Local Real-Token Procedure
+## 8. Local Real-Token Procedure
 
-This section designs the later local procedure. It does not execute a real-token
-smoke and does not request credentials.
+This section records the accepted local safety skeleton for a later real-token
+smoke. It does not execute a real-token smoke and does not request credentials.
+The next step is execution acceptance review / external audit gate work, not
+direct execution of a real-token smoke.
 
 Allowed credential placement for a later local smoke:
 
@@ -224,29 +303,40 @@ The token must never enter:
 - logs
 - output
 - commits
+- review comments
 
 The runner should use this procedure:
 
-1. Run token leakage precheck before any real smoke.
-2. Require an explicit real-smoke flag such as `--real-token-smoke`; default
-   mode remains dry-run.
-3. Allow logs / errors / source traces to display only `<masked>`.
-4. Run token leakage postcheck after the smoke.
-5. If any artifact contains a token-like value, Bearer credential, or raw MCP
-   URL text, fail immediately and delete the affected timestamp comparison
-   directory.
+1. Run precheck before any real smoke, including repo tracked-file scan,
+   staged-diff scan, docs / tests / source scan, target output scan, and
+   protected-output snapshots.
+2. Record `output/reports` and default output path sets plus SHA-256 hashes.
+3. Require explicit `--real-token-smoke --provider-transport sdk`; default mode
+   remains dry-run.
+4. Reject `--token` CLI arguments; keep `http` and `mcp-local` reserved and
+   fail closed.
+5. Fail closed when no local token is available, before any SDK call.
+6. Scan every payload and diff report before write.
+7. Run postcheck after the attempt, verify protected path sets and hashes, and
+   confirm comparison artifacts are not staged or tracked.
+8. If any blocker occurs, delete only the strict timestamp comparison
+   directory and record only a sanitized reason.
 
 Source traces should include provider names, endpoint / function names,
 canonical field names, source periods, derivation flags, units, and row counts
 where useful. They must not include credentials, local config values, or local
 connection strings.
 
-## 8. MCP / SDK / HTTP Decision
+## 9. MCP / SDK / HTTP Decision
 
 Phase 4 local smoke should prefer:
 
 - Python SDK transport, or
 - another mockable `TushareClient` transport
+
+The accepted safety skeleton implements only the SDK transport skeleton. Tests
+use fake SDK objects / factories. HTTP and MCP-local transports remain reserved
+and explicitly fail closed.
 
 MCP is only a local tool-layer fallback. The deterministic pipeline must not
 depend directly on MCP availability, MCP URLs, MCP config shape, or local
@@ -258,9 +348,9 @@ P1.1, HTML, or Dashboard logic.
 
 MCP URL text from local config must not be written into the repository.
 
-## 9. Testing Plan
+## 10. Testing Plan
 
-Phase 4 implementation should include tests for:
+Phase 4 dry-run acceptance included targeted coverage for:
 
 - comparison artifact path behavior
 - no writes to default production output
@@ -272,12 +362,16 @@ Phase 4 implementation should include tests for:
 - regression unchanged behavior
 - `dual_compare` still does not return a merged raw payload
 
+Latest recorded verification after safety skeleton acceptance: targeted tests
+`42 passed, 1 skipped`; full `pytest` `589 passed, 1 skipped`; regression
+suite `passed=47 failed=0 total=47`.
+
 Real-token smoke tests must not run in CI by default and must not require real
 credentials.
 
-## 10. CLI / Runner Design
+## 11. CLI / Runner Design
 
-Suggested future runner:
+Accepted isolated runner:
 
 ```bash
 python -m src.fundamental_skill.data_providers.compare_providers \
@@ -290,7 +384,11 @@ python -m src.fundamental_skill.data_providers.compare_providers \
 Runner requirements:
 
 - default dry-run
-- real-token smoke requires explicit `--real-token-smoke`
+- real-token smoke path requires explicit `--real-token-smoke --provider-transport sdk`
+- `--provider-transport` without `--real-token-smoke` fails closed
+- `--real-token-smoke` without `--provider-transport` fails closed
+- `--provider-transport http` and `--provider-transport mcp-local` fail closed as reserved
+- `--token` is rejected
 - default does not write production output
 - default does not modify current `evidence_pack`
 - default does not run HTML / P1.1
@@ -298,11 +396,11 @@ Runner requirements:
 - token safe
 
 The runner should fail closed if the requested provider is unavailable, if the
-Tushare token is absent for a real-token smoke, if canonical raw shape is
-broken, or if the artifact boundary would write outside the comparison
-directory.
+local token is absent for a real-token smoke, if canonical raw shape is broken,
+or if the artifact boundary would write outside the comparison directory. Safe
+errors must not echo raw command text or secret-like arguments.
 
-## 11. Risk Review
+## 12. Risk Review
 
 Main risks:
 
@@ -322,28 +420,37 @@ Main risks:
 Any drift that changes final deterministic interpretation should be treated as a
 review finding, not as an automatic migration success.
 
-## 12. Claude / External Audit
+## 13. Claude / External Audit
 
 Recommended external-audit stance:
 
-- Phase 4 design audit can proceed without Claude.
-- Phase 4 implementation can proceed without Claude if it remains dry-run /
-  comparison-only.
-- Local real-token acceptance should have Claude review or strict human audit
-  before execution.
+- Phase 4 design and dry-run implementation have been accepted without requiring real-token external audit because they remained comparison-only.
+- Phase 4 real-token smoke gate safety skeleton has been implemented and
+  accepted without executing real smoke.
+- Local real-token smoke execution should have Claude review or strict human
+  audit before execution.
 - Primary-provider switch must have external audit before acceptance.
 
-## 13. Next Recommendation
+## 14. Next Recommendation
 
-Recommendation: proceed to Phase 4 implementation with a tightly isolated
-minimum scope:
+Recommendation: keep the accepted Phase 4 implementation frozen as a tightly
+isolated dry-run plus real-token smoke gate safety baseline:
 
 - isolated `compare_providers` runner
 - diff classifier
 - artifact writer
 - dry-run mode
 - token leak scanner
+- real-token smoke gate helper
+- SDK transport skeleton
 - provider-separated pipeline / evidence builder
+
+Next gate: local real-token smoke execution acceptance review / external audit gate.
+
+Do not directly execute a real-token smoke. Real tokens may be used only in a
+later local-only execution acceptance step through local `TUSHARE_TOKEN` or
+local MCP config; they must never enter prompts, code, docs, tests, logs,
+output, commits, or review comments.
 
 Do not change:
 
