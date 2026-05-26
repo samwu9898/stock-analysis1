@@ -221,7 +221,8 @@ def test_tushare_provider_passes_normalized_ts_code_to_all_sdk_endpoints_and_kee
 def test_tushare_provider_source_trace_records_normalized_ts_code_without_sensitive_metadata():
     secret = "FAKE_TOKEN_FOR_TESTING_ONLY__NOT_REAL__XYZ_1234567890"
     local_tool_url = "http://127.0.0.1:9999/local-tool"
-    raw = _provider(token=secret).fetch_to_raw_json("002050")
+    provider = _provider(token=secret)
+    raw = provider.fetch_to_raw_json("002050")
 
     trace_text = repr(raw["fetch_status"])
 
