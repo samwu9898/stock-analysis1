@@ -18,7 +18,7 @@ def test_exact_match_category():
 
 def test_drift_categories_require_manual_review():
     for field_path, category in [
-        ("fundamental.strategy_type", DiffCategory.CLASSIFICATION_DRIFT),
+        ("fundamental.strategy_type", DiffCategory.STRATEGY_TYPE_DRIFT),
         ("fundamental.sub_type", DiffCategory.CLASSIFICATION_DRIFT),
         ("fundamental.confidence", DiffCategory.CONFIDENCE_DRIFT),
         ("fundamental.fundamental_score", DiffCategory.SCORE_DRIFT),
@@ -79,6 +79,7 @@ def test_make_diff_item_supports_all_required_categories():
         "stale_or_failed_akshare_field",
         "tushare_permission_missing",
         "canonical_mapping_issue",
+        "strategy_type_drift",
         "classification_drift",
         "confidence_drift",
         "score_drift",

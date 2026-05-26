@@ -20,6 +20,7 @@ class DiffCategory(str, Enum):
     STALE_OR_FAILED_AKSHARE_FIELD = "stale_or_failed_akshare_field"
     TUSHARE_PERMISSION_MISSING = "tushare_permission_missing"
     CANONICAL_MAPPING_ISSUE = "canonical_mapping_issue"
+    STRATEGY_TYPE_DRIFT = "strategy_type_drift"
     CLASSIFICATION_DRIFT = "classification_drift"
     CONFIDENCE_DRIFT = "confidence_drift"
     SCORE_DRIFT = "score_drift"
@@ -29,6 +30,7 @@ class DiffCategory(str, Enum):
 
 
 REVIEW_REQUIRED_CATEGORIES = {
+    DiffCategory.STRATEGY_TYPE_DRIFT,
     DiffCategory.CLASSIFICATION_DRIFT,
     DiffCategory.CONFIDENCE_DRIFT,
     DiffCategory.SCORE_DRIFT,
@@ -104,7 +106,9 @@ def classify_field_diff(
 
     if "research_questions" in lowered or "research_questions_p1" in lowered:
         return make_diff_item(DiffCategory.P1_QUESTION_DRIFT, field_path, akshare_value, tushare_value)
-    if lowered.endswith("strategy_type") or lowered.endswith("sub_type"):
+    if lowered.endswith("strategy_type"):
+        return make_diff_item(DiffCategory.STRATEGY_TYPE_DRIFT, field_path, akshare_value, tushare_value)
+    if lowered.endswith("sub_type"):
         return make_diff_item(DiffCategory.CLASSIFICATION_DRIFT, field_path, akshare_value, tushare_value)
     if lowered.endswith("confidence") or ".confidence" in lowered:
         return make_diff_item(DiffCategory.CONFIDENCE_DRIFT, field_path, akshare_value, tushare_value)
@@ -300,6 +304,7 @@ def _default_note_for(category: DiffCategory) -> str:
         DiffCategory.STALE_OR_FAILED_AKSHARE_FIELD: "AkShare failed or appears stale while Tushare has data.",
         DiffCategory.TUSHARE_PERMISSION_MISSING: "Tushare field appears unavailable because of permission or endpoint access.",
         DiffCategory.CANONICAL_MAPPING_ISSUE: "Provider output violates or weakens the canonical mapping contract.",
+        DiffCategory.STRATEGY_TYPE_DRIFT: "Strategy type drift requires manual review and must not be automatically accepted.",
         DiffCategory.CLASSIFICATION_DRIFT: "Classification drift requires manual review.",
         DiffCategory.CONFIDENCE_DRIFT: "Confidence drift requires manual review.",
         DiffCategory.SCORE_DRIFT: "Score drift requires manual review.",

@@ -12,6 +12,10 @@ from src.fundamental_skill.data_providers.compare_providers import (
 from src.fundamental_skill.data_providers.fake_provider import FakeDataProvider
 
 
+def _fake_secret():
+    return "Qq1Ww2Ee3Rr4Tt5" + "Yy6Uu7Ii8Oo9Pp0" + "Aa2Ss3Dd4Ff5Gg6"
+
+
 def test_cli_default_dry_run_plans_only_and_does_not_write(tmp_path, capsys):
     output_dir = tmp_path / "output" / "provider_comparison"
 
@@ -34,18 +38,106 @@ def test_cli_default_dry_run_plans_only_and_does_not_write(tmp_path, capsys):
     assert not output_dir.exists()
 
 
-def test_real_token_flag_fails_closed(tmp_path, capsys):
+def test_real_token_flag_without_provider_transport_fails_closed(tmp_path, capsys):
     exit_code = main([
         "--codes",
         "600406",
         "--output-dir",
-        str(tmp_path / "output" / "provider_comparison"),
+        "output/provider_comparison",
         "--real-token-smoke",
     ])
 
     captured = capsys.readouterr()
     assert exit_code == 2
-    assert "real-token smoke is not implemented" in captured.out
+    assert "--real-token-smoke requires --provider-transport" in captured.out
+
+
+def test_provider_transport_without_real_token_smoke_fails_closed(capsys):
+    exit_code = main([
+        "--codes",
+        "600406",
+        "--output-dir",
+        "output/provider_comparison",
+        "--provider-transport",
+        "sdk",
+    ])
+
+    captured = capsys.readouterr()
+    assert exit_code == 2
+    assert "--provider-transport requires --real-token-smoke" in captured.out
+
+
+def test_reserved_provider_transports_fail_closed(capsys):
+    for transport in ("http", "mcp-local"):
+        exit_code = main([
+            "--codes",
+            "600406",
+            "--output-dir",
+            "output/provider_comparison",
+            "--real-token-smoke",
+            "--provider-transport",
+            transport,
+        ])
+        captured = capsys.readouterr()
+        assert exit_code == 2
+        assert "reserved for future implementation" in captured.out
+
+
+def test_token_cli_argument_is_rejected_without_echoing_value(capsys):
+    fake_secret = _fake_secret()
+
+    exit_code = main([
+        "--codes",
+        "600406",
+        "--token",
+        fake_secret,
+    ])
+
+    captured = capsys.readouterr()
+    assert exit_code == 2
+    assert "--token CLI parameter is not allowed" in captured.out
+    assert fake_secret not in captured.out
+
+
+def test_real_token_sdk_path_missing_token_fails_before_sdk_call():
+    calls = {"sdk": 0}
+
+    def sdk_factory():
+        calls["sdk"] += 1
+        raise AssertionError("SDK factory must not be called without token")
+
+    try:
+        run_provider_comparison(
+            codes=["600406"],
+            output_dir="output/provider_comparison",
+            real_token_smoke=True,
+            provider_transport="sdk",
+            token_reader=lambda: None,
+            sdk_factory=sdk_factory,
+        )
+    except ProviderComparisonError as exc:
+        assert "requires a local TUSHARE_TOKEN" in str(exc)
+    else:
+        raise AssertionError("expected ProviderComparisonError")
+
+    assert calls["sdk"] == 0
+
+
+def test_dry_run_does_not_read_real_token_or_require_ci_secret(tmp_path):
+    calls = {"token_reader": 0}
+
+    def token_reader():
+        calls["token_reader"] += 1
+        return _fake_secret()
+
+    result = run_provider_comparison(
+        codes=["600406"],
+        output_dir=tmp_path / "output" / "provider_comparison",
+        token_reader=token_reader,
+    )
+
+    assert result["dry_run"] is True
+    assert calls["token_reader"] == 0
 
 
 def test_include_p1_default_off_and_can_plan_only(tmp_path):

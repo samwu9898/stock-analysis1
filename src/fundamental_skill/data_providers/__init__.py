@@ -17,6 +17,7 @@ from .comparison_artifacts import (
 )
 from .diff_classifier import DiffCategory, DiffItem, classify_field_diff
 from .provider_router import ProviderRouter, ProviderRoutingError
+from .real_token_smoke_gate import RealTokenSmokeGate, RealTokenSmokeGateError
 from .schemas import (
     CANONICAL_RAW_BLOCKS,
     CANONICAL_RAW_TOP_LEVEL_KEYS,
@@ -36,6 +37,7 @@ from .tushare_client import (
     TushareRateLimitError,
 )
 from .tushare_provider import TushareProvider, TushareProviderError
+from .tushare_sdk_transport import TushareSdkTransport, TushareSdkTransportError
 
 __all__ = [
     "CANONICAL_RAW_BLOCKS",
@@ -55,6 +57,8 @@ __all__ = [
     "ProviderRouter",
     "ProviderRoutingError",
     "ProviderSelection",
+    "RealTokenSmokeGate",
+    "RealTokenSmokeGateError",
     "TushareClient",
     "TushareClientError",
     "TushareMalformedResponseError",
@@ -62,6 +66,8 @@ __all__ = [
     "TushareProvider",
     "TushareProviderError",
     "TushareRateLimitError",
+    "TushareSdkTransport",
+    "TushareSdkTransportError",
     "TokenLeakError",
     "TokenLeakFinding",
     "TokenLeakScanResult",
