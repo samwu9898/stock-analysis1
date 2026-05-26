@@ -2,9 +2,9 @@
 
 Date: 2026-05-26
 
-Stage: Phase 3 Implementation Acceptance Documentation Sync Patch.
+Stage: Phase 4 Design Documentation Patch.
 
-Status: Phase 0 design documentation completed; Phase 1 provider abstraction skeleton accepted; Phase 2 `AkShareProvider` adapter implemented and accepted; Phase 3 `TushareProvider` mocked MVP implemented and accepted. This documentation sync does not change code, tests, config, deterministic pipeline behavior, classifier rules, connector behavior, scoring, readiness, HTML / Dashboard behavior, generated output, or regression expectations.
+Status: Phase 0 design documentation completed; Phase 1 provider abstraction skeleton accepted; Phase 2 `AkShareProvider` adapter implemented and accepted; Phase 3 `TushareProvider` mocked MVP implemented and accepted. Phase 4 dual-source comparison smoke design / local real-token acceptance planning is documented in `docs/DATA_PROVIDER_PHASE4_DUAL_SOURCE_COMPARISON_DESIGN.md`. This documentation sync does not change code, tests, config, deterministic pipeline behavior, classifier rules, connector behavior, scoring, readiness, HTML / Dashboard behavior, generated output, or regression expectations.
 
 Latest Phase 2 acceptance record:
 
@@ -661,11 +661,17 @@ Phase 3 acceptance result:
 - Full `pytest` `541 passed`.
 - Regression suite `passed=47 failed=0 total=47`.
 
-Phase 4: dual-source comparison smoke design / local real-token acceptance planning. Next.
+Phase 4: dual-source comparison smoke design / local real-token acceptance planning. Design documented.
 
 - Design provider-separated AkShare and Tushare comparison smoke.
 - Plan local-only real-token acceptance, but do not request or paste tokens into prompts, code, docs, tests, logs, output, commits, or review comments.
 - Keep no automatic merge.
+- Write comparison artifacts only under `output/provider_comparison/<timestamp>/<code>/`.
+- Do not write `output/raw_<code>.json`, `output/fundamental_<code>.json`, `output/evidence_pack_<code>.json`, or `output/reports`.
+- Keep P1.1 drift comparison off by default; allow it only under an explicit include-P1 option.
+- Keep real-token smoke behind an explicit flag; default comparison runner behavior should be dry-run.
+
+See `docs/DATA_PROVIDER_PHASE4_DUAL_SOURCE_COMPARISON_DESIGN.md` for the Phase 4 artifact boundary, sample set, diff classification, acceptance thresholds, token-safety procedure, MCP / SDK / HTTP decision, testing plan, runner design, risk review, and external-audit stance.
 
 Phase 5: config switch to primary Tushare.
 
@@ -701,9 +707,9 @@ Technical-analysis data-source integration is explicitly out of scope for this m
 
 ## 15. Current Go / No-Go Recommendation
 
-Recommendation: Freeze the accepted Phase 3 mocked baseline and proceed only to a separately scoped Phase 4 dual-source comparison smoke design / local real-token acceptance planning cycle.
+Recommendation: Freeze the accepted Phase 3 mocked baseline and proceed to a separately scoped Phase 4 implementation only after the Phase 4 design in `docs/DATA_PROVIDER_PHASE4_DUAL_SOURCE_COMPARISON_DESIGN.md` is accepted.
 
-Phase 3 mocked-only implementation did not require Claude / external audit, because it did not use a real token, connect real APIs, connect MCP, switch primary provider, or change downstream behavior. If the scope expands into real API field mapping, primary provider switching, dual-source comparison, real-token smoke, or MCP integration, request Claude or another external audit before implementation / acceptance.
+Phase 3 mocked-only implementation did not require Claude / external audit, because it did not use a real token, connect real APIs, connect MCP, switch primary provider, or change downstream behavior. Phase 4 design audit can proceed without Claude, and Phase 4 implementation can proceed without Claude if it remains dry-run / comparison-only. Local real-token acceptance should have Claude review or strict human audit before execution. Primary-provider switch must have external audit before acceptance.
 
 Completed Phase 1 / Phase 2 / Phase 3 scope:
 
@@ -731,6 +737,16 @@ Accepted Phase 3 did not:
 - change classifier, scoring, readiness, or deterministic pipeline behavior
 - change regression expected outputs
 - generate committed runtime artifacts
+
+Phase 4 implementation guardrails:
+
+- Isolate all comparison artifacts under `output/provider_comparison/<timestamp>/<code>/`.
+- Keep comparison artifacts out of git.
+- Keep default production output unchanged.
+- Keep `output/reports` unchanged.
+- Keep `ProviderRouter` `dual_compare` as no-merge behavior.
+- Do not run real-token smoke unless explicitly requested by a local-only flag.
+- Do not accept classification, score, confidence, or P1.1 question drift automatically.
 
 No-Go triggers:
 
