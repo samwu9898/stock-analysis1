@@ -2,9 +2,19 @@
 
 Date: 2026-05-26
 
-Stage: Design Documentation Patch.
+Stage: Phase 2 Documentation Sync Patch.
 
-Status: documentation-only. This file records the planned Data Provider Abstraction and Tushare migration design for later Phase 1 implementation. It does not change code, tests, config, deterministic pipeline behavior, classifier rules, connector behavior, scoring, readiness, HTML / Dashboard behavior, generated output, or regression expectations.
+Status: Phase 0 design documentation completed; Phase 1 provider abstraction skeleton accepted; Phase 2 `AkShareProvider` adapter implemented and accepted. This documentation sync does not change code, tests, config, deterministic pipeline behavior, classifier rules, connector behavior, scoring, readiness, HTML / Dashboard behavior, generated output, or regression expectations.
+
+Latest Phase 2 acceptance record:
+
+- `AkShareProvider` is a thin adapter around the existing `RealDataConnector`.
+- The default `real_stock_runner` production path still directly uses `RealDataConnector`.
+- `ProviderRouter` supports `auto`, `akshare`, `tushare`, and `dual_compare` modes as optional provider-abstraction paths.
+- `provider=tushare` still fails closed when no token / provider is available.
+- `dual_compare` records comparison intent only; it does not fetch, merge, or change downstream results.
+- Phase 2 did not connect real Tushare, read tokens, read local MCP config, call MCP, add network calls, or modify the deterministic pipeline.
+- Latest recorded verification after Phase 2 acceptance: full `pytest` `520 passed`; regression suite `passed=47 failed=0 total=47`.
 
 ## 1. Background And Goals
 
@@ -223,7 +233,7 @@ Business composition:
 
 - If the relevant main-business composition interface is available under the user's permission, Tushare can replace AkShare `stock_zygc_em`.
 - Mapping targets: `business_composition.period`, `classification_type`, `segment_name`, `revenue`, `revenue_ratio`, `gross_margin`, `cost`, `profit`, and `profit_ratio`.
-- This should be verified in Phase 3 with mocked and then real local responses before using it as primary.
+- This should be verified with mocked responses first. Any real local-response validation should be handled only under a later explicit acceptance step before using it as primary.
 
 ### Fields That Can Enhance `evidence_pack`
 
@@ -293,8 +303,8 @@ Core principles:
 - Downstream modules do not directly depend on Tushare or AkShare.
 - `evidence_pack` schema remains unchanged.
 - Classifier, scoring, readiness, Research Intelligence P1.1, HTML Report, and Dashboard do not directly know the data source.
-- `AkShareProvider` should first wrap the existing `RealDataConnector`.
-- `TushareProvider` should later convert Tushare responses into the same canonical raw blocks.
+- `AkShareProvider` wraps the existing `RealDataConnector` and is complete as of Phase 2.
+- `TushareProvider` should later convert Tushare responses into the same canonical raw blocks; this starts no earlier than Phase 3.
 - Provider adapters own all source-specific API names, response shapes, unit conversions, and source traces.
 - Missing or unavailable provider fields should continue to flow through `fetch_status.*.missing_fields`.
 
@@ -315,6 +325,23 @@ class DataProvider:
 
 `schemas.py` should keep provider-facing structures lightweight and separate from downstream Pydantic models unless a later phase needs stricter validation.
 
+### Phase 2 AkShareProvider Adapter Status
+
+Phase 2 implemented and accepted `src/fundamental_skill/data_providers/akshare_provider.py`.
+
+Accepted behavior:
+
+- `name = "akshare"`.
+- The adapter internally wraps `RealDataConnector`.
+- `fetch_to_raw_json(stock_code, force_refresh=False)` delegates directly to `RealDataConnector.fetch_to_raw_json(...)`.
+- The adapter returns the connector raw dict without reshaping or rewriting `meta`, `blocks`, `fetch_status`, or `errors`.
+- The canonical raw top-level structure remains `meta`, `blocks`, `fetch_status`, and `errors`.
+- Existing block names remain unchanged, including `basic_info`, `financial_indicator`, `valuation`, `business_composition`, `news`, and optional `commodity_prices` / `commodity_price_foreign_reference`.
+- Fake connector / connector factory injection is supported for equivalence tests.
+- The default production `real_stock_runner` path was not changed and still directly uses `RealDataConnector`.
+
+Phase 2 explicitly did not add real Tushare access, token reading, MCP access, new network calls, classifier changes, scoring / readiness changes, evidence-pack schema changes, Research Intelligence P1.1 changes, HTML / Dashboard changes, regression expected changes, or committed output artifacts.
+
 ## 8. ProviderRouter Design
 
 Supported provider modes:
@@ -329,9 +356,17 @@ Routing rules:
 - `auto`: use Tushare when token/client is available; otherwise fall back to AkShare.
 - `tushare`: use only Tushare; if token/client is unavailable, fail closed with a clear non-secret error.
 - `akshare`: preserve current behavior.
-- `dual_compare`: fetch both AkShare and Tushare outputs for comparison; do not automatically merge data.
+- `dual_compare`: Phase 2 records comparison intent only and does not fetch or merge. A later comparison phase may generate provider-separated AkShare and Tushare outputs for review, but must not automatically merge data.
 
-The router should not change downstream output semantics. It only decides which provider produces canonical raw JSON.
+Phase 2 accepted behavior:
+
+- `provider=akshare` can select the `AkShareProvider` optional path.
+- `provider=auto` selects AkShare when no usable Tushare provider is available.
+- `provider=tushare` still fails closed without a token / provider.
+- `dual_compare` does not automatically merge, fetch, or change results.
+- The router is not wired into the default `real_stock_runner` production path.
+
+The router should not change downstream output semantics. It only decides which provider produces canonical raw JSON when the optional provider-abstraction path is used.
 
 ## 9. Token And MCP Security Design
 
@@ -352,6 +387,7 @@ TUSHARE_TOKEN=<TUSHARE_TOKEN>
 - Documentation may only use `<TUSHARE_TOKEN>` as a placeholder.
 - MCP URL text from local configuration must not be written into the repository.
 - Source traces must record provider/function names and field provenance, not credentials or local connection strings.
+- Phase 2 does not require a real token. Phase 3 should continue to use mocks / fake tokens until an explicit real-token acceptance step is designed.
 
 Recommended masking behavior:
 
@@ -453,28 +489,31 @@ Before switching primary provider:
 
 ## 13. Phase Roadmap
 
-Phase 0: design doc.
+Phase 0: design doc. Completed.
 
 - Record the migration design and safety boundaries.
 - No code change.
 
-Phase 1: provider abstraction skeleton.
+Phase 1: provider abstraction skeleton. Implemented and accepted.
 
 - Add provider directory and lightweight base/schema/router/token-safety skeletons.
 - Do not call real Tushare.
 - Keep default behavior unchanged.
 
-Phase 2: `AkShareProvider` adapter.
+Phase 2: `AkShareProvider` adapter. Implemented and accepted.
 
 - Wrap existing `RealDataConnector`.
 - Prove current raw/fundamental/evidence behavior is unchanged.
 - Keep regression expected unchanged.
+- Keep the default `real_stock_runner` path directly on `RealDataConnector`.
+- Do not call real Tushare, read tokens, read MCP config, call MCP, or add network calls.
 
 Phase 3: `TushareProvider` MVP.
 
 - Implement mockable Tushare client.
 - Map basic info, financial statements / indicators, valuation, and business composition where verified.
 - Keep fallback for news, commodity prices, and specialized fields.
+- Phase 3 is the first phase for `TushareProvider` MVP work. It still does not require a real token before a separate explicit real-token acceptance step; use mocks / fake tokens for implementation tests.
 
 Phase 4: dual-source comparison smoke.
 
@@ -514,19 +553,22 @@ Those requirements need separate permission confirmation. If Tushare minute or r
 
 Technical-analysis data-source integration is explicitly out of scope for this migration documentation stage.
 
-## 15. Go / No-Go Recommendation
+## 15. Current Go / No-Go Recommendation
 
-Recommendation: Go for Phase 1 implementation.
+Recommendation: Freeze Phase 2 baseline and proceed only to a separately scoped Phase 3 `TushareProvider` MVP design / implementation cycle.
 
-Minimum Phase 1 scope:
+Completed Phase 1 / Phase 2 scope:
 
-- Add provider abstraction skeleton.
-- Add schema placeholders needed by the router and fake providers.
-- Add provider router config parser.
-- Add token masking helper.
-- Add fake-provider tests only if Phase 1 includes tests.
+- Provider abstraction skeleton.
+- Schema placeholders needed by the router and fake providers.
+- Provider router config parser.
+- Token masking helper.
+- Fake-provider tests.
+- `AkShareProvider` adapter around `RealDataConnector`.
+- AkShare adapter equivalence tests.
+- ProviderRouter tests for AkShare fallback, Tushare fail-closed behavior, and `dual_compare` no-merge behavior.
 
-Phase 1 must not:
+Phase 3 must not:
 
 - call real Tushare
 - require a real token
@@ -545,4 +587,3 @@ No-Go triggers:
 - Any design that makes MCP server availability a hard deterministic pipeline dependency.
 - Any provider output that forces downstream schema changes before a dedicated schema migration review.
 - Any unreviewed classification, scoring, readiness, P1.1, HTML, or regression change.
-
