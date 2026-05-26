@@ -9,6 +9,8 @@ from src.fundamental_skill.data_providers.provider_router import (
     provider_mode_from_config,
 )
 from src.fundamental_skill.data_providers.schemas import ProviderMode
+from src.fundamental_skill.data_providers.tushare_client import TushareClient
+from src.fundamental_skill.data_providers.tushare_provider import TushareProvider
 
 
 def test_provider_mode_from_config_reads_supported_keys():
@@ -116,6 +118,30 @@ def test_tushare_mode_with_injected_provider_and_token_fetches_fake_raw():
 
     assert raw["meta"]["data_source"] == "tushare"
     assert tushare.calls == [{"stock_code": "002050", "force_refresh": False}]
+
+
+def test_tushare_mode_with_injected_phase3_provider_and_fake_token_available_fetches_mocked_raw():
+    provider = TushareProvider(
+        client=TushareClient(
+            transport={
+                "stock_basic": [{"stock_code": "002050", "stock_name": "Mock Stock"}],
+                "income": [],
+                "balancesheet": [],
+                "cashflow": [],
+                "fina_indicator": [],
+                "daily_basic": [],
+                "fina_mainbz": [],
+            }
+        ),
+        token_available=True,
+    )
+    router = ProviderRouter(mode="tushare", tushare_provider=provider, tushare_token_available=True)
+
+    raw = router.fetch_to_raw_json("002050")
+
+    assert raw["meta"]["data_source"] == "tushare"
+    assert raw["blocks"]["basic_info"][0]["stock_name"] == "Mock Stock"
+    assert raw["fetch_status"]["news"]["error"] == "news_missing_fallback"
 
 
 def test_dual_compare_returns_intent_and_does_not_auto_merge():
