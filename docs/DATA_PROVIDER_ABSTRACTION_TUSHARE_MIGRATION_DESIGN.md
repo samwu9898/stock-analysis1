@@ -2,9 +2,9 @@
 
 Date: 2026-05-26
 
-Stage: Phase 2 Documentation Sync Patch.
+Stage: Phase 3 Design Documentation Sync Patch.
 
-Status: Phase 0 design documentation completed; Phase 1 provider abstraction skeleton accepted; Phase 2 `AkShareProvider` adapter implemented and accepted. This documentation sync does not change code, tests, config, deterministic pipeline behavior, classifier rules, connector behavior, scoring, readiness, HTML / Dashboard behavior, generated output, or regression expectations.
+Status: Phase 0 design documentation completed; Phase 1 provider abstraction skeleton accepted; Phase 2 `AkShareProvider` adapter implemented and accepted; Phase 3 `TushareProvider` MVP design audit completed and synchronized here as the basis for later mocked implementation. This documentation sync does not change code, tests, config, deterministic pipeline behavior, classifier rules, connector behavior, scoring, readiness, HTML / Dashboard behavior, generated output, or regression expectations.
 
 Latest Phase 2 acceptance record:
 
@@ -15,6 +15,13 @@ Latest Phase 2 acceptance record:
 - `dual_compare` records comparison intent only; it does not fetch, merge, or change downstream results.
 - Phase 2 did not connect real Tushare, read tokens, read local MCP config, call MCP, add network calls, or modify the deterministic pipeline.
 - Latest recorded verification after Phase 2 acceptance: full `pytest` `520 passed`; regression suite `passed=47 failed=0 total=47`.
+
+Latest Phase 3 design audit record:
+
+- Phase 3 MVP is a mocked-only `TushareProvider` design for later implementation.
+- Phase 3 MVP should add a `TushareClient` abstraction with mocked transport, `TushareProvider` mocked response mapping, canonical raw output, explicit `fetch_status` / `errors` / `source_trace`, token safety, no-token fail-closed behavior, and mock tests only.
+- Phase 3 MVP should not require or request a real token, connect MCP, make real network calls in tests, switch `provider=auto` primary behavior, run dual-source comparison, replace news, replace commodity prices, add industry-specific operating indicators, add minute / realtime technical data, or change downstream deterministic behavior.
+- Phase 3 mocked implementation does not require Claude / external review. External review is recommended before real API field validation, primary switching, dual-source comparison, real-token smoke, or MCP integration.
 
 ## 1. Background And Goals
 
@@ -205,6 +212,13 @@ Provider migration must preserve these fields and their absence semantics.
 
 The user has paid Tushare access at the 6000-point tier. The unlocked scope is mainly suitable for fundamental data, financial statements, macro data, low-frequency market data, and reference datasets.
 
+Phase 3 mapping notes:
+
+- Endpoint names below are placeholders / equivalent API concepts for mocked implementation design.
+- This document does not claim that the user's exact endpoint permissions have been verified through a real API call.
+- Phase 3 tests should use mocked responses only.
+- Source-specific names stay inside `TushareClient` / `TushareProvider`; downstream raw block names stay canonical.
+
 ### Fields That Can Directly Replace AkShare
 
 Basic information:
@@ -263,6 +277,24 @@ News and announcements:
 
 - Tushare should not be assumed to fully replace current `stock_news_em` news coverage.
 - AkShare or a future CNInfo / exchange-announcement provider should remain available for `latest_news` / `news`.
+
+### Phase 3 Placeholder Endpoint To Canonical Raw Mapping
+
+Phase 3 MVP should map mocked Tushare-like responses into existing canonical raw blocks only:
+
+| Placeholder endpoint | Canonical raw block | Canonical fields |
+| --- | --- | --- |
+| `stock_basic` or equivalent | `basic_info` | `stock_code`, `stock_name`, `industry`, `listing_date` |
+| profile / business-scope equivalent | `basic_info` | `main_business` remains uncertain; default to missing / fallback until verified |
+| `income` | `financial_indicator` | `revenue`, `net_profit`, `deducted_net_profit`, `r_and_d_expense` |
+| `balancesheet` | `financial_indicator` | `debt_to_asset`, `inventory`, `accounts_receivable`, `contract_liabilities` |
+| `cashflow` | `financial_indicator` | `operating_cashflow`, `capex` |
+| `fina_indicator` | `financial_indicator` | `revenue_yoy`, `net_profit_yoy`, `gross_margin`, `net_margin`, `roe`, `r_and_d_expense_ratio` |
+| `daily_basic` or equivalent | `valuation` | `pe_ttm`, `pb`, `ps`, `market_cap`, `dividend_yield` |
+| `fina_mainbz` or equivalent, if available | `business_composition` | `period`, `classification_type`, `segment_name`, `revenue`, `revenue_ratio`, `gross_margin`, `cost`, `profit`, `profit_ratio` |
+| news equivalent | `news` | Not replaced in Phase 3 MVP; record missing / fallback to a future news provider |
+
+Phase 3 must not rename raw blocks to downstream evidence names. In particular, raw output remains `financial_indicator` and `valuation`; it does not introduce raw blocks named `financial_metrics` or `valuation_metrics`.
 
 Commodity prices:
 
@@ -342,6 +374,78 @@ Accepted behavior:
 
 Phase 2 explicitly did not add real Tushare access, token reading, MCP access, new network calls, classifier changes, scoring / readiness changes, evidence-pack schema changes, Research Intelligence P1.1 changes, HTML / Dashboard changes, regression expected changes, or committed output artifacts.
 
+### Phase 3 TushareProvider MVP Scope
+
+Phase 3 MVP should design / later implement only:
+
+- `TushareClient` abstraction.
+- Mocked transport.
+- `TushareProvider` mocked response mapping.
+- `basic_info`.
+- `financial_indicator`.
+- `valuation`.
+- `business_composition`, where the interface is available or represented by mocked permission-positive responses.
+- `news` explicitly marked as missing / fallback.
+- `fetch_status`, `errors`, and `source_trace`.
+- Token safety.
+- No-token fail-closed behavior.
+- Mock tests only.
+
+Phase 3 MVP must not do:
+
+- Real token smoke.
+- MCP integration.
+- Real network calls in tests.
+- `provider=auto` primary switch.
+- Dual-source comparison.
+- News replacement.
+- `commodity_prices` replacement.
+- Industry-specific operating indicators.
+- Minute / realtime technical data.
+- Classifier, scoring, or readiness changes.
+- `evidence_pack` schema changes.
+- HTML / P1.1 changes.
+- Regression expected changes.
+
+### Phase 3 Canonical Raw Output
+
+`TushareProvider.fetch_to_raw_json(...)` must output the existing canonical raw structure:
+
+```text
+meta
+blocks
+fetch_status
+errors
+```
+
+`blocks` must keep the existing canonical raw names:
+
+- `basic_info`
+- `financial_indicator`
+- `valuation`
+- `business_composition`
+- `news`
+
+Phase 3 must not introduce a new downstream schema and must not rename raw blocks to `financial_metrics` or `valuation_metrics`. Adapter and evidence-pack layers may continue to expose downstream names, but provider raw output remains compatible with the current connector contract.
+
+Each `fetch_status.<block>` should record non-secret diagnostics such as `success`, `error`, `missing_fields`, `fetched_at`, `source_trace`, `warnings`, and source name. `source_trace` should record provider/function names, canonical field names, source periods, derivation flags, units, and row counts where useful; it must not record credentials, MCP URLs, or local config values.
+
+### Phase 3 Missing And Fallback Semantics
+
+All missing, unavailable, or failed data must be explicit in `fetch_status`, `errors`, or `missing_fields`. These states must not become company operating facts.
+
+| Scenario | Required Phase 3 behavior |
+| --- | --- |
+| Tushare field missing | Keep the field absent or `None`; add the canonical field to `missing_fields`; use warnings if the block otherwise succeeded. |
+| Endpoint permission unavailable | Return an empty or partial block; mark the block failed or partial in `fetch_status`; use a sanitized `permission_denied` style error; include missing canonical fields. |
+| Empty dataframe / empty response | Return an empty block list; mark `success=False`; use `error="empty_response"` or equivalent; include expected missing fields. |
+| API error | Mark the affected block failed; store only sanitized error text; add a block-level error entry. |
+| No token | `provider=tushare` fails closed before real access; do not call the client and do not fabricate data. |
+| Rate limit | Mark the affected block failed or partial; store sanitized `rate_limit` error; include missing fields. |
+| Malformed response | Mark the affected block failed; use sanitized `malformed_response`; include missing fields. |
+| `business_composition` unavailable | Keep `business_composition: []`; add `business_composition.segments` or expected segment fields to `missing_fields`; record unavailable / permission status. |
+| `news` unavailable | Keep `news: []`; mark news missing / fallback; do not claim Tushare replaces news in MVP. |
+
 ## 8. ProviderRouter Design
 
 Supported provider modes:
@@ -374,6 +478,7 @@ Required security rules:
 
 - Tushare token is allowed only from environment variables or local MCP configuration.
 - Recommended environment variable name: `TUSHARE_TOKEN`.
+- Phase 3 mocked implementation does not require a real token.
 - `.env` must remain in `.gitignore`.
 - `.env.example` may be added later, but it may only contain:
 
@@ -383,11 +488,14 @@ TUSHARE_TOKEN=<TUSHARE_TOKEN>
 
 - No real token may enter code, documentation, tests, logs, output artifacts, fixtures, commits, or review comments.
 - Logs and errors must mask token-like values.
+- All token-like strings must be masked in exceptions, object representations, `fetch_status`, `errors`, logs, and test diagnostics.
 - Tests must use fake token values and monkeypatching.
 - Documentation may only use `<TUSHARE_TOKEN>` as a placeholder.
 - MCP URL text from local configuration must not be written into the repository.
 - Source traces must record provider/function names and field provenance, not credentials or local connection strings.
 - Phase 2 does not require a real token. Phase 3 should continue to use mocks / fake tokens until an explicit real-token acceptance step is designed.
+- `provider=tushare` with no token must fail closed.
+- Real-token smoke must be a later local-only explicit acceptance step, not part of Phase 3 mocked implementation or CI.
 
 Recommended masking behavior:
 
@@ -466,18 +574,25 @@ No automatic data merge should occur in `dual_compare`.
 New test categories for later implementation:
 
 - Fake provider tests for canonical raw-block shape.
+- `TushareClient` mocked response tests.
 - Mocked `TushareProvider` tests with representative Tushare-like responses.
+- `TushareProvider` mapping tests for `basic_info`, `financial_indicator`, `valuation`, `business_composition`, and missing `news`.
 - `ProviderRouter` priority and fallback tests.
+- ProviderRouter tests with an injected `TushareProvider`.
 - No-token fail-closed tests.
-- Token masking tests for logs, errors, object representations, and `fetch_status`.
+- Permission-denied, empty-response, malformed-response, and rate-limit tests.
+- Token masking tests for logs, errors, object representations, `fetch_status`, and provider/client exceptions.
+- Canonical raw shape tests for `meta`, `blocks`, `fetch_status`, `errors`, and unchanged raw block names.
 - Dual-source comparison smoke tests.
 - AkShare adapter equivalence tests proving current behavior is unchanged.
 
 Regression rules:
 
 - Phase 1 and Phase 2 must not modify regression expected outputs.
+- Phase 3 mocked implementation must not modify regression expected outputs.
 - Current regression suite remains the baseline.
 - Any provider migration must prove that `provider=akshare` remains equivalent to current behavior.
+- CI tests must not make real Tushare API calls or require real credentials.
 
 Before switching primary provider:
 
@@ -510,10 +625,32 @@ Phase 2: `AkShareProvider` adapter. Implemented and accepted.
 
 Phase 3: `TushareProvider` MVP.
 
-- Implement mockable Tushare client.
-- Map basic info, financial statements / indicators, valuation, and business composition where verified.
-- Keep fallback for news, commodity prices, and specialized fields.
+- Implement mockable Tushare client with mocked transport only.
+- Map mocked responses for basic info, financial statements / indicators, valuation, and business composition.
+- Mark news as missing / fallback; keep fallback for commodity prices and specialized fields.
 - Phase 3 is the first phase for `TushareProvider` MVP work. It still does not require a real token before a separate explicit real-token acceptance step; use mocks / fake tokens for implementation tests.
+
+Recommended Phase 3 implementation sequence:
+
+- 3.1 `TushareClient` abstraction with mocked transport only.
+- 3.2 `TushareProvider` mocked mapping into canonical raw blocks.
+- 3.3 `ProviderRouter` injection tests.
+- 3.4 No-token / masking tests.
+- 3.5 Optional local-only smoke design, not executed by default.
+
+Phase 3 acceptance criteria:
+
+- No real token required.
+- No network calls in tests.
+- Canonical raw shape preserved.
+- Mocked Tushare responses map to expected raw blocks.
+- No downstream behavior change.
+- Default `real_stock_runner` unchanged.
+- Classifier, scoring, readiness, `evidence_pack`, HTML, and Dashboard unchanged.
+- Full `pytest` green.
+- Regression suite `passed=47 failed=0 total=47`.
+- No token or MCP URL leak.
+- Regression expected files unchanged.
 
 Phase 4: dual-source comparison smoke.
 
@@ -556,6 +693,8 @@ Technical-analysis data-source integration is explicitly out of scope for this m
 ## 15. Current Go / No-Go Recommendation
 
 Recommendation: Freeze Phase 2 baseline and proceed only to a separately scoped Phase 3 `TushareProvider` MVP design / implementation cycle.
+
+Phase 3 mocked-only implementation does not require Claude / external audit before starting, because it does not use a real token, connect real APIs, connect MCP, switch primary provider, or change downstream behavior. If the scope expands into real API field mapping, primary provider switching, dual-source comparison, real-token smoke, or MCP integration, request Claude or another external audit before implementation / acceptance.
 
 Completed Phase 1 / Phase 2 scope:
 
