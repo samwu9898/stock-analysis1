@@ -166,6 +166,27 @@ def test_dual_compare_returns_intent_and_does_not_auto_merge():
     assert tushare.calls == []
 
 
+def test_dual_compare_remains_plan_only_for_phase4_dry_run_boundary():
+    akshare = FakeDataProvider(name="akshare")
+    tushare = FakeDataProvider(name="tushare")
+    router = ProviderRouter(
+        mode="dual_compare",
+        akshare_provider=akshare,
+        tushare_provider=tushare,
+        tushare_token_available=True,
+    )
+
+    selection = router.comparison_plan()
+
+    assert selection.comparison_providers == ("akshare", "tushare")
+    assert selection.selected_provider is None
+    assert selection.fallback_provider is None
+    with pytest.raises(ProviderRoutingError, match="does not return a merged raw JSON"):
+        router.fetch_to_raw_json("600406", force_refresh=True)
+    assert akshare.calls == []
+    assert tushare.calls == []
+
+
 def test_provider_failure_error_is_sanitized():
     fake_token = "fake-token-for-tests-abcdef"
     failing = FakeDataProvider(
