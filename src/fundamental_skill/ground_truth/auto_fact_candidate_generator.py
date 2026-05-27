@@ -180,6 +180,10 @@ _KEYED_SECRET_RE = re.compile(
 )
 _BEARER_RE = re.compile(r"\bBearer\s+[A-Za-z0-9._~+/=-]+", flags=re.IGNORECASE)
 _MCP_RE = re.compile(r"\bmcp(?:s)?://[^\s\"'<>]+|\bmcp\?[^\s\"']*", flags=re.IGNORECASE)
+_DOTENV_PATH_RE = re.compile(
+    r"(^|[\\/:\s\"'`=])\.env(?:\.[A-Za-z0-9_-]+)*\b",
+    flags=re.IGNORECASE,
+)
 _TOKEN_LIKE_RE = re.compile(
     r"\b(?=[A-Za-z0-9._~+/=-]{32,}\b)"
     r"(?=[A-Za-z0-9._~+/=-]*[a-z])"
@@ -1920,7 +1924,12 @@ def _first_secret_like_finding(value: Any, path: str) -> str | None:
                 return child_finding
         return None
     if isinstance(value, str):
-        if _KEYED_SECRET_RE.search(value) or _BEARER_RE.search(value) or _MCP_RE.search(value):
+        if (
+            _KEYED_SECRET_RE.search(value)
+            or _BEARER_RE.search(value)
+            or _MCP_RE.search(value)
+            or _DOTENV_PATH_RE.search(value)
+        ):
             return path
         if _LOCAL_SECRET_PATH_RE.search(value):
             return path
@@ -1936,7 +1945,7 @@ def _nearby_text(text: str) -> str:
 
 
 def _safe_path_key(key: str) -> str:
-    if _SECRET_KEY_RE.search(key) or _TOKEN_LIKE_RE.search(key):
+    if _SECRET_KEY_RE.search(key) or _TOKEN_LIKE_RE.search(key) or _DOTENV_PATH_RE.search(key):
         return "<masked_key>"
     if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]{0,63}", key):
         return key
