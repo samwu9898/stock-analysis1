@@ -12,19 +12,25 @@ from .research_report_v1 import (
 )
 from .research_report_v1_presentation import (
     MARKDOWN_OUTPUT_FILENAME,
+    PRESENTATION_PROFILE_REGISTRY,
+    ResearchReportPresentationProfile,
     render_research_report_v1_markdown,
+    select_presentation_profile,
     write_research_report_v1_markdown,
 )
 
 __all__ = [
     "ALLOWED_EVIDENCE_LABELS",
     "MARKDOWN_OUTPUT_FILENAME",
+    "PRESENTATION_PROFILE_REGISTRY",
     "REPORT_TYPE",
+    "ResearchReportPresentationProfile",
     "ResearchReportArtifactBoundaryError",
     "ResearchReportBuildError",
     "ResearchReportSecretError",
     "build_research_report_v1",
     "render_research_report_v1_markdown",
+    "select_presentation_profile",
     "write_research_report_v1",
     "write_research_report_v1_markdown",
 ]
