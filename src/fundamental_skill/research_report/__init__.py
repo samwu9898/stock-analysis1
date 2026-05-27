@@ -18,9 +18,15 @@ from .research_report_v1_presentation import (
     select_presentation_profile,
     write_research_report_v1_markdown,
 )
+from .research_report_v1_html import (
+    HTML_OUTPUT_FILENAME,
+    render_research_report_v1_html,
+    write_research_report_v1_html,
+)
 
 __all__ = [
     "ALLOWED_EVIDENCE_LABELS",
+    "HTML_OUTPUT_FILENAME",
     "MARKDOWN_OUTPUT_FILENAME",
     "PRESENTATION_PROFILE_REGISTRY",
     "REPORT_TYPE",
@@ -29,8 +35,10 @@ __all__ = [
     "ResearchReportBuildError",
     "ResearchReportSecretError",
     "build_research_report_v1",
+    "render_research_report_v1_html",
     "render_research_report_v1_markdown",
     "select_presentation_profile",
+    "write_research_report_v1_html",
     "write_research_report_v1",
     "write_research_report_v1_markdown",
 ]
