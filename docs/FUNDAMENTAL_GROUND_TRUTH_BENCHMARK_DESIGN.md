@@ -11,7 +11,7 @@ output, regression expected files, or provider-primary behavior.
 
 Latest accepted project baseline referenced by this design:
 
-- `pytest`: `648 passed, 1 skipped`
+- `pytest`: `655 passed, 1 skipped`
 - regression suite: `passed=47 failed=0 total=47`
 
 No pytest or regression run is required for this documentation-only stage.
@@ -47,7 +47,8 @@ Current non-coverage:
 
 Ground Truth Benchmark target:
 
-- Verify selected factual fields against manually reviewed source references.
+- Verify selected factual fields that are produced by automatic candidate
+  generation and then accepted by auto gates or human review.
 - Keep the benchmark separate from investment judgement.
 - Produce audit evidence about field correctness, source, period, unit, and
   missingness category.
@@ -62,10 +63,18 @@ Ground Truth Benchmark non-target:
   support scope, HTML / Dashboard behavior, or regression expected files.
 - It must not treat Tushare as ground truth merely because it is paid or
   structured.
+- It must not become a user-facing manual field-fill workflow. Manual review is
+  for exception handling after automatic candidate generation.
+
+The Auto Fact Candidate Generator design is recorded in
+`docs/FUNDAMENTAL_AUTO_FACT_CANDIDATE_GENERATOR_DESIGN.md`. It corrects the
+workflow sequence: generate provider / official-parser candidates first, review
+only conflicts and unclear fields, and promote only accepted facts into this
+benchmark.
 
 ## 2. V1 Sample Pool Design
 
-V1 should start with 8 to 12 manually reviewed stocks. The target size is 12
+V1 should start with 8 to 12 reviewed stocks. The target size is 12
 samples: six Phase 4 comparison / narrative-hint samples, two P1.1 validation /
 boundary samples from accepted project history, and four broader validation /
 caveat samples.
@@ -87,7 +96,8 @@ caveat samples.
 
 V1 sampling principles:
 
-- Keep the sample set small enough for manual source review.
+- Keep the sample set small enough for automatic candidate generation and
+  exception review.
 - Include positive samples only where existing project history already accepted
   the strategy slice.
 - Include boundary and caveat samples to prevent the benchmark from becoming a
@@ -280,12 +290,12 @@ data/ground_truth/fundamental_ground_truth_v1.json
 
 Git policy:
 
-- A small manually curated benchmark may be committed to git.
+- A small reviewed benchmark may be committed to git.
 - It must not contain real tokens, MCP URLs, local secret paths, or private
   connection strings.
 - It must not contain large raw paid-source exports.
-- It may contain manually reviewed field values, source names, source document
-  references, units, periods, and reviewer notes.
+- It may contain auto-accepted or human-reviewed field values, source names,
+  source document references, units, periods, and reviewer notes.
 - If source copyright is uncertain, store only field values and source
   references, not long source text excerpts.
 
@@ -296,7 +306,7 @@ Recommended JSON shape:
   "version": "fundamental_ground_truth.v1",
   "created_at": "2026-05-27",
   "scope": {
-    "benchmark_type": "manual_field_ground_truth",
+    "benchmark_type": "reviewed_field_ground_truth",
     "not_for_trading_advice": true,
     "does_not_modify_scoring": true
   },
@@ -549,13 +559,16 @@ Recommended sequence:
 
 1. This design document.
 2. Ground Truth Benchmark schema / fixture implementation.
-3. Manual entry for a small number of samples.
-4. Ground truth validator script.
-5. Benchmark report for AkShare / Tushare / canonical output.
-6. Tushare block-level primary design.
-7. P1.1 deep validation.
-8. `fina_mainbz type=P/D/I` ratio derivation.
-9. Sidecar data availability design.
+3. Auto Fact Candidate Generator design.
+4. Offline artifact candidate generator implementation.
+5. Candidate report for a first sample such as `600406`.
+6. Promote selected `auto_accepted` or human-reviewed fields into the fixture.
+7. Ground truth validator script.
+8. Benchmark report for AkShare / Tushare / canonical output.
+9. Tushare block-level primary design.
+10. P1.1 deep validation.
+11. `fina_mainbz type=P/D/I` ratio derivation.
+12. Sidecar data availability design.
 
 ## 13. Delivery Checklist For This Patch
 

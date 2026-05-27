@@ -4,7 +4,7 @@ Date: 2026-05-27
 
 Stage: Phase 4 Closeout / Baseline Freeze.
 
-Status: Phase 0 design documentation completed; Phase 1 provider abstraction skeleton accepted; Phase 2 `AkShareProvider` adapter implemented and accepted; Phase 3 `TushareProvider` mocked MVP implemented and accepted; Phase 4 dual-source comparison dry-run tooling implemented and accepted; Phase 4 local real-token smoke gate documentation completed; Phase 4 real-token smoke gate safety skeleton implemented and accepted. A later third local real-token smoke review completed with `partial_pass_data_review_required`: Tushare endpoint availability and canonical mapping materially improved, while score / confidence drift required comparison-only explainability. Phase 4 score / confidence explainability design, implementation, acceptance, narrative hints, artifact review, and closeout baseline freeze are now completed. Tushare is usable for comparison but is still not allowed to become primary, AkShare / Tushare data must not be automatically merged, and drift must not be automatically accepted. Fundamental Ground Truth Benchmark Design is now recorded in `docs/FUNDAMENTAL_GROUND_TRUTH_BENCHMARK_DESIGN.md`; the next recommended phase is benchmark schema / fixture implementation, not another Phase 4 smoke. This documentation sync does not change code, tests, config, deterministic pipeline behavior, classifier rules, connector behavior, scoring, readiness, HTML / Dashboard behavior, generated output, or regression expectations.
+Status: Phase 0 design documentation completed; Phase 1 provider abstraction skeleton accepted; Phase 2 `AkShareProvider` adapter implemented and accepted; Phase 3 `TushareProvider` mocked MVP implemented and accepted; Phase 4 dual-source comparison dry-run tooling implemented and accepted; Phase 4 local real-token smoke gate documentation completed; Phase 4 real-token smoke gate safety skeleton implemented and accepted. A later third local real-token smoke review completed with `partial_pass_data_review_required`: Tushare endpoint availability and canonical mapping materially improved, while score / confidence drift required comparison-only explainability. Phase 4 score / confidence explainability design, implementation, acceptance, narrative hints, artifact review, and closeout baseline freeze are now completed. Tushare is usable for comparison but is still not allowed to become primary, AkShare / Tushare data must not be automatically merged, and drift must not be automatically accepted. Fundamental Ground Truth Benchmark Design is recorded in `docs/FUNDAMENTAL_GROUND_TRUTH_BENCHMARK_DESIGN.md`, the fixture skeleton is present, and Auto Fact Candidate Generator Design is recorded in `docs/FUNDAMENTAL_AUTO_FACT_CANDIDATE_GENERATOR_DESIGN.md`; the next recommended phase is offline candidate generator implementation from existing artifacts, not another Phase 4 smoke and not manual field filling. This documentation sync does not change code, tests, config, deterministic pipeline behavior, classifier rules, connector behavior, scoring, readiness, HTML / Dashboard behavior, generated output, or regression expectations.
 
 Latest Phase 2 acceptance record:
 
@@ -93,9 +93,10 @@ Latest Phase 4 closeout / baseline freeze record:
 - Latest recorded verification remains targeted tests `27 passed`, full
   `pytest` `648 passed, 1 skipped`, and regression suite
   `passed=47 failed=0 total=47`.
-- Next recommended phase: Ground Truth Benchmark schema / fixture implementation,
-  after the design recorded in
-  `docs/FUNDAMENTAL_GROUND_TRUTH_BENCHMARK_DESIGN.md`.
+- Next recommended phase: offline Auto Fact Candidate Generator
+  implementation from existing provider-comparison artifacts, after the designs
+  recorded in `docs/FUNDAMENTAL_GROUND_TRUTH_BENCHMARK_DESIGN.md` and
+  `docs/FUNDAMENTAL_AUTO_FACT_CANDIDATE_GENERATOR_DESIGN.md`.
 
 ## 1. Background And Goals
 
@@ -1053,10 +1054,15 @@ See `docs/DATA_PROVIDER_PHASE4_DUAL_SOURCE_COMPARISON_DESIGN.md` for the accepte
 
 See `docs/DATA_PROVIDER_PHASE4_SCORE_CONFIDENCE_EXPLAINABILITY_DESIGN.md` for the accepted score / confidence drift explainability design and implementation boundary.
 
-See `docs/FUNDAMENTAL_GROUND_TRUTH_BENCHMARK_DESIGN.md` for the manual factual benchmark design that should precede any block-level primary-provider decision.
+See `docs/FUNDAMENTAL_GROUND_TRUTH_BENCHMARK_DESIGN.md` for the reviewed factual benchmark design that should precede any block-level primary-provider decision.
 
-Next gate: Ground Truth Benchmark schema / fixture implementation, then a small
-manual sample fill and standalone validator script before later mapping /
+See `docs/FUNDAMENTAL_AUTO_FACT_CANDIDATE_GENERATOR_DESIGN.md` for the
+automatic provider / official-parser fact candidate layer that should run before
+fixture promotion or validator work.
+
+Next gate: offline candidate generator implementation, then a `600406`
+candidate report, reviewed promotion of selected accepted facts into the
+fixture, and only then a standalone validator script before later mapping /
 sidecar design decisions.
 
 - Do not run another real-token smoke unless later provider mapping or sidecar
@@ -1073,12 +1079,15 @@ sidecar design decisions.
   `fina_mainbz` `type=P/D/I` selected-period ratio derivation and design
   sidecar policy separately.
 
-Phase 5: Ground Truth Benchmark schema / fixture implementation.
+Phase 5: Auto Fact Candidate Generator and reviewed fixture promotion.
 
-- Add the small manual benchmark fixture after a separate implementation patch.
+- Generate provider fact candidates from existing comparison artifacts first.
+- Promote only selected `auto_accepted` or human-reviewed facts into the
+  existing benchmark fixture after a separate implementation patch.
 - Keep the fixture free of tokens, MCP URLs, local secret paths, and raw paid
   source exports.
-- Start with a standalone validator script rather than mandatory CI.
+- Implement the standalone validator only after candidate generation and
+  fixture promotion are reviewed.
 
 Phase 6: Tushare block-level primary design.
 
