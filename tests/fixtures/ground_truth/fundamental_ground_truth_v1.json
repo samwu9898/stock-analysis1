@@ -1,0 +1,869 @@
+{
+  "version": "fundamental_ground_truth.v1",
+  "created_at": "2026-05-27",
+  "scope": {
+    "benchmark_type": "manual_field_ground_truth",
+    "purpose": "Validate factual field correctness for a small manually reviewed A-share benchmark.",
+    "not_for_trading_advice": true,
+    "excludes_investment_judgement": true,
+    "does_not_modify_scoring": true,
+    "does_not_modify_provider_primary": true,
+    "does_not_merge_providers": true,
+    "does_not_accept_drift": true,
+    "does_not_expand_p1_1": true
+  },
+  "samples": [
+    {
+      "code": "600406",
+      "name": "\u56fd\u7535\u5357\u745e",
+      "strategy_type_expected": "stable_growth",
+      "sample_role": "positive",
+      "sample_role_note": "Accepted stable_growth + 600406 first-version positive sample; this fixture still contains no reviewed financial values.",
+      "p1_1_support_status": "current_supported_positive_sample",
+      "fields": {
+        "basic_info": {
+          "stock_code": {"value": "600406", "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "metadata_only", "missing_category": null, "manual_review_note": "Sample identity metadata only; field facts still require manual review."},
+          "stock_name": {"value": "\u56fd\u7535\u5357\u745e", "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "metadata_only", "missing_category": null, "manual_review_note": "Sample identity metadata only; field facts still require manual review."},
+          "industry": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "listing_date": {"value": null, "source_ref": null, "data_unit": "date", "canonical_unit": "date", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "main_business": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "financial_metrics": {
+          "period": {"value": null, "source_ref": null, "data_unit": "report_period", "canonical_unit": "report_period", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "revenue": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "revenue_yoy": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_profit_yoy": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "deducted_net_profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "gross_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "roe": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "operating_cashflow": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "debt_to_asset": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "inventory": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "accounts_receivable": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "contract_liabilities": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "r_and_d_expense": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "r_and_d_expense_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "capex": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "valuation_metrics": {
+          "as_of_date": {"value": null, "source_ref": null, "data_unit": "date", "canonical_unit": "date", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "pe_ttm": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "pb": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "ps": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "market_cap": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "dividend_yield": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "business_composition": [
+          {
+            "period": {"value": null, "source_ref": null, "data_unit": "report_period", "canonical_unit": "report_period", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "classification_type": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "segment_name": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "revenue": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "revenue_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "gross_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "cost": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "profit_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+          }
+        ]
+      },
+      "source_refs": {},
+      "tolerance": {
+        "amount_relative_pct": 1.0,
+        "amount_absolute_floor_rmb": 1000000,
+        "ratio_pct_point": 0.5,
+        "business_revenue_ratio_pct_point": 0.5,
+        "valuation_policy": "same_as_of_date_required_or_mark_period_mismatch",
+        "text_policy": "normalized_text_plus_manual_judgement"
+      },
+      "manual_review_notes": [
+        "Field values are intentionally null until manual source review is completed.",
+        "No provider output has been accepted as ground truth in this skeleton."
+      ],
+      "audit_status": "draft_manual_review_required"
+    },
+    {
+      "code": "002050",
+      "name": "\u4e09\u82b1\u667a\u63a7",
+      "strategy_type_expected": "advanced_manufacturing_growth",
+      "sample_role": "positive",
+      "sample_role_note": "Accepted advanced_manufacturing_growth + 002050 first-version positive sample; robotics and emerging-business evidence still require conservative manual review.",
+      "p1_1_support_status": "current_supported_positive_sample",
+      "fields": {
+        "basic_info": {
+          "stock_code": {"value": "002050", "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "metadata_only", "missing_category": null, "manual_review_note": "Sample identity metadata only; field facts still require manual review."},
+          "stock_name": {"value": "\u4e09\u82b1\u667a\u63a7", "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "metadata_only", "missing_category": null, "manual_review_note": "Sample identity metadata only; field facts still require manual review."},
+          "industry": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "listing_date": {"value": null, "source_ref": null, "data_unit": "date", "canonical_unit": "date", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "main_business": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "financial_metrics": {
+          "period": {"value": null, "source_ref": null, "data_unit": "report_period", "canonical_unit": "report_period", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "revenue": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "revenue_yoy": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_profit_yoy": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "deducted_net_profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "gross_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "roe": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "operating_cashflow": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "debt_to_asset": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "inventory": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "accounts_receivable": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "contract_liabilities": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "r_and_d_expense": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "r_and_d_expense_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "capex": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "valuation_metrics": {
+          "as_of_date": {"value": null, "source_ref": null, "data_unit": "date", "canonical_unit": "date", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "pe_ttm": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "pb": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "ps": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "market_cap": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "dividend_yield": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "business_composition": [
+          {
+            "period": {"value": null, "source_ref": null, "data_unit": "report_period", "canonical_unit": "report_period", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "classification_type": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "segment_name": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "revenue": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "revenue_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "gross_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "cost": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "profit_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+          }
+        ]
+      },
+      "source_refs": {},
+      "tolerance": {
+        "amount_relative_pct": 1.0,
+        "amount_absolute_floor_rmb": 1000000,
+        "ratio_pct_point": 0.5,
+        "business_revenue_ratio_pct_point": 0.5,
+        "valuation_policy": "same_as_of_date_required_or_mark_period_mismatch",
+        "text_policy": "normalized_text_plus_manual_judgement"
+      },
+      "manual_review_notes": [
+        "Field values are intentionally null until manual source review is completed.",
+        "No provider output has been accepted as ground truth in this skeleton."
+      ],
+      "audit_status": "draft_manual_review_required"
+    },
+    {
+      "code": "002371",
+      "name": "\u5317\u65b9\u534e\u521b",
+      "strategy_type_expected": "semiconductor_cycle",
+      "sample_role": "positive",
+      "sample_role_note": "Accepted semiconductor_cycle + 002371 first-version positive sample; domestic-substitution and cycle evidence remain manually reviewed later.",
+      "p1_1_support_status": "current_supported_positive_sample",
+      "fields": {
+        "basic_info": {
+          "stock_code": {"value": "002371", "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "metadata_only", "missing_category": null, "manual_review_note": "Sample identity metadata only; field facts still require manual review."},
+          "stock_name": {"value": "\u5317\u65b9\u534e\u521b", "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "metadata_only", "missing_category": null, "manual_review_note": "Sample identity metadata only; field facts still require manual review."},
+          "industry": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "listing_date": {"value": null, "source_ref": null, "data_unit": "date", "canonical_unit": "date", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "main_business": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "financial_metrics": {
+          "period": {"value": null, "source_ref": null, "data_unit": "report_period", "canonical_unit": "report_period", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "revenue": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "revenue_yoy": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_profit_yoy": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "deducted_net_profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "gross_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "roe": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "operating_cashflow": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "debt_to_asset": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "inventory": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "accounts_receivable": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "contract_liabilities": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "r_and_d_expense": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "r_and_d_expense_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "capex": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "valuation_metrics": {
+          "as_of_date": {"value": null, "source_ref": null, "data_unit": "date", "canonical_unit": "date", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "pe_ttm": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "pb": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "ps": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "market_cap": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "dividend_yield": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "business_composition": [
+          {
+            "period": {"value": null, "source_ref": null, "data_unit": "report_period", "canonical_unit": "report_period", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "classification_type": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "segment_name": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "revenue": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "revenue_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "gross_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "cost": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "profit_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+          }
+        ]
+      },
+      "source_refs": {},
+      "tolerance": {
+        "amount_relative_pct": 1.0,
+        "amount_absolute_floor_rmb": 1000000,
+        "ratio_pct_point": 0.5,
+        "business_revenue_ratio_pct_point": 0.5,
+        "valuation_policy": "same_as_of_date_required_or_mark_period_mismatch",
+        "text_policy": "normalized_text_plus_manual_judgement"
+      },
+      "manual_review_notes": [
+        "Field values are intentionally null until manual source review is completed.",
+        "No provider output has been accepted as ground truth in this skeleton."
+      ],
+      "audit_status": "draft_manual_review_required"
+    },
+    {
+      "code": "603259",
+      "name": "\u836f\u660e\u5eb7\u5fb7",
+      "strategy_type_expected": "life_science_cxo_services",
+      "sample_role": "positive_caveat",
+      "sample_role_note": "CXO representative; generic fundamentals do not prove backlog, geography, utilization, or regulatory-risk evidence.",
+      "p1_1_support_status": "current_supported_caveat_sample",
+      "fields": {
+        "basic_info": {
+          "stock_code": {"value": "603259", "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "metadata_only", "missing_category": null, "manual_review_note": "Sample identity metadata only; field facts still require manual review."},
+          "stock_name": {"value": "\u836f\u660e\u5eb7\u5fb7", "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "metadata_only", "missing_category": null, "manual_review_note": "Sample identity metadata only; field facts still require manual review."},
+          "industry": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "listing_date": {"value": null, "source_ref": null, "data_unit": "date", "canonical_unit": "date", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "main_business": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "financial_metrics": {
+          "period": {"value": null, "source_ref": null, "data_unit": "report_period", "canonical_unit": "report_period", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "revenue": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "revenue_yoy": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_profit_yoy": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "deducted_net_profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "gross_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "roe": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "operating_cashflow": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "debt_to_asset": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "inventory": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "accounts_receivable": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "contract_liabilities": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "r_and_d_expense": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "r_and_d_expense_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "capex": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "valuation_metrics": {
+          "as_of_date": {"value": null, "source_ref": null, "data_unit": "date", "canonical_unit": "date", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "pe_ttm": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "pb": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "ps": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "market_cap": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "dividend_yield": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "business_composition": [
+          {
+            "period": {"value": null, "source_ref": null, "data_unit": "report_period", "canonical_unit": "report_period", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "classification_type": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "segment_name": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "revenue": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "revenue_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "gross_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "cost": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "profit_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+          }
+        ]
+      },
+      "source_refs": {},
+      "tolerance": {
+        "amount_relative_pct": 1.0,
+        "amount_absolute_floor_rmb": 1000000,
+        "ratio_pct_point": 0.5,
+        "business_revenue_ratio_pct_point": 0.5,
+        "valuation_policy": "same_as_of_date_required_or_mark_period_mismatch",
+        "text_policy": "normalized_text_plus_manual_judgement"
+      },
+      "manual_review_notes": [
+        "Field values are intentionally null until manual source review is completed.",
+        "No provider output has been accepted as ground truth in this skeleton."
+      ],
+      "audit_status": "draft_manual_review_required"
+    },
+    {
+      "code": "000426",
+      "name": "\u5174\u4e1a\u94f6\u9521",
+      "strategy_type_expected": "resource_swing",
+      "sample_role": "positive_caveat",
+      "sample_role_note": "Accepted resource_swing + 000426 first implementation sample; commodity context remains independent sidecar context and does not expand resource_core.",
+      "p1_1_support_status": "current_supported_caveat_sample",
+      "fields": {
+        "basic_info": {
+          "stock_code": {"value": "000426", "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "metadata_only", "missing_category": null, "manual_review_note": "Sample identity metadata only; field facts still require manual review."},
+          "stock_name": {"value": "\u5174\u4e1a\u94f6\u9521", "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "metadata_only", "missing_category": null, "manual_review_note": "Sample identity metadata only; field facts still require manual review."},
+          "industry": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "listing_date": {"value": null, "source_ref": null, "data_unit": "date", "canonical_unit": "date", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "main_business": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "financial_metrics": {
+          "period": {"value": null, "source_ref": null, "data_unit": "report_period", "canonical_unit": "report_period", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "revenue": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "revenue_yoy": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_profit_yoy": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "deducted_net_profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "gross_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "roe": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "operating_cashflow": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "debt_to_asset": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "inventory": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "accounts_receivable": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "contract_liabilities": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "r_and_d_expense": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "r_and_d_expense_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "capex": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "valuation_metrics": {
+          "as_of_date": {"value": null, "source_ref": null, "data_unit": "date", "canonical_unit": "date", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "pe_ttm": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "pb": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "ps": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "market_cap": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "dividend_yield": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "business_composition": [
+          {
+            "period": {"value": null, "source_ref": null, "data_unit": "report_period", "canonical_unit": "report_period", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "classification_type": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "segment_name": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "revenue": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "revenue_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "gross_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "cost": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "profit_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+          }
+        ]
+      },
+      "source_refs": {},
+      "tolerance": {
+        "amount_relative_pct": 1.0,
+        "amount_absolute_floor_rmb": 1000000,
+        "ratio_pct_point": 0.5,
+        "business_revenue_ratio_pct_point": 0.5,
+        "valuation_policy": "same_as_of_date_required_or_mark_period_mismatch",
+        "text_policy": "normalized_text_plus_manual_judgement"
+      },
+      "manual_review_notes": [
+        "Field values are intentionally null until manual source review is completed.",
+        "No provider output has been accepted as ground truth in this skeleton."
+      ],
+      "audit_status": "draft_manual_review_required"
+    },
+    {
+      "code": "002837",
+      "name": "\u82f1\u7ef4\u514b",
+      "strategy_type_expected": "ai_datacenter_infrastructure",
+      "sample_role": "positive_caveat",
+      "sample_role_note": "AI datacenter cooling / liquid-cooling infrastructure sample; generic financial fields do not prove liquid-cooling realization.",
+      "p1_1_support_status": "current_supported_caveat_sample",
+      "fields": {
+        "basic_info": {
+          "stock_code": {"value": "002837", "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "metadata_only", "missing_category": null, "manual_review_note": "Sample identity metadata only; field facts still require manual review."},
+          "stock_name": {"value": "\u82f1\u7ef4\u514b", "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "metadata_only", "missing_category": null, "manual_review_note": "Sample identity metadata only; field facts still require manual review."},
+          "industry": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "listing_date": {"value": null, "source_ref": null, "data_unit": "date", "canonical_unit": "date", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "main_business": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "financial_metrics": {
+          "period": {"value": null, "source_ref": null, "data_unit": "report_period", "canonical_unit": "report_period", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "revenue": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "revenue_yoy": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_profit_yoy": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "deducted_net_profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "gross_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "roe": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "operating_cashflow": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "debt_to_asset": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "inventory": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "accounts_receivable": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "contract_liabilities": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "r_and_d_expense": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "r_and_d_expense_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "capex": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "valuation_metrics": {
+          "as_of_date": {"value": null, "source_ref": null, "data_unit": "date", "canonical_unit": "date", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "pe_ttm": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "pb": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "ps": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "market_cap": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "dividend_yield": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "business_composition": [
+          {
+            "period": {"value": null, "source_ref": null, "data_unit": "report_period", "canonical_unit": "report_period", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "classification_type": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "segment_name": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "revenue": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "revenue_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "gross_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "cost": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "profit_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+          }
+        ]
+      },
+      "source_refs": {},
+      "tolerance": {
+        "amount_relative_pct": 1.0,
+        "amount_absolute_floor_rmb": 1000000,
+        "ratio_pct_point": 0.5,
+        "business_revenue_ratio_pct_point": 0.5,
+        "valuation_policy": "same_as_of_date_required_or_mark_period_mismatch",
+        "text_policy": "normalized_text_plus_manual_judgement"
+      },
+      "manual_review_notes": [
+        "Field values are intentionally null until manual source review is completed.",
+        "No provider output has been accepted as ground truth in this skeleton."
+      ],
+      "audit_status": "draft_manual_review_required"
+    },
+    {
+      "code": "002028",
+      "name": "\u601d\u6e90\u7535\u6c14",
+      "strategy_type_expected": "stable_growth",
+      "sample_role": "boundary_validation",
+      "sample_role_note": "Stable Growth validation / boundary sample only; not first-version positive P1.1 support.",
+      "p1_1_support_status": "validation_only_not_first_version_positive_support",
+      "fields": {
+        "basic_info": {
+          "stock_code": {"value": "002028", "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "metadata_only", "missing_category": null, "manual_review_note": "Sample identity metadata only; field facts still require manual review."},
+          "stock_name": {"value": "\u601d\u6e90\u7535\u6c14", "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "metadata_only", "missing_category": null, "manual_review_note": "Sample identity metadata only; field facts still require manual review."},
+          "industry": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "listing_date": {"value": null, "source_ref": null, "data_unit": "date", "canonical_unit": "date", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "main_business": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "financial_metrics": {
+          "period": {"value": null, "source_ref": null, "data_unit": "report_period", "canonical_unit": "report_period", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "revenue": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "revenue_yoy": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_profit_yoy": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "deducted_net_profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "gross_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "roe": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "operating_cashflow": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "debt_to_asset": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "inventory": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "accounts_receivable": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "contract_liabilities": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "r_and_d_expense": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "r_and_d_expense_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "capex": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "valuation_metrics": {
+          "as_of_date": {"value": null, "source_ref": null, "data_unit": "date", "canonical_unit": "date", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "pe_ttm": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "pb": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "ps": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "market_cap": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "dividend_yield": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "business_composition": [
+          {
+            "period": {"value": null, "source_ref": null, "data_unit": "report_period", "canonical_unit": "report_period", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "classification_type": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "segment_name": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "revenue": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "revenue_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "gross_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "cost": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "profit_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+          }
+        ]
+      },
+      "source_refs": {},
+      "tolerance": {
+        "amount_relative_pct": 1.0,
+        "amount_absolute_floor_rmb": 1000000,
+        "ratio_pct_point": 0.5,
+        "business_revenue_ratio_pct_point": 0.5,
+        "valuation_policy": "same_as_of_date_required_or_mark_period_mismatch",
+        "text_policy": "normalized_text_plus_manual_judgement"
+      },
+      "manual_review_notes": [
+        "Field values are intentionally null until manual source review is completed.",
+        "No provider output has been accepted as ground truth in this skeleton."
+      ],
+      "audit_status": "draft_manual_review_required"
+    },
+    {
+      "code": "601689",
+      "name": "\u62d3\u666e\u96c6\u56e2",
+      "strategy_type_expected": "advanced_manufacturing_growth",
+      "sample_role": "boundary_validation",
+      "sample_role_note": "Advanced Manufacturing boundary sample only; must not be force-fit into the 002050 first-version support matrix.",
+      "p1_1_support_status": "validation_only_not_first_version_positive_support",
+      "fields": {
+        "basic_info": {
+          "stock_code": {"value": "601689", "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "metadata_only", "missing_category": null, "manual_review_note": "Sample identity metadata only; field facts still require manual review."},
+          "stock_name": {"value": "\u62d3\u666e\u96c6\u56e2", "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "metadata_only", "missing_category": null, "manual_review_note": "Sample identity metadata only; field facts still require manual review."},
+          "industry": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "listing_date": {"value": null, "source_ref": null, "data_unit": "date", "canonical_unit": "date", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "main_business": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "financial_metrics": {
+          "period": {"value": null, "source_ref": null, "data_unit": "report_period", "canonical_unit": "report_period", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "revenue": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "revenue_yoy": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_profit_yoy": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "deducted_net_profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "gross_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "roe": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "operating_cashflow": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "debt_to_asset": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "inventory": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "accounts_receivable": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "contract_liabilities": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "r_and_d_expense": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "r_and_d_expense_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "capex": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "valuation_metrics": {
+          "as_of_date": {"value": null, "source_ref": null, "data_unit": "date", "canonical_unit": "date", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "pe_ttm": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "pb": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "ps": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "market_cap": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "dividend_yield": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "business_composition": [
+          {
+            "period": {"value": null, "source_ref": null, "data_unit": "report_period", "canonical_unit": "report_period", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "classification_type": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "segment_name": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "revenue": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "revenue_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "gross_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "cost": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "profit_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+          }
+        ]
+      },
+      "source_refs": {},
+      "tolerance": {
+        "amount_relative_pct": 1.0,
+        "amount_absolute_floor_rmb": 1000000,
+        "ratio_pct_point": 0.5,
+        "business_revenue_ratio_pct_point": 0.5,
+        "valuation_policy": "same_as_of_date_required_or_mark_period_mismatch",
+        "text_policy": "normalized_text_plus_manual_judgement"
+      },
+      "manual_review_notes": [
+        "Field values are intentionally null until manual source review is completed.",
+        "No provider output has been accepted as ground truth in this skeleton."
+      ],
+      "audit_status": "draft_manual_review_required"
+    },
+    {
+      "code": "300442",
+      "name": "\u6da6\u6cfd\u79d1\u6280",
+      "strategy_type_expected": "ai_datacenter_infrastructure",
+      "sample_role": "validation",
+      "sample_role_note": "AI datacenter operator validation sample; operator KPIs remain future sidecar notes unless manually sourced.",
+      "p1_1_support_status": "current_supported_validation_sample",
+      "fields": {
+        "basic_info": {
+          "stock_code": {"value": "300442", "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "metadata_only", "missing_category": null, "manual_review_note": "Sample identity metadata only; field facts still require manual review."},
+          "stock_name": {"value": "\u6da6\u6cfd\u79d1\u6280", "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "metadata_only", "missing_category": null, "manual_review_note": "Sample identity metadata only; field facts still require manual review."},
+          "industry": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "listing_date": {"value": null, "source_ref": null, "data_unit": "date", "canonical_unit": "date", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "main_business": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "financial_metrics": {
+          "period": {"value": null, "source_ref": null, "data_unit": "report_period", "canonical_unit": "report_period", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "revenue": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "revenue_yoy": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_profit_yoy": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "deducted_net_profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "gross_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "roe": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "operating_cashflow": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "debt_to_asset": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "inventory": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "accounts_receivable": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "contract_liabilities": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "r_and_d_expense": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "r_and_d_expense_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "capex": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "valuation_metrics": {
+          "as_of_date": {"value": null, "source_ref": null, "data_unit": "date", "canonical_unit": "date", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "pe_ttm": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "pb": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "ps": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "market_cap": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "dividend_yield": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "business_composition": [
+          {
+            "period": {"value": null, "source_ref": null, "data_unit": "report_period", "canonical_unit": "report_period", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "classification_type": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "segment_name": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "revenue": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "revenue_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "gross_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "cost": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "profit_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+          }
+        ]
+      },
+      "source_refs": {},
+      "tolerance": {
+        "amount_relative_pct": 1.0,
+        "amount_absolute_floor_rmb": 1000000,
+        "ratio_pct_point": 0.5,
+        "business_revenue_ratio_pct_point": 0.5,
+        "valuation_policy": "same_as_of_date_required_or_mark_period_mismatch",
+        "text_policy": "normalized_text_plus_manual_judgement"
+      },
+      "manual_review_notes": [
+        "Field values are intentionally null until manual source review is completed.",
+        "No provider output has been accepted as ground truth in this skeleton."
+      ],
+      "audit_status": "draft_manual_review_required"
+    },
+    {
+      "code": "601698",
+      "name": "\u4e2d\u56fd\u536b\u901a",
+      "strategy_type_expected": "satellite_communication_infrastructure",
+      "sample_role": "validation",
+      "sample_role_note": "Satellite communication infrastructure validation sample; asset-heavy operating KPIs require later manual source evidence.",
+      "p1_1_support_status": "current_supported_validation_sample",
+      "fields": {
+        "basic_info": {
+          "stock_code": {"value": "601698", "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "metadata_only", "missing_category": null, "manual_review_note": "Sample identity metadata only; field facts still require manual review."},
+          "stock_name": {"value": "\u4e2d\u56fd\u536b\u901a", "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "metadata_only", "missing_category": null, "manual_review_note": "Sample identity metadata only; field facts still require manual review."},
+          "industry": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "listing_date": {"value": null, "source_ref": null, "data_unit": "date", "canonical_unit": "date", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "main_business": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "financial_metrics": {
+          "period": {"value": null, "source_ref": null, "data_unit": "report_period", "canonical_unit": "report_period", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "revenue": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "revenue_yoy": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_profit_yoy": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "deducted_net_profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "gross_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "roe": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "operating_cashflow": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "debt_to_asset": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "inventory": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "accounts_receivable": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "contract_liabilities": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "r_and_d_expense": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "r_and_d_expense_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "capex": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "valuation_metrics": {
+          "as_of_date": {"value": null, "source_ref": null, "data_unit": "date", "canonical_unit": "date", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "pe_ttm": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "pb": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "ps": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "market_cap": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "dividend_yield": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "business_composition": [
+          {
+            "period": {"value": null, "source_ref": null, "data_unit": "report_period", "canonical_unit": "report_period", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "classification_type": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "segment_name": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "revenue": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "revenue_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "gross_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "cost": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "profit_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+          }
+        ]
+      },
+      "source_refs": {},
+      "tolerance": {
+        "amount_relative_pct": 1.0,
+        "amount_absolute_floor_rmb": 1000000,
+        "ratio_pct_point": 0.5,
+        "business_revenue_ratio_pct_point": 0.5,
+        "valuation_policy": "same_as_of_date_required_or_mark_period_mismatch",
+        "text_policy": "normalized_text_plus_manual_judgement"
+      },
+      "manual_review_notes": [
+        "Field values are intentionally null until manual source review is completed.",
+        "No provider output has been accepted as ground truth in this skeleton."
+      ],
+      "audit_status": "draft_manual_review_required"
+    },
+    {
+      "code": "601899",
+      "name": "\u7d2b\u91d1\u77ff\u4e1a",
+      "strategy_type_expected": "resource_core",
+      "sample_role": "caveat_excluded_for_p1_1_v1",
+      "sample_role_note": "Resource Core representative; intentionally excluded from current P1.1 V1 positive support until resource_core design is accepted.",
+      "p1_1_support_status": "excluded_resource_core_design_only",
+      "fields": {
+        "basic_info": {
+          "stock_code": {"value": "601899", "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "metadata_only", "missing_category": null, "manual_review_note": "Sample identity metadata only; field facts still require manual review."},
+          "stock_name": {"value": "\u7d2b\u91d1\u77ff\u4e1a", "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "metadata_only", "missing_category": null, "manual_review_note": "Sample identity metadata only; field facts still require manual review."},
+          "industry": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "listing_date": {"value": null, "source_ref": null, "data_unit": "date", "canonical_unit": "date", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "main_business": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "financial_metrics": {
+          "period": {"value": null, "source_ref": null, "data_unit": "report_period", "canonical_unit": "report_period", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "revenue": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "revenue_yoy": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_profit_yoy": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "deducted_net_profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "gross_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "roe": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "operating_cashflow": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "debt_to_asset": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "inventory": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "accounts_receivable": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "contract_liabilities": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "r_and_d_expense": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "r_and_d_expense_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "capex": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "valuation_metrics": {
+          "as_of_date": {"value": null, "source_ref": null, "data_unit": "date", "canonical_unit": "date", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "pe_ttm": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "pb": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "ps": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "market_cap": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "dividend_yield": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "business_composition": [
+          {
+            "period": {"value": null, "source_ref": null, "data_unit": "report_period", "canonical_unit": "report_period", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "classification_type": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "segment_name": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "revenue": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "revenue_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "gross_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "cost": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "profit_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+          }
+        ]
+      },
+      "source_refs": {},
+      "tolerance": {
+        "amount_relative_pct": 1.0,
+        "amount_absolute_floor_rmb": 1000000,
+        "ratio_pct_point": 0.5,
+        "business_revenue_ratio_pct_point": 0.5,
+        "valuation_policy": "same_as_of_date_required_or_mark_period_mismatch",
+        "text_policy": "normalized_text_plus_manual_judgement"
+      },
+      "manual_review_notes": [
+        "Field values are intentionally null until manual source review is completed.",
+        "No provider output has been accepted as ground truth in this skeleton."
+      ],
+      "audit_status": "draft_manual_review_required"
+    },
+    {
+      "code": "300308",
+      "name": "\u4e2d\u9645\u65ed\u521b",
+      "strategy_type_expected": "right_trend_growth",
+      "sample_role": "boundary_excluded_from_current_p1_1_slices",
+      "sample_role_note": "Right-trend growth / AI optical-module boundary sample; not semiconductor or AI datacenter infrastructure first-version support.",
+      "p1_1_support_status": "excluded_from_current_p1_1_slices",
+      "fields": {
+        "basic_info": {
+          "stock_code": {"value": "300308", "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "metadata_only", "missing_category": null, "manual_review_note": "Sample identity metadata only; field facts still require manual review."},
+          "stock_name": {"value": "\u4e2d\u9645\u65ed\u521b", "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "metadata_only", "missing_category": null, "manual_review_note": "Sample identity metadata only; field facts still require manual review."},
+          "industry": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "listing_date": {"value": null, "source_ref": null, "data_unit": "date", "canonical_unit": "date", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "main_business": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "financial_metrics": {
+          "period": {"value": null, "source_ref": null, "data_unit": "report_period", "canonical_unit": "report_period", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "revenue": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "revenue_yoy": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_profit_yoy": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "deducted_net_profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "gross_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "net_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "roe": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "operating_cashflow": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "debt_to_asset": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "inventory": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "accounts_receivable": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "contract_liabilities": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "r_and_d_expense": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "r_and_d_expense_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "capex": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "valuation_metrics": {
+          "as_of_date": {"value": null, "source_ref": null, "data_unit": "date", "canonical_unit": "date", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "pe_ttm": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "pb": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "ps": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "multiple", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "market_cap": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+          "dividend_yield": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+        },
+        "business_composition": [
+          {
+            "period": {"value": null, "source_ref": null, "data_unit": "report_period", "canonical_unit": "report_period", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "classification_type": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "segment_name": {"value": null, "source_ref": null, "data_unit": "text", "canonical_unit": "text", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "revenue": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "revenue_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "gross_margin": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "cost": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "profit": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "RMB yuan", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."},
+            "profit_ratio": {"value": null, "source_ref": null, "data_unit": null, "canonical_unit": "percentage_point", "confidence_of_ground_truth": "unavailable", "missing_category": "manual_review_required", "manual_review_note": "Not populated; awaiting manual source review."}
+          }
+        ]
+      },
+      "source_refs": {},
+      "tolerance": {
+        "amount_relative_pct": 1.0,
+        "amount_absolute_floor_rmb": 1000000,
+        "ratio_pct_point": 0.5,
+        "business_revenue_ratio_pct_point": 0.5,
+        "valuation_policy": "same_as_of_date_required_or_mark_period_mismatch",
+        "text_policy": "normalized_text_plus_manual_judgement"
+      },
+      "manual_review_notes": [
+        "Field values are intentionally null until manual source review is completed.",
+        "No provider output has been accepted as ground truth in this skeleton."
+      ],
+      "audit_status": "draft_manual_review_required"
+    }
+  ]
+}
