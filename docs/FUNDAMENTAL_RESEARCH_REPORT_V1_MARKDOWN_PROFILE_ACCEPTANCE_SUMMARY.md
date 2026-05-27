@@ -5,8 +5,11 @@ Date: 2026-05-28
 Stage: Fundamental Skill Research Report V1 Cross-Industry Markdown Profile
 Acceptance Summary.
 
-Status: documentation-only acceptance summary. This stage read the three local
-Markdown runtime artifacts listed below and synchronized documentation only. It
+Status: documentation-only acceptance summary, now followed by accepted HTML
+presentation layer design in
+`docs/FUNDAMENTAL_RESEARCH_REPORT_V1_HTML_PRESENTATION_DESIGN.md`. This stage
+read the three local Markdown runtime artifacts listed below and synchronized
+documentation only. It
 did not modify code, tests, fixtures, pipeline behavior, scoring / readiness,
 Research Intelligence P1.1, HTML / Dashboard, regression expected files, or
 runtime output. It did not run smoke tests, read `TUSHARE_TOKEN`, use the
@@ -82,7 +85,8 @@ have passed real-sample Markdown validation:
 - `002371` 中 `capex` 后续也建议统一中文为“资本开支”，以保持中文报告口径。
 - 证据等级文字后续可进一步柔化，避免报告读感过于工程化。
 - 当前只验证 3 个真实样本。
-- 尚未做 HTML presentation。
+- HTML presentation layer design 已记录；尚未实现 HTML renderer，尚未生成
+  HTML runtime artifact。
 - 尚未做 live provider report。
 - 尚未做 official parser / CNInfo。
 - 尚未做 fixture promotion / validator / primary switch。
@@ -91,7 +95,9 @@ have passed real-sample Markdown validation:
 
 ## 6. Next recommended stage
 
-下一步建议进入 HTML presentation layer design / implementation。
+HTML presentation layer design 已记录在
+`docs/FUNDAMENTAL_RESEARCH_REPORT_V1_HTML_PRESENTATION_DESIGN.md`。
+下一步建议进入 HTML renderer implementation。
 
 HTML presentation layer 必须遵守以下边界：
 
@@ -118,4 +124,5 @@ HTML presentation layer 必须遵守以下边界：
 - 不输出投资建议。
 
 Documentation-only 结论：三套 presentation profiles 已通过真实样本 Markdown
-验证，可以作为进入 HTML presentation layer 的前置结论。
+验证，HTML presentation layer design 已完成，可以作为进入 HTML renderer
+implementation 的前置结论。

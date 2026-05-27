@@ -2,12 +2,13 @@
 
 Date: 2026-05-28
 
-Stage: Fundamental Skill Research Report V1 Design and Cross-Industry Markdown
-Profile Acceptance.
+Stage: Fundamental Skill Research Report V1 Design, Cross-Industry Markdown
+Profile Acceptance, and HTML Presentation Layer Design.
 
 Status: design accepted, implementation accepted, Research Report V1 baseline
-frozen, and cross-industry Markdown profile validation accepted for `600406`,
-`002371`, and `002050`. This document records the accepted design boundary; the
+frozen, cross-industry Markdown profile validation accepted for `600406`,
+`002371`, and `002050`, and HTML presentation layer design accepted. This
+document records the accepted design boundary; the
 implementation, baseline freeze, and profile acceptance do not modify tests,
 fixtures, pipeline, scoring / readiness, Research Intelligence P1.1, HTML /
 Dashboard, regression expected files, provider-primary behavior, default output,
@@ -37,9 +38,12 @@ It is an ignored runtime artifact and is not committed.
 
 The `600406`, `002371`, and `002050` Markdown runtime artifacts have since
 passed cross-industry Product Readability / Analyst Experience Review with
-their respective presentation profiles. The next recommended stage is HTML
-presentation layer design / implementation. It is not promote-rule design,
-validator implementation, fixture promotion, or a Tushare primary switch.
+their respective presentation profiles. HTML presentation layer design is
+recorded in
+`docs/FUNDAMENTAL_RESEARCH_REPORT_V1_HTML_PRESENTATION_DESIGN.md`. The next
+recommended stage is HTML renderer implementation. It is not promote-rule
+design, validator implementation, fixture promotion, live provider report, or a
+Tushare primary switch.
 
 ## 1. Goal Correction
 
@@ -661,12 +665,14 @@ Completed sequence:
 
 Next recommended sequence:
 
-1. HTML presentation layer design / implementation.
-2. Ensure HTML consumes Markdown / presentation-layer output or the Research
+1. HTML renderer implementation.
+2. Generate and review `600406`, `002371`, and `002050` HTML runtime artifacts
+   only after the renderer exists.
+3. Ensure HTML consumes Markdown / presentation-layer output or the Research
    Report V1 structured payload without re-analysis or conclusion changes.
-3. Keep caveats, evidence labels, data-quality notes, rebuttal conditions, and
+4. Keep caveats, evidence labels, data-quality notes, rebuttal conditions, and
    follow-up variables visible in the HTML layer.
-4. Later consider promote rules, validator, fixture promotion, and
+5. Later consider promote rules, validator, fixture promotion, and
    primary-provider switch only after the report product experience is reviewed.
 
 Do not continue into promote-rule design, validator implementation, fixture
@@ -731,9 +737,42 @@ rerun in the documentation-only acceptance-summary stage: targeted tests
 `86 passed`, full pytest `734 passed, 1 skipped`, and regression
 `passed=47 failed=0 total=47`.
 
-The next recommended stage is HTML presentation layer design / implementation.
-HTML must consume Markdown / presentation-layer output or the Research Report V1
+The HTML presentation layer design is now recorded in
+`docs/FUNDAMENTAL_RESEARCH_REPORT_V1_HTML_PRESENTATION_DESIGN.md`. HTML must
+consume Markdown / presentation-layer output or the Research Report V1
 structured payload, must not re-analyze or alter conclusions, must not hide
 caveats, and must not call providers, use the network, read tokens, connect
 MCP, or change promote rules, validators, fixtures, scoring, readiness, P1.1,
-or provider primary behavior.
+or provider primary behavior. The next recommended stage is HTML renderer
+implementation.
+
+## 13. HTML presentation layer design addendum
+
+The HTML presentation layer is accepted as a display-only design boundary.
+The future renderer should consume accepted Markdown as the preferred input and
+may consume `fundamental_research_report_v1.json` only to supplement display
+metadata, cards, evidence labels, source references, and data-quality caveats.
+It must not generate conclusions from raw provider artifacts or bypass the
+Markdown profile / professional voice gate.
+
+Future HTML runtime output should be written only when explicitly requested:
+
+```text
+output/research_reports/<timestamp>/<code>/fundamental_research_report_v1.html
+```
+
+Runtime HTML artifacts remain ignored output and must pass secret scanning
+before writing. They must not contain tokens, MCP URLs, local secret paths,
+`.env` paths, provider raw dumps, or paid-source long text. They must visibly
+preserve `not_for_trading_advice`, evidence labels, data-quality caveats,
+evidence gaps, rebuttal conditions, and follow-up variables.
+
+Implementation remains future work. The suggested next module is
+`src/fundamental_skill/research_report/research_report_v1_html.py` with a
+renderer shaped around:
+
+```python
+render_research_report_v1_html(markdown: str, report: dict | None = None) -> str
+```
+
+The writer should keep a strict output boundary under `output/research_reports/`.
