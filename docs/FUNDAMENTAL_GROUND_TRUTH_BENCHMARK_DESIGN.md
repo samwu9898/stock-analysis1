@@ -78,6 +78,13 @@ candidate report generation and any future promote-to-fixture step: it converts
 `manual_review_priority_queue` into a small set of review decisions, while the
 fixture remains unchanged until a later independent promotion stage.
 
+The Candidate Review Decisions Artifact design is recorded in
+`docs/FUNDAMENTAL_CANDIDATE_REVIEW_DECISIONS_ARTIFACT_DESIGN.md`. It formalizes
+`candidate_review_decisions.json` as an auditable intermediate artifact between
+the candidate report and future promote rules. It is not ground truth, not
+fixture promotion, and not validator input. The validator remains delayed until
+a later reviewed fixture exists.
+
 ## 2. V1 Sample Pool Design
 
 V1 should start with 8 to 12 reviewed stocks. The target size is 12
@@ -570,15 +577,17 @@ Recommended sequence:
 5. Candidate report for a first sample such as `600406`.
 6. Candidate Report Review Protocol design and acceptance.
 7. Review decisions artifact design.
-8. Review decisions for selected high-priority candidate queue items.
-9. Promote-rule design.
-10. Controlled fixture promotion only after promote rules are accepted.
-11. Ground truth validator script only after reviewed fixture fields exist.
-12. Benchmark report for AkShare / Tushare / canonical output.
-13. Tushare block-level primary design.
-14. P1.1 deep validation.
-15. `fina_mainbz type=P/D/I` ratio derivation.
-16. Sidecar data availability design.
+8. Review decisions artifact implementation.
+9. Review decisions for selected high-priority candidate queue items.
+10. Review decisions artifact acceptance.
+11. Promote-rule design.
+12. Controlled fixture promotion only after promote rules are accepted.
+13. Ground truth validator script only after reviewed fixture fields exist.
+14. Benchmark report for AkShare / Tushare / canonical output.
+15. Tushare block-level primary design.
+16. P1.1 deep validation.
+17. `fina_mainbz type=P/D/I` ratio derivation.
+18. Sidecar data availability design.
 
 ## 13. Delivery Checklist For This Patch
 

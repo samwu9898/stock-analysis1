@@ -341,6 +341,13 @@ The generator remains an offline artifact candidate producer for this stage.
 The protocol is the decision layer after report generation and before any later
 promotion.
 
+The review decisions artifact design is recorded in
+`docs/FUNDAMENTAL_CANDIDATE_REVIEW_DECISIONS_ARTIFACT_DESIGN.md`. That artifact
+materializes protocol-guided review actions as
+`candidate_review_decisions.json`, but it still does not change candidate
+reports, fixtures, provider outputs, scoring, P1.1, regression expected files,
+or provider-primary behavior.
+
 ## 7. Relationship With Ground Truth Fixture
 
 The fixture receives only fields that pass a later promote process. The review
@@ -405,12 +412,14 @@ This stage explicitly does not:
 - output buy / sell advice, target prices, position sizing, portfolio weights,
   or any trading recommendation.
 
-Recommended next stage after review protocol acceptance:
+Recommended stages after review protocol and review-decision design acceptance:
 
-1. Design the `review decisions artifact`.
-2. Then design promote rules.
-3. Then consider controlled fixture promotion.
-4. Then design and implement the validator.
+1. Implement the `review decisions artifact`.
+2. Generate `600406` `candidate_review_decisions.json`.
+3. Accept the review decisions artifact.
+4. Then design promote rules.
+5. Then consider controlled fixture promotion.
+6. Then design and implement the validator.
 
 Do not directly promote candidates to the fixture from this protocol, and do
 not write a validator before reviewed fixture fields exist.
