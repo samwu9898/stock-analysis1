@@ -85,6 +85,20 @@ def build_score_confidence_explainability(
         tushare_evidence_pack=tushare_evidence_pack,
         missing=missing,
     )
+    narrative_hints = _narrative_hints(
+        code=code,
+        akshare_raw=akshare_raw,
+        tushare_raw=tushare_raw,
+        akshare_fundamental=akshare_fundamental,
+        tushare_fundamental=tushare_fundamental,
+        akshare_evidence_pack=akshare_evidence_pack,
+        tushare_evidence_pack=tushare_evidence_pack,
+        missing=missing,
+        provider_caveats=provider_caveats,
+        diff_report=diff_report,
+        akshare_score=akshare_score,
+        tushare_score=tushare_score,
+    )
     drift_subcategory = _primary_drift_subcategory(
         code=code,
         missing=missing,
@@ -129,6 +143,7 @@ def build_score_confidence_explainability(
         ),
         "provider_caveats": provider_caveats,
         "derived_hints": _derived_hints(tushare_raw, tushare_evidence_pack),
+        "narrative_hints": narrative_hints,
         "domain_evidence_policy": DOMAIN_EVIDENCE_POLICY,
         "explainability_limitations": _explainability_limitations(
             akshare_fundamental=akshare_fundamental,
@@ -506,6 +521,291 @@ def _dimension_drift_subcategory(missing: Mapping[str, list[str]], provider_cave
     return None
 
 
+def _narrative_hints(
+    *,
+    code: str,
+    akshare_raw: Mapping[str, Any],
+    tushare_raw: Mapping[str, Any],
+    akshare_fundamental: Mapping[str, Any],
+    tushare_fundamental: Mapping[str, Any],
+    akshare_evidence_pack: Mapping[str, Any],
+    tushare_evidence_pack: Mapping[str, Any],
+    missing: Mapping[str, list[str]],
+    provider_caveats: list[Mapping[str, Any]],
+    diff_report: Mapping[str, Any] | None,
+    akshare_score: Any,
+    tushare_score: Any,
+) -> list[dict[str, Any]]:
+    """Reviewer-facing notes that never feed scoring or provider mapping."""
+
+    normalized_code = _normalize_code(code)
+    strategy = _strategy_type(akshare_fundamental, tushare_fundamental, akshare_evidence_pack, tushare_evidence_pack)
+    score_drift = _has_score_drift(akshare_score=akshare_score, tushare_score=tushare_score, diff_report=diff_report)
+    business_gap = _business_explanation_gap(tushare_raw=tushare_raw, tushare_evidence_pack=tushare_evidence_pack, missing=missing)
+    hints: list[dict[str, Any]] = []
+
+    if _has_caveat_category(provider_caveats, "external_sidecar_missing"):
+        hints.append(
+            _hint(
+                code="external_sidecar_missing",
+                scope="score_confidence_drift",
+                provider="tushare",
+                related_fields=["commodity_prices"],
+                message=(
+                    "Commodity context is provider-independent sidecar evidence; a Tushare comparison artifact should mark the "
+                    "missing sidecar instead of copying AkShare commodity rows into Tushare raw data."
+                ),
+            )
+        )
+        hints.append(
+            _hint(
+                code="commodity_context_provider_independent",
+                scope="score_confidence_drift",
+                provider="comparison",
+                related_fields=["commodity_prices", "domain_evidence_policy.resource_swing"],
+                message=(
+                    "Resource-swing score and confidence drift can be reviewed against the missing commodity sidecar, but the "
+                    "hint is diagnostic only and does not accept drift or change provider priority."
+                ),
+            )
+        )
+
+    if _has_caveat_category(provider_caveats, "domain_evidence_missing"):
+        hints.append(
+            _hint(
+                code="domain_evidence_missing",
+                scope="score_confidence_drift",
+                provider="tushare",
+                related_fields=["ai_datacenter.domain_evidence"],
+                message=(
+                    "Generic Tushare financials do not by themselves prove AI datacenter liquid-cooling exposure; missing domain "
+                    "evidence should remain a reviewer-facing coverage caveat."
+                ),
+            )
+        )
+        hints.append(
+            _hint(
+                code="liquid_cooling_revenue_share_missing",
+                scope="score_confidence_drift",
+                provider="tushare",
+                related_fields=["ai_datacenter.revenue_share", "ai_datacenter.cooling_revenue_share"],
+                message=(
+                    "Liquid-cooling revenue share or cooling revenue share is required domain evidence for this narrative and "
+                    "must not be inferred from generic revenue or margin fields alone."
+                ),
+            )
+        )
+        hints.append(
+            _hint(
+                code="orders_customer_validation_batch_delivery_missing",
+                scope="score_confidence_drift",
+                provider="tushare",
+                related_fields=[
+                    "ai_datacenter.orders",
+                    "ai_datacenter.customer_validation",
+                    "ai_datacenter.batch_delivery",
+                ],
+                message=(
+                    "Orders, customer validation, and batch delivery are separate liquid-cooling evidence points; generic "
+                    "financial statements are not a substitute for those domain signals."
+                ),
+            )
+        )
+
+    if not score_drift:
+        return hints
+
+    if (normalized_code == "600406" or strategy == "stable_growth") and business_gap:
+        hints.append(
+            _hint(
+                code="business_quality_main_business_gap",
+                scope="score_drift",
+                provider="tushare",
+                related_fields=["basic_info.main_business", "business_composition.revenue_ratio"],
+                message=(
+                    "Financial metrics are available, but business_quality can still be lower when canonical main_business text "
+                    "or usable business_composition revenue_ratio evidence is missing from the Tushare comparison artifact."
+                ),
+            )
+        )
+        hints.append(
+            _hint(
+                code="business_ratio_missing",
+                scope="score_drift",
+                provider="tushare",
+                related_fields=["business_composition.revenue_ratio", "business_composition.segment_name"],
+                message=(
+                    "Segment names can help reviewers understand the business mix, but missing revenue_ratio fields limit how "
+                    "much the comparison-only artifact can explain business_quality without recalculating scores."
+                ),
+            )
+        )
+
+    if (normalized_code == "002050" or strategy == "advanced_manufacturing_growth") and business_gap:
+        hints.append(
+            _hint(
+                code="advanced_manufacturing_business_exposure_gap",
+                scope="score_drift",
+                provider="tushare",
+                related_fields=[
+                    "basic_info.main_business",
+                    "business_composition.segment_name",
+                    "business_composition.revenue_ratio",
+                ],
+                message=(
+                    "Tushare segment evidence may show refrigeration or automotive-related lines, but automotive thermal, "
+                    "refrigeration, and new business exposure still need finer business composition ratios or main_business text; "
+                    "this does not prove robotics or other new-business claims."
+                ),
+            )
+        )
+
+    if normalized_code == "002371" or "semiconductor" in strategy:
+        if business_gap:
+            hints.append(
+                _hint(
+                    code="semiconductor_business_text_or_ratio_gap",
+                    scope="score_drift",
+                    provider="tushare",
+                    related_fields=["basic_info.main_business", "business_composition.revenue_ratio"],
+                    message=(
+                        "Semiconductor equipment classification can remain stable while business_quality is harder to explain "
+                        "when main_business text, semiconductor equipment business wording, or segment ratio evidence is missing."
+                    ),
+                )
+            )
+        if _has_financial_inputs(akshare_raw, tushare_raw, akshare_evidence_pack, tushare_evidence_pack):
+            hints.append(
+                _hint(
+                    code="semiconductor_financial_inputs_available",
+                    scope="score_drift",
+                    provider="comparison",
+                    related_fields=["financial_metrics.r_and_d", "financial_metrics.inventory", "financial_metrics.capex"],
+                    message=(
+                        "R&D, inventory, and capex-style financial inputs are available for review, but they do not remove the "
+                        "separate need for semiconductor equipment business text or segment ratio support."
+                    ),
+                )
+            )
+
+    if normalized_code == "603259" or "cxo" in strategy:
+        hints.append(
+            _hint(
+                code="cxo_domain_proxy_gap",
+                scope="score_drift",
+                provider="comparison",
+                related_fields=[
+                    "cxo.backlog",
+                    "cxo.customer_exposure",
+                    "cxo.geography",
+                    "cxo.cdmo_utilization",
+                ],
+                message=(
+                    "Generic fundamentals cannot directly prove CXO backlog, customer exposure, geography, or CDMO utilization; "
+                    "small score drift should be treated as a conservative domain-proxy coverage gap, not as a data error."
+                ),
+            )
+        )
+
+    return hints
+
+
+def _hint(
+    *,
+    code: str,
+    scope: str,
+    provider: str,
+    related_fields: list[str],
+    message: str,
+) -> dict[str, Any]:
+    return {
+        "code": code,
+        "scope": scope,
+        "provider": provider,
+        "related_fields": related_fields,
+        "message": message,
+        "automatic_acceptance": False,
+        "not_for_scoring": True,
+    }
+
+
+def _strategy_type(
+    akshare_fundamental: Mapping[str, Any],
+    tushare_fundamental: Mapping[str, Any],
+    akshare_evidence_pack: Mapping[str, Any],
+    tushare_evidence_pack: Mapping[str, Any],
+) -> str:
+    return str(
+        tushare_fundamental.get("strategy_type")
+        or _get_path(tushare_evidence_pack, "stock.strategy_type")
+        or akshare_fundamental.get("strategy_type")
+        or _get_path(akshare_evidence_pack, "stock.strategy_type")
+        or ""
+    )
+
+
+def _has_score_drift(*, akshare_score: Any, tushare_score: Any, diff_report: Mapping[str, Any] | None) -> bool:
+    delta = _numeric_delta(tushare_score, akshare_score)
+    return (delta is not None and delta != 0) or _has_diff_category(diff_report, "score_drift")
+
+
+def _has_caveat_category(provider_caveats: list[Mapping[str, Any]], category: str) -> bool:
+    return any(item.get("category") == category for item in provider_caveats)
+
+
+def _business_explanation_gap(
+    *,
+    tushare_raw: Mapping[str, Any],
+    tushare_evidence_pack: Mapping[str, Any],
+    missing: Mapping[str, list[str]],
+) -> bool:
+    return _main_business_missing(tushare_raw, tushare_evidence_pack, missing) or _business_ratio_missing(
+        tushare_raw=tushare_raw,
+        tushare_evidence_pack=tushare_evidence_pack,
+        missing=missing,
+    )
+
+
+def _business_ratio_missing(
+    *,
+    tushare_raw: Mapping[str, Any],
+    tushare_evidence_pack: Mapping[str, Any],
+    missing: Mapping[str, list[str]],
+) -> bool:
+    missing_text = " ".join(missing.get("tushare", []) + missing.get("tushare_only", [])).lower()
+    if "business_composition.revenue_ratio" in missing_text or "revenue_ratio" in missing_text:
+        return True
+    rows = tushare_evidence_pack.get("business_composition")
+    if not isinstance(rows, list) or not rows:
+        rows = _get_path(tushare_raw, "blocks.business_composition")
+    if not isinstance(rows, list) or not rows:
+        return "business_composition" in missing_text
+    return not any(isinstance(row, Mapping) and _first_number(row, ("revenue_ratio", "ratio")) is not None for row in rows)
+
+
+def _has_financial_inputs(*payloads: Mapping[str, Any]) -> bool:
+    required_groups = (
+        ("rd_expense", "r_and_d", "research_development", "research_expense", "development_expense"),
+        ("inventory", "inventories"),
+        ("capex", "capital_expenditure", "construction_in_progress"),
+    )
+    keys = _normalized_keys(*payloads)
+    return all(any(term in key for key in keys for term in term_group) for term_group in required_groups)
+
+
+def _normalized_keys(*payloads: Any) -> set[str]:
+    keys: set[str] = set()
+    for payload in payloads:
+        if isinstance(payload, Mapping):
+            for key, value in payload.items():
+                keys.add(str(key).lower().replace("-", "_"))
+                keys.update(_normalized_keys(value))
+        elif isinstance(payload, list):
+            for item in payload:
+                keys.update(_normalized_keys(item))
+    return keys
+
+
 def _derived_hints(tushare_raw: Mapping[str, Any], tushare_evidence_pack: Mapping[str, Any]) -> list[dict[str, Any]]:
     segment = _largest_business_segment(tushare_evidence_pack.get("business_composition"))
     source = "tushare.evidence_pack.business_composition:selected_period"
@@ -603,4 +903,3 @@ def _get_path(payload: Mapping[str, Any], path: str) -> Any:
 def _normalize_code(code: str) -> str:
     digits = "".join(ch for ch in str(code) if ch.isdigit())
     return digits[-6:] if len(digits) >= 6 else str(code)
-

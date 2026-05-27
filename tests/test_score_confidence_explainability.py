@@ -73,6 +73,18 @@ def _pack(code="600406", *, strategy_type="stable_growth", score=70, confidence=
     }
 
 
+def _hint_codes(payload):
+    return {item["code"]: item for item in payload["narrative_hints"]}
+
+
+def _assert_narrative_hints_are_diagnostic_only(payload):
+    assert isinstance(payload["narrative_hints"], list)
+    for hint in payload["narrative_hints"]:
+        assert hint["automatic_acceptance"] is False
+        assert hint["not_for_scoring"] is True
+    assert_no_token_leaks(payload, context="score_confidence_explainability")
+
+
 def test_explainability_module_has_no_forbidden_import_boundaries():
     source = open(
         "src/fundamental_skill/data_providers/score_confidence_explainability.py",
@@ -119,6 +131,7 @@ def test_schema_flags_and_score_confidence_summary_are_diagnostic_only():
     assert payload["score_summary"]["score_delta"] == -10.0
     assert payload["confidence_summary"]["confidence_delta"] == "high_to_medium"
     assert payload["providers"]["akshare"]["artifact_refs"]["raw"] == "akshare_raw.json"
+    assert "narrative_hints" in payload
     assert_no_token_leaks(payload, context="score_confidence_explainability")
 
 
@@ -177,12 +190,157 @@ def test_missing_dimension_scores_emit_limitation_without_fake_breakdown():
     assert any("dimension_level_scores_unavailable" in item for item in payload["explainability_limitations"])
 
 
+def test_stable_growth_main_business_and_ratio_gaps_emit_business_quality_hints():
+    business_rows = [{"segment_name": "grid automation", "revenue": 100.0, "revenue_ratio": None}]
+    payload = build_score_confidence_explainability(
+        code="600406",
+        akshare_raw=_raw(code="600406"),
+        tushare_raw=_raw(code="600406", provider="tushare", main_business=None, business=business_rows),
+        akshare_fundamental=_fundamental(code="600406", strategy_type="stable_growth", score=65, confidence="high"),
+        tushare_fundamental=_fundamental(
+            code="600406",
+            strategy_type="stable_growth",
+            score=62,
+            confidence="high",
+            missing=["basic_info.main_business", "business_composition.revenue_ratio"],
+        ),
+        akshare_evidence_pack=_pack(code="600406", strategy_type="stable_growth", score=65, confidence="high"),
+        tushare_evidence_pack=_pack(
+            code="600406",
+            strategy_type="stable_growth",
+            score=62,
+            confidence="high",
+            missing=["basic_info.main_business", "business_composition.revenue_ratio"],
+            business=business_rows,
+            main_business=None,
+        ),
+        diff_report={"diff_items": [{"category": "score_drift"}]},
+    )
+
+    hints = _hint_codes(payload)
+    assert "business_quality_main_business_gap" in hints
+    assert "business_ratio_missing" in hints
+    message = hints["business_quality_main_business_gap"]["message"]
+    assert "business_quality" in message
+    assert "Financial metrics are available" in message
+    assert "main_business" in message
+    assert "revenue_ratio" in message
+    _assert_narrative_hints_are_diagnostic_only(payload)
+
+
+def test_advanced_manufacturing_exposure_gap_is_reviewer_facing_only():
+    business_rows = [
+        {"segment_name": "refrigeration parts", "revenue": 100.0, "revenue_ratio": None},
+        {"segment_name": "automotive thermal management", "revenue": 80.0, "revenue_ratio": None},
+    ]
+    payload = build_score_confidence_explainability(
+        code="002050",
+        akshare_raw=_raw(code="002050"),
+        tushare_raw=_raw(code="002050", provider="tushare", main_business=None, business=business_rows),
+        akshare_fundamental=_fundamental(code="002050", strategy_type="advanced_manufacturing_growth", score=68, confidence="high"),
+        tushare_fundamental=_fundamental(
+            code="002050",
+            strategy_type="advanced_manufacturing_growth",
+            score=64,
+            confidence="high",
+            missing=["basic_info.main_business", "business_composition.revenue_ratio"],
+        ),
+        akshare_evidence_pack=_pack(code="002050", strategy_type="advanced_manufacturing_growth", score=68, confidence="high"),
+        tushare_evidence_pack=_pack(
+            code="002050",
+            strategy_type="advanced_manufacturing_growth",
+            score=64,
+            confidence="high",
+            missing=["basic_info.main_business", "business_composition.revenue_ratio"],
+            business=business_rows,
+            main_business=None,
+        ),
+        diff_report={"diff_items": [{"category": "score_drift"}]},
+    )
+
+    hint = _hint_codes(payload)["advanced_manufacturing_business_exposure_gap"]
+    assert "automotive thermal" in hint["message"]
+    assert "refrigeration" in hint["message"]
+    assert "new business exposure" in hint["message"]
+    assert "does not prove robotics" in hint["message"]
+    _assert_narrative_hints_are_diagnostic_only(payload)
+
+
+def test_semiconductor_business_gap_and_available_financial_inputs_are_separate_hints():
+    business_rows = [{"segment_name": "semiconductor equipment", "revenue": 100.0, "revenue_ratio": None}]
+    tushare_pack = _pack(
+        code="002371",
+        strategy_type="semiconductor_cycle",
+        score=63,
+        confidence="medium",
+        missing=["basic_info.main_business", "business_composition.revenue_ratio"],
+        business=business_rows,
+        main_business=None,
+    )
+    tushare_pack["financial_metrics"] = {
+        "rd_expense": 10.0,
+        "inventory": 20.0,
+        "capex": 30.0,
+    }
+    payload = build_score_confidence_explainability(
+        code="002371",
+        akshare_raw=_raw(code="002371"),
+        tushare_raw=_raw(code="002371", provider="tushare", main_business=None, business=business_rows),
+        akshare_fundamental=_fundamental(code="002371", strategy_type="semiconductor_cycle", score=67, confidence="medium"),
+        tushare_fundamental=_fundamental(
+            code="002371",
+            strategy_type="semiconductor_cycle",
+            score=63,
+            confidence="medium",
+            missing=["basic_info.main_business", "business_composition.revenue_ratio"],
+        ),
+        akshare_evidence_pack=_pack(code="002371", strategy_type="semiconductor_cycle", score=67, confidence="medium"),
+        tushare_evidence_pack=tushare_pack,
+        diff_report={"diff_items": [{"category": "score_drift"}]},
+    )
+
+    hints = _hint_codes(payload)
+    assert "semiconductor_business_text_or_ratio_gap" in hints
+    assert "semiconductor_financial_inputs_available" in hints
+    assert "business_quality" in hints["semiconductor_business_text_or_ratio_gap"]["message"]
+    financial_message = hints["semiconductor_financial_inputs_available"]["message"]
+    assert "R&D" in financial_message
+    assert "inventory" in financial_message
+    assert "capex" in financial_message
+    assert "substitute" not in financial_message.lower()
+    _assert_narrative_hints_are_diagnostic_only(payload)
+
+
+def test_cxo_hint_is_conservative_domain_proxy_gap_only():
+    payload = build_score_confidence_explainability(
+        code="603259",
+        akshare_raw=_raw(code="603259"),
+        tushare_raw=_raw(code="603259", provider="tushare"),
+        akshare_fundamental=_fundamental(code="603259", strategy_type="life_science_cxo_services", score=50, confidence="low"),
+        tushare_fundamental=_fundamental(code="603259", strategy_type="life_science_cxo_services", score=49, confidence="low"),
+        akshare_evidence_pack=_pack(code="603259", strategy_type="life_science_cxo_services", score=50, confidence="low"),
+        tushare_evidence_pack=_pack(code="603259", strategy_type="life_science_cxo_services", score=49, confidence="low"),
+        diff_report={"diff_items": [{"category": "score_drift"}]},
+    )
+
+    hints = _hint_codes(payload)
+    assert set(hints) == {"cxo_domain_proxy_gap"}
+    message = hints["cxo_domain_proxy_gap"]["message"]
+    assert "backlog" in message
+    assert "customer exposure" in message
+    assert "geography" in message
+    assert "CDMO utilization" in message
+    assert "not as a data error" in message
+    _assert_narrative_hints_are_diagnostic_only(payload)
+
+
 def test_000426_external_sidecar_missing_is_marked_without_merging():
     commodity_rows = [{"commodity_name": "silver", "price": 1.0, "readiness_eligible": True}]
+    tushare_raw = _raw(code="000426", provider="tushare", commodities=None)
     payload = build_score_confidence_explainability(
         code="000426",
         akshare_raw=_raw(code="000426", commodities=commodity_rows),
-        tushare_raw=_raw(code="000426", provider="tushare", commodities=None),
+        tushare_raw=tushare_raw,
         akshare_fundamental=_fundamental(code="000426", strategy_type="resource_swing", score=75, confidence="medium"),
         tushare_fundamental=_fundamental(
             code="000426",
@@ -205,6 +363,12 @@ def test_000426_external_sidecar_missing_is_marked_without_merging():
     assert payload["score_summary"]["score_drift_reason"] == "external_sidecar_missing"
     assert payload["confidence_summary"]["confidence_drift_reason"] == "external_sidecar_missing"
     assert any(item["category"] == "external_sidecar_missing" for item in payload["provider_caveats"])
+    assert "commodity_prices" not in tushare_raw["blocks"]
+    hints = _hint_codes(payload)
+    assert "external_sidecar_missing" in hints
+    assert "commodity_context_provider_independent" in hints
+    assert "copying AkShare commodity rows into Tushare raw data" in hints["external_sidecar_missing"]["message"]
+    _assert_narrative_hints_are_diagnostic_only(payload)
 
 
 def test_002837_ai_datacenter_domain_evidence_missing_is_marked():
@@ -239,6 +403,13 @@ def test_002837_ai_datacenter_domain_evidence_missing_is_marked():
     assert payload["confidence_summary"]["confidence_drift_reason"] == "domain_evidence_missing"
     assert any(item["category"] == "domain_evidence_missing" for item in payload["provider_caveats"])
     assert "ai_datacenter_cooling" in payload["domain_evidence_policy"]
+    hints = _hint_codes(payload)
+    assert "domain_evidence_missing" in hints
+    assert "liquid_cooling_revenue_share_missing" in hints
+    assert "orders_customer_validation_batch_delivery_missing" in hints
+    assert "Generic Tushare financials do not by themselves prove" in hints["domain_evidence_missing"]["message"]
+    assert "generic revenue or margin fields alone" in hints["liquid_cooling_revenue_share_missing"]["message"]
+    _assert_narrative_hints_are_diagnostic_only(payload)
 
 
 def test_main_business_gap_uses_derived_hint_not_canonical_writeback():
