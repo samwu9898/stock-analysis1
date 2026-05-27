@@ -2,9 +2,9 @@
 
 Date: 2026-05-27
 
-Stage: Phase 4 Score / Confidence Explainability Narrative Hints Documentation Sync Patch.
+Stage: Phase 4 Closeout / Baseline Freeze.
 
-Status: Phase 0 design documentation completed; Phase 1 provider abstraction skeleton accepted; Phase 2 `AkShareProvider` adapter implemented and accepted; Phase 3 `TushareProvider` mocked MVP implemented and accepted; Phase 4 dual-source comparison dry-run tooling implemented and accepted; Phase 4 local real-token smoke gate documentation completed; Phase 4 real-token smoke gate safety skeleton implemented and accepted. A later third local real-token smoke review completed with `partial_pass_data_review_required`: Tushare endpoint availability and canonical mapping materially improved, while score / confidence drift required comparison-only explainability. Phase 4 score / confidence explainability design, implementation, and acceptance are now completed. Tushare is still not allowed to become primary, AkShare / Tushare data must not be automatically merged, and drift must not be automatically accepted. This documentation sync does not change code, tests, config, deterministic pipeline behavior, classifier rules, connector behavior, scoring, readiness, HTML / Dashboard behavior, generated output, or regression expectations.
+Status: Phase 0 design documentation completed; Phase 1 provider abstraction skeleton accepted; Phase 2 `AkShareProvider` adapter implemented and accepted; Phase 3 `TushareProvider` mocked MVP implemented and accepted; Phase 4 dual-source comparison dry-run tooling implemented and accepted; Phase 4 local real-token smoke gate documentation completed; Phase 4 real-token smoke gate safety skeleton implemented and accepted. A later third local real-token smoke review completed with `partial_pass_data_review_required`: Tushare endpoint availability and canonical mapping materially improved, while score / confidence drift required comparison-only explainability. Phase 4 score / confidence explainability design, implementation, acceptance, narrative hints, artifact review, and closeout baseline freeze are now completed. Tushare is usable for comparison but is still not allowed to become primary, AkShare / Tushare data must not be automatically merged, and drift must not be automatically accepted. The next recommended phase is Fundamental Ground Truth Benchmark Design, not another Phase 4 smoke. This documentation sync does not change code, tests, config, deterministic pipeline behavior, classifier rules, connector behavior, scoring, readiness, HTML / Dashboard behavior, generated output, or regression expectations.
 
 Latest Phase 2 acceptance record:
 
@@ -31,8 +31,8 @@ Latest Phase 4 dry-run implementation acceptance record:
 - Phase 4 added comparison support modules: `comparison_artifacts`, `diff_classifier`, and `token_leak_scanner`.
 - Default runner behavior is dry-run / comparison-only: it does not generate `output/provider_comparison` by default, does not write production output, does not run HTML, and does not run Research Intelligence P1.1.
 - `--include-p1` is off by default and is required before any P1.1 comparison path may run.
-- At dry-run acceptance time, `--real-token-smoke` was closed and no real token smoke was executed; the later accepted safety skeleton adds explicit `--provider-transport sdk` interlock but still has not executed real smoke.
-- Phase 4 did not connect real Tushare, read `TUSHARE_TOKEN`, read local MCP config, call MCP, call the network, switch provider primary behavior, change the default `real_stock_runner` path, change deterministic pipeline behavior, change `evidence_pack`, change Research Intelligence P1.1, change HTML / Dashboard, change classifier / scoring / readiness, generate `output/provider_comparison`, or change regression expected outputs.
+- At dry-run acceptance time, `--real-token-smoke` was closed and no real token smoke was executed; the later accepted safety skeleton added the explicit `--provider-transport sdk` interlock that was used for subsequent local-only real-token smoke reviews.
+- The default Phase 4 dry-run path did not connect real Tushare, read `TUSHARE_TOKEN`, read local MCP config, call MCP, call the network, switch provider primary behavior, change the default `real_stock_runner` path, change deterministic pipeline behavior, change `evidence_pack`, change Research Intelligence P1.1, change HTML / Dashboard, change classifier / scoring / readiness, generate `output/provider_comparison`, or change regression expected outputs.
 - Latest recorded verification after Phase 4 acceptance: targeted tests `36 passed`; full `pytest` `566 passed`; regression suite `passed=47 failed=0 total=47`.
 
 Latest Phase 4 real-token smoke gate safety skeleton acceptance record:
@@ -43,7 +43,7 @@ Latest Phase 4 real-token smoke gate safety skeleton acceptance record:
 - `token_leak_scanner` now covers exact token references, realistic 32+ token-like strings, keyword proximity, dict keys / values, and URL query parameters; findings expose only location plus `<masked>`.
 - `diff_classifier` now includes `strategy_type_drift`, which requires human review and is not automatically accepted.
 - Gate capability includes repo / staged diff / docs / tests / source scans, `output/reports` and default-output path + SHA-256 baselines, payload and diff-report scans before write, and cleanup limited to `output/provider_comparison/<timestamp>`.
-- No real smoke was executed; no real `TUSHARE_TOKEN` was read; no network or MCP access occurred; no `output/provider_comparison` artifacts were generated; default output and `output/reports` were unchanged; there was no primary switch, automatic merge, or automatic drift acceptance.
+- At safety-skeleton acceptance time, no real smoke was executed, no real `TUSHARE_TOKEN` was read, no network or MCP access occurred, no `output/provider_comparison` artifacts were generated, default output and `output/reports` were unchanged, and there was no primary switch, automatic merge, or automatic drift acceptance. Later local-only real-token smoke reviews were separate controlled review events.
 - Latest recorded verification after safety skeleton acceptance: targeted tests `42 passed, 1 skipped`; full `pytest` `589 passed, 1 skipped`; regression suite `passed=47 failed=0 total=47`.
 
 Latest Phase 4 third real-token smoke review record:
@@ -77,6 +77,24 @@ Latest Phase 4 score / confidence explainability implementation acceptance recor
   `27 passed`; full `pytest` `648 passed, 1 skipped`; regression suite
   `passed=47 failed=0 total=47`.
 
+Latest Phase 4 closeout / baseline freeze record:
+
+- Phase 4 is complete and frozen as comparison-only tooling.
+- The narrative-hints explainability artifacts were regenerated from the third
+  smoke artifact root and passed artifact review.
+- Tushare is usable for comparison, but it remains blocked from primary-provider
+  status.
+- AkShare / Tushare data must not be automatically merged.
+- Score, confidence, classification, and P1 drift must not be automatically
+  accepted.
+- No default output, `output/reports`, raw / fundamental / evidence-pack
+  artifacts, `diff_report`, regression expected files, scoring, readiness,
+  classifier, P1.1, HTML, or Dashboard behavior changed during closeout.
+- Latest recorded verification remains targeted tests `27 passed`, full
+  `pytest` `648 passed, 1 skipped`, and regression suite
+  `passed=47 failed=0 total=47`.
+- Next recommended phase: Fundamental Ground Truth Benchmark Design.
+
 ## 1. Background And Goals
 
 The current real-data path depends primarily on AkShare. AkShare remains useful as a public-data aggregation source, but the project has observed instability in several endpoints and fetch traces. The user has purchased paid Tushare data access and wants Tushare to become the future primary provider for fundamental and low-frequency market data.
@@ -99,9 +117,10 @@ Original Phase 0 / early-phase non-goals:
 - No technical-analysis provider.
 - No changes to P1.1 frozen baseline.
 
-The later accepted Phase 4 safety skeleton adds guarded token-read and SDK
-transport preparation for a future local-only smoke, but it still has not read
-a real token or executed a real Tushare call.
+The later accepted Phase 4 safety skeleton added guarded token-read and SDK
+transport preparation for local-only smoke review. Subsequent controlled
+local-only real-token smoke reviews occurred through that gated path and are
+recorded separately from the default dry-run behavior.
 
 ## 2. Current Data Flow Summary
 
@@ -491,7 +510,7 @@ Accepted default behavior:
 - Default invocation does not run HTML.
 - Default invocation does not run Research Intelligence P1.1.
 - `--include-p1` is off by default.
-- `--real-token-smoke` is guarded by explicit `--provider-transport sdk`, no-token fail-closed behavior, and safety gate checks; no real smoke has been executed.
+- `--real-token-smoke` is guarded by explicit `--provider-transport sdk`, no-token fail-closed behavior, and safety gate checks; default comparison invocations still do not execute real smoke.
 
 Accepted artifact boundary:
 
@@ -514,21 +533,21 @@ Accepted token-leak scanner behavior:
 - Detects `token=`, `api_key=`, `Bearer`, MCP URL / `mcp?token=`, and high-entropy token-like values.
 - Scanner output displays only `<masked>` for detected secret-like values.
 
-Accepted Phase 4 guardrails:
+Accepted default-path Phase 4 guardrails:
 
-- No real token.
-- No real Tushare.
-- No MCP.
-- No network.
+- No real token in default comparison.
+- No real Tushare call in default comparison.
+- No MCP in default comparison.
+- No network in default comparison.
 - No primary switch.
 - No default output overwrite.
 - No regression expected changes.
 
-Phase 4 remains dry-run / comparison-only after acceptance. A later real-token smoke is a separate local-only acceptance step and must not be executed directly as part of this documentation sync.
+The default Phase 4 comparison path remains dry-run / comparison-only after acceptance. Later local-only real-token smoke reviews were separate controlled review events and must not be repeated as part of documentation sync.
 
 ### Phase 4 Real-Token Smoke Gate Safety Skeleton Status
 
-Phase 4 local real-token smoke gate safety skeleton has been implemented and accepted, but no real smoke has been executed.
+Phase 4 local real-token smoke gate safety skeleton has been implemented and accepted as a gate mechanism. At safety-skeleton acceptance time, no real smoke had been executed; later local-only smoke reviews were separate controlled events.
 
 Accepted modules and changes:
 
@@ -547,13 +566,13 @@ Accepted gate capabilities:
 - Cleanup is limited to the strict timestamp directory under `output/provider_comparison`.
 - Real smoke output path is restricted to `output/provider_comparison/<YYYYMMDDTHHMMSS>/<6-digit-code>/` with allowlisted artifact names.
 
-Accepted safety boundaries:
+Accepted safety-skeleton boundaries at that acceptance point:
 
-- No real smoke executed.
-- No real token read.
-- No network.
-- No MCP connection or local MCP config read.
-- No `output/provider_comparison` runtime artifact generated.
+- No real smoke executed during safety-skeleton acceptance.
+- No real token read during safety-skeleton acceptance.
+- No network during safety-skeleton acceptance.
+- No MCP connection or local MCP config read during safety-skeleton acceptance.
+- No `output/provider_comparison` runtime artifact generated during safety-skeleton acceptance.
 - No default output or `output/reports` modification.
 - No primary switch.
 - No automatic AkShare / Tushare merge.
@@ -675,7 +694,7 @@ Accepted safety boundaries:
 - no token read
 - no network
 - no MCP connection or local MCP config read
-- no real smoke execution
+- no real smoke execution in the explainability or default comparison path
 - no scoring, readiness, classifier, P1.1, HTML, Dashboard, pipeline, or
   regression-expected change
 - no primary switch
@@ -963,7 +982,7 @@ Phase 4: dual-source comparison dry-run tooling. Implemented and accepted.
 - Kept no automatic merge and no primary-provider switch.
 - Default behavior does not generate `output/provider_comparison`, does not write production output, does not run HTML, and does not run Research Intelligence P1.1.
 - `--include-p1` remains off by default.
-- `--real-token-smoke` is guarded by explicit `--provider-transport sdk`, no-token fail-closed behavior, and safety gate checks; no real smoke has been executed.
+- `--real-token-smoke` is guarded by explicit `--provider-transport sdk`, no-token fail-closed behavior, and safety gate checks; default comparison invocations still do not execute real smoke.
 - Allowed artifact boundary is only `output/provider_comparison/<timestamp>/<code>/`.
 - Forbidden writes remain `output/raw_<code>.json`, `output/fundamental_<code>.json`, `output/evidence_pack_<code>.json`, and `output/reports`.
 - Diff classifier requires review for classification, confidence, score, and P1.1 drift; token / secret risk is a blocker.
@@ -976,10 +995,10 @@ Phase 4: local real-token smoke gate safety skeleton. Implemented and accepted.
 - Added `tushare_sdk_transport.py`.
 - Strengthened CLI interlock, token leak scanner, and diff classifier.
 - Kept the implementation local-only and safety-gated.
-- Did not execute real smoke.
-- Did not read a real token.
-- Did not use network or MCP.
-- Did not generate `output/provider_comparison`.
+- Did not execute real smoke during safety-skeleton acceptance.
+- Did not read a real token during safety-skeleton acceptance.
+- Did not use network or MCP during safety-skeleton acceptance.
+- Did not generate `output/provider_comparison` during safety-skeleton acceptance.
 - Did not change default output, `output/reports`, regression expected files, or the default production chain.
 - Latest recorded verification: targeted tests `42 passed, 1 skipped`; full `pytest` `589 passed, 1 skipped`; regression suite `passed=47 failed=0 total=47`.
 
@@ -1103,7 +1122,7 @@ Completed Phase 1 / Phase 2 / Phase 3 / Phase 4 scope:
 - Diff classifier.
 - Token leak scanner.
 - Real-token smoke gate safety helper.
-- SDK transport skeleton for a later local-only smoke.
+- SDK transport skeleton for controlled local-only smoke review.
 - Provider-separated dry-run comparison tests.
 - Third local real-token smoke data review with `partial_pass_data_review_required`.
 - Score / confidence explainability design.
@@ -1111,7 +1130,7 @@ Completed Phase 1 / Phase 2 / Phase 3 / Phase 4 scope:
 - Score / confidence explainability narrative hints implementation and
   acceptance.
 
-Accepted Phase 3 / Phase 4 dry-run, safety-skeleton, and explainability work did not:
+Accepted Phase 3 plus Phase 4 default dry-run, safety-skeleton acceptance, and explainability work did not:
 
 - call real Tushare
 - require a real token

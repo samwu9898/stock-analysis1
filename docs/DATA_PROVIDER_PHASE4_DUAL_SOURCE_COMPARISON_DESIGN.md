@@ -2,7 +2,7 @@
 
 Date: 2026-05-27
 
-Status: Phase 4 dual-source comparison dry-run implementation accepted; Phase 4 real-token smoke gate safety skeleton implemented and accepted; Phase 4 score / confidence explainability implementation and narrative hints patch accepted; documentation sync patch only.
+Status: Phase 4 dual-source comparison dry-run implementation accepted; Phase 4 real-token smoke gate safety skeleton implemented and accepted; Phase 4 score / confidence explainability implementation and narrative hints patch accepted; Phase 4 closeout / baseline freeze completed.
 
 This document records the accepted Phase 4 implementation boundary for
 dual-source comparison dry-run tooling and local real-token acceptance planning
@@ -12,7 +12,7 @@ the Phase 4 real-token smoke gate safety skeleton, the comparison-only
 score / confidence explainability implementation, and the reviewer-facing
 narrative hints patch were accepted.
 
-This patch does not change code, tests, config, pipeline, classifier,
+This closeout patch does not change code, tests, config, pipeline, classifier,
 connector, scoring / readiness, HTML / Dashboard, runtime output, or regression
 expected files.
 
@@ -45,11 +45,12 @@ Phase 4 is:
 - dual-source comparison dry-run tooling
 - local real-token acceptance planning
 - local real-token smoke gate safety skeleton
+- controlled local-only real-token smoke review records
 - provider-separated artifact design
 - drift report design
 - token safety / local-only procedure design
 
-Phase 4 is not:
+The default Phase 4 comparison path is not:
 
 - default switch to Tushare primary
 - production path change
@@ -72,7 +73,11 @@ generate `output/provider_comparison`, does not write production output, does
 not run HTML, and does not run Research Intelligence P1.1. `--include-p1` is
 off by default. The accepted real-token smoke gate safety skeleton requires
 explicit `--real-token-smoke --provider-transport sdk`, rejects `--token`,
-fails closed without a token, and has not executed a real smoke.
+and fails closed without a token in default / no-token contexts. Later
+local-only real-token smoke reviews were executed through this gated path,
+including the third-smoke artifact timestamp `20260526T233804` under
+`output/provider_comparison/`; no further real-token smoke is
+recommended unless provider mapping or sidecar execution changes require it.
 
 Phase roadmap snapshot:
 
@@ -84,8 +89,11 @@ Phase roadmap snapshot:
 - Phase 4 real-token smoke gate safety skeleton accepted.
 - Phase 4 score / confidence explainability accepted.
 - Phase 4 score / confidence explainability narrative hints accepted.
-- Next: explainability artifact review, later `fina_mainbz` ratio-derivation
-  evaluation, or separate sidecar policy design.
+- Phase 4 narrative-hints explainability artifact review accepted.
+- Phase 4 closeout / baseline freeze completed.
+- Next: Fundamental Ground Truth Benchmark Design, then later Tushare
+  block-level primary design, P1.1 deep validation, `fina_mainbz` ratio
+  derivation evaluation, and sidecar data availability design.
 
 ## 2. Dual-Source Comparison Dry-Run Design
 
@@ -292,7 +300,8 @@ Phase 4 dry-run acceptance passed under these boundaries:
 - P1.1 question drift is manually audited
 - there is no automatic primary-provider switch
 - `--include-p1` is off by default
-- real-token smoke remains local-only, explicitly gated, and not executed
+- real-token smoke remains local-only, explicitly gated, and not executed by
+  default
 - regression expected files are unchanged
 
 Tushare does not need to win every field. A useful Phase 4 result may be a
@@ -447,13 +456,15 @@ review finding, not as an automatic migration success.
 
 Recommended external-audit stance:
 
-- Phase 4 design and dry-run implementation have been accepted without requiring real-token external audit because they remained comparison-only.
+- Phase 4 design and dry-run implementation have been accepted without requiring real-token external audit because the default path remained comparison-only.
 - Phase 4 real-token smoke gate safety skeleton has been implemented and
-  accepted without executing real smoke.
+  accepted as a gate mechanism; later local-only real-token smoke reviews were
+  separate controlled review events.
 - Phase 4 score / confidence explainability has been implemented and accepted
   without real-token smoke, token reading, network, or MCP.
-- Local real-token smoke execution should have Claude review or strict human
-  audit before execution.
+- Any future local real-token smoke execution should have Claude review or
+  strict human audit before execution and should occur only when provider
+  mapping or sidecar execution changes require it.
 - Primary-provider switch must have external audit before acceptance.
 
 ## 14. Next Recommendation
@@ -472,12 +483,13 @@ isolated dry-run plus real-token smoke gate safety plus explainability baseline:
 - score / confidence explainability helper
 - explicit `--explainability`
 
-Next gate: explainability artifact review, later `fina_mainbz` `type=P/D/I`
-ratio derivation evaluation, or separate sidecar policy design.
+Next gate: Fundamental Ground Truth Benchmark Design. Later gates may evaluate
+Tushare block-level primary design, P1.1 deep validation, `fina_mainbz`
+`type=P/D/I` ratio derivation, and sidecar data availability design.
 
 Do not directly execute another real-token smoke unless later provider mapping
 or sidecar execution changes require it. Real tokens may be used only in a
-later local-only execution acceptance step through local `TUSHARE_TOKEN` or
+future local-only execution acceptance step through local `TUSHARE_TOKEN` or
 local MCP config; they must never enter prompts, code, docs, tests, logs,
 output, commits, or review comments.
 
@@ -489,6 +501,6 @@ Do not change:
 - HTML / Dashboard / P1.1 default chain
 
 The user does not need to provide a token now. A token is needed only for a
-later local-only real-token smoke that is justified by provider mapping or
+future local-only real-token smoke that is justified by provider mapping or
 sidecar execution changes, and then only through local `TUSHARE_TOKEN` or local
 MCP config, never through prompts or repository files.

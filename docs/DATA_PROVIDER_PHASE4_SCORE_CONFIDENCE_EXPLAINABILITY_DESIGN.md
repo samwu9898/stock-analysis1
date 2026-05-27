@@ -2,8 +2,9 @@
 
 Date: 2026-05-27
 
-Status: comparison-only score / confidence explainability implementation and
-narrative hints patch completed and accepted; this patch is documentation
+Status: comparison-only score / confidence explainability implementation,
+narrative hints patch, narrative-hints artifact review, and Phase 4 closeout
+baseline freeze completed and accepted; this patch is documentation
 synchronization only.
 
 This document consolidates the Gemini / DeepSeek / Kimi external audit feedback
@@ -68,9 +69,12 @@ Current decision:
   accepted as comparison-only tooling.
 - Narrative hints have been completed and accepted as reviewer-facing
   explanation only.
-- The remaining migration issue is review of the explainability artifact and
-  any later provider-mapping / sidecar policy decisions, not provider
-  reachability.
+- The narrative-hints explainability artifacts have been regenerated from the
+  third smoke artifact root and reviewed successfully.
+- Phase 4 is frozen as a comparison-only baseline. The next recommended phase
+  is Fundamental Ground Truth Benchmark Design, not more Phase 4 smoke.
+- Later provider-mapping / sidecar policy decisions remain separate designs,
+  not provider reachability issues.
 - Tushare must not become primary yet.
 - AkShare and Tushare data must not be automatically merged.
 - Drift must not be automatically accepted.
@@ -146,7 +150,7 @@ The accepted explainability implementation is limited to:
 - no token read
 - no network
 - no Tushare call
-- no real smoke execution
+- no real smoke execution in the explainability or default comparison path
 - no default output writes
 - no current `evidence_pack` mutation
 - no Research Intelligence P1.1 change
@@ -617,8 +621,8 @@ above.
 
 ## 16. Whether Another Real Smoke Is Needed
 
-No new real-token smoke is needed for this documentation sync or explainability
-artifact review.
+No new real-token smoke is needed for this documentation sync, explainability
+artifact review, or Phase 4 closeout baseline freeze.
 
 Rationale:
 
