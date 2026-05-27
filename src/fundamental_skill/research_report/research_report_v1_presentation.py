@@ -98,6 +98,31 @@ _FORBIDDEN_MARKDOWN_TERMS = (
 
 _GENERIC_PROFILE_ID = "generic_fundamental_report"
 
+_TECHNICAL_APPENDIX_HEADING = "## 技术附注"
+
+_PM_BODY_FORBIDDEN_TERMS = (
+    "Presentation Profile",
+    "profile_id",
+    "advanced_manufacturing_thermal_management",
+    "semiconductor_equipment_cycle",
+    "stable_growth_grid_equipment",
+    "generic_fundamental_report",
+    "artifact",
+    "schema",
+    "candidate_review",
+    "raw field",
+    "按 profile 排序展示",
+    "当前适用",
+)
+
+_PM_BODY_FORBIDDEN_PATTERNS = (
+    re.compile(r"\bprofile\b", flags=re.IGNORECASE),
+    re.compile(r"适用.*展示框架"),
+    re.compile(r"business_composition(?:\.\*|\[[0-9]+\])?(?:\.[A-Za-z0-9_*]+)?"),
+    re.compile(r"valuation_metrics(?:\.\*|\.[A-Za-z0-9_*]+)?"),
+    re.compile(r"basic_info(?:\.\*|\.[A-Za-z0-9_*]+)?"),
+)
+
 
 @dataclass(frozen=True)
 class ResearchReportPresentationProfile:
@@ -165,11 +190,11 @@ PRESENTATION_PROFILE_REGISTRY: dict[str, ResearchReportPresentationProfile] = {
             "估值数据日期和业务构成口径变化",
         ),
         unsupported_claims=(
-            "不能把电网投资直接写成公司订单或收入兑现。",
-            "不能把国网 / 南网招标节奏直接写成公司确定性增长。",
-            "不能把合同负债直接写成 backlog。",
-            "不能把单期经营现金流改善写成长周期现金流稳定。",
-            "不能把主营构成衍生提示写成官方主营业务事实。",
+            "如果电网投资无法传导到公司订单或收入确认，则会削弱兑现判断。",
+            "如果国网 / 南网招标节奏缺少公司级中标证据，则会削弱需求路径判断。",
+            "如果合同负债缺少交付和收入确认配合，则只能作为订单可见度线索。",
+            "如果单期经营现金流改善缺少连续性，则现金流稳定判断需要保持克制。",
+            "如果主营构成只来自衍生提示，则官方业务事实仍需补充来源。",
         ),
         evidence_gap_focus=(
             "招标、订单、收入、毛利率、现金流之间的公司级传导证据",
@@ -225,12 +250,12 @@ PRESENTATION_PROFILE_REGISTRY: dict[str, ResearchReportPresentationProfile] = {
             "半导体周期、产线扩张和客户扩产节奏",
         ),
         unsupported_claims=(
-            "不能把国产替代叙事直接写成收入兑现。",
-            "不能把研发投入直接写成技术壁垒。",
-            "不能把库存变化直接写成需求强弱。",
-            "不能把 capex 直接写成订单。",
-            "不能把客户验证、导入或认证直接写成批量收入。",
-            "不能把合同负债直接写成 backlog。",
+            "如果国产替代缺少客户验证和收入确认证据，则只能保留为研究假设。",
+            "如果研发投入缺少产品进展和商业化收入证据，则技术壁垒判断需要保持克制。",
+            "如果库存变化缺少订单和收入确认配合，则需求强弱判断需要降级。",
+            "如果 capex 缺少公司订单证据，则只能作为产业周期线索。",
+            "如果客户验证、导入或认证缺少批量收入证据，则商业化判断需要保留弹性。",
+            "如果合同负债缺少交付和收入确认配合，则只能作为订单可见度线索。",
         ),
         evidence_gap_focus=(
             "设备订单、交付、验收、收入确认和回款之间的公司级证据",
@@ -286,12 +311,12 @@ PRESENTATION_PROFILE_REGISTRY: dict[str, ResearchReportPresentationProfile] = {
             "机器人 / 新业务订单、客户、量产、交付和收入确认",
         ),
         unsupported_claims=(
-            "不能把机器人概念直接写成已兑现收入。",
-            "不能把新业务叙事直接写成利润增长。",
-            "不能把客户传闻写成已确认事实。",
-            "不能把行业空间直接写成公司确定性。",
-            "不能把定点、认证或客户导入直接写成批量收入。",
-            "不能把制冷控制和汽车热管理数据代理为机器人业务兑现。",
+            "如果机器人概念缺少收入确认和回款证据，则只能保留为可选项。",
+            "如果新业务叙事缺少收入占比和利润贡献证据，则利润增长判断需要保持克制。",
+            "如果客户线索缺少公司披露或可复核来源，则尚不足以作为已确认事实。",
+            "如果行业空间缺少公司订单、收入和份额证据，则尚不足以上升为公司确定性。",
+            "如果定点、认证或客户导入缺少批量收入证据，则商业化判断需要保留弹性。",
+            "如果制冷控制和汽车热管理数据缺少机器人业务口径，则尚不足以代理机器人业务兑现。",
         ),
         evidence_gap_focus=(
             "新能源车热管理收入、订单、客户、毛利率和回款证据",
@@ -321,7 +346,7 @@ PRESENTATION_PROFILE_REGISTRY: dict[str, ResearchReportPresentationProfile] = {
             ("cashflow_and_receivable_risk", "现金流与应收风险"),
         ),
         industry_transmission_paths=(
-            "当前无法可靠选择行业 profile，因此只保留通用基本面阅读框架。",
+            "当前无法可靠选择行业归类，因此只保留通用基本面阅读框架。",
             "报告优先检查财务质量、估值口径、主营构成、数据质量、风险和证据缺口。",
         ),
         follow_up_variables=(
@@ -332,7 +357,7 @@ PRESENTATION_PROFILE_REGISTRY: dict[str, ResearchReportPresentationProfile] = {
             "需要人工复核的证据缺口",
         ),
         unsupported_claims=(
-            "无法可靠识别 profile 时，不写行业专属强判断。",
+            "无法可靠识别行业主线时，不写行业专属强判断。",
             "不把主题词、新闻词或关键词命中写成行业框架。",
             "不为了显得具体而套用错误行业语言。",
         ),
@@ -432,47 +457,42 @@ def render_research_report_v1_markdown(report: dict[str, Any]) -> str:
         "## 重要声明",
         "- 本报告仅用于基本面研究，不构成交易建议。",
         "- 本报告不提供价格预测、配置比例或技术面信号。",
-        "- 所有判断都必须服从 evidence label、数据质量说明和证据缺口。",
-        "",
-        "## Presentation Profile",
-        f"- presentation_profile_id: `{profile_selection['presentation_profile_id']}`",
-        f"- presentation_profile_selected_by: `{profile_selection['presentation_profile_selected_by']}`",
-        f"- fallback_reason: `{profile_selection.get('fallback_reason') or 'none'}`",
-        f"- profile_selection_warning: `{profile_selection.get('profile_selection_warning') or 'none'}`",
+        "- 所有判断都必须服从证据标注、数据质量说明和证据缺口。",
         "",
         "## 一句话结论",
         _one_sentence_conclusion(company_name, profile, profile_selection),
         "",
         "## 投研速读",
-        f"- 展示框架：{profile.display_name}。",
-        f"- 行业关键词：{_join(profile.keywords)}。",
-        f"- 机会排序：{_join(_path_titles(profile.opportunity_paths))}。",
-        f"- 风险排序：{_join(_path_titles(profile.risk_paths))}。",
-        "- 当前报告只把行业逻辑写成研究框架和后续验证路径，不写成公司已经兑现的事实。",
+    ]
+    lines.extend(_render_quick_read(profile))
+    lines.extend([
         "",
         "## 研究员判断",
         _research_judgement(company_name, profile),
         "",
         "## 数据质量说明",
-    ]
+    ])
     lines.extend(_render_data_quality(quality))
     lines.extend(["", "## 宏观与行业逻辑"])
     lines.extend(f"- {item}" for item in profile.industry_transmission_paths)
     lines.extend(["", "## 公司基本面"])
     lines.extend(_render_company_fundamentals(metrics, quality))
     lines.extend(["", "## 机会分析"])
-    lines.extend(_render_profile_paths(profile.opportunity_paths, report.get("opportunity_analysis")))
+    lines.extend(_render_profile_paths(profile.opportunity_paths, report.get("opportunity_analysis"), profile=profile, section="opportunity"))
     lines.extend(["", "## 风险分析"])
-    lines.extend(_render_profile_paths(profile.risk_paths, report.get("risk_analysis")))
+    lines.extend(_render_profile_paths(profile.risk_paths, report.get("risk_analysis"), profile=profile, section="risk"))
     lines.extend(["", "## 证据缺口"])
     lines.extend(_render_evidence_gaps(report, profile))
     lines.extend(["", "## 反证条件"])
     lines.extend(_render_rebuttal_conditions(report, profile))
     lines.extend(["", "## 后续跟踪清单"])
     lines.extend(f"- [ ] {item}" for item in profile.follow_up_variables)
+    lines.extend(["", _TECHNICAL_APPENDIX_HEADING])
+    lines.extend(_render_technical_appendix(profile_selection))
 
     markdown = "\n".join(lines).rstrip() + "\n"
     _assert_no_nonselected_profile_terms(markdown, profile.profile_id)
+    _assert_professional_analyst_voice(markdown)
     _assert_no_forbidden_markdown_terms(markdown)
     _assert_no_secret_like_payload(markdown)
     return markdown
@@ -511,13 +531,28 @@ def _one_sentence_conclusion(
 ) -> str:
     if profile.profile_id == _GENERIC_PROFILE_ID:
         return (
-            f"{company_name} 当前无法可靠选择行业展示 profile，报告应先保留为通用基本面框架，"
+            f"{company_name} 当前无法可靠选择行业归类，报告应先保留为通用基本面框架，"
             "重点检查财务质量、估值、主营构成、数据质量、风险和证据缺口。"
         )
+    if profile.profile_id == "advanced_manufacturing_thermal_management":
+        return (
+            f"{company_name}更适合作为制冷控制基本盘叠加新能源车热管理和新业务可选项的先进制造样本跟踪，"
+            "财务候选数据可支撑基础研究，但新业务收入占比、客户结构和主营构成仍需要更多证据确认。"
+        )
+    if profile.profile_id == "stable_growth_grid_equipment":
+        return (
+            f"{company_name}目前更适合作为电网投资与数字电网景气的稳健兑现型样本跟踪，"
+            "财务候选数据可支撑基础研究，但招标、订单、收入确认、毛利率和回款之间的传导仍需要更多证据确认。"
+        )
+    if profile.profile_id == "semiconductor_equipment_cycle":
+        return (
+            f"{company_name}更适合作为半导体设备国产替代和晶圆厂资本开支周期的核心跟踪样本，"
+            "财务候选数据可支撑基础研究，但订单、客户验证、存货与收入确认之间的传导仍需要进一步证据。"
+        )
     warning = selection.get("profile_selection_warning")
-    warning_text = "；profile selection 存在冲突，已使用 fallback" if warning else ""
+    warning_text = "；当前行业归类存在冲突，已降级为通用阅读" if warning else ""
     return (
-        f"{company_name} 当前适用 `{profile.profile_id}` 展示框架，报告应围绕"
+        f"{company_name}当前可围绕"
         f"{_join(profile.keywords[:4])}组织研究语言，但所有机会都必须继续通过公司级证据验证{warning_text}。"
     )
 
@@ -525,13 +560,61 @@ def _one_sentence_conclusion(
 def _research_judgement(company_name: str, profile: ResearchReportPresentationProfile) -> str:
     if profile.profile_id == _GENERIC_PROFILE_ID:
         return (
-            f"{company_name} 的行业展示框架暂不强行归类；当前判断只适合形成财务质量、估值口径、"
+            f"{company_name}暂不强行归入单一行业主线；当前判断只适合形成财务质量、估值口径、"
             "主营构成和数据缺口清单。"
         )
+    if profile.profile_id == "advanced_manufacturing_thermal_management":
+        return (
+            f"{company_name}的阅读重点应拆分为制冷控制基本盘、汽车热管理成长路径和机器人 / 新业务可选项："
+            "财务候选数据可以描述基础状态，但客户结构、产品结构和新业务收入占比仍需由主营构成、"
+            "订单、客户或经营披露继续验证。"
+        )
+    if profile.profile_id == "stable_growth_grid_equipment":
+        return (
+            f"{company_name}的核心问题不是电网投资景气本身，而是景气如何传导到公司订单、收入确认、"
+            "毛利率和现金流；当前报告应把电网需求作为验证路径，而不是直接写成公司兑现。"
+        )
+    if profile.profile_id == "semiconductor_equipment_cycle":
+        return (
+            f"{company_name}的核心问题是国产替代、晶圆厂资本开支和设备导入能否转化为订单、交付、验收、"
+            "收入确认与回款；研发投入和存货变化需要和客户验证、产品进展一起阅读。"
+        )
     return (
-        f"{company_name} 可以按“{profile.display_name}”展示框架阅读，但 profile 只决定表达顺序和行业语言，"
-        "不改变 evidence label，不把候选字段写成已确认事实，也不把行业叙事写成公司兑现。"
+        f"{company_name}可以按“{profile.display_name}”研究主线阅读，但行业语言只决定表达顺序，"
+        "不改变证据标注，不把候选字段写成已确认事实，也不把行业叙事写成公司兑现。"
     )
+
+
+def _render_quick_read(profile: ResearchReportPresentationProfile) -> list[str]:
+    if profile.profile_id == "advanced_manufacturing_thermal_management":
+        return [
+            "- 研究主线：制冷控制基本盘提供稳定性观察，新能源车热管理和机器人 / 新业务提供待验证的成长选项。",
+            "- 机会排序：新能源车热管理、制冷控制基本盘、客户和产品结构升级、新业务可选项、毛利率和经营质量候选支撑。",
+            "- 风险排序：汽车需求波动、客户集中度、新业务兑现不足、毛利率压力、存货 / 应收 / capex 扩张风险、新业务收入占比证据不足。",
+            "- 证据边界：候选财务和估值字段只支持基础研究观察，客户结构、产品结构和新业务收入占比仍需复核。",
+            "- 阅读方式：行业空间和客户线索只能作为验证路径，不能直接写成公司收入或利润兑现。",
+        ]
+    if profile.profile_id == "stable_growth_grid_equipment":
+        return [
+            "- 研究主线：电网投资、国网 / 南网招标、特高压 / 配网和数字电网决定需求入口，公司层面仍需订单、收入、毛利率和现金流验证。",
+            "- 机会排序：电网投资与招标、数字电网 / 调度 / 信息通信、特高压 / 配网、电力自动化 / 继电保护、经营质量候选支撑。",
+            "- 风险排序：应收账款与经营现金流、招标和订单节奏、毛利率压力、合同负债可见度、主营构成口径、估值日期。",
+            "- 证据边界：行业景气只能作为需求路径，不能直接替代公司订单、收入或现金流兑现。",
+        ]
+    if profile.profile_id == "semiconductor_equipment_cycle":
+        return [
+            "- 研究主线：半导体设备国产替代和晶圆厂资本开支决定需求入口，公司层面仍需订单、交付、验收、收入确认和回款验证。",
+            "- 机会排序：国内晶圆厂 capex、国产替代和设备导入、研发投入转化、订单 / 存货 / 合同负债验证、产品结构和毛利率改善。",
+            "- 风险排序：半导体周期下行、订单兑现不足、存货和收入错配、研发投入转化不足、毛利率压力、客户验证不足、capex 节奏放缓。",
+            "- 证据边界：capex、国产替代和研发投入只能构成研究假设，不能直接写成公司收入兑现或技术壁垒。",
+        ]
+    return [
+        f"- 研究主线：{profile.display_name}。",
+        f"- 行业关键词：{_join(profile.keywords)}。",
+        f"- 机会排序：{_join(_path_titles(profile.opportunity_paths))}。",
+        f"- 风险排序：{_join(_path_titles(profile.risk_paths))}。",
+        "- 当前报告只把行业逻辑写成研究框架和后续验证路径，不写成公司已经兑现的事实。",
+    ]
 
 
 def _render_data_quality(quality: dict[str, Any]) -> list[str]:
@@ -552,7 +635,7 @@ def _render_data_quality(quality: dict[str, Any]) -> list[str]:
             f"收入占比覆盖={_coverage_text(business.get('revenue_ratio_coverage'))}。"
         ),
         f"- 主营业务官方来源：{_status_text(main_business.get('status'))}。",
-        "- 数据质量 caveat 必须保留；profile 不能隐藏复核缺口，也不能把候选字段升级为已确认事实。",
+        "- 结论强度：上述数据缺口必须保留在阅读判断中，候选字段不能升级为已确认事实。",
     ]
 
 
@@ -584,17 +667,200 @@ def _render_company_fundamentals(metrics: dict[str, dict[str, Any]], quality: di
     return lines
 
 
-def _render_profile_paths(paths: tuple[tuple[str, str], ...], source_items: Any) -> list[str]:
+def _render_profile_paths(
+    paths: tuple[tuple[str, str], ...],
+    source_items: Any,
+    *,
+    profile: ResearchReportPresentationProfile,
+    section: str,
+) -> list[str]:
     by_title = _items_by_title(source_items)
     lines = []
     for index, (path_id, title) in enumerate(paths, start=1):
         evidence = _evidence_text(by_title.get(path_id, {}).get("evidence_label"))
-        lines.append(f"{index}. **{title}**：按 profile 排序展示；证据等级：{evidence}。")
+        line = _profile_specific_path_line(
+            profile_id=profile.profile_id,
+            section=section,
+            path_id=path_id,
+            title=title,
+            evidence=evidence,
+        )
+        lines.append(f"{index}. {line}")
     return lines
 
 
+def _profile_specific_path_line(*, profile_id: str, section: str, path_id: str, title: str, evidence: str) -> str:
+    if profile_id == "advanced_manufacturing_thermal_management" and section == "opportunity":
+        thermal_opportunities = {
+            "nev_thermal_management": (
+                "**新能源车热管理**：这是三花智控的重要成长路径；当前证据状态为{evidence}，"
+                "只能作为研究假设和跟踪主线；还需要收入、订单、客户、毛利率和回款证据验证。"
+            ),
+            "refrigeration_control_base": (
+                "**制冷控制基本盘**：这是稳定性观察的基础；当前证据状态为{evidence}，"
+                "可以结合收入、毛利率和现金流候选数据观察经营质量；还需要持续验证基本盘收入稳定性和现金流表现。"
+            ),
+            "customer_and_product_mix_upgrade": (
+                "**客户和产品结构升级**：结构变化决定热管理业务的质量和弹性；当前证据状态为{evidence}，"
+                "客户结构、产品结构和主营构成仍未充分确认；还需要客户、产品线、收入占比和毛利率证据。"
+            ),
+            "new_business_optionality": (
+                "**新业务可选项**：机器人 / 新业务只能作为可选项跟踪；当前证据状态为{evidence}，"
+                "现阶段尚不足以证明已兑现收入或利润；还需要订单、客户、量产、交付、收入确认和收款证据。"
+            ),
+            "margin_and_operating_quality_candidate": (
+                "**毛利率和经营质量候选支撑**：毛利率、存货、应收账款、资本开支和经营现金流决定增长质量；"
+                "当前证据状态为{evidence}，可以形成候选支撑；还需要观察这些变量是否与收入和现金流兑现匹配。"
+            ),
+        }
+        if path_id in thermal_opportunities:
+            return thermal_opportunities[path_id].format(evidence=evidence)
+    if profile_id == "advanced_manufacturing_thermal_management" and section == "risk":
+        thermal_risks = {
+            "auto_demand_volatility": (
+                "**汽车需求波动**：新能源车热管理路径依赖整车需求和车型节奏；当前证据状态为{evidence}，"
+                "行业销量变化还需要通过订单、客户和收入验证，才可判断对公司业绩节奏的影响。"
+            ),
+            "customer_concentration": (
+                "**客户集中度**：客户结构会影响收入波动、议价能力和回款质量；当前证据状态为{evidence}，"
+                "客户集中度尚不能作为已确认事实，需要客户结构和收入占比证据。"
+            ),
+            "new_business_realization_shortfall": (
+                "**新业务兑现不足**：机器人 / 新业务如果缺少订单、客户、量产和收入确认，就只能保留为可选项；"
+                "当前证据状态为{evidence}，不能提升为核心增长判断。"
+            ),
+            "gross_margin_pressure": (
+                "**毛利率压力**：热管理和制冷控制的产品结构、价格和成本变化会影响盈利质量；"
+                "当前证据状态为{evidence}，需要结合毛利率、收入结构和现金流继续验证。"
+            ),
+            "inventory_receivable_capex_expansion_risk": (
+                "**存货 / 应收 / capex 扩张风险**：投入和营运资本扩张若快于收入和现金流兑现，会削弱经营质量；"
+                "当前证据状态为{evidence}，需要同时看存货、应收账款、资本开支、经营现金流和收入匹配。"
+            ),
+            "new_business_revenue_share_gap": (
+                "**新业务收入占比证据不足**：如果新业务收入占比缺少清晰口径，就难以判断其对公司增长的真实贡献；"
+                "当前证据状态为{evidence}，需要主营构成、收入占比和官方披露补足。"
+            ),
+        }
+        if path_id in thermal_risks:
+            return thermal_risks[path_id].format(evidence=evidence)
+    if profile_id == "stable_growth_grid_equipment" and section == "opportunity":
+        grid_opportunities = {
+            "grid_investment_cycle": (
+                "**电网投资与招标**：电网投资决定需求入口，但对公司的意义取决于招标、订单、收入确认、"
+                "毛利率和回款传导；当前证据状态为{evidence}，后续需要公司级订单和交付证据。"
+            ),
+            "digital_grid": (
+                "**数字电网 / 调度 / 信息通信**：数字化建设提供中长期需求线索，可能影响产品结构和估值理解；"
+                "当前证据状态为{evidence}，仍需产品线、订单或收入结构证据验证。"
+            ),
+            "uhv_and_distribution_grid": (
+                "**特高压 / 配网**：项目节奏会影响电力设备需求和交付节奏；当前证据状态为{evidence}，"
+                "需要看到公司订单、收入确认和现金回收的对应关系。"
+            ),
+            "power_automation_and_relay_protection": (
+                "**电力自动化 / 继电保护**：这是公司业务质量和技术属性的关键观察方向；当前证据状态为{evidence}，"
+                "仍需主营构成、产品线和毛利率证据补足。"
+            ),
+            "stable_operating_quality_candidate": (
+                "**经营质量候选支撑**：收入、毛利率、经营现金流、应收账款和合同负债需要联看；"
+                "当前证据状态为{evidence}，后续重点是确认增长是否转化为现金流质量。"
+            ),
+        }
+        if path_id in grid_opportunities:
+            return grid_opportunities[path_id].format(evidence=evidence)
+    if profile_id == "stable_growth_grid_equipment" and section == "risk":
+        grid_risks = {
+            "receivables_and_cashflow_risk": (
+                "**应收账款与经营现金流**：电网设备交付和结算节奏可能拉长现金回收；当前证据状态为{evidence}，"
+                "需要跟踪应收账款、经营现金流和收入之间的匹配。"
+            ),
+            "tender_cadence_risk": (
+                "**招标与订单节奏**：国网 / 南网招标节奏变化会影响订单入口和收入确认节奏；当前证据状态为{evidence}，"
+                "仍需公司层面的订单和交付证据。"
+            ),
+            "gross_margin_pressure": (
+                "**毛利率压力**：产品结构、招标价格和成本变化会影响利润质量；当前证据状态为{evidence}，"
+                "需要结合收入结构和现金流继续验证。"
+            ),
+            "contract_liabilities_visibility_risk": (
+                "**合同负债可见度**：合同负债可作为订单可见度线索，但不足以单独证明未来收入；"
+                "当前证据状态为{evidence}，需要和订单、交付及收入确认联看。"
+            ),
+            "business_composition_scope_risk": (
+                "**主营构成口径**：业务分类和收入占比口径不清会限制电网设备暴露判断；当前证据状态为{evidence}，"
+                "需要更清晰的分部收入和产品口径。"
+            ),
+            "valuation_date_risk": (
+                "**估值日期**：PE、PB 和总市值需要同日口径，否则会削弱估值比较；当前证据状态为{evidence}，"
+                "后续需要保持估值数据日期一致。"
+            ),
+        }
+        if path_id in grid_risks:
+            return grid_risks[path_id].format(evidence=evidence)
+    if profile_id == "semiconductor_equipment_cycle" and section == "opportunity":
+        semi_opportunities = {
+            "domestic_fab_capex": (
+                "**国内晶圆厂 capex**：资本开支周期决定设备需求入口，但不是公司订单事实；当前证据状态为{evidence}，"
+                "需要订单、交付、验收、收入确认和回款证据。"
+            ),
+            "localization_and_tool_adoption": (
+                "**国产替代和设备导入**：国产替代影响长期份额和估值理解，但不能直接等同收入兑现；"
+                "当前证据状态为{evidence}，需要客户验证、导入进展和批量收入证据。"
+            ),
+            "rd_conversion": (
+                "**研发投入转化**：研发投入只有转化为产品进展、客户验证和商业化收入，才支持竞争力判断；"
+                "当前证据状态为{evidence}，需要产品和客户侧证据。"
+            ),
+            "orders_inventory_contract_liabilities_validation": (
+                "**订单 / 存货 / 合同负债验证**：三者需要共同验证设备需求和收入确认节奏；当前证据状态为{evidence}，"
+                "需要避免把单一指标写成需求强弱。"
+            ),
+            "product_mix_and_margin_improvement": (
+                "**产品结构和毛利率改善**：产品组合决定国产替代质量和利润弹性；当前证据状态为{evidence}，"
+                "需要毛利率、产品线和客户结构证据补足。"
+            ),
+        }
+        if path_id in semi_opportunities:
+            return semi_opportunities[path_id].format(evidence=evidence)
+    if profile_id == "semiconductor_equipment_cycle" and section == "risk":
+        semi_risks = {
+            "semiconductor_cycle_downturn": (
+                "**半导体周期下行**：周期走弱会影响设备订单、交付和收入确认；当前证据状态为{evidence}，"
+                "需要跟踪晶圆厂资本开支与公司订单之间的传导。"
+            ),
+            "order_realization_shortfall": (
+                "**订单兑现不足**：订单若不能顺利交付、验收和回款，会影响业绩持续性；当前证据状态为{evidence}，"
+                "需要订单、合同负债、收入确认和现金流共同验证。"
+            ),
+            "inventory_revenue_mismatch": (
+                "**存货和收入错配**：存货增长如果无法对应后续收入确认，会影响需求判断并增加减值风险；"
+                "当前证据状态为{evidence}，需要观察存货结构和收入确认节奏。"
+            ),
+            "rd_conversion_failure": (
+                "**研发投入转化不足**：研发投入未能转化为产品进展和客户验证，会削弱产品竞争力判断；"
+                "当前证据状态为{evidence}，不能单独由投入规模推导技术壁垒。"
+            ),
+            "gross_margin_pressure": (
+                "**毛利率压力**：价格、成本和产品结构变化会影响国产替代质量；当前证据状态为{evidence}，"
+                "需要结合产品组合和客户验证继续观察。"
+            ),
+            "customer_validation_gap": (
+                "**客户验证不足**：客户导入、认证和验证不足会限制强结论；当前证据状态为{evidence}，"
+                "需要客户验证和批量收入证据。"
+            ),
+            "capex_cadence_slowdown": (
+                "**capex 节奏放缓**：晶圆厂资本开支放缓会削弱需求路径；当前证据状态为{evidence}，"
+                "仍需公司订单和交付节奏确认影响。"
+            ),
+        }
+        if path_id in semi_risks:
+            return semi_risks[path_id].format(evidence=evidence)
+    return f"**{title}**：作为研究路径保留；目前证据仍偏初步，后续需要公司级材料确认其对收入、利润和现金流的影响。"
+
+
 def _render_evidence_gaps(report: dict[str, Any], profile: ResearchReportPresentationProfile) -> list[str]:
-    lines = [f"- profile 重点：{item}。" for item in profile.evidence_gap_focus]
+    lines = [f"- 重点证据：{item}。" for item in profile.evidence_gap_focus]
     for gap in _as_list(report.get("evidence_gaps")):
         if not isinstance(gap, dict):
             continue
@@ -602,12 +868,50 @@ def _render_evidence_gaps(report: dict[str, Any], profile: ResearchReportPresent
         status = _status_text(gap.get("status"))
         evidence = _evidence_text(gap.get("evidence_label"))
         lines.append(f"- {field}：{status}；证据等级：{evidence}。")
-    return lines or ["- 当前 artifact 未提供可直接展示的证据缺口。"]
+    return lines or ["- 当前材料未提供可直接展示的证据缺口。"]
 
 
 def _render_rebuttal_conditions(report: dict[str, Any], profile: ResearchReportPresentationProfile) -> list[str]:
     del report
-    return [f"- {claim}" for claim in profile.unsupported_claims]
+    if profile.profile_id == "advanced_manufacturing_thermal_management":
+        return [
+            "- 如果新能源车热管理收入、订单或客户验证不足，则会削弱成长路径判断。",
+            "- 如果制冷控制基本盘收入稳定性、毛利率或现金流走弱，则会削弱基本盘判断。",
+            "- 如果客户结构、产品结构和主营构成缺少清晰证据，则客户和产品升级只能保留为待验证假设。",
+            "- 如果机器人 / 新业务缺乏订单、客户、量产、交付和收入确认证据，则只能保留为可选项，不能提升为核心增长判断。",
+            "- 如果存货、应收和 capex 扩张快于收入和现金流兑现，则会削弱经营质量判断。",
+            "- 如果新业务收入占比缺少可复核口径，则新业务仍只适合作为待验证变量，不能支撑利润增长判断。",
+        ]
+    if profile.profile_id == "stable_growth_grid_equipment":
+        return [
+            "- 如果电网投资和招标节奏无法传导到公司订单、收入确认和回款，则会削弱稳健兑现判断。",
+            "- 如果国网 / 南网招标节奏放缓或公司中标证据不足，则会削弱需求路径判断。",
+            "- 如果特高压 / 配网和数字电网项目缺少公司级产品、订单或收入证据，则只能作为行业线索跟踪。",
+            "- 如果应收账款扩张快于收入和现金流兑现，则会削弱经营质量判断。",
+            "- 如果毛利率走弱或合同负债可见度下降，则会削弱后续收入质量判断。",
+        ]
+    if profile.profile_id == "semiconductor_equipment_cycle":
+        return [
+            "- 如果晶圆厂资本开支节奏放缓，则会削弱设备需求路径判断。",
+            "- 如果国产替代和设备导入缺少客户验证、交付和收入确认证据，则只能保留为研究假设。",
+            "- 如果订单、存货和合同负债无法共同指向后续收入确认，则会削弱业绩持续性判断。",
+            "- 如果研发投入缺少产品进展、客户验证和商业化收入证据，则会削弱产品竞争力判断。",
+            "- 如果毛利率承压或存货与收入确认错配，则会削弱国产替代质量判断。",
+        ]
+    return [
+        "- 如果财务候选字段缺少后续复核，则报告只能形成初步研究清单。",
+        "- 如果主营构成和官方业务来源不能补足，则行业暴露判断需要保持克制。",
+        "- 如果估值日期和口径无法保持一致，则估值比较需要降级处理。",
+    ]
+
+
+def _render_technical_appendix(selection: dict[str, Any]) -> list[str]:
+    return [
+        f"- presentation_profile_id: `{selection['presentation_profile_id']}`",
+        f"- presentation_profile_selected_by: `{selection['presentation_profile_selected_by']}`",
+        f"- fallback_reason: `{selection.get('fallback_reason') or 'none'}`",
+        f"- profile_selection_warning: `{selection.get('profile_selection_warning') or 'none'}`",
+    ]
 
 
 def _metrics_by_field(report: dict[str, Any]) -> dict[str, dict[str, Any]]:
@@ -622,14 +926,14 @@ def _metrics_by_field(report: dict[str, Any]) -> dict[str, dict[str, Any]]:
 
 def _format_metric_value(metric: dict[str, Any], field_path: str) -> str:
     if not metric:
-        return "当前 artifact 未提供可直接展示数值"
+        return "当前材料未提供可直接展示数值"
     value = metric.get("value")
     unit = metric.get("canonical_unit") or metric.get("unit")
     display = metric.get("display_value")
     if value is None and display not in (None, ""):
         return _translate_display_value(display, field_path)
     if value is None:
-        return "当前 artifact 未提供可直接展示数值"
+        return "当前材料未提供可直接展示数值"
     numeric = _to_float(value)
     if numeric is None:
         return str(value)
@@ -657,17 +961,38 @@ def _translate_display_value(value: Any, field_path: str) -> str:
 
 
 def _field_names(items: list[Any]) -> str:
-    names = [
-        _field_label(str(item.get("field_path") or ""))
-        for item in items
-        if isinstance(item, dict) and item.get("field_path")
-    ]
-    return "、".join(names) if names else "当前 artifact 未提供可直接展示字段"
+    names: list[str] = []
+    seen: set[str] = set()
+    for item in items:
+        if not isinstance(item, dict) or not item.get("field_path"):
+            continue
+        label = _field_label(str(item.get("field_path") or ""))
+        if label in seen:
+            continue
+        seen.add(label)
+        names.append(label)
+    return "、".join(names) if names else "当前材料未提供可直接展示字段"
 
 
 def _field_label(field_path: str) -> str:
     normalized = re.sub(r"business_composition\[\d+\]\.", "business_composition.", field_path)
-    return _FIELD_CN.get(normalized, normalized or "未命名字段")
+    if normalized in _FIELD_CN:
+        return _FIELD_CN[normalized]
+    if normalized in {"business_composition.*", "business_composition"}:
+        return "主营构成明细"
+    if normalized in {"valuation_metrics.*", "valuation_metrics"}:
+        return "估值字段"
+    if normalized in {"basic_info.*", "basic_info"}:
+        return "基础信息"
+    if normalized.startswith("business_composition."):
+        return "主营构成明细"
+    if normalized.startswith("valuation_metrics."):
+        return "估值字段"
+    if normalized.startswith("basic_info."):
+        return "基础信息"
+    if normalized.startswith("financial_metrics."):
+        return "财务字段"
+    return normalized or "未命名字段"
 
 
 def _company_name(report: dict[str, Any], code: str) -> str:
@@ -731,7 +1056,7 @@ def _evidence_text(label: Any) -> str:
 
 def _status_text(status: Any) -> str:
     if status in (None, "", [], {}):
-        return "当前 artifact 未提供可直接展示状态"
+        return "当前材料未提供可直接展示状态"
     translations = {
         "same_date_candidate_metadata_available": "同日候选元数据可用",
         "missing_or_mismatched": "缺失或日期不一致",
@@ -745,12 +1070,12 @@ def _status_text(status: Any) -> str:
 def _coverage_text(value: Any) -> str:
     data = _dict_or_empty(value)
     if not data:
-        return "当前 artifact 未提供可直接展示覆盖率"
+        return "当前材料未提供可直接展示覆盖率"
     available = data.get("available_count")
     total = data.get("candidate_count")
     ratio = data.get("coverage_ratio")
     numeric = _to_float(ratio)
-    ratio_text = f"{numeric * 100:.1f}%" if numeric is not None else "当前 artifact 未提供可直接展示覆盖率"
+    ratio_text = f"{numeric * 100:.1f}%" if numeric is not None else "当前材料未提供可直接展示覆盖率"
     if available is not None and total is not None:
         return f"{available}/{total}（{ratio_text}）"
     return ratio_text
@@ -758,18 +1083,18 @@ def _coverage_text(value: Any) -> str:
 
 def _join_or_unavailable(value: Any) -> str:
     values = [str(item) for item in _as_list(value) if item not in (None, "")]
-    return "、".join(values) if values else "当前 artifact 未提供可直接展示内容"
+    return "、".join(values) if values else "当前材料未提供可直接展示内容"
 
 
 def _display_or_unavailable(value: Any) -> str:
     if value in (None, "", [], {}):
-        return "当前 artifact 未提供可直接展示内容"
+        return "当前材料未提供可直接展示内容"
     return str(value)
 
 
 def _join(values: Any) -> str:
     items = [str(item) for item in values if item not in (None, "")]
-    return "、".join(items) if items else "当前 artifact 未提供可直接展示内容"
+    return "、".join(items) if items else "当前材料未提供可直接展示内容"
 
 
 def _first_text(*values: Any) -> str | None:
@@ -812,6 +1137,21 @@ def _assert_no_forbidden_markdown_terms(markdown: str) -> None:
     for term in _FORBIDDEN_MARKDOWN_TERMS:
         if term in markdown:
             raise ResearchReportBuildError("rendered markdown contains forbidden trading advice or fact-promotion term")
+
+
+def _assert_professional_analyst_voice(markdown: str) -> None:
+    body = _pm_facing_body(markdown)
+    for term in _PM_BODY_FORBIDDEN_TERMS:
+        if term in body:
+            raise ResearchReportBuildError("pm-facing markdown body contains engineering presentation language")
+    for pattern in _PM_BODY_FORBIDDEN_PATTERNS:
+        if pattern.search(body):
+            raise ResearchReportBuildError("pm-facing markdown body contains mechanical field or profile language")
+
+
+def _pm_facing_body(markdown: str) -> str:
+    marker = f"\n{_TECHNICAL_APPENDIX_HEADING}\n"
+    return markdown.split(marker, 1)[0]
 
 
 def _assert_no_nonselected_profile_terms(markdown: str, selected_profile_id: str) -> None:

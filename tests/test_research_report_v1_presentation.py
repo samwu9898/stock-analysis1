@@ -2,6 +2,7 @@
 
 import copy
 import inspect
+import re
 
 import pytest
 
@@ -39,6 +40,49 @@ FORBIDDEN_TRADING_TERMS = (
 GRID_TERMS = ("国网 / 南网", "特高压")
 SEMICONDUCTOR_TERMS = ("半导体设备", "晶圆厂 capex", "晶圆厂资本开支", "国产替代")
 THERMAL_TERMS = ("热管理", "机器人 / 新业务")
+PM_BODY_FORBIDDEN_TERMS = (
+    "Presentation Profile",
+    "profile_id",
+    "advanced_manufacturing_thermal_management",
+    "semiconductor_equipment_cycle",
+    "stable_growth_grid_equipment",
+    "generic_fundamental_report",
+    "artifact",
+    "schema",
+    "candidate_review",
+    "raw field",
+    "按 profile 排序展示",
+    "当前适用",
+)
+PM_BODY_FORBIDDEN_PATTERNS = (
+    re.compile(r"\bprofile\b", flags=re.IGNORECASE),
+    re.compile(r"适用.*展示框架"),
+    re.compile(r"business_composition(?:\.\*|\[[0-9]+\])?(?:\.[A-Za-z0-9_*]+)?"),
+    re.compile(r"valuation_metrics(?:\.\*|\.[A-Za-z0-9_*]+)?"),
+    re.compile(r"basic_info(?:\.\*|\.[A-Za-z0-9_*]+)?"),
+)
+
+
+def _main_body(markdown: str) -> str:
+    return markdown.split("\n## 技术附注\n", 1)[0]
+
+
+def _section_lines(markdown: str, heading: str) -> list[str]:
+    lines = markdown.splitlines()
+    try:
+        start = lines.index(f"## {heading}") + 1
+    except ValueError:
+        raise AssertionError(f"missing section {heading}") from None
+    end = next((index for index in range(start, len(lines)) if lines[index].startswith("## ")), len(lines))
+    return [line for line in lines[start:end] if line.strip()]
+
+
+def _assert_pm_body_professional(markdown: str) -> None:
+    body = _main_body(markdown)
+    for term in PM_BODY_FORBIDDEN_TERMS:
+        assert term not in body
+    for pattern in PM_BODY_FORBIDDEN_PATTERNS:
+        assert not pattern.search(body), pattern.pattern
 
 
 def _judgement(title: str, label: str = "forward_tracking_variable") -> dict:
@@ -318,6 +362,7 @@ def test_unknown_code_and_strategy_fallback_to_generic():
     assert selection["presentation_profile_id"] == "generic_fundamental_report"
     assert selection["presentation_profile_selected_by"] == "fallback"
     assert selection["fallback_reason"]
+    _assert_pm_body_professional(markdown)
     for term in GRID_TERMS + SEMICONDUCTOR_TERMS + THERMAL_TERMS:
         assert term not in markdown
 
@@ -335,11 +380,11 @@ def test_classifier_code_conflict_warns_and_falls_back():
 
 def test_render_markdown_keeps_common_skeleton_and_selection_metadata():
     markdown = render_research_report_v1_markdown(_fake_report())
+    body = _main_body(markdown)
 
     assert markdown.startswith("# 600406 国电南瑞 基本面研究报告 V1\n")
     for heading in (
         "## 重要声明",
-        "## Presentation Profile",
         "## 一句话结论",
         "## 投研速读",
         "## 研究员判断",
@@ -351,55 +396,104 @@ def test_render_markdown_keeps_common_skeleton_and_selection_metadata():
         "## 证据缺口",
         "## 反证条件",
         "## 后续跟踪清单",
+        "## 技术附注",
     ):
         assert heading in markdown
+    assert "## Presentation Profile" not in markdown
+    assert "presentation_profile_id" not in body
     assert "presentation_profile_id: `stable_growth_grid_equipment`" in markdown
     assert "presentation_profile_selected_by: `strategy_type_expected`" in markdown
+    _assert_pm_body_professional(markdown)
 
 
 def test_600406_uses_grid_profile_without_semiconductor_or_robotics_terms():
     markdown = render_research_report_v1_markdown(_fake_report("600406", "stable_growth"))
+    rebuttal_lines = _section_lines(markdown, "反证条件")
 
+    assert "国电南瑞目前更适合作为电网投资与数字电网景气的稳健兑现型样本跟踪" in markdown
     assert "电网投资" in markdown
     assert "国网 / 南网" in markdown
     assert "特高压 / 配网" in markdown
+    assert "电网投资决定需求入口" in markdown
+    assert "电网设备交付和结算节奏可能拉长现金回收" in markdown
     assert "合同负债只能作为订单可见度线索，不等于 backlog" in markdown
+    assert all(line.startswith("- 如果") and "，则" in line for line in rebuttal_lines)
+    _assert_pm_body_professional(markdown)
     for term in SEMICONDUCTOR_TERMS + ("机器人 / 新业务",):
         assert term not in markdown
 
 
 def test_002371_uses_semiconductor_profile_without_grid_terms():
     markdown = render_research_report_v1_markdown(_fake_report("002371", "semiconductor_cycle"))
+    rebuttal_lines = _section_lines(markdown, "反证条件")
 
     assert "presentation_profile_id: `semiconductor_equipment_cycle`" in markdown
+    assert "北方华创更适合作为半导体设备国产替代和晶圆厂资本开支周期的核心跟踪样本" in markdown
     assert "半导体设备" in markdown
     assert "国内晶圆厂 capex" in markdown
     assert "国产替代和设备导入" in markdown
     assert "研发投入转化" in markdown
     assert "存货和收入错配" in markdown
-    assert "不能把国产替代叙事直接写成收入兑现" in markdown
-    assert "不能把研发投入直接写成技术壁垒" in markdown
-    assert "不能把库存变化直接写成需求强弱" in markdown
-    assert "不能把 capex 直接写成订单" in markdown
+    assert "资本开支周期决定设备需求入口，但不是公司订单事实" in markdown
+    assert "国产替代影响长期份额和估值理解" in markdown
+    assert "研发投入只有转化为产品进展、客户验证和商业化收入" in markdown
+    assert "三者需要共同验证设备需求和收入确认节奏" in markdown
+    assert "周期走弱会影响设备订单、交付和收入确认" in markdown
+    assert "如果国产替代和设备导入缺少客户验证、交付和收入确认证据，则只能保留为研究假设" in markdown
+    assert all(line.startswith("- 如果") and "，则" in line for line in rebuttal_lines)
+    _assert_pm_body_professional(markdown)
     for term in GRID_TERMS:
         assert term not in markdown
 
 
 def test_002050_uses_thermal_management_profile_without_grid_or_semiconductor_terms():
     markdown = render_research_report_v1_markdown(_fake_report("002050", "advanced_manufacturing_growth"))
+    body = _main_body(markdown)
 
     assert "presentation_profile_id: `advanced_manufacturing_thermal_management`" in markdown
-    assert "热管理" in markdown
-    assert "制冷控制" in markdown
-    assert "新能源车热管理" in markdown
-    assert "机器人 / 新业务" in markdown
-    assert "新业务收入占比" in markdown
-    assert "不能把机器人概念直接写成已兑现收入" in markdown
-    assert "不能把新业务叙事直接写成利润增长" in markdown
-    assert "不能把客户传闻写成已确认事实" in markdown
-    assert "不能把行业空间直接写成公司确定性" in markdown
+    assert "advanced_manufacturing_thermal_management" not in body
+    assert "Presentation Profile" not in body
+    assert "展示框架" not in _section_lines(markdown, "一句话结论")[0]
+    assert "三花智控更适合作为制冷控制基本盘叠加新能源车热管理和新业务可选项" in markdown
+    assert "财务候选数据可支撑基础研究" in markdown
+    assert "新业务收入占比、客户结构和主营构成仍需要更多证据确认" in markdown
+    assert "热管理" in body
+    assert "制冷控制" in body
+    assert "新能源车热管理" in body
+    assert "机器人 / 新业务" in body
+    assert "新业务收入占比" in body
+    assert "不能把机器人概念直接写成已兑现收入" not in body
+    assert "不能把新业务叙事直接写成利润增长" not in body
+    assert "不能把客户传闻写成已确认事实" not in body
+    assert "不能把行业空间直接写成公司确定性" not in body
+    _assert_pm_body_professional(markdown)
     for term in GRID_TERMS + ("半导体设备",):
         assert term not in markdown
+
+
+def test_002050_opportunity_risk_and_bear_case_are_pm_readable():
+    markdown = render_research_report_v1_markdown(_fake_report("002050", "advanced_manufacturing_growth"))
+    opportunity = "\n".join(_section_lines(markdown, "机会分析"))
+    risk = "\n".join(_section_lines(markdown, "风险分析"))
+    rebuttal_lines = _section_lines(markdown, "反证条件")
+
+    assert "按 profile 排序展示" not in markdown
+    assert "这是三花智控的重要成长路径" in opportunity
+    assert "当前证据状态为" in opportunity
+    assert "还需要收入、订单、客户、毛利率和回款证据验证" in opportunity
+    assert "机器人 / 新业务只能作为可选项跟踪" in opportunity
+    assert "现阶段尚不足以证明已兑现收入或利润" in opportunity
+    assert "客户结构、产品结构和主营构成仍未充分确认" in opportunity
+
+    assert "新能源车热管理路径依赖整车需求和车型节奏" in risk
+    assert "客户结构会影响收入波动、议价能力和回款质量" in risk
+    assert "不能提升为核心增长判断" in risk
+    assert "投入和营运资本扩张若快于收入和现金流兑现" in risk
+    assert "难以判断其对公司增长的真实贡献" in risk
+
+    assert rebuttal_lines
+    assert all(line.startswith("- 如果") and "，则" in line for line in rebuttal_lines)
+    assert "如果机器人 / 新业务缺乏订单、客户、量产、交付和收入确认证据，则只能保留为可选项" in "\n".join(rebuttal_lines)
 
 
 def test_profile_selection_can_use_code_whitelist_when_strategy_missing():
@@ -439,13 +533,18 @@ def test_profile_does_not_change_evidence_label_or_promote_candidate():
 
 def test_markdown_preserves_data_quality_caveats_and_boundaries():
     markdown = render_research_report_v1_markdown(_fake_report("002371", "semiconductor_cycle"))
+    body = _main_body(markdown)
 
-    assert "数据质量 caveat 必须保留" in markdown
+    assert "结论强度：上述数据缺口必须保留在阅读判断中" in markdown
     assert "合同负债只能作为订单可见度线索，不等于 backlog" in markdown
     assert "资本开支只能作为投入节奏线索，不等于订单、产能释放、收入或增长兑现" in markdown
-    assert "不能把合同负债直接写成 backlog" in markdown
-    assert "不能把研发投入直接写成技术壁垒" in markdown
-    assert "不能把库存变化直接写成需求强弱" in markdown
+    assert "候选字段不能升级为已确认事实" in markdown
+    assert "研发投入未能转化为产品进展和客户验证，会削弱产品竞争力判断" in markdown
+    assert "存货增长如果无法对应后续收入确认，会影响需求判断并增加减值风险" in markdown
+    assert "business_composition" not in body
+    assert "valuation_metrics" not in body
+    assert "basic_info" not in body
+    assert "artifact" not in body
 
 
 def test_markdown_formats_metrics_and_has_no_forbidden_trading_terms():
@@ -464,6 +563,18 @@ def test_renderer_blocks_nonselected_profile_terms_if_template_leaks():
     original = PRESENTATION_PROFILE_REGISTRY["semiconductor_equipment_cycle"].follow_up_variables
     mutated = PRESENTATION_PROFILE_REGISTRY["semiconductor_equipment_cycle"]
     object.__setattr__(mutated, "follow_up_variables", original + ("国网 / 南网",))
+    try:
+        with pytest.raises(ResearchReportBuildError):
+            render_research_report_v1_markdown(report)
+    finally:
+        object.__setattr__(mutated, "follow_up_variables", original)
+
+
+def test_professional_voice_gate_blocks_engineering_language_in_pm_body():
+    report = _fake_report("002050", "advanced_manufacturing_growth")
+    original = PRESENTATION_PROFILE_REGISTRY["advanced_manufacturing_thermal_management"].follow_up_variables
+    mutated = PRESENTATION_PROFILE_REGISTRY["advanced_manufacturing_thermal_management"]
+    object.__setattr__(mutated, "follow_up_variables", original + ("raw field basic_info.main_business from artifact",))
     try:
         with pytest.raises(ResearchReportBuildError):
             render_research_report_v1_markdown(report)
