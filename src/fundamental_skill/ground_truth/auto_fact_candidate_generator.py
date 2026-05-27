@@ -85,6 +85,11 @@ VALUATION_MULTIPLE_FIELDS = {
     "valuation_metrics.pe_ttm",
     "valuation_metrics.pb",
 }
+VALUATION_SAME_DATE_FIELDS = {
+    "valuation_metrics.pe_ttm",
+    "valuation_metrics.pb",
+    "valuation_metrics.market_cap",
+}
 TEXT_FIELDS = {
     "basic_info.stock_code",
     "basic_info.stock_name",
@@ -848,6 +853,9 @@ def _build_manual_review_priority_queue(
             suggested_next_action="Locate the valuation trading date in the source artifact and record it explicitly.",
         )
     )
+    valuation_as_of_date_item = _valuation_as_of_date_review_item(candidates)
+    if valuation_as_of_date_item:
+        queue.append(valuation_as_of_date_item)
     queue.extend(
         _review_items_by_normalized_field(
             candidates,
@@ -876,6 +884,10 @@ def _build_manual_review_priority_queue(
                 suggested_next_action="Review the narrative against source filings or provider profile text.",
             )
         )
+
+    business_period_item = _business_composition_period_review_item(candidates)
+    if business_period_item:
+        queue.append(business_period_item)
 
     for field_path in BUSINESS_REVIEW_FIELDS:
         business_items = [
@@ -958,6 +970,119 @@ def _build_manual_review_priority_queue(
     )
 
     return _dedupe_and_limit_review_queue(queue, limit)
+
+
+def _valuation_as_of_date_review_item(candidates: list[dict[str, Any]]) -> dict[str, Any] | None:
+    valuation_candidates = [
+        candidate
+        for candidate in candidates
+        if _normalized_simple_field_path(candidate["field_path"]).startswith("valuation_metrics.")
+    ]
+    if not valuation_candidates:
+        return None
+
+    as_of_date_candidates = [
+        candidate
+        for candidate in valuation_candidates
+        if _normalized_simple_field_path(candidate["field_path"]) == "valuation_metrics.as_of_date"
+    ]
+    provider_dates: dict[str, set[str]] = {}
+    for candidate in valuation_candidates:
+        provider = candidate.get("source_provider")
+        as_of_date = candidate.get("as_of_date")
+        if provider in PROVIDERS and as_of_date:
+            provider_dates.setdefault(str(provider), set()).add(str(as_of_date))
+
+    has_missing_as_of_date = any(
+        candidate.get("value") is not None and not candidate.get("as_of_date")
+        for candidate in valuation_candidates
+    )
+    has_provider_date_mismatch = bool(
+        provider_dates.get("tushare")
+        and provider_dates.get("akshare")
+        and provider_dates["tushare"] != provider_dates["akshare"]
+    )
+    has_auto_accepted_valuation_field = any(
+        _normalized_simple_field_path(candidate["field_path"]) in VALUATION_SAME_DATE_FIELDS
+        and candidate.get("review_status") == "auto_accepted"
+        for candidate in valuation_candidates
+    )
+    has_auto_accepted_as_of_date = any(
+        candidate.get("review_status") == "auto_accepted"
+        for candidate in as_of_date_candidates
+    )
+    has_valuation_review_issue = any(
+        candidate.get("review_status") in {"period_mismatch", "manual_review_required"}
+        or candidate.get("conflict_status") == "period_mismatch"
+        for candidate in valuation_candidates
+    )
+
+    if not (
+        has_missing_as_of_date
+        or has_provider_date_mismatch
+        or (has_auto_accepted_valuation_field and not has_auto_accepted_as_of_date)
+        or has_valuation_review_issue
+    ):
+        return None
+
+    return _make_review_item(
+        priority=1,
+        field_path="valuation_metrics.as_of_date",
+        issue_type="valuation_as_of_date_review_required",
+        candidates=valuation_candidates,
+        reason=(
+            "PE/PB/market_cap valuation fields require the same as_of_date before strict comparison; "
+            "otherwise valuation candidates are not strictly comparable."
+        ),
+        suggested_next_action=(
+            "Verify valuation as_of_date before using valuation candidates for reviewed ground truth "
+            "or block-level primary decisions."
+        ),
+    )
+
+
+def _business_composition_period_review_item(candidates: list[dict[str, Any]]) -> dict[str, Any] | None:
+    business_candidates = [
+        candidate
+        for candidate in candidates
+        if _normalized_simple_field_path(candidate["field_path"]).startswith("business_composition.")
+    ]
+    if not business_candidates:
+        return None
+
+    issue_candidates = [
+        candidate
+        for candidate in business_candidates
+        if candidate.get("review_status") == "period_mismatch"
+        or candidate.get("conflict_status") == "period_mismatch"
+        or candidate.get("conflict_status") == "provider_missing"
+        or candidate.get("review_status") == "mapping_missing"
+        or candidate.get("missing_category") == "mapping_missing"
+    ]
+    has_many_candidates = len(business_candidates) >= 10
+    if not issue_candidates and not has_many_candidates:
+        return None
+
+    period_mismatch_count = sum(
+        1
+        for candidate in business_candidates
+        if candidate.get("review_status") == "period_mismatch"
+        or candidate.get("conflict_status") == "period_mismatch"
+    )
+    return _make_review_item(
+        priority=1 if period_mismatch_count >= 10 else 2,
+        field_path="business_composition.period",
+        issue_type="business_composition_period_review_required",
+        candidates=issue_candidates or business_candidates,
+        reason=(
+            "Business composition must use the same report period and classification group; "
+            "do not mix period, product, region, or industry rows when deriving ratios."
+        ),
+        suggested_next_action=(
+            "Verify selected period and classification group before deriving ratios or accepting segment rows; "
+            "keep provider rows separate."
+        ),
+    )
 
 
 def _build_business_composition_summary(candidates: list[dict[str, Any]]) -> dict[str, Any]:
@@ -1186,15 +1311,17 @@ def _dedupe_and_limit_review_queue(queue: list[dict[str, Any]], limit: int) -> l
         "source_conflict": 0,
         "unit_unknown": 1,
         "period_mismatch_core_field": 2,
-        "missing_as_of_date": 3,
-        "suspicious_auto_acceptance_trace": 4,
-        "main_business_review": 5,
-        "business_composition_field_review": 6,
-        "block_mapping_missing": 7,
-        "block_provider_missing": 8,
-        "text_field_review": 9,
-        "akshare_only_review": 10,
-        "low_confidence_candidates": 11,
+        "valuation_as_of_date_review_required": 3,
+        "missing_as_of_date": 4,
+        "suspicious_auto_acceptance_trace": 5,
+        "main_business_review": 6,
+        "business_composition_period_review_required": 7,
+        "business_composition_field_review": 8,
+        "block_mapping_missing": 9,
+        "block_provider_missing": 10,
+        "text_field_review": 11,
+        "akshare_only_review": 12,
+        "low_confidence_candidates": 13,
     }
     ordered = sorted(
         queue,
@@ -1206,9 +1333,9 @@ def _dedupe_and_limit_review_queue(queue: list[dict[str, Any]], limit: int) -> l
         ),
     )
     deduped: list[dict[str, Any]] = []
-    seen: set[tuple[int, str, str]] = set()
+    seen: set[tuple[str, str]] = set()
     for item in ordered:
-        key = (int(item["priority"]), str(item["field_path"]), str(item["issue_type"]))
+        key = (str(item["field_path"]), str(item["issue_type"]))
         if key in seen:
             continue
         seen.add(key)

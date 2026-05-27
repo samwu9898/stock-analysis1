@@ -210,6 +210,16 @@ def _candidate(payload: dict, field_path: str, provider: str) -> dict:
     return matches[0]
 
 
+def _queue_item(queue: list[dict], field_path: str, issue_type: str) -> dict:
+    matches = [
+        item
+        for item in queue
+        if item["field_path"] == field_path and item["issue_type"] == issue_type
+    ]
+    assert len(matches) == 1, f"expected one queue item for {field_path}:{issue_type}, got {len(matches)}"
+    return matches[0]
+
+
 def _walk_keys(value):
     if isinstance(value, dict):
         for key, child in value.items():
@@ -307,6 +317,30 @@ def test_auto_accepted_core_fields_lists_only_core_auto_acceptance_items(tmp_pat
     assert all(item["report_period"] or item["as_of_date"] for item in core_fields)
 
 
+def test_manual_review_priority_queue_exposes_valuation_as_of_date_when_not_explicitly_accepted(tmp_path):
+    payload = build_fact_candidates_from_comparison_dir(_comparison_dir(tmp_path))
+    candidates_before = copy.deepcopy(payload["candidates"])
+
+    queue = generator_module._build_manual_review_priority_queue(payload["candidates"])
+
+    assert payload["candidates"] == candidates_before
+    assert len(queue) <= 20
+    item = _queue_item(
+        queue,
+        "valuation_metrics.as_of_date",
+        "valuation_as_of_date_review_required",
+    )
+    assert item["priority"] == 1
+    assert "valuation fields require the same as_of_date" in item["reason"]
+    assert len(item["representative_candidates"]) <= 3
+    assert _candidate(payload, "valuation_metrics.pe_ttm", "tushare")["review_status"] == "auto_accepted"
+    assert _candidate(payload, "valuation_metrics.as_of_date", "tushare")["review_status"] != "auto_accepted"
+    assert payload["summary"]["auto_accepted_count"] == 13
+    item_text = json.dumps(item, ensure_ascii=False).lower()
+    assert "primary switch" not in item_text
+    assert "automatic merge" not in item_text
+
+
 def test_manual_review_priority_queue_aggregates_business_composition_and_respects_limit(tmp_path):
     payload = build_fact_candidates_from_comparison_dir(_comparison_dir_with_many_business_rows(tmp_path))
     queue = payload["manual_review_priority_queue"]
@@ -322,6 +356,58 @@ def test_manual_review_priority_queue_aggregates_business_composition_and_respec
         for item in business_items
     )
     assert any(item["issue_type"] == "business_composition_field_review" for item in business_items)
+    period_item = _queue_item(
+        queue,
+        "business_composition.period",
+        "business_composition_period_review_required",
+    )
+    assert period_item["candidate_count"] > len(period_item["representative_candidates"])
+    assert len(period_item["representative_candidates"]) <= 3
+    assert len(
+        [
+            item
+            for item in queue
+            if item["field_path"] == "business_composition.period"
+            and item["issue_type"] == "business_composition_period_review_required"
+        ]
+    ) == 1
+
+
+def test_manual_review_priority_queue_exposes_business_period_for_missing_mapping_or_provider(tmp_path):
+    code_dir = tmp_path / "600406"
+    payload = _provider_payload("tushare")
+    payload["blocks"]["business_composition"][0].pop("classification_type")
+    _write_json(code_dir / "tushare_fundamental.json", payload)
+
+    report = build_fact_candidates_from_comparison_dir(code_dir)
+    queue = report["manual_review_priority_queue"]
+
+    assert len(queue) <= 20
+    assert any(
+        candidate["review_status"] == "mapping_missing"
+        for candidate in report["candidates"]
+        if candidate["field_path"].startswith("business_composition")
+    )
+    assert any(
+        candidate["conflict_status"] == "provider_missing"
+        for candidate in report["candidates"]
+        if candidate["field_path"].startswith("business_composition")
+    )
+    period_item = _queue_item(
+        queue,
+        "business_composition.period",
+        "business_composition_period_review_required",
+    )
+    assert period_item["priority"] == 2
+    assert "same report period and classification group" in period_item["reason"]
+    assert "period, product, region, or industry" in period_item["reason"]
+    assert "classification group" in period_item["suggested_next_action"]
+    assert len(period_item["representative_candidates"]) <= 3
+    assert all(
+        "[" not in item["field_path"]
+        for item in queue
+        if item["field_path"].startswith("business_composition")
+    )
 
 
 def test_business_composition_summary_compresses_periods_coverage_and_next_action(tmp_path):
