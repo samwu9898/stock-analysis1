@@ -2,9 +2,9 @@
 
 Date: 2026-05-26
 
-Stage: Phase 4 Score / Confidence Explainability Design Documentation Patch.
+Stage: Phase 4 Score / Confidence Explainability Documentation Sync Patch.
 
-Status: Phase 0 design documentation completed; Phase 1 provider abstraction skeleton accepted; Phase 2 `AkShareProvider` adapter implemented and accepted; Phase 3 `TushareProvider` mocked MVP implemented and accepted; Phase 4 dual-source comparison dry-run tooling implemented and accepted; Phase 4 local real-token smoke gate documentation completed; Phase 4 real-token smoke gate safety skeleton implemented and accepted. A later third local real-token smoke review completed with `partial_pass_data_review_required`: Tushare endpoint availability and canonical mapping materially improved, while score / confidence drift still requires comparison-only explainability review. Tushare is still not allowed to become primary, AkShare / Tushare data must not be automatically merged, and drift must not be automatically accepted. This documentation sync does not change code, tests, config, deterministic pipeline behavior, classifier rules, connector behavior, scoring, readiness, HTML / Dashboard behavior, generated output, or regression expectations.
+Status: Phase 0 design documentation completed; Phase 1 provider abstraction skeleton accepted; Phase 2 `AkShareProvider` adapter implemented and accepted; Phase 3 `TushareProvider` mocked MVP implemented and accepted; Phase 4 dual-source comparison dry-run tooling implemented and accepted; Phase 4 local real-token smoke gate documentation completed; Phase 4 real-token smoke gate safety skeleton implemented and accepted. A later third local real-token smoke review completed with `partial_pass_data_review_required`: Tushare endpoint availability and canonical mapping materially improved, while score / confidence drift required comparison-only explainability. Phase 4 score / confidence explainability design, implementation, and acceptance are now completed. Tushare is still not allowed to become primary, AkShare / Tushare data must not be automatically merged, and drift must not be automatically accepted. This documentation sync does not change code, tests, config, deterministic pipeline behavior, classifier rules, connector behavior, scoring, readiness, HTML / Dashboard behavior, generated output, or regression expectations.
 
 Latest Phase 2 acceptance record:
 
@@ -55,9 +55,20 @@ Latest Phase 4 third real-token smoke review record:
 - `market_cap` units, `gross_margin`, and business-level `gross_margin` derivation were corrected before this review point.
 - There was no `missing_field_regression`, `strategy_type_drift`, or `classification_drift`.
 - Score drift remained for the reviewed sample set; `000426` and `002837` still had confidence drift.
-- Current recommendation: do not switch Tushare primary, do not automatically merge, do not automatically accept drift, and do not run another real-token smoke for the explainability patch.
+- Current recommendation: do not switch Tushare primary, do not automatically merge, do not automatically accept drift, and do not run another real-token smoke unless later provider mapping or sidecar execution changes require it.
 - Latest recorded verification from that review: full `pytest` `630 passed, 1 skipped`; regression suite `passed=47 failed=0 total=47`.
-- The formal design for the next step is `docs/DATA_PROVIDER_PHASE4_SCORE_CONFIDENCE_EXPLAINABILITY_DESIGN.md`.
+- The accepted score / confidence explainability boundary is recorded in `docs/DATA_PROVIDER_PHASE4_SCORE_CONFIDENCE_EXPLAINABILITY_DESIGN.md`.
+
+Latest Phase 4 score / confidence explainability implementation acceptance record:
+
+- Added `score_confidence_explainability.py`.
+- `compare_providers` added explicit `--explainability`.
+- `comparison_artifacts` allowlist added `score_confidence_explainability.json`.
+- `diff_classifier` added reviewer-aid drift subcategory values for explainability use.
+- The explainability artifact writes only to `output/provider_comparison/<timestamp>/<code>/score_confidence_explainability.json`.
+- Default `diff_report.json` / `diff_report.md`, raw output, fundamental output, evidence packs, `output/reports`, HTML / Dashboard, P1.1, scoring, readiness, classifier behavior, and regression expected files remain unchanged.
+- No token was read, no network was used, no MCP was connected, no real smoke was run, no primary switch occurred, no automatic merge occurred, and no drift was automatically accepted.
+- Latest recorded verification: targeted tests `38 passed`; full `pytest` `644 passed, 1 skipped`; regression suite `passed=47 failed=0 total=47`.
 
 ## 1. Background And Goals
 
@@ -373,6 +384,7 @@ src/fundamental_skill/data_providers/
   token_leak_scanner.py
   real_token_smoke_gate.py
   tushare_sdk_transport.py
+  score_confidence_explainability.py
 ```
 
 Core principles:
@@ -485,6 +497,7 @@ Accepted artifact boundary:
 Accepted diff-classifier behavior:
 
 - `classification_drift`, `confidence_drift`, `score_drift`, and `P1_question_drift` must be `review_required`.
+- Reviewer-aid drift subcategory values are available for explainability use.
 - `token_or_secret_risk` is a `blocker`.
 - No drift is automatically accepted as a migration success.
 
@@ -581,13 +594,62 @@ Current gate:
 - Do not switch Tushare primary.
 - Do not automatically merge AkShare / Tushare data.
 - Do not automatically accept drift.
-- Do not run another real-token smoke for the explainability patch.
-- Proceed, if approved, to comparison-only score / confidence explainability
-  implementation using `docs/DATA_PROVIDER_PHASE4_SCORE_CONFIDENCE_EXPLAINABILITY_DESIGN.md`.
+- Do not run another real-token smoke unless later provider mapping or sidecar
+  execution changes require it.
+- Proceed to explainability artifact review when useful; implementation is
+  already accepted.
 
 Latest third-smoke verification:
 
 - full `pytest` `630 passed, 1 skipped`
+- regression suite `passed=47 failed=0 total=47`
+
+### Phase 4 Score / Confidence Explainability Implementation Status
+
+Score / confidence explainability has been implemented and accepted as
+comparison-only tooling.
+
+Accepted modules and changes:
+
+- `score_confidence_explainability.py`: builds diagnostic score /
+  confidence-drift payloads from already-produced comparison raw,
+  fundamental, evidence-pack, and diff-report data.
+- `compare_providers.py`: adds explicit `--explainability`; default remains
+  off, and `--explainability` cannot be combined with `--real-token-smoke` in
+  V1.
+- `comparison_artifacts.py`: adds `score_confidence_explainability.json` to the
+  explicit explainability artifact allowlist only.
+- `diff_classifier.py`: adds reviewer-aid drift subcategory values for
+  explainability use without changing default diff report behavior.
+
+Accepted artifact boundary:
+
+- Allowed write:
+  `output/provider_comparison/<timestamp>/<code>/score_confidence_explainability.json`.
+- Forbidden writes remain `output/raw_<code>.json`,
+  `output/fundamental_<code>.json`, `output/evidence_pack_<code>.json`,
+  `output/reports`, default output, and report output.
+- Default `diff_report.json` and `diff_report.md` are unchanged when
+  explainability is not explicitly requested.
+
+Accepted safety boundaries:
+
+- comparison-only
+- default-off
+- no token read
+- no network
+- no MCP connection or local MCP config read
+- no real smoke execution
+- no scoring, readiness, classifier, P1.1, HTML, Dashboard, pipeline, or
+  regression-expected change
+- no primary switch
+- no automatic AkShare / Tushare merge
+- no automatic drift acceptance
+
+Latest explainability implementation verification:
+
+- targeted tests `38 passed`
+- full `pytest` `644 passed, 1 skipped`
 - regression suite `passed=47 failed=0 total=47`
 
 ### Phase 3 Canonical Raw Output
@@ -737,6 +799,8 @@ For the same stock sample set, comparison may generate:
 - AkShare `raw` / `fundamental` / `evidence_pack`
 - Tushare `raw` / `fundamental` / `evidence_pack`
 - Diff report
+- `score_confidence_explainability.json` only when explicit
+  `--explainability` is enabled
 
 Comparison dimensions:
 
@@ -766,7 +830,7 @@ Diff report should classify differences:
 
 No automatic data merge should occur in `dual_compare`.
 
-The accepted Phase 4 diff classifier requires `review_required` for classification, confidence, score, and P1.1 question drift. `token_or_secret_risk` is a blocker. Drift is never automatically accepted.
+The accepted Phase 4 diff classifier requires `review_required` for classification, confidence, score, and P1.1 question drift. `token_or_secret_risk` is a blocker. Reviewer-aid drift subcategory values are available for explainability diagnostics and do not change the default diff report schema. Drift is never automatically accepted.
 
 ## 12. Testing And Regression Strategy
 
@@ -893,18 +957,43 @@ Phase 4: third local real-token smoke data review. Completed with data review re
 - Drift remained limited to score drift and confidence drift for `000426` / `002837`; there was no `missing_field_regression`, `strategy_type_drift`, or `classification_drift`.
 - Latest recorded verification: full `pytest` `630 passed, 1 skipped`; regression suite `passed=47 failed=0 total=47`.
 
+Phase 4: score / confidence explainability. Implemented and accepted.
+
+- Added `score_confidence_explainability.py`.
+- Added explicit `compare_providers --explainability`.
+- Added `score_confidence_explainability.json` to the comparison artifact
+  allowlist for explicit explainability mode only.
+- Added reviewer-aid drift subcategory values in `diff_classifier`.
+- Kept the artifact boundary limited to
+  `output/provider_comparison/<timestamp>/<code>/score_confidence_explainability.json`.
+- Did not write raw / fundamental / evidence-pack default output, `output/reports`,
+  HTML / Dashboard output, or regression expected files.
+- Did not change default `diff_report.json` / `diff_report.md`.
+- Did not read a token, use network, connect MCP, or run real smoke.
+- Did not change scoring, readiness, classifier, P1.1, HTML / Dashboard, the
+  deterministic pipeline, primary-provider behavior, merge behavior, or drift
+  acceptance behavior.
+- Latest recorded verification: targeted tests `38 passed`; full `pytest`
+  `644 passed, 1 skipped`; regression suite `passed=47 failed=0 total=47`.
+
 See `docs/DATA_PROVIDER_PHASE4_DUAL_SOURCE_COMPARISON_DESIGN.md` for the accepted Phase 4 artifact boundary, sample set, diff classification, acceptance thresholds, token-safety procedure, MCP / SDK / HTTP decision, testing plan, runner behavior, risk review, and external-audit stance.
 
-See `docs/DATA_PROVIDER_PHASE4_SCORE_CONFIDENCE_EXPLAINABILITY_DESIGN.md` for the score / confidence drift explainability design.
+See `docs/DATA_PROVIDER_PHASE4_SCORE_CONFIDENCE_EXPLAINABILITY_DESIGN.md` for the accepted score / confidence drift explainability design and implementation boundary.
 
-Next gate: comparison-only score / confidence explainability implementation.
+Next gate: explainability artifact review and later mapping / sidecar design decisions.
 
-- Do not run another real-token smoke for the explainability patch.
+- Do not run another real-token smoke unless later provider mapping or sidecar
+  execution changes require it.
 - Do not request or read a token.
 - Do not connect MCP or read local MCP config.
 - Do not call Tushare or use the network.
-- Keep explainability default-off and emit only `score_confidence_explainability.json` under the provider-comparison timestamp directory when explicitly enabled.
+- Keep explainability default-off and emit only
+  `score_confidence_explainability.json` under the provider-comparison
+  timestamp directory when explicitly enabled.
 - Keep Tushare non-primary, keep no automatic merge, and keep no automatic drift acceptance.
+- Later work may review explainability artifacts, evaluate `fina_mainbz`
+  `type=P/D/I` selected-period ratio derivation, and design sidecar policy
+  separately.
 
 Phase 5: config switch to primary Tushare.
 
@@ -940,9 +1029,9 @@ Technical-analysis data-source integration is explicitly out of scope for this m
 
 ## 15. Current Go / No-Go Recommendation
 
-Recommendation: Freeze the accepted Phase 4 dry-run / comparison-only baseline, real-token smoke gate safety skeleton baseline, and third-smoke data-availability conclusion. Proceed only to comparison-only score / confidence explainability implementation after this design is accepted.
+Recommendation: Freeze the accepted Phase 4 dry-run / comparison-only baseline, real-token smoke gate safety skeleton baseline, third-smoke data-availability conclusion, and accepted score / confidence explainability implementation.
 
-The third smoke moved the migration from provider-availability uncertainty to drift-explainability review. Tushare can be treated as usable for comparison, but not as the primary provider. Primary-provider switch still requires a separate design, implementation, acceptance cycle, and external audit before acceptance.
+The third smoke moved the migration from provider-availability uncertainty to drift-explainability review, and the accepted explainability implementation now provides a comparison-only artifact for that review. Tushare can be treated as usable for comparison, but not as the primary provider. Primary-provider switch still requires a separate design, implementation, acceptance cycle, and external audit before acceptance.
 
 Completed Phase 1 / Phase 2 / Phase 3 / Phase 4 scope:
 
@@ -966,8 +1055,9 @@ Completed Phase 1 / Phase 2 / Phase 3 / Phase 4 scope:
 - Provider-separated dry-run comparison tests.
 - Third local real-token smoke data review with `partial_pass_data_review_required`.
 - Score / confidence explainability design.
+- Score / confidence explainability implementation and acceptance.
 
-Accepted Phase 3 / Phase 4 dry-run and safety-skeleton work did not:
+Accepted Phase 3 / Phase 4 dry-run, safety-skeleton, and explainability work did not:
 
 - call real Tushare
 - require a real token
@@ -982,7 +1072,7 @@ Accepted Phase 3 / Phase 4 dry-run and safety-skeleton work did not:
 - change Research Intelligence P1.1
 - change HTML Report or Dashboard
 - change classifier, scoring, readiness, or deterministic pipeline behavior
-- generate `output/provider_comparison`
+- generate `output/provider_comparison` by default
 - write production output
 - change regression expected outputs
 - generate committed runtime artifacts
@@ -996,10 +1086,13 @@ Accepted Phase 4 guardrails:
 - Keep `ProviderRouter` `dual_compare` as no-merge behavior.
 - Keep `--include-p1` off by default.
 - Keep `--real-token-smoke` guarded by explicit `--provider-transport sdk`, no-token fail-closed behavior, and safety gate checks.
-- Do not run another real-token smoke for the explainability patch.
+- Do not run another real-token smoke unless later provider mapping or sidecar
+  execution changes require it.
 - Do not accept classification, score, confidence, or P1.1 question drift automatically.
 - Keep explainability default-off and comparison-only.
-- Keep `score_confidence_explainability.json` out of default output and out of git.
+- Keep `score_confidence_explainability.json` limited to explicit
+  `--explainability` writes under
+  `output/provider_comparison/<timestamp>/<code>/` and out of git.
 
 No-Go triggers:
 

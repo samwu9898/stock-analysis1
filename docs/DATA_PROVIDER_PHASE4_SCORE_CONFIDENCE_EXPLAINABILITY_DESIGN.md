@@ -2,14 +2,14 @@
 
 Date: 2026-05-27
 
-Status: design documentation patch only. No implementation is included in this
-patch.
+Status: comparison-only score / confidence explainability implementation
+completed and accepted; this patch is documentation synchronization only.
 
 This document consolidates the Gemini / DeepSeek / Kimi external audit feedback
-after the third Tushare real-token smoke review into a formal design boundary
-for a future comparison-only score / confidence explainability patch.
+after the third Tushare real-token smoke review and records the accepted
+comparison-only score / confidence explainability implementation boundary.
 
-This phase only adds and synchronizes documentation. It does not change code,
+This documentation sync only adds and synchronizes documentation. It does not change code,
 tests, config, pipeline behavior, classifier behavior, scoring / readiness,
 Research Intelligence P1.1, HTML / Dashboard behavior, runtime output,
 comparison output, or regression expected files. It does not read a token, call
@@ -23,7 +23,13 @@ Reference smoke artifact root recorded by the prior review:
 output/provider_comparison/20260526T233804
 ```
 
-Latest recorded verification from the third real-token smoke review:
+Latest recorded score / confidence explainability implementation verification:
+
+- targeted tests: `38 passed`
+- full `pytest`: `644 passed, 1 skipped`
+- regression suite: `passed=47 failed=0 total=47`
+
+Previous recorded verification from the third real-token smoke review:
 
 - `pytest`: `630 passed, 1 skipped`
 - regression suite: `passed=47 failed=0 total=47`
@@ -56,13 +62,17 @@ Current decision:
   gate.
 - Canonical mapping has materially improved compared with earlier Phase 4
   states.
-- The remaining issue is score / confidence drift explainability, not provider
+- Score / confidence drift explainability implementation has been completed and
+  accepted as comparison-only tooling.
+- The remaining migration issue is review of the explainability artifact and
+  any later provider-mapping / sidecar policy decisions, not provider
   reachability.
 - Tushare must not become primary yet.
 - AkShare and Tushare data must not be automatically merged.
 - Drift must not be automatically accepted.
-- A new real-token smoke is not needed for the explainability design or first
-  implementation patch.
+- A new real-token smoke is not needed for this documentation sync or for
+  explainability artifact review unless later provider mapping or sidecar
+  execution changes are introduced.
 - The user does not need to provide any token for this stage.
 
 ## 2. Drift Classification
@@ -122,14 +132,13 @@ The correct sequence is:
 The comparison system must not hide true evidence gaps. If the Tushare-only view
 lacks domain evidence, the explainability artifact should say so directly.
 
-## 4. Comparison-Only Explainability V1 Scope
+## 4. Implemented Comparison-Only Explainability V1 Scope
 
-The first explainability implementation, if approved later, is limited to:
+The accepted explainability implementation is limited to:
 
 - comparison-only behavior
 - default off
 - generated only when `compare_providers` receives explicit `--explainability`
-  or an equivalent explicit flag
 - no token read
 - no network
 - no Tushare call
@@ -146,8 +155,8 @@ The first explainability implementation, if approved later, is limited to:
 - no automatic provider merge
 - no automatic drift acceptance
 
-The explainability patch may run against existing comparison artifacts, fake
-provider outputs, or dry-run test fixtures. It must not require a real token.
+The implementation may run against injected provider outputs and dry-run test
+fixtures. It must not require a real token.
 
 ## 5. Output Boundary
 
@@ -165,15 +174,15 @@ output/provider_comparison/<timestamp>/<code>/score_confidence_explainability.js
 
 Required boundary rules:
 
-- The artifact must be added to the comparison artifact allowlist before any
-  implementation writes it.
+- The artifact has been added to the comparison artifact allowlist as
+  `EXPLAINABILITY_ARTIFACT_NAMES`.
 - It is generated only in explicit explainability mode.
 - It must not write `output/raw_*.json`.
 - It must not write `output/fundamental_*.json`.
 - It must not write `output/evidence_pack_*.json`.
 - It must not write `output/reports`.
 - It must not enter git.
-- It must not change default `diff_report` content.
+- It must not change default `diff_report.json` or `diff_report.md` content.
 - If a future patch wants `diff_report.md` to reference explainability, that
   must be separately designed and reviewed; it is not part of V1.
 
@@ -311,16 +320,10 @@ Schema notes:
 
 ## 7. Module Boundary
 
-Future implementation may choose one of these module names:
+Accepted implementation module:
 
 ```text
 src/fundamental_skill/data_providers/score_confidence_explainability.py
-```
-
-or:
-
-```text
-src/fundamental_skill/data_providers/diff_explainability.py
 ```
 
 Required module boundary:
@@ -350,7 +353,7 @@ downstream scoring.
 
 ## 8. CLI / Runner Design
 
-A future implementation may add:
+The accepted implementation adds:
 
 ```text
 --explainability
@@ -364,6 +367,7 @@ CLI requirements:
 - does not require `--real-token-smoke`
 - can be used with existing artifacts, fake provider fixtures, or dry-run data
 - does not automatically execute real-token smoke
+- cannot be combined with `--real-token-smoke` in V1
 - does not automatically run Research Intelligence P1.1
 - does not automatically modify `diff_report`
 - does not automatically accept drift
@@ -373,8 +377,9 @@ migration acceptance flag.
 
 ## 9. Diff Classifier Subcategory Design
 
-Future implementation may add `drift_subcategory` for diff / explainability
-only. It must not alter scoring, readiness, classifier output, or migration
+The accepted implementation adds reviewer-aid drift subcategory values in
+`diff_classifier` for explainability use. These values must not alter scoring,
+readiness, classifier output, default `diff_report` schema, or migration
 acceptance.
 
 Recommended subcategories:
@@ -494,9 +499,15 @@ This phase and the V1 explainability implementation must not touch:
 Any future change to one of these areas requires a separate design, acceptance
 gate, and external audit where appropriate.
 
-## 15. Acceptance Design For Future Implementation
+## 15. Implementation Acceptance Record
 
-Future implementation acceptance should verify:
+Accepted implementation verification:
+
+- targeted tests: `38 passed`
+- full `pytest`: `644 passed, 1 skipped`
+- regression suite: `passed=47 failed=0 total=47`
+
+The accepted implementation boundary verifies:
 
 - no scoring import
 - default `compare_providers` behavior unchanged
@@ -524,12 +535,13 @@ Recommended test posture:
 - artifact-boundary test proving writes are limited to
   `output/provider_comparison/<timestamp>/<code>/score_confidence_explainability.json`
 
-This design does not require tests to run in the current documentation-only
-patch.
+This documentation-only sync does not require pytest or regression to be rerun;
+it cites the accepted implementation results above.
 
 ## 16. Whether Another Real Smoke Is Needed
 
-No new real-token smoke is needed for the explainability patch.
+No new real-token smoke is needed for this documentation sync or explainability
+artifact review.
 
 Rationale:
 
@@ -550,23 +562,25 @@ A future real-token smoke becomes relevant only if a later patch implements:
 
 Recommended roadmap:
 
-1. This design documentation patch.
-2. Comparison-only explainability implementation.
-3. Acceptance for the implementation boundary.
-4. Documentation synchronization.
-5. Decide whether to implement `fina_mainbz` `type=P/D/I` selected-period ratio
+1. Score / confidence explainability design. Completed.
+2. Comparison-only explainability implementation. Completed.
+3. Acceptance for the implementation boundary. Completed.
+4. Documentation synchronization. This patch.
+5. Review `score_confidence_explainability.json` artifacts when useful.
+6. Decide whether to implement `fina_mainbz` `type=P/D/I` selected-period ratio
    derivation.
-6. Sidecar policy design.
-7. Primary-provider switch remains remote and must require external audit.
+7. Sidecar policy design.
+8. Primary-provider switch remains remote and must require external audit.
 
 Primary-provider switching is not a near-term step. The current state is data
-availability pass plus score / confidence explainability review required.
+availability pass plus accepted comparison-only explainability tooling; artifact
+review and later mapping / sidecar decisions remain separate.
 
 ## 18. External Audit Feedback Adoption
 
 Gemini audit adoption (`A`):
 
-- Proceed only toward comparison-only explainability.
+- Proceed only within comparison-only explainability.
 - Do not allow hidden merge through sidecars.
 - Keep ratio derivation strictly within the same group and same period if it is
   ever implemented in a later patch.

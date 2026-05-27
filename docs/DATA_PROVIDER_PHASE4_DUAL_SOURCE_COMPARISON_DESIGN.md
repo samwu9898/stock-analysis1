@@ -2,13 +2,14 @@
 
 Date: 2026-05-26
 
-Status: Phase 4 dual-source comparison dry-run implementation accepted; Phase 4 real-token smoke gate safety skeleton implemented and accepted; documentation sync patch only.
+Status: Phase 4 dual-source comparison dry-run implementation accepted; Phase 4 real-token smoke gate safety skeleton implemented and accepted; Phase 4 score / confidence explainability implementation accepted; documentation sync patch only.
 
 This document records the accepted Phase 4 implementation boundary for
 dual-source comparison dry-run tooling and local real-token acceptance planning
 after Phase 1 provider abstraction skeleton, Phase 2 `AkShareProvider` adapter,
 Phase 3 mocked `TushareProvider` MVP, Phase 4 comparison-only dry-run tooling,
-and the Phase 4 real-token smoke gate safety skeleton were accepted.
+the Phase 4 real-token smoke gate safety skeleton, and the comparison-only
+score / confidence explainability implementation were accepted.
 
 This patch does not change code, tests, config, pipeline, classifier,
 connector, scoring / readiness, HTML / Dashboard, runtime output, or regression
@@ -22,14 +23,17 @@ Accepted Phase 4 implementation inventory:
 - `token_leak_scanner`
 - `real_token_smoke_gate`
 - `tushare_sdk_transport`
+- `score_confidence_explainability.py`
 - CLI interlock for `--real-token-smoke` and `--provider-transport`
+- explicit `--explainability` for comparison-only explainability artifacts
 - strengthened token scanner
 - `strategy_type_drift` diff category
+- reviewer-aid drift subcategory values for explainability use
 
-Latest recorded verification after Phase 4 real-token smoke gate safety skeleton acceptance:
+Latest recorded verification after Phase 4 score / confidence explainability acceptance:
 
-- targeted tests `42 passed, 1 skipped`
-- full `pytest` `589 passed, 1 skipped`
+- targeted tests `38 passed`
+- full `pytest` `644 passed, 1 skipped`
 - regression suite `passed=47 failed=0 total=47`
 
 ## 1. Phase 4 Positioning
@@ -76,7 +80,9 @@ Phase roadmap snapshot:
 - Phase 3 accepted.
 - Phase 4 dry-run accepted.
 - Phase 4 real-token smoke gate safety skeleton accepted.
-- Next: local real-token smoke execution acceptance review / external audit gate.
+- Phase 4 score / confidence explainability accepted.
+- Next: explainability artifact review, later `fina_mainbz` ratio-derivation
+  evaluation, or separate sidecar policy design.
 
 ## 2. Dual-Source Comparison Dry-Run Design
 
@@ -140,6 +146,12 @@ akshare_evidence_pack.json
 tushare_evidence_pack.json
 diff_report.json
 diff_report.md
+```
+
+If explicit score / confidence explainability is enabled, also write:
+
+```text
+score_confidence_explainability.json
 ```
 
 If P1.1 comparison is explicitly enabled, also write:
@@ -232,6 +244,8 @@ Accepted diff-classifier behavior:
 - `score_drift` must set `review_required=true`.
 - `P1_question_drift` must set `review_required=true`.
 - `token_or_secret_risk` must be `blocker`.
+- Reviewer-aid drift subcategory values may be used by explainability
+  diagnostics but must not change default `diff_report` schema or acceptance.
 - No drift is automatically accepted, even when the raw-data difference appears reasonable.
 
 Strategy-type, classification, confidence, score, and P1.1 question drift
@@ -366,6 +380,10 @@ Latest recorded verification after safety skeleton acceptance: targeted tests
 `42 passed, 1 skipped`; full `pytest` `589 passed, 1 skipped`; regression
 suite `passed=47 failed=0 total=47`.
 
+Latest recorded verification after score / confidence explainability acceptance:
+targeted tests `38 passed`; full `pytest` `644 passed, 1 skipped`;
+regression suite `passed=47 failed=0 total=47`.
+
 Real-token smoke tests must not run in CI by default and must not require real
 credentials.
 
@@ -393,6 +411,8 @@ Runner requirements:
 - default does not modify current `evidence_pack`
 - default does not run HTML / P1.1
 - P1.1 requires explicit `--include-p1`
+- score / confidence explainability requires explicit `--explainability`
+- `--explainability` cannot be combined with `--real-token-smoke` in V1
 - token safe
 
 The runner should fail closed if the requested provider is unavailable, if the
@@ -427,6 +447,8 @@ Recommended external-audit stance:
 - Phase 4 design and dry-run implementation have been accepted without requiring real-token external audit because they remained comparison-only.
 - Phase 4 real-token smoke gate safety skeleton has been implemented and
   accepted without executing real smoke.
+- Phase 4 score / confidence explainability has been implemented and accepted
+  without real-token smoke, token reading, network, or MCP.
 - Local real-token smoke execution should have Claude review or strict human
   audit before execution.
 - Primary-provider switch must have external audit before acceptance.
@@ -434,7 +456,7 @@ Recommended external-audit stance:
 ## 14. Next Recommendation
 
 Recommendation: keep the accepted Phase 4 implementation frozen as a tightly
-isolated dry-run plus real-token smoke gate safety baseline:
+isolated dry-run plus real-token smoke gate safety plus explainability baseline:
 
 - isolated `compare_providers` runner
 - diff classifier
@@ -444,10 +466,14 @@ isolated dry-run plus real-token smoke gate safety baseline:
 - real-token smoke gate helper
 - SDK transport skeleton
 - provider-separated pipeline / evidence builder
+- score / confidence explainability helper
+- explicit `--explainability`
 
-Next gate: local real-token smoke execution acceptance review / external audit gate.
+Next gate: explainability artifact review, later `fina_mainbz` `type=P/D/I`
+ratio derivation evaluation, or separate sidecar policy design.
 
-Do not directly execute a real-token smoke. Real tokens may be used only in a
+Do not directly execute another real-token smoke unless later provider mapping
+or sidecar execution changes require it. Real tokens may be used only in a
 later local-only execution acceptance step through local `TUSHARE_TOKEN` or
 local MCP config; they must never enter prompts, code, docs, tests, logs,
 output, commits, or review comments.
@@ -460,5 +486,6 @@ Do not change:
 - HTML / Dashboard / P1.1 default chain
 
 The user does not need to provide a token now. A token is needed only for a
-later local-only real-token smoke, and then only through local `TUSHARE_TOKEN`
-or local MCP config, never through prompts or repository files.
+later local-only real-token smoke that is justified by provider mapping or
+sidecar execution changes, and then only through local `TUSHARE_TOKEN` or local
+MCP config, never through prompts or repository files.
