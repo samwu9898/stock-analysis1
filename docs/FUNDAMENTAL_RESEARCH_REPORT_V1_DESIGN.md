@@ -5,14 +5,16 @@ Date: 2026-05-27
 Stage: Fundamental Skill 600406 Automated Fundamental Research Report V1
 Design.
 
-Status: design-only. This document does not implement code, does not modify
-tests, fixtures, pipeline, scoring / readiness, Research Intelligence P1.1,
-HTML / Dashboard, regression expected files, provider-primary behavior, default
-output, provider raw artifacts, evidence packs, candidate reports, or review
-decision artifacts. It does not run real smoke tests, read `TUSHARE_TOKEN`, use
-the network, call Tushare or AkShare, connect MCP, promote fixture values,
-automatically merge providers, or output buy / sell advice, target prices,
-position sizing, portfolio weights, or technical trading advice.
+Status: design accepted, implementation accepted, first `600406` runtime
+artifact accepted, and Research Report V1 baseline frozen. This document records
+the accepted design boundary; the implementation and baseline freeze do not
+modify tests, fixtures, pipeline, scoring / readiness, Research Intelligence
+P1.1, HTML / Dashboard, regression expected files, provider-primary behavior,
+default output, provider raw artifacts, evidence packs, candidate reports, or
+review decision artifacts. They do not run real smoke tests, read
+`TUSHARE_TOKEN`, use the network, call Tushare or AkShare, connect MCP, promote
+fixture values, automatically merge providers, or output buy / sell advice,
+target prices, position sizing, portfolio weights, or technical trading advice.
 
 Current design inputs reviewed:
 
@@ -28,7 +30,13 @@ Current design inputs reviewed:
 - local
   `output/ground_truth_candidate_reviews/20260527T172520/600406/candidate_review_decisions.json`
 
-No runtime output is written in this stage.
+The first accepted runtime artifact is
+`output/research_reports/20260527T103241/600406/fundamental_research_report_v1.json`.
+It is an ignored runtime artifact and is not committed.
+
+The next stage is Product Readability / Analyst Experience Review. It is not
+promote-rule design, validator implementation, fixture promotion, or a Tushare
+primary switch.
 
 ## 1. Goal Correction
 
@@ -603,7 +611,8 @@ Expected evidence labels:
 
 ## 9. Acceptance Criteria
 
-Future Research Report V1 implementation acceptance should check:
+Research Report V1 implementation and the first `600406` runtime artifact have
+passed acceptance. Acceptance checked:
 
 - no token read;
 - no network access;
@@ -627,20 +636,28 @@ Future Research Report V1 implementation acceptance should check:
 - 600406 report explains opportunity, risk, evidence gaps, rebuttal
   conditions, and follow-up variables;
 - `not_for_trading_advice=true` appears in the output;
-- pytest and regression remain green when implementation is added.
+- targeted tests `64 passed`;
+- regression `passed=47 failed=0 total=47`.
 
 ## 10. Roadmap
 
-Recommended sequence:
+Completed sequence:
 
 1. This design document.
 2. Research Report V1 implementation.
-3. Generate the first report from existing 600406 local artifacts.
-4. Review the 600406 report artifact.
-5. Extend to 002371 and 002050 with their existing artifacts.
-6. Later consider promote rules, validator, and primary-provider switch only
-   after the report path is accepted.
+3. First report generation from existing 600406 local artifacts.
+4. 600406 report artifact acceptance.
+5. Research Report V1 baseline freeze / documentation sync.
 
-Do not continue into promote-rule design before Research Report V1 has been
-implemented and reviewed. The product line should now return from data-quality
-audit infrastructure to professional fundamental research output.
+Next recommended sequence:
+
+1. Product Readability / Analyst Experience Review.
+2. Optional report wording / structure refinement.
+3. Generate and review 002371 and 002050 reports with their existing artifacts.
+4. Later consider promote rules, validator, fixture promotion, and
+   primary-provider switch only after the report product experience is reviewed.
+
+Do not continue into promote-rule design, validator implementation, fixture
+promotion, or Tushare primary switch as the next step. The product line should
+now return from data-quality audit infrastructure to professional fundamental
+research output.
