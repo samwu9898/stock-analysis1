@@ -4,7 +4,7 @@ Date: 2026-05-27
 
 Stage: Phase 4 Closeout / Baseline Freeze.
 
-Status: Phase 0 design documentation completed; Phase 1 provider abstraction skeleton accepted; Phase 2 `AkShareProvider` adapter implemented and accepted; Phase 3 `TushareProvider` mocked MVP implemented and accepted; Phase 4 dual-source comparison dry-run tooling implemented and accepted; Phase 4 local real-token smoke gate documentation completed; Phase 4 real-token smoke gate safety skeleton implemented and accepted. A later third local real-token smoke review completed with `partial_pass_data_review_required`: Tushare endpoint availability and canonical mapping materially improved, while score / confidence drift required comparison-only explainability. Phase 4 score / confidence explainability design, implementation, acceptance, narrative hints, artifact review, and closeout baseline freeze are now completed. Tushare is usable for comparison but is still not allowed to become primary, AkShare / Tushare data must not be automatically merged, and drift must not be automatically accepted. The next recommended phase is Fundamental Ground Truth Benchmark Design, not another Phase 4 smoke. This documentation sync does not change code, tests, config, deterministic pipeline behavior, classifier rules, connector behavior, scoring, readiness, HTML / Dashboard behavior, generated output, or regression expectations.
+Status: Phase 0 design documentation completed; Phase 1 provider abstraction skeleton accepted; Phase 2 `AkShareProvider` adapter implemented and accepted; Phase 3 `TushareProvider` mocked MVP implemented and accepted; Phase 4 dual-source comparison dry-run tooling implemented and accepted; Phase 4 local real-token smoke gate documentation completed; Phase 4 real-token smoke gate safety skeleton implemented and accepted. A later third local real-token smoke review completed with `partial_pass_data_review_required`: Tushare endpoint availability and canonical mapping materially improved, while score / confidence drift required comparison-only explainability. Phase 4 score / confidence explainability design, implementation, acceptance, narrative hints, artifact review, and closeout baseline freeze are now completed. Tushare is usable for comparison but is still not allowed to become primary, AkShare / Tushare data must not be automatically merged, and drift must not be automatically accepted. Fundamental Ground Truth Benchmark Design is now recorded in `docs/FUNDAMENTAL_GROUND_TRUTH_BENCHMARK_DESIGN.md`; the next recommended phase is benchmark schema / fixture implementation, not another Phase 4 smoke. This documentation sync does not change code, tests, config, deterministic pipeline behavior, classifier rules, connector behavior, scoring, readiness, HTML / Dashboard behavior, generated output, or regression expectations.
 
 Latest Phase 2 acceptance record:
 
@@ -93,7 +93,9 @@ Latest Phase 4 closeout / baseline freeze record:
 - Latest recorded verification remains targeted tests `27 passed`, full
   `pytest` `648 passed, 1 skipped`, and regression suite
   `passed=47 failed=0 total=47`.
-- Next recommended phase: Fundamental Ground Truth Benchmark Design.
+- Next recommended phase: Ground Truth Benchmark schema / fixture implementation,
+  after the design recorded in
+  `docs/FUNDAMENTAL_GROUND_TRUTH_BENCHMARK_DESIGN.md`.
 
 ## 1. Background And Goals
 
@@ -1051,7 +1053,11 @@ See `docs/DATA_PROVIDER_PHASE4_DUAL_SOURCE_COMPARISON_DESIGN.md` for the accepte
 
 See `docs/DATA_PROVIDER_PHASE4_SCORE_CONFIDENCE_EXPLAINABILITY_DESIGN.md` for the accepted score / confidence drift explainability design and implementation boundary.
 
-Next gate: explainability artifact review and later mapping / sidecar design decisions.
+See `docs/FUNDAMENTAL_GROUND_TRUTH_BENCHMARK_DESIGN.md` for the manual factual benchmark design that should precede any block-level primary-provider decision.
+
+Next gate: Ground Truth Benchmark schema / fixture implementation, then a small
+manual sample fill and standalone validator script before later mapping /
+sidecar design decisions.
 
 - Do not run another real-token smoke unless later provider mapping or sidecar
   execution changes require it.
@@ -1062,17 +1068,33 @@ Next gate: explainability artifact review and later mapping / sidecar design dec
   `score_confidence_explainability.json` under the provider-comparison
   timestamp directory when explicitly enabled.
 - Keep Tushare non-primary, keep no automatic merge, and keep no automatic drift acceptance.
-- First review explainability artifacts when useful. Later work may evaluate `fina_mainbz`
-  `type=P/D/I` selected-period ratio derivation, and design sidecar policy
-  separately.
+- First produce a ground-truth benchmark report before deciding whether AkShare
+  or Tushare should become primary for any block. Later work may evaluate
+  `fina_mainbz` `type=P/D/I` selected-period ratio derivation and design
+  sidecar policy separately.
 
-Phase 5: config switch to primary Tushare.
+Phase 5: Ground Truth Benchmark schema / fixture implementation.
 
-- Enable Tushare primary behind explicit config.
-- Keep AkShare fallback.
+- Add the small manual benchmark fixture after a separate implementation patch.
+- Keep the fixture free of tokens, MCP URLs, local secret paths, and raw paid
+  source exports.
+- Start with a standalone validator script rather than mandatory CI.
+
+Phase 6: Tushare block-level primary design.
+
+- Evaluate `financial_indicator`, `valuation`, and `basic_identity` separately.
+- Do not switch global primary based on a small benchmark.
+- Do not switch `business_composition`, `main_business`, `news`,
+  `commodity_prices`, or `domain_evidence` without source-specific validation.
+- Keep AkShare / Tushare merge and drift acceptance manual and review-gated.
+
+Later phase: explicit provider config switch, only after block-level acceptance.
+
+- Enable a reviewed block-level Tushare primary path behind explicit config.
+- Keep AkShare fallback where appropriate.
 - Fail closed for `provider=tushare` without token.
 
-Phase 6: docs / regression freeze.
+Phase 7: docs / regression freeze.
 
 - Freeze provider behavior once accepted.
 - Update documentation and regression strategy only after review.
