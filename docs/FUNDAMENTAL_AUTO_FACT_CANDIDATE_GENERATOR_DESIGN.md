@@ -359,6 +359,13 @@ Rules:
 - The generator must not write evidence packs.
 - The generator must not write provider raw artifacts.
 
+Candidate report review is a separate protocol layer, documented in
+`docs/FUNDAMENTAL_CANDIDATE_REPORT_REVIEW_PROTOCOL_DESIGN.md`. That protocol
+turns `manual_review_priority_queue` into a small set of executable review
+actions. It does not change generator candidates, auto-accept rules, fixtures,
+provider primary behavior, or provider data, and it does not read tokens, use
+the network, call Tushare / AkShare, or connect MCP.
+
 Recommended `fact_candidates.json` shape:
 
 ```json
@@ -498,13 +505,16 @@ Recommended sequence:
 2. Implement offline candidate generation from the existing third-smoke
    artifacts.
 3. Generate `fact_candidates.json` for `600406`.
-4. Review the candidate artifact.
-5. Promote a small number of `auto_accepted` or human-reviewed fields to the
-   ground-truth fixture.
-6. Design and implement the validator.
-7. Design any Tushare block-level primary switch separately.
-8. Add official parser / CNInfo parser support.
-9. Add sidecar evidence designs for commodity prices and domain-specific
+4. Design and accept the Candidate Report Review Protocol.
+5. Design the review decisions artifact.
+6. Convert `manual_review_priority_queue` into review decisions for the
+   highest-value fields.
+7. Design promote rules.
+8. Perform controlled fixture promotion only after promote rules are accepted.
+9. Design and implement the validator only after reviewed fixture fields exist.
+10. Design any Tushare block-level primary switch separately.
+11. Add official parser / CNInfo parser support.
+12. Add sidecar evidence designs for commodity prices and domain-specific
    operating evidence.
 
 ## 15. External Audit Position

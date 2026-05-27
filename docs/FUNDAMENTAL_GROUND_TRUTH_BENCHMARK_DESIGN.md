@@ -72,6 +72,12 @@ workflow sequence: generate provider / official-parser candidates first, review
 only conflicts and unclear fields, and promote only accepted facts into this
 benchmark.
 
+The Candidate Report Review Protocol design is recorded in
+`docs/FUNDAMENTAL_CANDIDATE_REPORT_REVIEW_PROTOCOL_DESIGN.md`. It sits between
+candidate report generation and any future promote-to-fixture step: it converts
+`manual_review_priority_queue` into a small set of review decisions, while the
+fixture remains unchanged until a later independent promotion stage.
+
 ## 2. V1 Sample Pool Design
 
 V1 should start with 8 to 12 reviewed stocks. The target size is 12
@@ -562,13 +568,17 @@ Recommended sequence:
 3. Auto Fact Candidate Generator design.
 4. Offline artifact candidate generator implementation.
 5. Candidate report for a first sample such as `600406`.
-6. Promote selected `auto_accepted` or human-reviewed fields into the fixture.
-7. Ground truth validator script.
-8. Benchmark report for AkShare / Tushare / canonical output.
-9. Tushare block-level primary design.
-10. P1.1 deep validation.
-11. `fina_mainbz type=P/D/I` ratio derivation.
-12. Sidecar data availability design.
+6. Candidate Report Review Protocol design and acceptance.
+7. Review decisions artifact design.
+8. Review decisions for selected high-priority candidate queue items.
+9. Promote-rule design.
+10. Controlled fixture promotion only after promote rules are accepted.
+11. Ground truth validator script only after reviewed fixture fields exist.
+12. Benchmark report for AkShare / Tushare / canonical output.
+13. Tushare block-level primary design.
+14. P1.1 deep validation.
+15. `fina_mainbz type=P/D/I` ratio derivation.
+16. Sidecar data availability design.
 
 ## 13. Delivery Checklist For This Patch
 
