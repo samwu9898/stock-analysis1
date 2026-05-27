@@ -1,15 +1,16 @@
 # Data Provider Phase 4 Dual-Source Comparison Design
 
-Date: 2026-05-26
+Date: 2026-05-27
 
-Status: Phase 4 dual-source comparison dry-run implementation accepted; Phase 4 real-token smoke gate safety skeleton implemented and accepted; Phase 4 score / confidence explainability implementation accepted; documentation sync patch only.
+Status: Phase 4 dual-source comparison dry-run implementation accepted; Phase 4 real-token smoke gate safety skeleton implemented and accepted; Phase 4 score / confidence explainability implementation and narrative hints patch accepted; documentation sync patch only.
 
 This document records the accepted Phase 4 implementation boundary for
 dual-source comparison dry-run tooling and local real-token acceptance planning
 after Phase 1 provider abstraction skeleton, Phase 2 `AkShareProvider` adapter,
 Phase 3 mocked `TushareProvider` MVP, Phase 4 comparison-only dry-run tooling,
-the Phase 4 real-token smoke gate safety skeleton, and the comparison-only
-score / confidence explainability implementation were accepted.
+the Phase 4 real-token smoke gate safety skeleton, the comparison-only
+score / confidence explainability implementation, and the reviewer-facing
+narrative hints patch were accepted.
 
 This patch does not change code, tests, config, pipeline, classifier,
 connector, scoring / readiness, HTML / Dashboard, runtime output, or regression
@@ -26,14 +27,15 @@ Accepted Phase 4 implementation inventory:
 - `score_confidence_explainability.py`
 - CLI interlock for `--real-token-smoke` and `--provider-transport`
 - explicit `--explainability` for comparison-only explainability artifacts
+- top-level `narrative_hints[]` in `score_confidence_explainability.json`
 - strengthened token scanner
 - `strategy_type_drift` diff category
 - reviewer-aid drift subcategory values for explainability use
 
-Latest recorded verification after Phase 4 score / confidence explainability acceptance:
+Latest recorded verification after Phase 4 score / confidence explainability narrative hints acceptance:
 
-- targeted tests `38 passed`
-- full `pytest` `644 passed, 1 skipped`
+- targeted tests `27 passed`
+- full `pytest` `648 passed, 1 skipped`
 - regression suite `passed=47 failed=0 total=47`
 
 ## 1. Phase 4 Positioning
@@ -81,6 +83,7 @@ Phase roadmap snapshot:
 - Phase 4 dry-run accepted.
 - Phase 4 real-token smoke gate safety skeleton accepted.
 - Phase 4 score / confidence explainability accepted.
+- Phase 4 score / confidence explainability narrative hints accepted.
 - Next: explainability artifact review, later `fina_mainbz` ratio-derivation
   evaluation, or separate sidecar policy design.
 
@@ -380,8 +383,8 @@ Latest recorded verification after safety skeleton acceptance: targeted tests
 `42 passed, 1 skipped`; full `pytest` `589 passed, 1 skipped`; regression
 suite `passed=47 failed=0 total=47`.
 
-Latest recorded verification after score / confidence explainability acceptance:
-targeted tests `38 passed`; full `pytest` `644 passed, 1 skipped`;
+Latest recorded verification after score / confidence explainability narrative
+hints acceptance: targeted tests `27 passed`; full `pytest` `648 passed, 1 skipped`;
 regression suite `passed=47 failed=0 total=47`.
 
 Real-token smoke tests must not run in CI by default and must not require real

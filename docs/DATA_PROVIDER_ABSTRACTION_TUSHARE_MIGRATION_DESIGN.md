@@ -1,8 +1,8 @@
 # Data Provider Abstraction + Tushare Migration Design
 
-Date: 2026-05-26
+Date: 2026-05-27
 
-Stage: Phase 4 Score / Confidence Explainability Documentation Sync Patch.
+Stage: Phase 4 Score / Confidence Explainability Narrative Hints Documentation Sync Patch.
 
 Status: Phase 0 design documentation completed; Phase 1 provider abstraction skeleton accepted; Phase 2 `AkShareProvider` adapter implemented and accepted; Phase 3 `TushareProvider` mocked MVP implemented and accepted; Phase 4 dual-source comparison dry-run tooling implemented and accepted; Phase 4 local real-token smoke gate documentation completed; Phase 4 real-token smoke gate safety skeleton implemented and accepted. A later third local real-token smoke review completed with `partial_pass_data_review_required`: Tushare endpoint availability and canonical mapping materially improved, while score / confidence drift required comparison-only explainability. Phase 4 score / confidence explainability design, implementation, and acceptance are now completed. Tushare is still not allowed to become primary, AkShare / Tushare data must not be automatically merged, and drift must not be automatically accepted. This documentation sync does not change code, tests, config, deterministic pipeline behavior, classifier rules, connector behavior, scoring, readiness, HTML / Dashboard behavior, generated output, or regression expectations.
 
@@ -65,10 +65,17 @@ Latest Phase 4 score / confidence explainability implementation acceptance recor
 - `compare_providers` added explicit `--explainability`.
 - `comparison_artifacts` allowlist added `score_confidence_explainability.json`.
 - `diff_classifier` added reviewer-aid drift subcategory values for explainability use.
+- Added accepted top-level `narrative_hints[]` for reviewer-facing drift
+  explanation only.
 - The explainability artifact writes only to `output/provider_comparison/<timestamp>/<code>/score_confidence_explainability.json`.
 - Default `diff_report.json` / `diff_report.md`, raw output, fundamental output, evidence packs, `output/reports`, HTML / Dashboard, P1.1, scoring, readiness, classifier behavior, and regression expected files remain unchanged.
 - No token was read, no network was used, no MCP was connected, no real smoke was run, no primary switch occurred, no automatic merge occurred, and no drift was automatically accepted.
-- Latest recorded verification: targeted tests `38 passed`; full `pytest` `644 passed, 1 skipped`; regression suite `passed=47 failed=0 total=47`.
+- Narrative hints are `automatic_acceptance=false` and `not_for_scoring=true`;
+  they do not change score, confidence, drift acceptance, canonical fields,
+  scoring, classifier, readiness, primary-provider selection, or merge behavior.
+- Latest recorded verification after narrative hints acceptance: targeted tests
+  `27 passed`; full `pytest` `648 passed, 1 skipped`; regression suite
+  `passed=47 failed=0 total=47`.
 
 ## 1. Background And Goals
 
@@ -607,7 +614,8 @@ Latest third-smoke verification:
 ### Phase 4 Score / Confidence Explainability Implementation Status
 
 Score / confidence explainability has been implemented and accepted as
-comparison-only tooling.
+comparison-only tooling. The narrative hints patch has also been implemented
+and accepted as reviewer-facing explanation only.
 
 Accepted modules and changes:
 
@@ -621,6 +629,8 @@ Accepted modules and changes:
   explicit explainability artifact allowlist only.
 - `diff_classifier.py`: adds reviewer-aid drift subcategory values for
   explainability use without changing default diff report behavior.
+- `score_confidence_explainability.py`: now emits accepted top-level
+  `narrative_hints[]` entries for reviewer-facing explanation.
 
 Accepted artifact boundary:
 
@@ -631,6 +641,32 @@ Accepted artifact boundary:
   `output/reports`, default output, and report output.
 - Default `diff_report.json` and `diff_report.md` are unchanged when
   explainability is not explicitly requested.
+- `narrative_hints[]` stays inside
+  `score_confidence_explainability.json` and does not modify raw,
+  fundamental, evidence-pack, or diff-report artifacts.
+
+Accepted narrative hint coverage:
+
+| Code | Accepted hints |
+| --- | --- |
+| `600406` | `business_quality_main_business_gap`, `business_ratio_missing` |
+| `002050` | `advanced_manufacturing_business_exposure_gap` |
+| `002371` | `semiconductor_business_text_or_ratio_gap`, `semiconductor_financial_inputs_available` |
+| `603259` | `cxo_domain_proxy_gap` |
+| `000426` | `external_sidecar_missing`, `commodity_context_provider_independent` |
+| `002837` | `domain_evidence_missing`, `liquid_cooling_revenue_share_missing`, `orders_customer_validation_batch_delivery_missing` |
+
+Narrative hint boundaries:
+
+- reviewer-facing only
+- `automatic_acceptance=false`
+- `not_for_scoring=true`
+- no score or confidence change
+- no drift-acceptance change
+- no scoring / classifier / readiness participation
+- no canonical-field writeback
+- no primary-provider switch basis
+- no automatic merge basis
 
 Accepted safety boundaries:
 
@@ -646,10 +682,10 @@ Accepted safety boundaries:
 - no automatic AkShare / Tushare merge
 - no automatic drift acceptance
 
-Latest explainability implementation verification:
+Latest explainability + narrative hints acceptance verification:
 
-- targeted tests `38 passed`
-- full `pytest` `644 passed, 1 skipped`
+- targeted tests `27 passed`
+- full `pytest` `648 passed, 1 skipped`
 - regression suite `passed=47 failed=0 total=47`
 
 ### Phase 3 Canonical Raw Output
@@ -958,12 +994,25 @@ Phase 4: third local real-token smoke data review. Completed with data review re
 - Latest recorded verification: full `pytest` `630 passed, 1 skipped`; regression suite `passed=47 failed=0 total=47`.
 
 Phase 4: score / confidence explainability. Implemented and accepted.
+Narrative hints patch implemented and accepted.
 
 - Added `score_confidence_explainability.py`.
 - Added explicit `compare_providers --explainability`.
 - Added `score_confidence_explainability.json` to the comparison artifact
   allowlist for explicit explainability mode only.
 - Added reviewer-aid drift subcategory values in `diff_classifier`.
+- Added top-level `narrative_hints[]` with reviewer-facing explanations only.
+- Accepted hint coverage:
+  - `600406`: `business_quality_main_business_gap`, `business_ratio_missing`
+  - `002050`: `advanced_manufacturing_business_exposure_gap`
+  - `002371`: `semiconductor_business_text_or_ratio_gap`,
+    `semiconductor_financial_inputs_available`
+  - `603259`: `cxo_domain_proxy_gap`
+  - `000426`: `external_sidecar_missing`,
+    `commodity_context_provider_independent`
+  - `002837`: `domain_evidence_missing`,
+    `liquid_cooling_revenue_share_missing`,
+    `orders_customer_validation_batch_delivery_missing`
 - Kept the artifact boundary limited to
   `output/provider_comparison/<timestamp>/<code>/score_confidence_explainability.json`.
 - Did not write raw / fundamental / evidence-pack default output, `output/reports`,
@@ -973,8 +1022,11 @@ Phase 4: score / confidence explainability. Implemented and accepted.
 - Did not change scoring, readiness, classifier, P1.1, HTML / Dashboard, the
   deterministic pipeline, primary-provider behavior, merge behavior, or drift
   acceptance behavior.
-- Latest recorded verification: targeted tests `38 passed`; full `pytest`
-  `644 passed, 1 skipped`; regression suite `passed=47 failed=0 total=47`.
+- Narrative hints remain `automatic_acceptance=false` and
+  `not_for_scoring=true`; they do not write back canonical fields and do not
+  participate in primary switch or automatic merge decisions.
+- Latest recorded verification: targeted tests `27 passed`; full `pytest`
+  `648 passed, 1 skipped`; regression suite `passed=47 failed=0 total=47`.
 
 See `docs/DATA_PROVIDER_PHASE4_DUAL_SOURCE_COMPARISON_DESIGN.md` for the accepted Phase 4 artifact boundary, sample set, diff classification, acceptance thresholds, token-safety procedure, MCP / SDK / HTTP decision, testing plan, runner behavior, risk review, and external-audit stance.
 
@@ -991,7 +1043,7 @@ Next gate: explainability artifact review and later mapping / sidecar design dec
   `score_confidence_explainability.json` under the provider-comparison
   timestamp directory when explicitly enabled.
 - Keep Tushare non-primary, keep no automatic merge, and keep no automatic drift acceptance.
-- Later work may review explainability artifacts, evaluate `fina_mainbz`
+- First review explainability artifacts when useful. Later work may evaluate `fina_mainbz`
   `type=P/D/I` selected-period ratio derivation, and design sidecar policy
   separately.
 
@@ -1029,9 +1081,9 @@ Technical-analysis data-source integration is explicitly out of scope for this m
 
 ## 15. Current Go / No-Go Recommendation
 
-Recommendation: Freeze the accepted Phase 4 dry-run / comparison-only baseline, real-token smoke gate safety skeleton baseline, third-smoke data-availability conclusion, and accepted score / confidence explainability implementation.
+Recommendation: Freeze the accepted Phase 4 dry-run / comparison-only baseline, real-token smoke gate safety skeleton baseline, third-smoke data-availability conclusion, accepted score / confidence explainability implementation, and accepted narrative hints baseline.
 
-The third smoke moved the migration from provider-availability uncertainty to drift-explainability review, and the accepted explainability implementation now provides a comparison-only artifact for that review. Tushare can be treated as usable for comparison, but not as the primary provider. Primary-provider switch still requires a separate design, implementation, acceptance cycle, and external audit before acceptance.
+The third smoke moved the migration from provider-availability uncertainty to drift-explainability review, and the accepted explainability implementation plus narrative hints now provide a comparison-only artifact for that review. Tushare can be treated as usable for comparison, but not as the primary provider. Primary-provider switch still requires a separate design, implementation, acceptance cycle, and external audit before acceptance.
 
 Completed Phase 1 / Phase 2 / Phase 3 / Phase 4 scope:
 
@@ -1056,6 +1108,8 @@ Completed Phase 1 / Phase 2 / Phase 3 / Phase 4 scope:
 - Third local real-token smoke data review with `partial_pass_data_review_required`.
 - Score / confidence explainability design.
 - Score / confidence explainability implementation and acceptance.
+- Score / confidence explainability narrative hints implementation and
+  acceptance.
 
 Accepted Phase 3 / Phase 4 dry-run, safety-skeleton, and explainability work did not:
 

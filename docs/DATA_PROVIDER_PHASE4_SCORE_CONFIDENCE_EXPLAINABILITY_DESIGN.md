@@ -2,12 +2,14 @@
 
 Date: 2026-05-27
 
-Status: comparison-only score / confidence explainability implementation
-completed and accepted; this patch is documentation synchronization only.
+Status: comparison-only score / confidence explainability implementation and
+narrative hints patch completed and accepted; this patch is documentation
+synchronization only.
 
 This document consolidates the Gemini / DeepSeek / Kimi external audit feedback
 after the third Tushare real-token smoke review and records the accepted
-comparison-only score / confidence explainability implementation boundary.
+comparison-only score / confidence explainability implementation boundary,
+including the accepted reviewer-facing `narrative_hints[]` extension.
 
 This documentation sync only adds and synchronizes documentation. It does not change code,
 tests, config, pipeline behavior, classifier behavior, scoring / readiness,
@@ -25,8 +27,8 @@ output/provider_comparison/20260526T233804
 
 Latest recorded score / confidence explainability implementation verification:
 
-- targeted tests: `38 passed`
-- full `pytest`: `644 passed, 1 skipped`
+- targeted tests: `27 passed`
+- full `pytest`: `648 passed, 1 skipped`
 - regression suite: `passed=47 failed=0 total=47`
 
 Previous recorded verification from the third real-token smoke review:
@@ -64,6 +66,8 @@ Current decision:
   states.
 - Score / confidence drift explainability implementation has been completed and
   accepted as comparison-only tooling.
+- Narrative hints have been completed and accepted as reviewer-facing
+  explanation only.
 - The remaining migration issue is review of the explainability artifact and
   any later provider-mapping / sidecar policy decisions, not provider
   reachability.
@@ -154,6 +158,7 @@ The accepted explainability implementation is limited to:
 - no primary-provider switch
 - no automatic provider merge
 - no automatic drift acceptance
+- reviewer-facing `narrative_hints[]` only
 
 The implementation may run against injected provider outputs and dry-run test
 fixtures. It must not require a real token.
@@ -278,6 +283,20 @@ Proposed V1 schema:
       "reason": "Largest segment may help reviewers understand composition, but it must not become canonical basic_info.main_business."
     }
   ],
+  "narrative_hints": [
+    {
+      "code": "business_quality_main_business_gap",
+      "scope": "score_drift",
+      "provider": "tushare",
+      "related_fields": [
+        "basic_info.main_business",
+        "business_composition.revenue_ratio"
+      ],
+      "message": "Reviewer-facing explanation only.",
+      "automatic_acceptance": false,
+      "not_for_scoring": true
+    }
+  ],
   "domain_evidence_policy": {
     "resource_swing": {
       "sidecar_policy": "commodity_prices are provider-independent evidence",
@@ -315,8 +334,60 @@ Schema notes:
 - `provider_caveats.code` is a standardized caveat code, not a stock code.
 - `derived_hints` may help reviewers understand likely explanations but must be
   excluded from scoring and canonical evidence-pack fields.
+- `narrative_hints` are reviewer-facing explanations only. Every item must
+  include `automatic_acceptance=false` and `not_for_scoring=true`.
+- `narrative_hints` must not change score, confidence, drift acceptance,
+  classifier output, readiness, scoring, provider mapping, canonical fields,
+  primary-provider selection, or merge behavior.
 - `domain_evidence_policy` is extensible. Initial named policies include
   `resource_swing`, `ai_datacenter_cooling`, and `cxo`.
+
+## 6.1 Accepted Narrative Hints
+
+The accepted narrative hints patch adds reviewer-facing explanation depth
+without recalculating scores or changing any downstream decision.
+
+Accepted sample / strategy coverage:
+
+| Code | Accepted narrative hints |
+| --- | --- |
+| `600406` | `business_quality_main_business_gap`, `business_ratio_missing` |
+| `002050` | `advanced_manufacturing_business_exposure_gap` |
+| `002371` | `semiconductor_business_text_or_ratio_gap`, `semiconductor_financial_inputs_available` |
+| `603259` | `cxo_domain_proxy_gap` |
+| `000426` | `external_sidecar_missing`, `commodity_context_provider_independent` |
+| `002837` | `domain_evidence_missing`, `liquid_cooling_revenue_share_missing`, `orders_customer_validation_batch_delivery_missing` |
+
+Narrative hint policy:
+
+- reviewer-facing only
+- `automatic_acceptance=false`
+- `not_for_scoring=true`
+- no scoring change
+- no confidence change
+- no drift-acceptance change
+- no scoring / classifier / readiness participation
+- no canonical-field writeback
+- no primary-provider switch basis
+- no automatic merge basis
+
+Content boundaries:
+
+- `600406` hints may explain business_quality, main-business text, and
+  business-composition ratio gaps.
+- `002050` hints may explain that automotive thermal, refrigeration, and new
+  business exposure still need finer business-composition ratio or
+  main-business evidence. They must not claim robotics exposure is proven.
+- `002371` hints may explain semiconductor equipment business text / ratio gaps
+  while separately noting that R&D, inventory, and capex-style inputs are
+  available. They must not add domestic-substitution conclusions.
+- `603259` hints must stay conservative: generic fundamentals cannot directly
+  prove CXO backlog, customer exposure, geography, or CDMO utilization.
+- `000426` hints must keep commodity context as provider-independent sidecar
+  evidence and must not merge commodity rows into Tushare raw data.
+- `002837` hints must keep liquid-cooling revenue share, orders, customer
+  validation, and batch delivery as missing domain evidence. Generic Tushare
+  financials must not be treated as liquid-cooling evidence.
 
 ## 7. Module Boundary
 
@@ -343,6 +414,8 @@ Required module boundary:
   fundamental, evidence, and diff data
 - output only the independent explainability artifact in explicit mode
 - no participation in downstream decisions
+- narrative hints are returned in the independent artifact only and remain
+  reviewer-facing diagnostics
 
 The module should be a narrative and diagnostic layer over already-produced
 comparison data. It must not recalculate final scores by importing the scoring
@@ -503,8 +576,8 @@ gate, and external audit where appropriate.
 
 Accepted implementation verification:
 
-- targeted tests: `38 passed`
-- full `pytest`: `644 passed, 1 skipped`
+- targeted tests: `27 passed`
+- full `pytest`: `648 passed, 1 skipped`
 - regression suite: `passed=47 failed=0 total=47`
 
 The accepted implementation boundary verifies:
@@ -524,6 +597,9 @@ The accepted implementation boundary verifies:
 - existing `diff_report` unchanged unless a separate explicit design says
   otherwise
 - comparison artifact allowlist enforced
+- accepted `narrative_hints[]` schema and sample / strategy coverage
+- every narrative hint has `automatic_acceptance=false` and
+  `not_for_scoring=true`
 
 Recommended test posture:
 
@@ -536,7 +612,8 @@ Recommended test posture:
   `output/provider_comparison/<timestamp>/<code>/score_confidence_explainability.json`
 
 This documentation-only sync does not require pytest or regression to be rerun;
-it cites the accepted implementation results above.
+it cites the accepted implementation and narrative-hints acceptance results
+above.
 
 ## 16. Whether Another Real Smoke Is Needed
 
@@ -565,12 +642,13 @@ Recommended roadmap:
 1. Score / confidence explainability design. Completed.
 2. Comparison-only explainability implementation. Completed.
 3. Acceptance for the implementation boundary. Completed.
-4. Documentation synchronization. This patch.
-5. Review `score_confidence_explainability.json` artifacts when useful.
-6. Decide whether to implement `fina_mainbz` `type=P/D/I` selected-period ratio
+4. Narrative hints patch and acceptance. Completed.
+5. Documentation synchronization. This patch.
+6. Review `score_confidence_explainability.json` artifacts when useful.
+7. Decide whether to implement `fina_mainbz` `type=P/D/I` selected-period ratio
    derivation.
-7. Sidecar policy design.
-8. Primary-provider switch remains remote and must require external audit.
+8. Sidecar policy design.
+9. Primary-provider switch remains remote and must require external audit.
 
 Primary-provider switching is not a near-term step. The current state is data
 availability pass plus accepted comparison-only explainability tooling; artifact
