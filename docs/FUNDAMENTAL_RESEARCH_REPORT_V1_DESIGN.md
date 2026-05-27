@@ -1,20 +1,21 @@
 # Fundamental Research Report V1 Design
 
-Date: 2026-05-27
+Date: 2026-05-28
 
-Stage: Fundamental Skill 600406 Automated Fundamental Research Report V1
-Design.
+Stage: Fundamental Skill Research Report V1 Design and Cross-Industry Markdown
+Profile Acceptance.
 
-Status: design accepted, implementation accepted, first `600406` runtime
-artifact accepted, and Research Report V1 baseline frozen. This document records
-the accepted design boundary; the implementation and baseline freeze do not
-modify tests, fixtures, pipeline, scoring / readiness, Research Intelligence
-P1.1, HTML / Dashboard, regression expected files, provider-primary behavior,
-default output, provider raw artifacts, evidence packs, candidate reports, or
-review decision artifacts. They do not run real smoke tests, read
-`TUSHARE_TOKEN`, use the network, call Tushare or AkShare, connect MCP, promote
-fixture values, automatically merge providers, or output buy / sell advice,
-target prices, position sizing, portfolio weights, or technical trading advice.
+Status: design accepted, implementation accepted, Research Report V1 baseline
+frozen, and cross-industry Markdown profile validation accepted for `600406`,
+`002371`, and `002050`. This document records the accepted design boundary; the
+implementation, baseline freeze, and profile acceptance do not modify tests,
+fixtures, pipeline, scoring / readiness, Research Intelligence P1.1, HTML /
+Dashboard, regression expected files, provider-primary behavior, default output,
+provider raw artifacts, evidence packs, candidate reports, or review decision
+artifacts. They do not run real smoke tests, read `TUSHARE_TOKEN`, use the
+network, call Tushare or AkShare, connect MCP, promote fixture values,
+automatically merge providers, or output buy / sell advice, target prices,
+position sizing, portfolio weights, or technical trading advice.
 
 Current design inputs reviewed:
 
@@ -34,11 +35,11 @@ The first accepted runtime artifact is
 `output/research_reports/20260527T103241/600406/fundamental_research_report_v1.json`.
 It is an ignored runtime artifact and is not committed.
 
-The `600406` refined Markdown artifact has since passed initial Product
-Readability / Analyst Experience Review. The next stage is presentation profile
-design before extending Markdown presentation to `002371` / `002050`. It is not
-promote-rule design, validator implementation, fixture promotion, or a Tushare
-primary switch.
+The `600406`, `002371`, and `002050` Markdown runtime artifacts have since
+passed cross-industry Product Readability / Analyst Experience Review with
+their respective presentation profiles. The next recommended stage is HTML
+presentation layer design / implementation. It is not promote-rule design,
+validator implementation, fixture promotion, or a Tushare primary switch.
 
 ## 1. Goal Correction
 
@@ -654,13 +655,17 @@ Completed sequence:
    artifact.
 7. Presentation profile design for multi-strategy Markdown / future HTML
    presentation.
+8. Presentation profile registry acceptance.
+9. `600406`, `002371`, and `002050` real-sample Markdown profile acceptance.
+10. Cross-industry Markdown validation.
 
 Next recommended sequence:
 
-1. Presentation profile registry implementation.
-2. Generate and review `002371` and `002050` Markdown reports with their
-   existing artifacts.
-3. Cross-industry readability acceptance.
+1. HTML presentation layer design / implementation.
+2. Ensure HTML consumes Markdown / presentation-layer output or the Research
+   Report V1 structured payload without re-analysis or conclusion changes.
+3. Keep caveats, evidence labels, data-quality notes, rebuttal conditions, and
+   follow-up variables visible in the HTML layer.
 4. Later consider promote rules, validator, fixture promotion, and
    primary-provider switch only after the report product experience is reviewed.
 
@@ -672,14 +677,18 @@ research output.
 ## 11. Presentation profile design addendum
 
 The `600406` refined Markdown report has passed initial product readability
-review and can remain as the investment-manager draft baseline. However, its
-presentation layer is strongly shaped around `600406` / grid equipment.
+review and can remain as the investment-manager draft baseline. The subsequent
+`002371` and `002050` Markdown reports have also passed profile-specific
+readability review, confirming that the presentation layer no longer leaks the
+`600406` / grid-equipment language into semiconductor equipment or thermal
+management reports.
 
-Before rendering `002371` or `002050`, use
-`docs/FUNDAMENTAL_RESEARCH_REPORT_V1_PRESENTATION_PROFILE_DESIGN.md` as the
-accepted design reference for a profile layer that separates the common report
-skeleton from industry-specific Chinese language, opportunity ordering, risk
-ordering, evidence-gap focus, and follow-up variables.
+Use `docs/FUNDAMENTAL_RESEARCH_REPORT_V1_PRESENTATION_PROFILE_DESIGN.md` and
+`docs/FUNDAMENTAL_RESEARCH_REPORT_V1_MARKDOWN_PROFILE_ACCEPTANCE_SUMMARY.md` as
+the accepted references for the profile layer. The accepted profile layer
+separates the common report skeleton from industry-specific Chinese language,
+opportunity ordering, risk ordering, evidence-gap focus, and follow-up
+variables.
 
 The profile layer remains presentation-only. It must not change the Research
 Report V1 JSON builder, candidate generator, review decisions, scoring /
@@ -688,3 +697,43 @@ or evidence labels. It must prevent cross-contamination between
 `stable_growth_grid_equipment`, `semiconductor_equipment_cycle`, and
 `advanced_manufacturing_thermal_management`, and must fall back to
 `generic_fundamental_report` when the profile cannot be selected reliably.
+
+## 12. Cross-industry Markdown profile acceptance
+
+The following runtime Markdown artifacts are accepted as real-sample validation
+for the first three presentation profiles:
+
+| code | company | profile | accepted runtime artifact |
+| --- | --- | --- | --- |
+| `600406` | 国电南瑞 | `stable_growth_grid_equipment` | `output/research_reports/20260527T210301/600406/fundamental_research_report_v1.md` |
+| `002371` | 北方华创 | `semiconductor_equipment_cycle` | `output/research_reports/20260527T220148/002371/fundamental_research_report_v1.md` |
+| `002050` | 三花智控 | `advanced_manufacturing_thermal_management` | `output/research_reports/20260528T003826/002050/fundamental_research_report_v1.md` |
+
+Acceptance conclusion:
+
+- `600406` Markdown accepted.
+- `002371` Markdown accepted.
+- `002050` Markdown accepted.
+- Presentation profile registry accepted.
+- Professional analyst voice gate accepted.
+- Cross-industry Markdown validation passed.
+
+Cross-contamination result:
+
+- `600406` did not inherit semiconductor or robot / new-business language.
+- `002371` did not inherit grid or thermal-management language.
+- `002050` did not inherit grid or semiconductor-equipment language.
+- The V1 hard-fail term-isolation strategy is effective for the three accepted
+  samples.
+
+Latest verification results are quoted from the acceptance input and were not
+rerun in the documentation-only acceptance-summary stage: targeted tests
+`86 passed`, full pytest `734 passed, 1 skipped`, and regression
+`passed=47 failed=0 total=47`.
+
+The next recommended stage is HTML presentation layer design / implementation.
+HTML must consume Markdown / presentation-layer output or the Research Report V1
+structured payload, must not re-analyze or alter conclusions, must not hide
+caveats, and must not call providers, use the network, read tokens, connect
+MCP, or change promote rules, validators, fixtures, scoring, readiness, P1.1,
+or provider primary behavior.
