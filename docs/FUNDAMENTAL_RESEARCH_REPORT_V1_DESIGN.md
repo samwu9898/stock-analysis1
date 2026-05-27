@@ -34,7 +34,9 @@ The first accepted runtime artifact is
 `output/research_reports/20260527T103241/600406/fundamental_research_report_v1.json`.
 It is an ignored runtime artifact and is not committed.
 
-The next stage is Product Readability / Analyst Experience Review. It is not
+The `600406` refined Markdown artifact has since passed initial Product
+Readability / Analyst Experience Review. The next stage is presentation profile
+design before extending Markdown presentation to `002371` / `002050`. It is not
 promote-rule design, validator implementation, fixture promotion, or a Tushare
 primary switch.
 
@@ -648,12 +650,17 @@ Completed sequence:
 3. First report generation from existing 600406 local artifacts.
 4. 600406 report artifact acceptance.
 5. Research Report V1 baseline freeze / documentation sync.
+6. Initial product readability review for the `600406` refined Markdown
+   artifact.
+7. Presentation profile design for multi-strategy Markdown / future HTML
+   presentation.
 
 Next recommended sequence:
 
-1. Product Readability / Analyst Experience Review.
-2. Optional report wording / structure refinement.
-3. Generate and review 002371 and 002050 reports with their existing artifacts.
+1. Presentation profile registry implementation.
+2. Generate and review `002371` and `002050` Markdown reports with their
+   existing artifacts.
+3. Cross-industry readability acceptance.
 4. Later consider promote rules, validator, fixture promotion, and
    primary-provider switch only after the report product experience is reviewed.
 
@@ -661,3 +668,23 @@ Do not continue into promote-rule design, validator implementation, fixture
 promotion, or Tushare primary switch as the next step. The product line should
 now return from data-quality audit infrastructure to professional fundamental
 research output.
+
+## 11. Presentation profile design addendum
+
+The `600406` refined Markdown report has passed initial product readability
+review and can remain as the investment-manager draft baseline. However, its
+presentation layer is strongly shaped around `600406` / grid equipment.
+
+Before rendering `002371` or `002050`, use
+`docs/FUNDAMENTAL_RESEARCH_REPORT_V1_PRESENTATION_PROFILE_DESIGN.md` as the
+accepted design reference for a profile layer that separates the common report
+skeleton from industry-specific Chinese language, opportunity ordering, risk
+ordering, evidence-gap focus, and follow-up variables.
+
+The profile layer remains presentation-only. It must not change the Research
+Report V1 JSON builder, candidate generator, review decisions, scoring /
+readiness, P1.1, data artifacts, provider behavior, regression expected files,
+or evidence labels. It must prevent cross-contamination between
+`stable_growth_grid_equipment`, `semiconductor_equipment_cycle`, and
+`advanced_manufacturing_thermal_management`, and must fall back to
+`generic_fundamental_report` when the profile cannot be selected reliably.
