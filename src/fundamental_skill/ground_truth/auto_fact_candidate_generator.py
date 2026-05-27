@@ -18,6 +18,7 @@ from typing import Any
 MODE = "offline_artifact_candidate_generation"
 
 PROVIDERS = ("tushare", "akshare")
+FIELD_GROUPS = ("basic_info", "financial_metrics", "valuation_metrics", "business_composition")
 
 FUNDAMENTAL_ARTIFACTS = {
     "tushare": "tushare_fundamental.json",
@@ -102,6 +103,30 @@ BUSINESS_RATIO_FIELDS = {
     "business_composition.revenue_ratio",
     "business_composition.gross_margin",
 }
+CORE_AUTO_ACCEPT_FIELDS = {
+    "financial_metrics.revenue",
+    "financial_metrics.net_profit",
+    "financial_metrics.gross_margin",
+    "financial_metrics.roe",
+    "financial_metrics.operating_cashflow",
+    "valuation_metrics.pe_ttm",
+    "valuation_metrics.pb",
+    "valuation_metrics.market_cap",
+}
+CORE_REVIEW_FIELDS = CORE_AUTO_ACCEPT_FIELDS | {
+    "financial_metrics.period",
+    "financial_metrics.accounts_receivable",
+    "financial_metrics.inventory",
+    "financial_metrics.contract_liabilities",
+    "financial_metrics.capex",
+    "valuation_metrics.as_of_date",
+}
+BUSINESS_REVIEW_FIELDS = (
+    "business_composition.classification_type",
+    "business_composition.revenue_ratio",
+    "business_composition.gross_margin",
+)
+DEFAULT_REVIEW_QUEUE_LIMIT = 20
 
 REQUIRED_CANDIDATE_KEYS = (
     "field_path",
@@ -192,6 +217,7 @@ def build_fact_candidates_from_comparison_dir(code_dir: Path) -> dict[str, Any]:
         candidates.extend(_extract_provider_candidates(code, provider, provider_artifacts))
 
     _apply_provider_conflicts(candidates)
+    report_sections = _build_report_usability_sections(candidates)
     payload = {
         "code": code,
         "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
@@ -199,6 +225,7 @@ def build_fact_candidates_from_comparison_dir(code_dir: Path) -> dict[str, Any]:
         "source_artifacts": artifacts["source_artifacts"],
         "candidates": candidates,
         "summary": _build_summary(candidates, artifacts["unreadable_artifacts"]),
+        **report_sections,
     }
     _assert_payload_has_required_candidate_keys(payload)
     _assert_no_forbidden_recommendation_keys(payload)
@@ -676,6 +703,640 @@ def _build_summary(candidates: list[dict[str, Any]], unreadable_artifacts: list[
         "provider_missing_count": sum(1 for candidate in candidates if candidate["conflict_status"] == "provider_missing"),
         "unreadable_artifacts": sorted(set(unreadable_artifacts)),
     }
+
+
+def _build_report_usability_sections(candidates: list[dict[str, Any]]) -> dict[str, Any]:
+    return {
+        "field_group_summary": _build_field_group_summary(candidates),
+        "auto_accepted_core_fields": _build_auto_accepted_core_fields(candidates),
+        "manual_review_priority_queue": _build_manual_review_priority_queue(candidates),
+        "business_composition_summary": _build_business_composition_summary(candidates),
+        "provider_quality_summary": _build_provider_quality_summary(candidates),
+        "candidate_report_limitations": _build_candidate_report_limitations(),
+    }
+
+
+def _build_field_group_summary(candidates: list[dict[str, Any]]) -> dict[str, dict[str, int]]:
+    summary = {group: _empty_field_group_summary() for group in FIELD_GROUPS}
+    for candidate in candidates:
+        group = _field_group_for_candidate(candidate)
+        if group not in summary:
+            continue
+        item = summary[group]
+        item["candidate_count"] += 1
+        provider = candidate.get("source_provider")
+        if provider == "tushare":
+            item["tushare_candidate_count"] += 1
+        elif provider == "akshare":
+            item["akshare_candidate_count"] += 1
+
+        review_status = candidate.get("review_status")
+        if review_status == "auto_accepted":
+            item["auto_accepted_count"] += 1
+        elif review_status == "manual_review_required":
+            item["manual_review_required_count"] += 1
+        elif review_status == "source_conflict":
+            item["source_conflict_count"] += 1
+        elif review_status == "period_mismatch":
+            item["period_mismatch_count"] += 1
+        elif review_status == "unit_unknown":
+            item["unit_unknown_count"] += 1
+        elif review_status == "mapping_missing":
+            item["mapping_missing_count"] += 1
+        elif review_status == "not_available":
+            item["not_available_count"] += 1
+
+        if candidate.get("conflict_status") == "provider_missing":
+            item["provider_missing_count"] += 1
+    return summary
+
+
+def _empty_field_group_summary() -> dict[str, int]:
+    return {
+        "candidate_count": 0,
+        "tushare_candidate_count": 0,
+        "akshare_candidate_count": 0,
+        "auto_accepted_count": 0,
+        "manual_review_required_count": 0,
+        "source_conflict_count": 0,
+        "period_mismatch_count": 0,
+        "unit_unknown_count": 0,
+        "provider_missing_count": 0,
+        "mapping_missing_count": 0,
+        "not_available_count": 0,
+    }
+
+
+def _build_auto_accepted_core_fields(candidates: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    core_items: list[dict[str, Any]] = []
+    for candidate in candidates:
+        field_path = _normalized_simple_field_path(candidate["field_path"])
+        if field_path not in CORE_AUTO_ACCEPT_FIELDS:
+            continue
+        if candidate.get("review_status") != "auto_accepted":
+            continue
+        core_items.append(
+            {
+                "field_path": field_path,
+                "source_provider": candidate.get("source_provider"),
+                "value": candidate.get("value"),
+                "report_period": candidate.get("report_period"),
+                "as_of_date": candidate.get("as_of_date"),
+                "canonical_unit": candidate.get("canonical_unit"),
+                "confidence": candidate.get("confidence"),
+                "reason": (
+                    "Core field passed V1 auto-acceptance checks for provider, unit, "
+                    "period or date, and source metadata."
+                ),
+            }
+        )
+    return sorted(core_items, key=lambda item: (_core_field_sort_key(item["field_path"]), item["source_provider"] or ""))
+
+
+def _build_manual_review_priority_queue(
+    candidates: list[dict[str, Any]],
+    limit: int = DEFAULT_REVIEW_QUEUE_LIMIT,
+) -> list[dict[str, Any]]:
+    queue: list[dict[str, Any]] = []
+
+    queue.extend(
+        _review_items_by_normalized_field(
+            candidates,
+            priority=1,
+            issue_type="source_conflict",
+            predicate=lambda candidate: candidate.get("review_status") == "source_conflict"
+            or candidate.get("conflict_status") == "source_conflict",
+            reason="Provider values differ beyond V1 tolerance and need human review.",
+            suggested_next_action="Review source rows, units, periods, and transformation notes in the offline artifacts.",
+        )
+    )
+    queue.extend(
+        _review_items_by_normalized_field(
+            candidates,
+            priority=1,
+            issue_type="unit_unknown",
+            predicate=lambda candidate: candidate.get("review_status") == "unit_unknown",
+            reason="Unit metadata is not explicit enough for V1 auto acceptance.",
+            suggested_next_action="Confirm source unit and canonical unit in the offline artifact metadata.",
+        )
+    )
+    queue.extend(
+        _review_items_by_normalized_field(
+            candidates,
+            priority=1,
+            issue_type="period_mismatch_core_field",
+            predicate=lambda candidate: _normalized_simple_field_path(candidate["field_path"]) in CORE_REVIEW_FIELDS
+            and (
+                candidate.get("review_status") == "period_mismatch"
+                or candidate.get("conflict_status") == "period_mismatch"
+            ),
+            reason="A core financial or valuation field has a period or valuation-date mismatch.",
+            suggested_next_action="Align report period or valuation as-of date in the candidate evidence.",
+        )
+    )
+    queue.extend(
+        _review_items_by_normalized_field(
+            candidates,
+            priority=1,
+            issue_type="missing_as_of_date",
+            predicate=lambda candidate: _normalized_simple_field_path(candidate["field_path"]).startswith(
+                "valuation_metrics."
+            )
+            and candidate.get("value") is not None
+            and not candidate.get("as_of_date"),
+            reason="A valuation candidate is missing the as-of date required by V1 review.",
+            suggested_next_action="Locate the valuation trading date in the source artifact and record it explicitly.",
+        )
+    )
+    queue.extend(
+        _review_items_by_normalized_field(
+            candidates,
+            priority=1,
+            issue_type="suspicious_auto_acceptance_trace",
+            predicate=_has_suspicious_auto_acceptance_trace,
+            reason="An auto-accepted candidate does not have the expected trace anchors.",
+            suggested_next_action="Inspect source_trace endpoint and JSON pointer before relying on the auto acceptance.",
+        )
+    )
+
+    main_business = [
+        candidate
+        for candidate in candidates
+        if _normalized_simple_field_path(candidate["field_path"]) == "basic_info.main_business"
+        and candidate.get("review_status") != "auto_accepted"
+    ]
+    if main_business:
+        queue.append(
+            _make_review_item(
+                priority=2,
+                field_path="basic_info.main_business",
+                issue_type="main_business_review",
+                candidates=main_business,
+                reason="main_business is narrative text and is intentionally not auto-accepted in V1.",
+                suggested_next_action="Review the narrative against source filings or provider profile text.",
+            )
+        )
+
+    for field_path in BUSINESS_REVIEW_FIELDS:
+        business_items = [
+            candidate
+            for candidate in candidates
+            if _normalized_simple_field_path(candidate["field_path"]) == field_path
+            and candidate.get("review_status") != "auto_accepted"
+        ]
+        if business_items:
+            queue.append(
+                _make_review_item(
+                    priority=2,
+                    field_path=field_path,
+                    issue_type="business_composition_field_review",
+                    candidates=business_items,
+                    reason="Business composition rows need classification, period, and ratio-denominator review.",
+                    suggested_next_action=(
+                        "Verify fina_mainbz type=P/D/I selected-period ratio derivation; "
+                        "do not auto-accept mixed group rows; do not merge AkShare and Tushare composition rows."
+                    ),
+                )
+            )
+
+    queue.extend(
+        _review_items_by_field_group(
+            candidates,
+            priority=2,
+            issue_type="block_mapping_missing",
+            predicate=lambda candidate: candidate.get("review_status") == "mapping_missing"
+            or candidate.get("missing_category") == "mapping_missing",
+            min_count=10,
+            reason="Mapping gaps affect a large block of candidates.",
+            suggested_next_action="Review endpoint and field mapping coverage for the affected block.",
+        )
+    )
+    queue.extend(
+        _review_items_by_field_group(
+            candidates,
+            priority=2,
+            issue_type="block_provider_missing",
+            predicate=lambda candidate: candidate.get("conflict_status") == "provider_missing",
+            min_count=10,
+            reason="One provider is absent for many candidates in this block.",
+            suggested_next_action="Review provider coverage for the block without switching provider precedence.",
+        )
+    )
+
+    queue.extend(
+        _review_items_by_normalized_field(
+            candidates,
+            priority=3,
+            issue_type="text_field_review",
+            predicate=lambda candidate: _normalized_simple_field_path(candidate["field_path"]) in TEXT_FIELDS
+            and candidate.get("review_status") != "auto_accepted",
+            reason="Text or identity fields need manual reading in V1.",
+            suggested_next_action="Check the field against the source artifact and keep provider candidates separate.",
+        )
+    )
+    queue.extend(
+        _review_items_by_normalized_field(
+            candidates,
+            priority=3,
+            issue_type="akshare_only_review",
+            predicate=lambda candidate: candidate.get("source_provider") == "akshare"
+            and candidate.get("conflict_status") == "provider_missing",
+            reason="AkShare-only candidates are retained for review and are not auto-accepted in V1.",
+            suggested_next_action="Review source coverage and keep the candidate as manual-review material.",
+        )
+    )
+    queue.extend(
+        _review_items_by_field_group(
+            candidates,
+            priority=3,
+            issue_type="low_confidence_candidates",
+            predicate=lambda candidate: candidate.get("confidence") == "low",
+            min_count=1,
+            reason="Low-confidence candidates need human inspection before downstream review.",
+            suggested_next_action="Inspect source metadata, period, and unit evidence for the affected block.",
+        )
+    )
+
+    return _dedupe_and_limit_review_queue(queue, limit)
+
+
+def _build_business_composition_summary(candidates: list[dict[str, Any]]) -> dict[str, Any]:
+    business_candidates = [
+        candidate
+        for candidate in candidates
+        if _normalized_simple_field_path(candidate["field_path"]).startswith("business_composition.")
+    ]
+    periods = sorted(
+        {
+            candidate.get("report_period")
+            for candidate in business_candidates
+            if candidate.get("report_period")
+        }
+    )
+    providers = sorted(
+        {
+            candidate.get("source_provider")
+            for candidate in business_candidates
+            if candidate.get("source_provider")
+        }
+    )
+    top_issues = _top_issue_categories(business_candidates)
+    return {
+        "total_rows": len({_business_row_key(candidate) for candidate in business_candidates}),
+        "candidate_count": len(business_candidates),
+        "providers_present": providers,
+        "periods_observed": periods,
+        "classification_type_coverage": _business_field_coverage(
+            business_candidates, "business_composition.classification_type"
+        ),
+        "revenue_ratio_coverage": _business_field_coverage(
+            business_candidates, "business_composition.revenue_ratio"
+        ),
+        "gross_margin_coverage": _business_field_coverage(
+            business_candidates, "business_composition.gross_margin"
+        ),
+        "period_mismatch_count": sum(
+            1 for candidate in business_candidates if candidate.get("review_status") == "period_mismatch"
+        ),
+        "provider_missing_count": sum(
+            1 for candidate in business_candidates if candidate.get("conflict_status") == "provider_missing"
+        ),
+        "mapping_missing_count": sum(
+            1
+            for candidate in business_candidates
+            if candidate.get("review_status") == "mapping_missing"
+            or candidate.get("missing_category") == "mapping_missing"
+        ),
+        "top_issue_categories": top_issues,
+        "recommended_next_action": (
+            "Verify fina_mainbz type=P/D/I selected-period ratio derivation; "
+            "do not auto-accept mixed group rows; do not merge AkShare and Tushare composition rows."
+        ),
+    }
+
+
+def _build_provider_quality_summary(candidates: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    summary: dict[str, dict[str, Any]] = {}
+    for provider in PROVIDERS:
+        provider_candidates = [candidate for candidate in candidates if candidate.get("source_provider") == provider]
+        auto_accepted_count = sum(
+            1 for candidate in provider_candidates if candidate.get("review_status") == "auto_accepted"
+        )
+        manual_review_count = sum(
+            1 for candidate in provider_candidates if candidate.get("review_status") != "auto_accepted"
+        )
+        conflict_count = sum(
+            1
+            for candidate in provider_candidates
+            if candidate.get("review_status") == "source_conflict"
+            or candidate.get("conflict_status") == "source_conflict"
+        )
+        mapping_missing_count = sum(
+            1
+            for candidate in provider_candidates
+            if candidate.get("review_status") == "mapping_missing"
+            or candidate.get("missing_category") == "mapping_missing"
+        )
+        not_available_count = sum(
+            1 for candidate in provider_candidates if candidate.get("review_status") == "not_available"
+        )
+        provider_missing_count = sum(
+            1 for candidate in provider_candidates if candidate.get("conflict_status") == "provider_missing"
+        )
+        missing_mapping_issue_count = mapping_missing_count + not_available_count + provider_missing_count
+        summary[provider] = {
+            "candidate_count": len(provider_candidates),
+            "auto_accepted_count": auto_accepted_count,
+            "manual_review_count": manual_review_count,
+            "conflict_count": conflict_count,
+            "mapping_missing_count": mapping_missing_count,
+            "not_available_count": not_available_count,
+            "provider_missing_count": provider_missing_count,
+            "missing_mapping_issue_count": missing_mapping_issue_count,
+            "diagnostic_note": _provider_quality_note(
+                provider=provider,
+                auto_accepted_count=auto_accepted_count,
+                manual_review_count=manual_review_count,
+                conflict_count=conflict_count,
+                missing_mapping_issue_count=missing_mapping_issue_count,
+            ),
+        }
+    return summary
+
+
+def _build_candidate_report_limitations() -> list[str]:
+    return [
+        "Candidate report is not reviewed ground truth.",
+        "No fixture promotion is performed.",
+        "No validator run is performed.",
+        "No primary switch is performed.",
+        "No automatic merge is performed.",
+        "Business composition still needs classification, period, and ratio review.",
+        "Domain evidence, commodity signals, and news evidence are out of V1 scope.",
+    ]
+
+
+def _review_items_by_normalized_field(
+    candidates: list[dict[str, Any]],
+    *,
+    priority: int,
+    issue_type: str,
+    predicate,
+    reason: str,
+    suggested_next_action: str,
+) -> list[dict[str, Any]]:
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for candidate in candidates:
+        if predicate(candidate):
+            grouped.setdefault(_normalized_simple_field_path(candidate["field_path"]), []).append(candidate)
+    return [
+        _make_review_item(
+            priority=priority,
+            field_path=field_path,
+            issue_type=issue_type,
+            candidates=items,
+            reason=reason,
+            suggested_next_action=suggested_next_action,
+        )
+        for field_path, items in grouped.items()
+    ]
+
+
+def _review_items_by_field_group(
+    candidates: list[dict[str, Any]],
+    *,
+    priority: int,
+    issue_type: str,
+    predicate,
+    min_count: int,
+    reason: str,
+    suggested_next_action: str,
+) -> list[dict[str, Any]]:
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for candidate in candidates:
+        if predicate(candidate):
+            group = _field_group_for_candidate(candidate)
+            if group:
+                grouped.setdefault(group, []).append(candidate)
+    return [
+        _make_review_item(
+            priority=priority,
+            field_path=f"{group}.*",
+            issue_type=issue_type,
+            candidates=items,
+            reason=reason,
+            suggested_next_action=suggested_next_action,
+        )
+        for group, items in grouped.items()
+        if len(items) >= min_count
+    ]
+
+
+def _make_review_item(
+    *,
+    priority: int,
+    field_path: str,
+    issue_type: str,
+    candidates: list[dict[str, Any]],
+    reason: str,
+    suggested_next_action: str,
+) -> dict[str, Any]:
+    return {
+        "priority": priority,
+        "field_path": field_path,
+        "issue_type": issue_type,
+        "source_provider": _provider_label(candidates),
+        "candidate_count": len(candidates),
+        "representative_candidates": _representative_candidates(candidates),
+        "reason": reason,
+        "suggested_next_action": suggested_next_action,
+    }
+
+
+def _representative_candidates(candidates: list[dict[str, Any]], limit: int = 3) -> list[dict[str, Any]]:
+    ordered = sorted(
+        candidates,
+        key=lambda candidate: (
+            candidate.get("source_provider") or "",
+            candidate.get("field_path") or "",
+            str(candidate.get("report_period") or ""),
+            str(candidate.get("as_of_date") or ""),
+        ),
+    )
+    return [
+        {
+            "field_path": candidate.get("field_path"),
+            "source_provider": candidate.get("source_provider"),
+            "value": _compact_candidate_value(candidate.get("value")),
+            "report_period": candidate.get("report_period"),
+            "as_of_date": candidate.get("as_of_date"),
+            "canonical_unit": candidate.get("canonical_unit"),
+            "confidence": candidate.get("confidence"),
+            "review_status": candidate.get("review_status"),
+            "missing_category": candidate.get("missing_category"),
+            "conflict_status": candidate.get("conflict_status"),
+            "source_endpoint": candidate.get("source_endpoint"),
+        }
+        for candidate in ordered[:limit]
+    ]
+
+
+def _dedupe_and_limit_review_queue(queue: list[dict[str, Any]], limit: int) -> list[dict[str, Any]]:
+    issue_order = {
+        "source_conflict": 0,
+        "unit_unknown": 1,
+        "period_mismatch_core_field": 2,
+        "missing_as_of_date": 3,
+        "suspicious_auto_acceptance_trace": 4,
+        "main_business_review": 5,
+        "business_composition_field_review": 6,
+        "block_mapping_missing": 7,
+        "block_provider_missing": 8,
+        "text_field_review": 9,
+        "akshare_only_review": 10,
+        "low_confidence_candidates": 11,
+    }
+    ordered = sorted(
+        queue,
+        key=lambda item: (
+            item["priority"],
+            issue_order.get(str(item["issue_type"]), 99),
+            -int(item["candidate_count"]),
+            str(item["field_path"]),
+        ),
+    )
+    deduped: list[dict[str, Any]] = []
+    seen: set[tuple[int, str, str]] = set()
+    for item in ordered:
+        key = (int(item["priority"]), str(item["field_path"]), str(item["issue_type"]))
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(item)
+        if len(deduped) >= limit:
+            break
+    return deduped
+
+
+def _has_suspicious_auto_acceptance_trace(candidate: dict[str, Any]) -> bool:
+    if candidate.get("review_status") != "auto_accepted":
+        return False
+    trace = candidate.get("source_trace")
+    if not isinstance(trace, dict):
+        return True
+    return not bool(candidate.get("source_endpoint") and trace.get("endpoint") and trace.get("json_pointer"))
+
+
+def _field_group_for_candidate(candidate: dict[str, Any]) -> str:
+    field_path = _normalized_simple_field_path(str(candidate.get("field_path", "")))
+    for group in FIELD_GROUPS:
+        if field_path == group or field_path.startswith(f"{group}."):
+            return group
+    return ""
+
+
+def _core_field_sort_key(field_path: str) -> int:
+    ordered_fields = (
+        "financial_metrics.revenue",
+        "financial_metrics.net_profit",
+        "financial_metrics.gross_margin",
+        "financial_metrics.roe",
+        "financial_metrics.operating_cashflow",
+        "valuation_metrics.pe_ttm",
+        "valuation_metrics.pb",
+        "valuation_metrics.market_cap",
+    )
+    try:
+        return ordered_fields.index(field_path)
+    except ValueError:
+        return len(ordered_fields)
+
+
+def _provider_label(candidates: list[dict[str, Any]]) -> str | None:
+    providers = sorted(
+        {
+            candidate.get("source_provider")
+            for candidate in candidates
+            if candidate.get("source_provider")
+        }
+    )
+    if not providers:
+        return None
+    if len(providers) == 1:
+        return providers[0]
+    return "multiple"
+
+
+def _business_field_coverage(candidates: list[dict[str, Any]], field_path: str) -> dict[str, Any]:
+    field_candidates = [
+        candidate for candidate in candidates if _normalized_simple_field_path(candidate["field_path"]) == field_path
+    ]
+    total_rows = len({_business_row_key(candidate) for candidate in candidates})
+    available_count = sum(
+        1
+        for candidate in field_candidates
+        if candidate.get("value") is not None and str(candidate.get("value")).strip() != ""
+    )
+    return {
+        "candidate_count": len(field_candidates),
+        "available_count": available_count,
+        "total_rows": total_rows,
+        "coverage_ratio": round(available_count / total_rows, 4) if total_rows else 0.0,
+    }
+
+
+def _top_issue_categories(candidates: list[dict[str, Any]], limit: int = 5) -> list[dict[str, Any]]:
+    counts: dict[str, int] = {}
+    for candidate in candidates:
+        review_status = candidate.get("review_status")
+        if review_status and review_status != "auto_accepted":
+            counts[str(review_status)] = counts.get(str(review_status), 0) + 1
+        if candidate.get("conflict_status") == "provider_missing":
+            counts["provider_missing"] = counts.get("provider_missing", 0) + 1
+    return [
+        {"issue_type": issue_type, "candidate_count": count}
+        for issue_type, count in sorted(counts.items(), key=lambda item: (-item[1], item[0]))[:limit]
+    ]
+
+
+def _business_row_key(candidate: dict[str, Any]) -> tuple[Any, ...]:
+    field_path = str(candidate.get("field_path") or "")
+    match = re.match(r"business_composition\[(\d+)\]\.", field_path)
+    selector = candidate.get("source_trace", {}).get("row_selector", {})
+    return (
+        candidate.get("source_provider"),
+        match.group(1) if match else None,
+        selector.get("report_period"),
+        selector.get("classification_type"),
+        selector.get("segment_name"),
+    )
+
+
+def _provider_quality_note(
+    *,
+    provider: str,
+    auto_accepted_count: int,
+    manual_review_count: int,
+    conflict_count: int,
+    missing_mapping_issue_count: int,
+) -> str:
+    if provider == "tushare":
+        return (
+            f"Tushare candidate quality: {auto_accepted_count} V1 auto-accepted items and "
+            f"{manual_review_count} items still requiring review; conflicts={conflict_count}, "
+            f"missing_or_mapping_issues={missing_mapping_issue_count}."
+        )
+    return (
+        f"AkShare candidate quality: {auto_accepted_count} V1 auto-accepted items and "
+        f"{manual_review_count} comparison/review items; conflicts={conflict_count}, "
+        f"missing_or_mapping_issues={missing_mapping_issue_count}."
+    )
+
+
+def _compact_candidate_value(value: Any) -> Any:
+    if isinstance(value, str) and len(value) > 120:
+        return f"{value[:117]}..."
+    return value
 
 
 def _block_rows(payload: dict[str, Any], canonical_block: str) -> list[dict[str, Any]]:

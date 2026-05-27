@@ -38,6 +38,14 @@ REQUIRED_CANDIDATE_KEYS = {
     "conflict_status",
     "manual_review_note",
 }
+V11_SUMMARY_KEYS = {
+    "field_group_summary",
+    "auto_accepted_core_fields",
+    "manual_review_priority_queue",
+    "business_composition_summary",
+    "provider_quality_summary",
+    "candidate_report_limitations",
+}
 
 GROUND_TRUTH_FIXTURE = (
     Path(__file__).resolve().parents[1]
@@ -105,6 +113,7 @@ def _provider_payload(provider: str, *, revenue=100_000_000.0, valuation_date="2
                     "contract_liabilities": 4_000_000.0,
                     "capex": 5_000_000.0,
                     "field_source_trace": {
+                        "period": _trace("period", "income", financial_period, financial_period),
                         "revenue": _trace("revenue", "income", financial_period, revenue),
                         "net_profit": _trace("net_profit", "income", financial_period, 10_000_000.0),
                         "gross_margin": _trace("gross_margin", "fina_indicator", financial_period, 30.0),
@@ -173,6 +182,24 @@ def _comparison_dir(tmp_path: Path, *, akshare=True, tushare=True, ak_revenue=10
     return code_dir
 
 
+def _comparison_dir_with_many_business_rows(tmp_path: Path, row_count: int = 30) -> Path:
+    code_dir = tmp_path / "600406"
+    for provider in ("tushare", "akshare"):
+        payload = _provider_payload(provider)
+        template = payload["blocks"]["business_composition"][0]
+        rows = []
+        for index in range(row_count):
+            row = copy.deepcopy(template)
+            row["segment_name"] = f"Segment {index:02d}"
+            row["revenue"] = 1_000_000.0 + index
+            row["revenue_ratio"] = round(100 / row_count, 4)
+            row["gross_margin"] = 20.0 + index / 10
+            rows.append(row)
+        payload["blocks"]["business_composition"] = rows
+        _write_json(code_dir / f"{provider}_fundamental.json", payload)
+    return code_dir
+
+
 def _candidate(payload: dict, field_path: str, provider: str) -> dict:
     matches = [
         candidate
@@ -209,6 +236,7 @@ def test_builds_offline_payload_from_fake_fundamental_artifacts(tmp_path):
         "akshare_fundamental": "akshare_fundamental.json",
         "tushare_fundamental": "tushare_fundamental.json",
     }
+    assert V11_SUMMARY_KEYS <= set(payload)
     assert payload["candidates"]
     assert {candidate["source_provider"] for candidate in payload["candidates"]} == {"tushare", "akshare"}
 
@@ -217,6 +245,7 @@ def test_candidates_have_required_schema_and_do_not_merge_providers(tmp_path):
     payload = build_fact_candidates_from_comparison_dir(_comparison_dir(tmp_path))
 
     assert all(REQUIRED_CANDIDATE_KEYS <= set(candidate) for candidate in payload["candidates"])
+    assert all(set(candidate) == REQUIRED_CANDIDATE_KEYS for candidate in payload["candidates"])
     revenue_candidates = [
         candidate for candidate in payload["candidates"] if candidate["field_path"] == "financial_metrics.revenue"
     ]
@@ -224,6 +253,121 @@ def test_candidates_have_required_schema_and_do_not_merge_providers(tmp_path):
     assert {candidate["source_provider"] for candidate in revenue_candidates} == {"tushare", "akshare"}
     assert len(revenue_candidates) == 2
     assert {candidate["value"] for candidate in revenue_candidates} == {100_000_000.0, 100_500_000.0}
+
+
+def test_field_group_summary_counts_candidates_by_block_provider_and_status(tmp_path):
+    payload = build_fact_candidates_from_comparison_dir(_comparison_dir(tmp_path))
+    summary = payload["field_group_summary"]
+
+    assert summary["basic_info"] == {
+        "candidate_count": 10,
+        "tushare_candidate_count": 5,
+        "akshare_candidate_count": 5,
+        "auto_accepted_count": 0,
+        "manual_review_required_count": 10,
+        "source_conflict_count": 0,
+        "period_mismatch_count": 0,
+        "unit_unknown_count": 0,
+        "provider_missing_count": 0,
+        "mapping_missing_count": 0,
+        "not_available_count": 0,
+    }
+    assert summary["financial_metrics"]["candidate_count"] == 20
+    assert summary["financial_metrics"]["tushare_candidate_count"] == 10
+    assert summary["financial_metrics"]["akshare_candidate_count"] == 10
+    assert summary["financial_metrics"]["auto_accepted_count"] == 10
+    assert summary["financial_metrics"]["manual_review_required_count"] == 10
+    assert summary["valuation_metrics"]["candidate_count"] == 8
+    assert summary["valuation_metrics"]["auto_accepted_count"] == 3
+    assert summary["valuation_metrics"]["manual_review_required_count"] == 4
+    assert summary["valuation_metrics"]["mapping_missing_count"] == 1
+    assert summary["business_composition"]["candidate_count"] == 12
+    assert summary["business_composition"]["manual_review_required_count"] == 12
+
+
+def test_auto_accepted_core_fields_lists_only_core_auto_acceptance_items(tmp_path):
+    payload = build_fact_candidates_from_comparison_dir(_comparison_dir(tmp_path))
+    core_fields = payload["auto_accepted_core_fields"]
+
+    assert [item["field_path"] for item in core_fields] == [
+        "financial_metrics.revenue",
+        "financial_metrics.net_profit",
+        "financial_metrics.gross_margin",
+        "financial_metrics.roe",
+        "financial_metrics.operating_cashflow",
+        "valuation_metrics.pe_ttm",
+        "valuation_metrics.pb",
+        "valuation_metrics.market_cap",
+    ]
+    assert {item["source_provider"] for item in core_fields} == {"tushare"}
+    assert all(item["confidence"] == "high" for item in core_fields)
+    assert all(item["canonical_unit"] for item in core_fields)
+    assert not any(item["field_path"] == "financial_metrics.capex" for item in core_fields)
+    assert not any(item["field_path"] == "valuation_metrics.as_of_date" for item in core_fields)
+    assert all(item["report_period"] or item["as_of_date"] for item in core_fields)
+
+
+def test_manual_review_priority_queue_aggregates_business_composition_and_respects_limit(tmp_path):
+    payload = build_fact_candidates_from_comparison_dir(_comparison_dir_with_many_business_rows(tmp_path))
+    queue = payload["manual_review_priority_queue"]
+
+    assert len(queue) <= 20
+    business_items = [item for item in queue if item["field_path"].startswith("business_composition")]
+    assert business_items
+    assert all("[" not in item["field_path"] for item in business_items)
+    assert any(
+        item["field_path"] == "business_composition.revenue_ratio"
+        and item["candidate_count"] == 60
+        and len(item["representative_candidates"]) <= 3
+        for item in business_items
+    )
+    assert any(item["issue_type"] == "business_composition_field_review" for item in business_items)
+
+
+def test_business_composition_summary_compresses_periods_coverage_and_next_action(tmp_path):
+    payload = build_fact_candidates_from_comparison_dir(_comparison_dir(tmp_path))
+    summary = payload["business_composition_summary"]
+
+    assert summary["total_rows"] == 2
+    assert summary["candidate_count"] == 12
+    assert summary["providers_present"] == ["akshare", "tushare"]
+    assert summary["periods_observed"] == ["2025-12-31"]
+    assert summary["classification_type_coverage"]["available_count"] == 2
+    assert summary["revenue_ratio_coverage"]["available_count"] == 2
+    assert summary["gross_margin_coverage"]["available_count"] == 2
+    assert summary["top_issue_categories"]
+    next_action = summary["recommended_next_action"].lower()
+    assert "fina_mainbz type=p/d/i" in next_action
+    assert "do not auto-accept mixed group rows" in next_action
+    assert "do not merge akshare and tushare composition rows" in next_action
+
+
+def test_provider_quality_summary_counts_without_ground_truth_or_error_claims(tmp_path):
+    payload = build_fact_candidates_from_comparison_dir(_comparison_dir(tmp_path))
+    summary = payload["provider_quality_summary"]
+
+    assert summary["tushare"]["auto_accepted_count"] == 13
+    assert summary["akshare"]["auto_accepted_count"] == 0
+    assert summary["tushare"]["manual_review_count"] == 12
+    assert summary["akshare"]["manual_review_count"] == 25
+    assert summary["tushare"]["mapping_missing_count"] == 1
+    text = json.dumps(summary, ensure_ascii=False).lower()
+    assert "ground truth" not in text
+    assert "akshare is wrong" not in text
+    assert "tushare is truth" not in text
+
+
+def test_candidate_report_limitations_document_non_actions(tmp_path):
+    payload = build_fact_candidates_from_comparison_dir(_comparison_dir(tmp_path))
+    limitations = "\n".join(payload["candidate_report_limitations"]).lower()
+
+    assert "not reviewed ground truth" in limitations
+    assert "no fixture promotion" in limitations
+    assert "no validator run" in limitations
+    assert "no primary switch" in limitations
+    assert "no automatic merge" in limitations
+    assert "business composition still needs classification, period, and ratio review" in limitations
+    assert "domain evidence" in limitations
 
 
 def test_does_not_write_ground_truth_fixture(tmp_path):
