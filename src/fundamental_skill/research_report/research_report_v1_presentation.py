@@ -57,9 +57,9 @@ _EVIDENCE_CN = {
 
 _OPPORTUNITY_CN = {
     "grid_investment_cycle": "电网投资与国网/南网招标",
-    "digital_grid": "数字电网",
+    "digital_grid": "数字电网、调度系统与电力信息通信",
     "uhv_and_distribution_grid": "特高压与配网建设",
-    "power_automation_and_relay_protection": "电力自动化、继电保护、调度系统与电力信息通信",
+    "power_automation_and_relay_protection": "电力自动化与继电保护",
     "stable_operating_quality_candidate": "经营质量候选支撑",
 }
 
@@ -136,18 +136,17 @@ def render_research_report_v1_markdown(report: dict[str, Any]) -> str:
         "",
         "## 一句话结论",
         (
-            f"{company_name}当前可以放在电网设备和电力自动化研究框架下讨论，收入、净利润、毛利率、ROE与估值指标"
-            "具备候选级支撑，但这些字段仍不能等同于经人工复核的最终事实。"
+            f"{company_name}目前更适合作为电网投资与数字电网景气的稳健兑现型样本跟踪，财务和估值候选数据可支撑基础研究，"
+            "但主营构成和官方主营业务证据仍不足以支持强结论。"
         ),
         (
-            "最大机会来自电网投资、国网 / 南网招标、特高压、配网和数字电网建设对调度系统、继电保护、"
-            "电力信息通信等方向的需求牵引。"
+            "最大机会在于国网 / 南网招标、电网投资和数字电网建设，对调度系统、电力信息通信、特高压、配网和继电保护形成需求牵引。"
         ),
         (
-            "最大风险在于招标节奏、订单兑现、应收账款与经营现金流背离，以及合同负债能否持续提供订单可见度。"
+            "最大风险不是行业方向本身，而是订单兑现、项目结算和回款节奏能否与收入、利润表现匹配。"
         ),
         (
-            "最大证据缺口是主营构成口径不清、主营业务仍缺官方来源支撑，估值数据日期也需要保持同日刷新。"
+            "最大证据缺口仍是主营构成口径不清、主营业务官方来源不足，以及估值数据日期需要保持同日刷新。"
         ),
         "",
         "## 投研速读",
@@ -166,6 +165,15 @@ def render_research_report_v1_markdown(report: dict[str, Any]) -> str:
         (
             "- 下一步重点跟踪：国网 / 南网招标、特高压与配网项目节奏、数字电网招标转化、同日估值刷新、"
             "主营构成口径修正和现金回款质量。"
+        ),
+        (
+            "- 当前证据能支持：把国电南瑞放入电网设备、数字电网和电力自动化框架下做基本面研究，并用候选财务与估值数据建立观察底稿。"
+        ),
+        (
+            "- 当前证据还不能支持：把行业景气直接写成公司订单、收入、利润或现金流已经兑现，也不能把主营构成当作已复核结论。"
+        ),
+        (
+            "- 下一步最需要验证：国网 / 南网招标到公司订单的转化、主营构成官方口径、应收账款回款、经营现金流修复和合同负债变化。"
         ),
         "",
         "## 研究员判断",
@@ -259,55 +267,75 @@ def write_research_report_v1_markdown(report: dict[str, Any], output_root: Path,
 
 def _render_data_quality(quality: dict[str, Any]) -> list[str]:
     auto_fields = _as_list(quality.get("auto_accepted_core_fields"))
-    review_fields = _as_list(quality.get("manual_review_required_fields"))
     valuation = _dict_or_empty(quality.get("valuation_as_of_date_status"))
     business = _dict_or_empty(quality.get("business_composition_status"))
     main_business = _dict_or_empty(quality.get("main_business_status"))
     score_status = _dict_or_empty(quality.get("score_confidence_explainability_status"))
 
     return [
-        f"- 候选可信字段：{_field_summary(auto_fields)}。这些字段可用于研究讨论，但不等同于经人工复核的最终事实。",
-        f"- 需人工复核：{_field_names(review_fields)}。复核决定只记录工作流状态，不代表写入基准样本。",
+        (
+            f"- 财务和估值候选字段整体可用于基础研究：{_field_names(auto_fields)}。"
+            "这些数据能支撑观察框架，但仍不是经人工复核的最终事实。"
+        ),
+        (
+            "- 主营构成仍需复核：当前可见的期间、分类口径和收入占比分母还不够稳，不能直接用来确认公司收入结构或产品暴露。"
+        ),
+        (
+            f"- 主营业务官方来源仍缺：{_status_text(main_business.get('status'))}。"
+            "因此电网设备、数字电网、电力自动化等表述只能作为研究画像和待验证方向。"
+        ),
         (
             f"- 估值数据日期：{_display_or_unavailable(valuation.get('as_of_date'))}"
-            f"（{_evidence_text(valuation.get('evidence_label'))}；PE、PB 与总市值需要保持同日口径）。"
+            "。PE、PB 与总市值只有在同日口径下才适合放在同一估值背景里阅读。"
         ),
         (
-            "- 主营构成："
-            f"期间={_join_or_unavailable(business.get('periods_observed'))}；"
+            "- 对结论强度的影响：财务候选字段可以支持研究初稿，主营构成和官方主营业务缺口会限制强结论，评分/置信度差异"
+            f"只作为只读提示（{_score_summary_text(score_status)}），不重算评分、不调整置信度。"
+        ),
+        (
+            "- 技术附注：主营构成期间="
+            f"{_join_or_unavailable(business.get('periods_observed'))}；"
             f"分类口径覆盖={_coverage_text(business.get('classification_type_coverage'))}；"
             f"收入占比覆盖={_coverage_text(business.get('revenue_ratio_coverage'))}。"
-            "当前结论仍受期间、分类口径、收入占比分母和来源覆盖限制。"
-        ),
-        (
-            f"- 主营业务官方来源缺口：{_status_text(main_business.get('status'))}。"
-            "不能把非官方文本或最大分部提示直接作为公司主营业务定论。"
-        ),
-        (
-            f"- 评分/置信度提示：{_score_summary_text(score_status)}。"
-            "本展示层只转述只读提示，不重算评分、不调整置信度。"
         ),
     ]
 
 
 def _render_company_fundamentals(metrics: dict[str, dict[str, Any]], quality: dict[str, Any]) -> list[str]:
-    fields = [
-        "financial_metrics.revenue",
-        "financial_metrics.net_profit",
-        "financial_metrics.gross_margin",
-        "financial_metrics.roe",
-        "financial_metrics.operating_cashflow",
-        "financial_metrics.accounts_receivable",
-        "financial_metrics.inventory",
-        "financial_metrics.contract_liabilities",
-        "financial_metrics.capex",
-        "valuation_metrics.pe_ttm",
-        "valuation_metrics.pb",
-        "valuation_metrics.market_cap",
-    ]
-    lines = [_metric_line(field, metrics.get(field, {})) for field in fields]
+    revenue = _format_metric_value(metrics.get("financial_metrics.revenue", {}), "financial_metrics.revenue")
+    net_profit = _format_metric_value(metrics.get("financial_metrics.net_profit", {}), "financial_metrics.net_profit")
+    gross_margin = _format_metric_value(metrics.get("financial_metrics.gross_margin", {}), "financial_metrics.gross_margin")
+    roe = _format_metric_value(metrics.get("financial_metrics.roe", {}), "financial_metrics.roe")
+    cashflow = _format_metric_value(metrics.get("financial_metrics.operating_cashflow", {}), "financial_metrics.operating_cashflow")
+    receivables = _format_metric_value(metrics.get("financial_metrics.accounts_receivable", {}), "financial_metrics.accounts_receivable")
+    inventory = _format_metric_value(metrics.get("financial_metrics.inventory", {}), "financial_metrics.inventory")
+    contract = _format_metric_value(metrics.get("financial_metrics.contract_liabilities", {}), "financial_metrics.contract_liabilities")
+    capex = _format_metric_value(metrics.get("financial_metrics.capex", {}), "financial_metrics.capex")
+    pe = _format_metric_value(metrics.get("valuation_metrics.pe_ttm", {}), "valuation_metrics.pe_ttm")
+    pb = _format_metric_value(metrics.get("valuation_metrics.pb", {}), "valuation_metrics.pb")
+    market_cap = _format_metric_value(metrics.get("valuation_metrics.market_cap", {}), "valuation_metrics.market_cap")
     valuation = _dict_or_empty(quality.get("valuation_as_of_date_status"))
     business = _dict_or_empty(quality.get("business_composition_status"))
+    evidence = _evidence_text(metrics.get("financial_metrics.revenue", {}).get("evidence_label"))
+    lines = [
+        (
+            f"- 经营质量候选支撑：收入 {revenue}、净利润 {net_profit}、毛利率 {gross_margin}、ROE {roe}，"
+            f"目前可作为经营质量观察底稿（{evidence}），但还需要跨期和官方口径复核。"
+        ),
+        (
+            f"- 现金流与回款：经营现金流 {cashflow}，需要和收入、净利润、应收账款一起看；"
+            f"应收账款 {receivables}，说明项目结算节奏和回款质量是后续判断的关键。"
+        ),
+        (
+            f"- 订单可见度线索：合同负债 {contract} 可以作为订单和预收款可见度线索，但不能直接等同于 backlog 或收入兑现。"
+        ),
+        (
+            f"- 存货与投入：存货 {inventory}、资本开支 {capex} 只能提示交付和投入节奏，不能直接等同产能扩张或增长兑现。"
+        ),
+        (
+            f"- 估值背景：PE {pe}、PB {pb}、总市值 {market_cap}，必须绑定同一估值数据日期阅读。"
+        ),
+    ]
     lines.append(
         f"- 估值数据日期：{_display_or_unavailable(valuation.get('as_of_date'))}（估值指标需同日刷新）。"
     )
@@ -329,17 +357,32 @@ def _render_opportunities(report: dict[str, Any]) -> list[str]:
         "stable_operating_quality_candidate",
     ]
     templates = {
-        "grid_investment_cycle": "当前证据支持把电网投资和国网 / 南网招标作为需求路径跟踪，仍需中标、订单、收入和回款验证。",
-        "digital_grid": "数字电网是重要机会方向，但现阶段属于待验证假设，需要产品线、订单或分部收入证据。",
-        "uhv_and_distribution_grid": "特高压与配网建设提供项目节奏线索，可作为后续跟踪变量，不应自动写成收入兑现。",
-        "power_automation_and_relay_protection": "电力自动化、继电保护、调度系统和电力信息通信与公司画像相关，但主营业务官方来源和主营构成仍需补强。",
-        "stable_operating_quality_candidate": "收入、净利润、毛利率、ROE和现金流等候选字段可用于检验经营质量，但仍需跨期确认。",
+        "grid_investment_cycle": (
+            "重要性最高，因为国网 / 南网招标和电网投资决定需求入口；当前只能支持需求路径跟踪，"
+            "还需要中标、订单、收入和回款证据来确认公司转化。"
+        ),
+        "digital_grid": (
+            "数字电网、调度系统和电力信息通信是公司研究画像中更具结构性的方向；当前属于待验证机会，"
+            "还需要产品线、订单、项目交付或分部收入证据。"
+        ),
+        "uhv_and_distribution_grid": (
+            "特高压与配网提供项目节奏和设备需求线索；当前适合作为后续跟踪变量，"
+            "还需要项目进度、公司参与度和收入确认链条。"
+        ),
+        "power_automation_and_relay_protection": (
+            "电力自动化与继电保护关系到公司核心产品假设；当前需人工复核，"
+            "还需要官方主营业务文本和主营构成支撑。"
+        ),
+        "stable_operating_quality_candidate": (
+            "收入、净利润、毛利率、ROE和现金流候选数据可帮助观察经营质量；"
+            "还需要跨期趋势、回款质量和合同负债变化来提高结论强度。"
+        ),
     }
     lines = []
     for index, title in enumerate(fallback_order, start=1):
         item = by_title.get(title, {})
         lines.append(
-            f"{index}. **{_OPPORTUNITY_CN[title]}**：{templates[title]}（证据等级：{_evidence_text(item.get('evidence_label'))}）"
+            f"{index}. **{_OPPORTUNITY_CN[title]}**：{templates[title]} 当前证据：{_evidence_text(item.get('evidence_label'))}。"
         )
     return lines
 
@@ -349,19 +392,41 @@ def _render_risks(report: dict[str, Any], metrics: dict[str, dict[str, Any]]) ->
     receivables = _format_metric_value(metrics.get("financial_metrics.accounts_receivable", {}), "financial_metrics.accounts_receivable")
     cashflow = _format_metric_value(metrics.get("financial_metrics.operating_cashflow", {}), "financial_metrics.operating_cashflow")
     contract = _format_metric_value(metrics.get("financial_metrics.contract_liabilities", {}), "financial_metrics.contract_liabilities")
-    templates = {
-        "tender_cadence_risk": "国网 / 南网招标节奏若放缓，会削弱电网设备需求路径。",
-        "order_realization_risk": "行业需求若无法转化为公司订单、收入和回款，机会判断会下降。",
-        "receivables_and_cashflow_risk": f"应收账款为{receivables}，经营现金流为{cashflow}，二者相对收入和利润的背离需要重点跟踪。",
-        "gross_margin_pressure": "毛利率若受价格、成本或产品结构影响而压缩，会削弱经营质量判断。",
-        "contract_liabilities_visibility_risk": f"合同负债为{contract}，若后续下降或无法支撑收入可见度，需要下调结论强度。",
-        "business_composition_scope_risk": "主营构成期间、分类口径和收入占比分母不清，会限制分部结论。",
-        "valuation_date_risk": "PE、PB和总市值若不是同日刷新，估值解释力会变弱。",
-        "data_quality_risk": "候选字段、人工复核、评分/置信度和覆盖缺口共同限制当前报告强度。",
-    }
+    ordered = [
+        (
+            "应收账款与经营现金流",
+            "receivables_and_cashflow_risk",
+            f"应收账款为{receivables}，经营现金流为{cashflow}；如果收入和利润增长不能同步转化为现金回款，经营质量判断会先受压。",
+        ),
+        (
+            "招标和订单兑现",
+            "tender_cadence_risk",
+            "国网 / 南网招标节奏和公司订单转化是需求兑现的关键；行业需求若无法落到公司订单、收入和回款，机会判断会下降。",
+        ),
+        (
+            "毛利率压力",
+            "gross_margin_pressure",
+            "毛利率若受价格、成本或产品结构影响而压缩，会削弱电力自动化和电网设备业务的经营质量判断。",
+        ),
+        (
+            "合同负债与订单可见度",
+            "contract_liabilities_visibility_risk",
+            f"合同负债为{contract}，可作为订单可见度线索；若后续下降或无法支撑收入确认，结论强度需要降低。",
+        ),
+        (
+            "主营构成口径",
+            "business_composition_scope_risk",
+            "主营构成期间、分类口径和收入占比分母不清，会限制对数字电网、电力自动化、继电保护等方向的分部判断。",
+        ),
+        (
+            "估值日期与数据质量",
+            "valuation_date_risk",
+            "PE、PB和总市值若不是同日刷新，估值解释力会变弱；候选字段、复核缺口和覆盖缺口也会限制报告强度。",
+        ),
+    ]
     return [
-        f"- **{_RISK_CN[title]}**：{text}（证据等级：{_evidence_text(by_title.get(title, {}).get('evidence_label'))}）"
-        for title, text in templates.items()
+        f"{index}. **{title}**：{text} 当前证据：{_evidence_text(by_title.get(source_title, {}).get('evidence_label'))}。"
+        for index, (title, source_title, text) in enumerate(ordered, start=1)
     ]
 
 

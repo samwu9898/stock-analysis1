@@ -316,6 +316,10 @@ def _fake_report() -> dict:
     }
 
 
+def _section(markdown: str, heading: str, next_heading: str) -> str:
+    return markdown.split(heading, 1)[1].split(next_heading, 1)[0]
+
+
 def test_render_markdown_from_fake_report_contains_chinese_headings_and_structure():
     markdown = render_research_report_v1_markdown(_fake_report())
 
@@ -369,12 +373,33 @@ def test_markdown_contains_pm_summary_disclaimer_and_600406_terms():
 def test_markdown_translates_fields_and_formats_values_in_chinese_units():
     markdown = render_research_report_v1_markdown(_fake_report())
 
-    assert "收入：95.64亿元" in markdown
-    assert "经营现金流：-15.14亿元" in markdown
-    assert "应收账款：266.52亿元" in markdown
-    assert "合同负债：86.35亿元" in markdown
-    assert "PE：24.60倍" in markdown
-    assert "毛利率：25.10%" in markdown
+    assert "收入 95.64亿元" in markdown
+    assert "经营现金流 -15.14亿元" in markdown
+    assert "应收账款 266.52亿元" in markdown
+    assert "合同负债 86.35亿元" in markdown
+    assert "PE 24.60倍" in markdown
+    assert "毛利率 25.10%" in markdown
+
+
+def test_one_sentence_conclusion_has_direct_research_judgement():
+    markdown = render_research_report_v1_markdown(_fake_report())
+    section = _section(markdown, "## 一句话结论", "## 投研速读")
+    sentences = [item for item in section.split("。") if item.strip()]
+
+    assert 3 <= len(sentences) <= 5
+    assert sentences[0].strip().startswith("国电南瑞目前更适合作为")
+    assert "稳健兑现型样本跟踪" in sentences[0]
+    assert "强结论" in sentences[0]
+
+
+def test_pm_summary_contains_support_cannot_support_and_most_needed_validation():
+    markdown = render_research_report_v1_markdown(_fake_report())
+    section = _section(markdown, "## 投研速读", "## 研究员判断")
+
+    assert "当前证据能支持：" in section
+    assert "当前证据还不能支持：" in section
+    assert "下一步最需要验证：" in section
+    assert "公司订单、收入、利润或现金流已经兑现" in section
 
 
 def test_main_body_does_not_expose_raw_json_field_names():
@@ -392,6 +417,57 @@ def test_main_body_does_not_expose_raw_json_field_names():
         assert raw_name not in main_body
 
 
+def test_data_quality_summary_is_compressed_and_raw_paths_do_not_dominate():
+    markdown = render_research_report_v1_markdown(_fake_report())
+    section = _section(markdown, "## 数据质量说明", "## 宏观与行业逻辑")
+
+    assert "财务和估值候选字段整体可用于基础研究" in section
+    assert "主营构成仍需复核" in section
+    assert "主营业务官方来源仍缺" in section
+    assert "估值数据日期：2026-05-26" in section
+    for raw_name in ("business_composition.", "basic_info.", "valuation_metrics."):
+        assert raw_name not in section
+
+
+def test_company_fundamentals_explain_cashflow_receivables_contract_liabilities_relationship():
+    markdown = render_research_report_v1_markdown(_fake_report())
+    section = _section(markdown, "## 公司基本面", "## 机会分析")
+
+    assert "经营质量候选支撑" in section
+    assert "经营现金流 -15.14亿元，需要和收入、净利润、应收账款一起看" in section
+    assert "应收账款 266.52亿元，说明项目结算节奏和回款质量是后续判断的关键" in section
+    assert "合同负债 86.35亿元 可以作为订单和预收款可见度线索，但不能直接等同于 backlog" in section
+    assert "资本开支 4.52亿元 只能提示交付和投入节奏" in section
+    assert "必须绑定同一估值数据日期阅读" in section
+
+
+def test_opportunity_and_risk_sections_are_priority_ordered():
+    markdown = render_research_report_v1_markdown(_fake_report())
+    opportunities = _section(markdown, "## 机会分析", "## 风险分析")
+    risks = _section(markdown, "## 风险分析", "## 证据缺口")
+
+    opportunity_order = [
+        "电网投资与国网/南网招标",
+        "数字电网、调度系统与电力信息通信",
+        "特高压与配网建设",
+        "电力自动化与继电保护",
+        "经营质量候选支撑",
+    ]
+    risk_order = [
+        "应收账款与经营现金流",
+        "招标和订单兑现",
+        "毛利率压力",
+        "合同负债与订单可见度",
+        "主营构成口径",
+        "估值日期与数据质量",
+    ]
+
+    assert [opportunities.index(item) for item in opportunity_order] == sorted(opportunities.index(item) for item in opportunity_order)
+    assert [risks.index(item) for item in risk_order] == sorted(risks.index(item) for item in risk_order)
+    assert "还需要中标、订单、收入和回款证据" in opportunities
+    assert "如果收入和利润增长不能同步转化为现金回款" in risks
+
+
 def test_markdown_has_no_forbidden_trading_advice_terms_and_no_verified_fact_label():
     markdown = render_research_report_v1_markdown(_fake_report())
 
@@ -406,7 +482,7 @@ def test_markdown_includes_data_quality_caveats_gaps_bear_cases_and_checklist():
     markdown = render_research_report_v1_markdown(_fake_report())
 
     assert "需人工复核" in markdown
-    assert "官方来源缺口" in markdown
+    assert "官方来源仍缺" in markdown
     assert "主营构成分类口径" in markdown
     assert "评分与置信度差异" in markdown
     assert "- 如果收入增速明显放缓，则会削弱当前判断。" in markdown
