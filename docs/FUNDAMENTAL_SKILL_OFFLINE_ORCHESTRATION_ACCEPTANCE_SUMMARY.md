@@ -10,18 +10,20 @@ single-stock offline orchestration implementation, the Chinese summary patch,
 and the three accepted local runtime samples have passed end-to-end acceptance
 for one-sentence local report invocation. The follow-on CLI / command wrapper
 design is recorded in
-`docs/FUNDAMENTAL_SKILL_USER_INVOCATION_CLI_DESIGN.md`. It does not modify code,
-tests, fixtures, pipeline behavior, scoring / readiness, Research Intelligence
-P1.1, regression expected files, provider-primary behavior, or runtime
-artifacts. It does not run smoke tests, read `TUSHARE_TOKEN`, use the network,
-call Tushare or AkShare, connect MCP, generate output, stage output, or provide
-investment advice.
+`docs/FUNDAMENTAL_SKILL_USER_INVOCATION_CLI_DESIGN.md`, and the CLI
+implementation plus three-sample CLI runtime acceptance closeout is recorded in
+`docs/FUNDAMENTAL_SKILL_CLI_RUNTIME_ACCEPTANCE_SUMMARY.md`. It does not modify
+code, tests, fixtures, pipeline behavior, scoring / readiness, Research
+Intelligence P1.1, regression expected files, provider-primary behavior, or
+runtime artifacts. It does not run smoke tests, read `TUSHARE_TOKEN`, use the
+network, call Tushare or AkShare, connect MCP, generate output, stage output,
+or provide investment advice.
 
 Latest verification results are quoted from the accepted stage input and were
 not rerun in this documentation-only stage:
 
-- targeted tests `147 passed`
-- full pytest `795 passed, 1 skipped`
+- targeted tests `163 passed`
+- full pytest `811 passed, 1 skipped`
 - regression `passed=47 failed=0 total=47`
 
 ## 1. Final status
@@ -33,6 +35,11 @@ not rerun in this documentation-only stage:
 - `002050` runtime accepted.
 - One-sentence local report invocation baseline frozen.
 - CLI / command wrapper design recorded.
+- CLI implementation accepted.
+- `600406` CLI runtime accepted.
+- `002371` CLI runtime accepted.
+- `002050` CLI runtime accepted.
+- Single-stock offline CLI baseline frozen.
 - Older `002371` Markdown / HTML runtime artifacts were superseded by the
   `20260528T125518` professional-voice regenerated artifacts; user-facing
   orchestration baseline should use the `20260528T125518` Markdown / HTML
@@ -84,31 +91,25 @@ The accepted offline orchestration runtime boundary is:
 
 ## 5. Known limitations
 
-- Current behavior is offline local artifact orchestration only.
-- Live provider mode has not been implemented.
-- Codex natural language to CLI / command-layer invocation has a documented
-  command-wrapper design, but the CLI implementation has not been formally
-  packaged or accepted.
+- Current CLI supports only the single-stock offline local artifact path.
 - Batch / Dashboard has not been implemented for this path.
-- Official parser / CNInfo has not been implemented.
+- Live provider mode has not been implemented.
+- Tushare token / MCP / CNInfo / official parser remain later work.
 - Validator, fixture promotion, and Tushare primary remain later work.
 - Runtime artifacts remain under ignored `output/` paths and do not enter git.
+- CLI is currently a command wrapper, not a full GUI / dashboard.
 - `002371` and `002050` content thickness still depends on future evidence
   enrichment.
 
 ## 6. Next recommended stage
 
-1. Commit the CLI / command wrapper design documentation patch.
-2. Enter user invocation CLI / command wrapper implementation.
-3. Let Codex call orchestration through one command, for example:
-
-```bash
-python -m src.fundamental_skill.research_report.generate_report --code 600406 --format html --data-mode offline_local_artifacts
-```
-
-4. Do batch / Dashboard only after the single-stock CLI implementation is
-   accepted.
-5. Keep live provider, Tushare token, MCP, CNInfo, and validator later.
+1. Commit the CLI runtime acceptance summary documentation patch.
+2. Enter batch / Dashboard design, or first add CLI usage documentation.
+3. Keep live provider, Tushare token, MCP, CNInfo, official parser, validator,
+   fixture promotion, and primary-provider switch for later separately accepted
+   stages.
+4. Do not continue single-stock CLI runtime generation unless a new sample or a
+   regression check requires it.
 
 ## 7. Safety confirmation
 
@@ -121,3 +122,25 @@ This documentation-only acceptance summary confirms:
 - no output generated;
 - no runtime artifact submitted;
 - no investment advice output.
+
+## 8. CLI runtime acceptance sync
+
+The CLI implementation and `600406` / `002371` / `002050` CLI runtime runs are
+accepted. The dedicated closeout is recorded in
+`docs/FUNDAMENTAL_SKILL_CLI_RUNTIME_ACCEPTANCE_SUMMARY.md`.
+
+The validated CLI flow is:
+
+```text
+Codex / user command
+  -> CLI argument parsing
+  -> accepted offline orchestration
+  -> normalize request
+  -> safe offline flags
+  -> locate local artifacts
+  -> reuse accepted HTML
+  -> extract Chinese summary from Markdown
+  -> stdout returns HTML / Markdown / JSON paths
+  -> stdout returns opportunity / risk / evidence gap / data quality
+  -> not-for-trading-advice statement
+```

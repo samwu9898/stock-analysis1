@@ -7,15 +7,18 @@ Three-Sample Offline Orchestration Acceptance Sync.
 
 Status: design accepted, single-stock offline orchestration implementation
 accepted, Chinese summary patch accepted, three-sample offline runtime
-acceptance complete, and CLI / command wrapper design recorded in
-`docs/FUNDAMENTAL_SKILL_USER_INVOCATION_CLI_DESIGN.md`. The acceptance closeout
-is recorded in
-`docs/FUNDAMENTAL_SKILL_OFFLINE_ORCHESTRATION_ACCEPTANCE_SUMMARY.md`. This
-documentation sync does not change tests, change fixtures, change pipeline
-behavior, change scoring / readiness, change Research Intelligence P1.1, change
-regression expected files, generate output, run smoke tests, read
-`TUSHARE_TOKEN`, use the network, call Tushare or AkShare, connect MCP, or
-produce trading advice.
+acceptance complete, CLI / command wrapper implementation accepted, three-sample
+CLI runtime acceptance complete, and single-stock offline CLI baseline frozen.
+The orchestration acceptance closeout is recorded in
+`docs/FUNDAMENTAL_SKILL_OFFLINE_ORCHESTRATION_ACCEPTANCE_SUMMARY.md`, the CLI
+design is recorded in
+`docs/FUNDAMENTAL_SKILL_USER_INVOCATION_CLI_DESIGN.md`, and the CLI runtime
+acceptance closeout is recorded in
+`docs/FUNDAMENTAL_SKILL_CLI_RUNTIME_ACCEPTANCE_SUMMARY.md`. This documentation
+sync does not change tests, change fixtures, change pipeline behavior, change
+scoring / readiness, change Research Intelligence P1.1, change regression
+expected files, generate output, run smoke tests, read `TUSHARE_TOKEN`, use the
+network, call Tushare or AkShare, connect MCP, or produce trading advice.
 
 Current accepted upstream state:
 
@@ -34,6 +37,10 @@ Current accepted upstream state:
   accepted.
 - One-sentence local report invocation baseline frozen.
 - User invocation CLI / command wrapper design recorded.
+- CLI implementation accepted.
+- `600406`, `002371`, and `002050` CLI runtime accepted.
+- Single-stock offline CLI baseline frozen.
+- CLI runtime acceptance summary recorded.
 - Older `002371` Markdown / HTML runtime artifacts were superseded by the
   `20260528T125518` professional-voice regenerated artifacts; user-facing
   orchestration baseline should use the `20260528T125518` Markdown / HTML
@@ -402,18 +409,18 @@ If generation stops because artifacts are missing, the response should say that
 the report was not generated and list the missing local artifacts. It should
 not suggest live-provider access unless the user explicitly asks for it.
 
-## 9. CLI / Command Design
+## 9. CLI / Command Design And Runtime Acceptance
 
 The detailed CLI / command wrapper design is recorded in
 `docs/FUNDAMENTAL_SKILL_USER_INVOCATION_CLI_DESIGN.md`.
 
-The stable command target for future implementation is:
+The stable accepted command target is:
 
 ```bash
 python -m src.fundamental_skill.research_report.generate_report --code 600406 --format html --data-mode offline_local_artifacts
 ```
 
-Company-name invocation should also be supported through the same command:
+Company-name invocation is supported through the same command:
 
 ```bash
 python -m src.fundamental_skill.research_report.generate_report --company-name 北方华创 --format html
@@ -437,10 +444,12 @@ Current V1 CLI defaults remain:
 - `--strict-evidence-boundary true`;
 - `--not-for-trading-advice true`.
 
-This orchestration document records the relationship; the CLI document is the
-source of truth for command arguments, output behavior, error behavior, safety
-boundaries, implementation suggestions, and future implementation acceptance
-criteria.
+The CLI implementation and `600406` / `002371` / `002050` CLI runtime runs are
+accepted. The runtime closeout is recorded in
+`docs/FUNDAMENTAL_SKILL_CLI_RUNTIME_ACCEPTANCE_SUMMARY.md`. This orchestration
+document records the relationship; the CLI document remains the source of truth
+for command arguments, output behavior, error behavior, safety boundaries, and
+implementation acceptance criteria.
 
 ## 10. Legacy Entry Point Reuse Boundary
 
@@ -547,6 +556,11 @@ Completed sequence:
    `docs/FUNDAMENTAL_SKILL_OFFLINE_ORCHESTRATION_ACCEPTANCE_SUMMARY.md`.
 9. Record the user invocation CLI / command wrapper design in
    `docs/FUNDAMENTAL_SKILL_USER_INVOCATION_CLI_DESIGN.md`.
+10. Implement the CLI / command wrapper.
+11. Accept `600406`, `002371`, and `002050` CLI runtime runs.
+12. Freeze the single-stock offline CLI baseline.
+13. Record the CLI runtime acceptance closeout in
+    `docs/FUNDAMENTAL_SKILL_CLI_RUNTIME_ACCEPTANCE_SUMMARY.md`.
 
 Accepted implementation criteria:
 
@@ -566,15 +580,9 @@ Accepted implementation criteria:
 
 Next recommended sequence:
 
-1. Commit the CLI / command wrapper design documentation patch.
-2. Enter user invocation CLI / command wrapper implementation.
-3. Let Codex call orchestration through one command, for example:
-
-```bash
-python -m src.fundamental_skill.research_report.generate_report --code 600406 --format html --data-mode offline_local_artifacts
-```
-
-4. Design batch / Dashboard only after the single-stock CLI implementation is
-   accepted.
-5. Keep future live provider mode, Tushare token, MCP, CNInfo, validator,
-   fixture promotion, and Tushare primary later.
+1. Commit the CLI runtime acceptance summary documentation patch.
+2. Enter batch / Dashboard design, or first add CLI usage documentation.
+3. Keep future live provider mode, Tushare token, MCP, CNInfo, official parser,
+   validator, fixture promotion, and Tushare primary later.
+4. Do not continue single-stock CLI runtime generation unless a new sample or a
+   regression check requires it.

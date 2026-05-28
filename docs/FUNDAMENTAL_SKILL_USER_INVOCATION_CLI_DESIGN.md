@@ -2,15 +2,18 @@
 
 Date: 2026-05-28
 
-Stage: Fundamental Skill User Invocation CLI / Command Wrapper Design.
+Stage: Fundamental Skill User Invocation CLI / Command Wrapper Design and
+Runtime Acceptance Sync.
 
-Status: documentation-only design. This stage designs the single-stock offline
-orchestration command surface so Codex can trigger the accepted orchestration
-through one stable command. It does not implement code, change tests, change
-fixtures, generate runtime output, run smoke tests, read `TUSHARE_TOKEN`, use
-the network, call Tushare or AkShare, connect MCP, change scoring / readiness,
-change Research Intelligence P1.1, change regression expected files, or provide
-trading advice.
+Status: design accepted, CLI implementation accepted, three-sample CLI runtime
+acceptance complete, and single-stock offline CLI baseline frozen. This
+document remains the command argument, output behavior, error behavior, and
+safety-boundary design source. The runtime acceptance closeout is recorded in
+`docs/FUNDAMENTAL_SKILL_CLI_RUNTIME_ACCEPTANCE_SUMMARY.md`. This documentation
+sync does not implement code, change tests, change fixtures, generate runtime
+output, run smoke tests, read `TUSHARE_TOKEN`, use the network, call Tushare or
+AkShare, connect MCP, change scoring / readiness, change Research Intelligence
+P1.1, change regression expected files, or provide trading advice.
 
 Accepted upstream state:
 
@@ -19,6 +22,11 @@ Accepted upstream state:
 - `600406`, `002371`, and `002050` one-sentence offline runtime invocations
   accepted.
 - Offline local invocation baseline frozen.
+- CLI implementation accepted.
+- `600406`, `002371`, and `002050` CLI runtime invocations accepted.
+- Single-stock offline CLI baseline frozen.
+- CLI runtime acceptance summary recorded in
+  `docs/FUNDAMENTAL_SKILL_CLI_RUNTIME_ACCEPTANCE_SUMMARY.md`.
 - Default mode remains `offline_local_artifacts`, `no_live_provider`, no token,
   no network, no provider call, and no MCP.
 
@@ -224,9 +232,9 @@ the report is not trading advice and contains no target price or position
 sizing. It must not translate that disclaimer into positive investment-action
 language.
 
-## 8. Implementation Suggestion
+## 8. Implementation Boundary
 
-Future implementation should add one command module:
+The accepted implementation exposes one command module:
 
 ```text
 src/fundamental_skill/research_report/generate_report.py
@@ -256,7 +264,7 @@ Implementation boundaries:
 - Keep `offline_local_artifacts` as the default and keep
   `local_provider_comparison` local-artifact-only.
 
-Suggested tests for the implementation stage:
+Accepted implementation-stage test and review coverage included:
 
 - no environment token read;
 - no network access;
@@ -270,8 +278,8 @@ Suggested tests for the implementation stage:
 - forbidden output checks reject buy / sell advice, target price, position
   sizing, and technical trading signals.
 
-Those tests are implementation-stage guidance only. This design stage does not
-add or modify tests.
+The current CLI runtime acceptance summary quotes the latest accepted results;
+this documentation sync does not add or modify tests.
 
 ## 9. Relation To Existing Orchestration
 
@@ -296,9 +304,9 @@ The CLI must not become a hidden second implementation of:
 - evidence scoring;
 - report summarization beyond `format_orchestration_response`.
 
-## 10. Acceptance Criteria For The Future Implementation Stage
+## 10. Accepted CLI Implementation Criteria
 
-A future CLI implementation can be accepted when:
+The CLI implementation acceptance criteria are:
 
 - Codex can run one stable command to locate or generate a single-stock report.
 - The command supports `--code` and `--company-name` entry paths.
@@ -314,14 +322,44 @@ A future CLI implementation can be accepted when:
 - No buy / sell advice, target price, position sizing, portfolio weight,
   account action, or technical trading signal is emitted.
 
-## 11. Next Recommended Step
+## 11. CLI Runtime Acceptance Sync
 
-After this design is accepted, the next recommended sequence is:
+The CLI command wrapper has now passed three-sample runtime acceptance. The
+accepted runtime closeout is recorded in
+`docs/FUNDAMENTAL_SKILL_CLI_RUNTIME_ACCEPTANCE_SUMMARY.md`.
 
-1. Implement the CLI command wrapper.
-2. Run single-stock CLI runtime review for `600406`.
-3. Run cross-profile CLI runtime review for `002371` and `002050`.
-4. Accept the single-stock CLI baseline.
-5. Keep batch / Dashboard after CLI acceptance.
-6. Keep live provider, token, MCP, CNInfo, validator, fixture promotion, and
-   primary-provider switch for later separately accepted stages.
+Accepted commands:
+
+```bash
+python -m src.fundamental_skill.research_report.generate_report --code 600406 --format html --data-mode offline_local_artifacts
+python -m src.fundamental_skill.research_report.generate_report --company-name 北方华创 --format html
+python -m src.fundamental_skill.research_report.generate_report --company-name 三花智控 --format html
+```
+
+Acceptance result:
+
+- CLI implementation accepted.
+- `600406`, `002371`, and `002050` CLI runtime accepted.
+- Exit code `0` for all three accepted CLI runtime runs.
+- Stdout Chinese and operational.
+- Selected HTML / Markdown / JSON artifacts correct.
+- No English JSON summary leaked.
+- No full report body dumped.
+- No cross-profile contamination.
+- Artifact boundary passed.
+- Token / secret / provider scan passed.
+- Forbidden output check passed.
+- Latest quoted verification: targeted tests `163 passed`, full pytest
+  `811 passed, 1 skipped`, and regression `passed=47 failed=0 total=47`.
+
+## 12. Next Recommended Step
+
+After CLI runtime acceptance, the next recommended sequence is:
+
+1. Commit the CLI runtime acceptance summary documentation patch.
+2. Enter batch / Dashboard design, or first add CLI usage documentation.
+3. Keep live provider, Tushare token, MCP, CNInfo, official parser, validator,
+   fixture promotion, and primary-provider switch for later separately accepted
+   stages.
+4. Do not continue single-stock CLI runtime generation unless a new sample or a
+   regression check requires it.
