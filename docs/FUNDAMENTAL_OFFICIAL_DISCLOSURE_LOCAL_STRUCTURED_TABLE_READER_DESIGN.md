@@ -392,7 +392,7 @@ Boundaries remain unchanged:
 - no regression expected update;
 - no live CNInfo, provider call, token read, network, MCP, or trading advice.
 
-Next recommended stage:
+Historical next recommended stage after CSV reader acceptance:
 
 ```text
 CSV normalized table -> business_composition_table_facts integration design
@@ -418,8 +418,77 @@ This design keeps the reader boundary intact:
 - `unreliable_text_copy` and `unusable` remain caveat-only;
 - no candidate generator or Research Report V1 integration is included.
 
-Next recommended stage:
+Historical next recommended stage after the integration design:
 
 ```text
 CSV to table facts converter implementation
+```
+
+## 14. CSV Table Facts Runtime Acceptance Sync
+
+CSV table fact converter implementation, Strict Gate Patch, and retained CSV
+sample -> table facts runtime review are now accepted. The frozen runtime
+acceptance closeout is recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_CSV_TABLE_FACTS_RUNTIME_ACCEPTANCE_SUMMARY.md
+```
+
+Retained input CSV:
+
+```text
+output/official_disclosures/local_structured_table_samples/600406_h1_product.csv
+```
+
+Retained table facts runtime artifact:
+
+```text
+output/official_disclosures/20260529T002922/600406/csv_table_facts_review.json
+```
+
+Reader boundary remains intact:
+
+- reader output is a normalized table, not a table fact;
+- reader runtime observed headers = 7 and rows = 6;
+- raw strings were preserved;
+- `delimiter_sniffed`, `unit_not_detected`, and `period_not_detected` remained
+  visible;
+- `classification_hint=product`;
+- `table_quality_hint=structured_medium`;
+- reader did not generate table facts.
+
+Converter runtime acceptance used explicit review parameters:
+
+- `period=2025H1`;
+- `unit=CNY`;
+- `denominator=主营业务收入合计`;
+- `classification_type=product`;
+- `table_quality=structured_medium`;
+- `needs_human_review=true`.
+
+The converter generated 6 runtime-review-only revenue facts, including
+`电网智能`, `数能融合`, and `合计`, with source table id, row index, column name,
+`source_column_map`, period, unit, classification type, denominator,
+`structured_medium`, `needs_human_review=true`, and caveat
+`local_structured_sample_requires_human_review`. Reader warnings were
+propagated to caveats or conversion warnings. No verified fact was generated.
+
+The retained CSV sample and runtime artifact remain ignored output, not
+fixtures, not regression expected files, not accepted manifest updates, not
+Research Report V1 updates, and not candidate generator output.
+
+Accepted fail-closed checks include missing explicit period, missing explicit
+unit, duplicate revenue-like header -> `ambiguous_header`, caveat-only
+`unreliable_text_copy`, and denominator omission -> `denominator_missing`.
+
+Latest accepted verification results are quoted, not rerun here:
+
+- targeted tests `424 passed`;
+- full pytest latest `1072 passed, 1 skipped`;
+- regression `passed=47 failed=0 total=47`.
+
+Next recommended stage:
+
+```text
+CSV table facts -> official_disclosure_facts integration design
 ```

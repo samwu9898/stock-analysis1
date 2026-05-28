@@ -88,9 +88,8 @@ single-stock CLI runtime acceptance is recorded in
 `docs/FUNDAMENTAL_SKILL_CLI_RUNTIME_ACCEPTANCE_SUMMARY.md`. The manifest
 locator runtime acceptance is recorded in
 `docs/FUNDAMENTAL_ACCEPTED_MANIFEST_LOCATOR_RUNTIME_ACCEPTANCE_SUMMARY.md`.
-The next recommended official-disclosure work is CSV Reader Schema /
-Implementation for the independent Business Composition Table Parser. The next
-step is not more ad hoc
+The next recommended official-disclosure work is CSV table facts ->
+`official_disclosure_facts.json` integration design. The next step is not more ad hoc
 single-target HTML generation, promote-rule design, validator implementation,
 fixture promotion, live CNInfo fetch, live provider report, MCP, Tushare token
 work, or a Tushare primary switch.
@@ -764,9 +763,11 @@ promotion, live CNInfo fetch, live provider report, MCP, Tushare token work,
 or Tushare primary switch as the next step. The product line should now move
 from accepted manifest locator runtime baseline, Minimal CNInfo / official
 disclosure parser local + real-local-file acceptance, and Business Composition
-Table Parser Design into CSV Reader Schema / Implementation. The table schema
-/ quality model implementation and Local Structured Table Reader Design are
-already accepted / recorded.
+Table Parser Design into CSV table facts -> `official_disclosure_facts.json`
+integration design. The table schema / quality model implementation, Local
+Structured Table Reader Design, CSV reader runtime acceptance, CSV to table
+facts design, and CSV table facts runtime acceptance are already accepted /
+recorded.
 
 ## 11. Presentation profile design addendum
 
@@ -925,8 +926,8 @@ The CLI runtime acceptance closeout is recorded in
 `docs/FUNDAMENTAL_SKILL_CLI_RUNTIME_ACCEPTANCE_SUMMARY.md`. Manifest locator
 runtime acceptance is recorded in
 `docs/FUNDAMENTAL_ACCEPTED_MANIFEST_LOCATOR_RUNTIME_ACCEPTANCE_SUMMARY.md`.
-Next recommended official-disclosure stage: CSV Reader Schema /
-Implementation for the independent Business Composition Table Parser.
+Next recommended official-disclosure stage: CSV table facts ->
+`official_disclosure_facts.json` integration design.
 
 ## 15. CLI runtime acceptance addendum
 
@@ -990,10 +991,12 @@ runtime manifest generation, and retained runtime acceptance are now accepted
 for `600406`, `002371`, and `002050`. Minimal CNInfo / official disclosure
 parser design, local sample acceptance, real local filing acceptance, and
 business-composition table parser design plus schema / quality model
-acceptance and Local Structured Table Reader Design are now recorded. The next
-recommended official-disclosure stage is CSV Reader Schema / Implementation for
-the independent Business Composition Table Parser. Batch / Dashboard can start
-after manifest closeout and should depend on manifest-located artifacts.
+acceptance and Local Structured Table Reader Design are now recorded. CSV
+reader runtime acceptance, CSV to table facts design, and CSV table facts
+runtime acceptance are also recorded. The next recommended
+official-disclosure stage is CSV table facts ->
+`official_disclosure_facts.json` integration design. Batch / Dashboard can
+start after manifest closeout and should depend on manifest-located artifacts.
 Live Tushare provider mode, live CNInfo fetch, MCP, token work, validator,
 fixture promotion, and Tushare primary remain later separately accepted stages.
 
@@ -1180,12 +1183,13 @@ Local Structured Table Reader Design is recorded in
 Next recommended official-disclosure stage:
 
 ```text
-CSV Reader Schema / Implementation
+CSV table facts -> official_disclosure_facts integration design
 ```
 
-The CSV reader implementation should remain separate from Research Report V1.
-Candidate generator integration and Research Report V1 integration require
-separate accepted designs after structured local table behavior is accepted.
+CSV table facts remain separate from Research Report V1.
+`official_disclosure_facts.json`, candidate generator, and Research Report V1
+integration require separate accepted designs after the retained CSV table
+facts runtime baseline.
 
 ## 20. Local Structured CSV Sample Runtime Acceptance Boundary
 
@@ -1216,7 +1220,7 @@ Next recommended official-disclosure stage remains separate from Research
 Report V1:
 
 ```text
-CSV normalized table -> business_composition_table_facts integration design
+CSV table facts -> official_disclosure_facts integration design
 ```
 
 ## 21. CSV To Table Facts Integration Design Boundary
@@ -1238,6 +1242,67 @@ Research Report V1 boundary remains unchanged:
 - no fixture promotion;
 - no scoring / readiness / P1.1 / regression expected change.
 
-Future Research Report V1 use of table facts requires separate candidate
-generator integration and report L1 evidence integration designs after the CSV
-converter implementation and runtime review are accepted.
+Future Research Report V1 use of table facts requires separate
+`official_disclosure_facts.json`, candidate generator, and report L1 evidence
+integration designs. The CSV converter implementation and retained sample
+runtime review are now accepted, but they do not make table facts Research
+Report V1 evidence.
+
+## 22. CSV Table Facts Runtime Acceptance Boundary
+
+CSV table fact converter implementation, Strict Gate Patch, and retained CSV
+sample -> table facts runtime review are accepted. The frozen runtime
+acceptance closeout is recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_CSV_TABLE_FACTS_RUNTIME_ACCEPTANCE_SUMMARY.md
+```
+
+Research Report V1 boundary remains unchanged:
+
+- retained CSV sample is ignored runtime output, not a fixture;
+- retained table facts runtime artifact is ignored runtime output;
+- table facts are runtime-review-only;
+- table facts are L1 official disclosure candidates only in a caveated,
+  human-review-required sense;
+- no verified fact was generated;
+- no `official_disclosure_facts.json` integration yet;
+- no Research Report V1 builder, renderer, orchestration, or CLI change;
+- no accepted manifest update;
+- no fixture promotion;
+- no candidate generator integration;
+- no report evidence promotion;
+- no scoring / readiness / P1.1 / regression expected change.
+
+Runtime records:
+
+- input CSV:
+  `output/official_disclosures/local_structured_table_samples/600406_h1_product.csv`;
+- runtime artifact:
+  `output/official_disclosures/20260529T002922/600406/csv_table_facts_review.json`;
+- reader summary: headers = 7, rows = 6, raw strings preserved,
+  `delimiter_sniffed`, `unit_not_detected`, `period_not_detected`,
+  `classification_hint=product`, `table_quality_hint=structured_medium`, and
+  no reader-generated table facts;
+- converter summary: explicit `period=2025H1`, `unit=CNY`,
+  `denominator=主营业务收入合计`, `classification_type=product`,
+  `table_quality=structured_medium`, `needs_human_review=true`, 6
+  runtime-review-only revenue facts including `电网智能`, `数能融合`, and
+  `合计`, source row / column traceability, warning propagation, and no
+  verified facts.
+
+Latest accepted verification results are quoted, not rerun here: targeted
+tests `424 passed`, full pytest latest `1072 passed, 1 skipped`, and
+regression `passed=47 failed=0 total=47`.
+
+Next recommended official-disclosure stage remains separate from Research
+Report V1:
+
+```text
+CSV table facts -> official_disclosure_facts integration design
+```
+
+Do not directly enter live CNInfo, PDF extraction, DOCX / HTML / Excel reader,
+candidate generator integration, Research Report V1 integration, fixture
+promotion, accepted manifest update, validator work, scoring / P1.1 changes,
+or trading advice.

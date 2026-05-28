@@ -243,7 +243,7 @@ That design keeps the table schema / quality model baseline unchanged:
 - no reader, writer, candidate generator integration, or Research Report V1
   integration is implemented by the design-only stage.
 
-Updated recommended next stage:
+Historical updated recommended next stage at schema acceptance time:
 
 ```text
 CSV Reader Schema / Implementation
@@ -290,13 +290,13 @@ Table quality relationship:
 - `unreliable_text_copy` remains caveat-only and copied PDF TXT still cannot
   produce numeric facts.
 
-Latest accepted verification results:
+Reader-stage accepted verification results:
 
 - targeted tests `385 passed`;
 - full pytest `1033 passed, 1 skipped`;
 - regression `passed=47 failed=0 total=47`.
 
-Next recommended stage:
+Historical next recommended stage after reader runtime acceptance:
 
 ```text
 CSV normalized table -> business_composition_table_facts integration design
@@ -330,8 +330,82 @@ Design requirements:
 - no fixture, accepted manifest, candidate generator, or Research Report V1
   side effects.
 
-Next recommended stage:
+Historical next recommended stage after integration design:
 
 ```text
 CSV to table facts converter implementation
+```
+
+## 14. CSV Table Facts Runtime Acceptance Sync
+
+CSV table fact converter implementation, Strict Gate Patch, and retained CSV
+sample -> table facts runtime review are now accepted. The schema / quality
+model baseline remains unchanged and continues to be the validator boundary for
+the converter.
+
+Runtime acceptance summary:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_CSV_TABLE_FACTS_RUNTIME_ACCEPTANCE_SUMMARY.md
+```
+
+Retained input CSV:
+
+```text
+output/official_disclosures/local_structured_table_samples/600406_h1_product.csv
+```
+
+Retained runtime artifact:
+
+```text
+output/official_disclosures/20260529T002922/600406/csv_table_facts_review.json
+```
+
+Accepted converter runtime baseline:
+
+- generated 6 runtime-review-only revenue facts;
+- includes `电网智能`, `数能融合`, and `合计`;
+- preserves official segment names and raw or traceable revenue values;
+- every fact includes `source_table_id`, `source_row_index`,
+  `source_column_name`, `source_column_map`, `period=2025H1`, `unit=CNY`,
+  `classification_type=product`, `denominator=主营业务收入合计`,
+  `table_quality=structured_medium`, and `needs_human_review=true`;
+- every fact includes caveat
+  `local_structured_sample_requires_human_review`;
+- reader warnings including `delimiter_sniffed`, `unit_not_detected`, and
+  `period_not_detected` are propagated to caveats or conversion warnings;
+- no verified fact generated.
+
+Accepted strict / fail-closed checks:
+
+- no explicit period + `period_not_detected` -> fail closed;
+- no explicit unit + `unit_not_detected` -> fail closed;
+- duplicate revenue-like header -> `ambiguous_header` fail closed;
+- `table_quality=unreliable_text_copy` -> no table facts;
+- denominator omitted -> `denominator_missing` appears in
+  `conversion_warnings` and fact caveats if revenue facts are allowed.
+
+Boundaries remain unchanged:
+
+- facts are runtime-review-only;
+- facts are L1 official disclosure candidates only in a caveated,
+  human-review-required sense;
+- no `official_disclosure_facts.json` integration yet;
+- no accepted manifest update;
+- no fixture promotion;
+- no candidate generator integration;
+- no Research Report V1 integration;
+- no scoring / P1.1 / regression update;
+- no live CNInfo, provider call, token read, network, MCP, or trading advice.
+
+Latest accepted verification results are quoted, not rerun here:
+
+- targeted tests `424 passed`;
+- full pytest latest `1072 passed, 1 skipped`;
+- regression `passed=47 failed=0 total=47`.
+
+Next recommended stage:
+
+```text
+CSV table facts -> official_disclosure_facts integration design
 ```

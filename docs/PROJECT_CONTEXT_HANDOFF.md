@@ -50,14 +50,21 @@ recorded in
 `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_BUSINESS_COMPOSITION_TABLE_SCHEMA_ACCEPTANCE_SUMMARY.md`.
 Local Structured Table Reader Design is recorded in
 `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_LOCAL_STRUCTURED_TABLE_READER_DESIGN.md`.
+Local Structured CSV sample runtime acceptance is recorded in
+`docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_LOCAL_STRUCTURED_CSV_SAMPLE_ACCEPTANCE_SUMMARY.md`.
+CSV normalized table -> table facts integration design is recorded in
+`docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_CSV_TO_TABLE_FACTS_INTEGRATION_DESIGN.md`.
+CSV table fact converter implementation, Strict Gate Patch, retained CSV
+sample -> table facts runtime review, and retained CSV sample -> table facts
+runtime baseline are accepted; the runtime acceptance summary is recorded in
+`docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_CSV_TABLE_FACTS_RUNTIME_ACCEPTANCE_SUMMARY.md`.
 The retained ignored manifest is `output/research_reports/accepted_manifest.json`
 with SHA256
 `C1F97162A59DE113CD4C9F1A9531AEC3A915A3D6F09365098201234E6F5BEB7F`, size
 `7678`, mtime UTC `2026-05-28 10:17:55`, three `current` entries, and
 manifest-first runtime acceptance for `600406`, `002371`, and `002050`. The
-next recommended official-disclosure stage is CSV Reader Schema /
-Implementation for the independent Business Composition Table Parser. The next
-step is
+next recommended official-disclosure stage is CSV table facts ->
+`official_disclosure_facts.json` integration design. The next step is
 not more ad hoc
 single-target HTML generation, more single-stock CLI runtime generation, CLI
 usage documentation, promote rules, validator, fixture promotion, Tushare
@@ -123,9 +130,10 @@ Core modules:
   manifest locator, Minimal CNInfo / official disclosure parser local +
   real-local-file acceptance, Business Composition Table Parser Design, and
   Business Composition Table Schema / Quality Model acceptance, and Local
-  Structured Table Reader Design are recorded. The next recommended
-  official-disclosure step is CSV Reader Schema / Implementation for the
-  independent Business Composition Table Parser, not
+  Structured Table Reader Design, Local Structured CSV runtime acceptance, CSV
+  to table facts integration design, and CSV table facts runtime acceptance
+  are recorded. The next recommended official-disclosure step is CSV table
+  facts -> `official_disclosure_facts.json` integration design, not
   batch / Dashboard design, not more ad hoc single-target HTML generation, not
   fixture promotion, not validator implementation, not Tushare primary switch,
   not live CNInfo fetch, not live provider report, not MCP, not token work, not
@@ -198,11 +206,13 @@ natural-language Codex / GPT-5.5 request
   locator, Minimal CNInfo / official disclosure parser local + real-local-file
   acceptance, Business Composition Table Parser Design, and Business
   Composition Table Schema / Quality Model acceptance, and Local Structured
-  Table Reader Design are recorded. The next recommended official-disclosure
-  step is CSV Reader Schema / Implementation, not another Phase 4 smoke, not
-  more single-target HTML generation, not fixture promotion, not Tushare
-  primary switch, not live CNInfo fetch, not candidate generator integration,
-  and not Research Report V1 integration.
+  Table Reader Design, Local Structured CSV runtime acceptance, CSV to table
+  facts integration design, and CSV table facts runtime acceptance are
+  recorded. The next recommended official-disclosure step is CSV table facts ->
+  `official_disclosure_facts.json` integration design, not another Phase 4
+  smoke, not more single-target HTML generation, not fixture promotion, not
+  Tushare primary switch, not live CNInfo fetch, not candidate generator
+  integration, and not Research Report V1 integration.
 - `Fundamental Ground Truth Benchmark Design`: documentation-only design for a reviewed factual benchmark covering canonical `basic_info`, `financial_metrics`, `valuation_metrics`, and `business_composition` fields. It defines the V1 sample pool, source priority, tolerance rules, future fixture shape, future validator boundary, and its relationship with regression, Tushare block-level primary design, and P1.1 deep validation. It does not make the user manually find most values; reviewed ground truth should be populated only after automatic candidate generation and auto-accept / human-review gates.
 - `Fundamental Auto Fact Candidate Generator Design`: documentation-only design for an automated candidate layer that extracts provider fact candidates from Tushare / AkShare / existing provider artifacts / future CNInfo or announcement parsers, records source trace, period, unit, confidence, conflict status, and review status, and routes only accepted or human-reviewed facts toward the ground-truth fixture. It does not add code, alter the fixture, implement a validator, call providers, read tokens, connect MCP, modify pipeline behavior, switch primary providers, or change regression expected files.
 - `Fundamental Candidate Report Review Protocol Design`: documentation-only design for converting `manual_review_priority_queue` into a few high-value review actions. The first `600406` plan prioritizes `valuation_metrics.as_of_date`, `business_composition.period`, `business_composition.classification_type`, and `business_composition.revenue_ratio`; the design is accepted and is now followed by the review decisions artifact design. It explicitly does not promote fixtures, run validators, call providers, read tokens, connect MCP, switch primary behavior, or merge AkShare / Tushare.
@@ -228,8 +238,10 @@ natural-language Codex / GPT-5.5 request
   through `table_caveats`, not `table_facts`. This is not live CNInfo, not PDF
   table parsing, not a fixture, not regression expected, not an accepted
   manifest update, not candidate generator integration, and not Research
-  Report V1 integration. Next recommended stage is CSV Reader Schema /
-  Implementation for the independent table parser.
+  Report V1 integration. CSV reader, CSV to table facts integration design,
+  converter implementation, Strict Gate Patch, and retained CSV sample ->
+  table facts runtime review are now accepted. Next recommended stage is CSV
+  table facts -> `official_disclosure_facts.json` integration design.
 - `Fundamental Skill User Invocation / Report Orchestration`:
   accepted single-stock offline Codex / GPT-5.5 natural-language entry point.
   It defines request parsing, schema normalization, data modes, single-stock
@@ -462,9 +474,11 @@ Do not add a new industry framework only because one stock is popular or difficu
   accepted manifest locator, Minimal CNInfo / official disclosure parser
   local + real-local-file acceptance, Business Composition Table Parser
   Design, Business Composition Table Schema / Quality Model acceptance, and
-  Local Structured Table Reader Design are complete or recorded. Next is CSV
-  Reader Schema / Implementation for the independent table parser, not another
-  Phase 4 smoke, not more ad hoc
+  Local Structured Table Reader Design, Local Structured CSV runtime
+  acceptance, CSV to table facts integration design, and CSV table facts
+  runtime acceptance are complete or recorded. Next is CSV table facts ->
+  `official_disclosure_facts.json` integration design, not another Phase 4
+  smoke, not more ad hoc
   single-target HTML generation, not manual field filling, not fixture
   promotion, not validator implementation, not promote-rule design, not live
   CNInfo fetch, not candidate generator integration, not Research Report V1
@@ -485,8 +499,10 @@ Do not add a new industry framework only because one stock is popular or difficu
   parser design, official parser local sample acceptance, real local filing
   acceptance, business-composition table parser design, table schema / quality
   model acceptance, and Local Structured Table Reader Design are documented.
-  The next recommended official-disclosure phase is CSV Reader Schema /
-  Implementation for the independent table parser.
+  Local Structured CSV runtime acceptance, CSV to table facts integration
+  design, and CSV table facts runtime acceptance are documented. The next
+  recommended official-disclosure phase is CSV table facts ->
+  `official_disclosure_facts.json` integration design.
 - `002050` 三花智控 is an internal successful HTML report sample candidate after v2.1 and visual audit acceptance.
 - `output/`, `output/reports/`, `output/visual_audit/`, `data/`, and `cache/` are generated/runtime artifacts and should not be committed.
 - Some industries remain uncovered, including banks, medical devices, and intelligent driving. CXO is covered by `life_science_cxo_services`, and AI datacenter infrastructure is covered by `ai_datacenter_infrastructure` v1, but both still have conservative public-data limits.
@@ -517,8 +533,10 @@ Do not add a new industry framework only because one stock is popular or difficu
   Minimal CNInfo / official disclosure parser design, local sample acceptance,
   real local filing acceptance, business-composition table parser design,
   schema / quality model acceptance, and Local Structured Table Reader Design
-  are recorded. Next useful official-disclosure direction is CSV Reader Schema
-  / Implementation for the independent table parser.
+  are recorded. Local Structured CSV runtime acceptance, CSV to table facts
+  integration design, and CSV table facts runtime acceptance are also
+  recorded. Next useful official-disclosure direction is CSV table facts ->
+  `official_disclosure_facts.json` integration design.
   HTML must
   consume Markdown / presentation-layer output or the Research Report V1
   structured payload; it must not re-analyze, change conclusions, hide caveats,
@@ -532,9 +550,11 @@ Do not add a new industry framework only because one stock is popular or difficu
   CLI, accepted manifest locator, Minimal CNInfo / official disclosure parser
   local + real-local-file acceptance, Business Composition Table Parser
   Design, Business Composition Table Schema / Quality Model acceptance, and
-  Local Structured Table Reader Design are complete or recorded. Next useful
-  official-disclosure step is CSV Reader Schema / Implementation for the
-  independent table parser. Promote-rule
+  Local Structured Table Reader Design, Local Structured CSV runtime
+  acceptance, CSV to table facts integration design, and CSV table facts
+  runtime acceptance are complete or recorded. Next useful official-disclosure
+  step is CSV table facts -> `official_disclosure_facts.json` integration
+  design. Promote-rule
   design, controlled fixture promotion, standalone validator, candidate
   generator integration, Research Report V1 integration, Tushare primary
   switch, live CNInfo fetch, live provider report, MCP, token work, sidecar
@@ -721,8 +741,11 @@ locator runtime acceptance is recorded in
 Minimal CNInfo / official disclosure parser design, local sample runtime
 acceptance, real local filing acceptance, Business Composition Table Parser
 Design, Business Composition Table Schema / Quality Model acceptance, and
-Local Structured Table Reader Design are now recorded. Next recommended
-official-disclosure stage: CSV Reader Schema / Implementation. Do not continue
+Local Structured Table Reader Design are now recorded. Local Structured CSV
+runtime acceptance, CSV to table facts integration design, and CSV table facts
+runtime acceptance are also recorded. Next recommended official-disclosure
+stage: CSV table facts -> `official_disclosure_facts.json` integration design.
+Do not continue
 single-stock CLI runtime generation or redo CLI usage documentation unless a
 new sample, regression check, or usage-surface change requires it.
 Batch / Dashboard can start after manifest closeout as a manifest-dependent
@@ -870,15 +893,18 @@ Key accepted table-schema decisions:
   `table_facts`, even with nonnumeric or null values.
 - Section detection and unusable-table reasons must be expressed through
   `table_caveats`.
-- No reader, writer, HTML / DOCX / PDF / CSV / Excel parser, candidate
-  generator integration, or Research Report V1 integration is implemented.
+- CSV reader and CSV table fact converter are now accepted, but no
+  `official_disclosure_facts.json` table-facts integration, HTML / DOCX / PDF /
+  Excel parser, candidate generator integration, or Research Report V1
+  integration is implemented.
 
-Latest accepted verification results are quoted: targeted tests `350 passed`,
-full pytest `998 passed, 1 skipped`, and regression
+Latest accepted verification results are quoted for the current CSV table facts
+runtime baseline: targeted tests `424 passed`, full pytest latest
+`1072 passed, 1 skipped`, and regression
 `passed=47 failed=0 total=47`.
 
-Next recommended stage: CSV Reader Schema / Implementation for the
-independent table parser. Live CNInfo fetch, MCP, provider calls, token work,
+Next recommended stage: CSV table facts -> `official_disclosure_facts.json`
+integration design. Live CNInfo fetch, MCP, provider calls, token work,
 validator work, fixture promotion, candidate generator integration, Research
 Report V1 integration, scoring changes, P1.1 changes, manifest updates, report
 rewrites, batch, and Dashboard remain separate later stages.
@@ -904,15 +930,20 @@ Important boundary:
 
 - `unreliable_text_copy` and `unusable` must not enter `table_facts`;
 - copied PDF TXT can only produce table caveats, not numeric facts;
-- no reader or writer exists yet;
-- no structured local table sample runtime review exists yet;
+- CSV reader and CSV table fact converter are now accepted;
+- retained structured local CSV sample runtime review is accepted;
+- no `official_disclosure_facts.json` table-facts integration exists yet;
 - no candidate generator or Research Report V1 integration exists yet.
 
 Local Structured Table Reader Design is recorded in
 `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_LOCAL_STRUCTURED_TABLE_READER_DESIGN.md`.
-Next stage should be CSV Reader Schema / Implementation. Local HTML and DOCX
-remain later local structured paths; PDF extraction and live CNInfo remain
-later.
+Local Structured CSV runtime acceptance is recorded in
+`docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_LOCAL_STRUCTURED_CSV_SAMPLE_ACCEPTANCE_SUMMARY.md`.
+CSV table facts runtime acceptance is recorded in
+`docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_CSV_TABLE_FACTS_RUNTIME_ACCEPTANCE_SUMMARY.md`.
+Next stage should be CSV table facts -> `official_disclosure_facts.json`
+integration design. Local HTML, DOCX, and Excel remain later local structured
+paths; PDF extraction and live CNInfo remain later.
 
 ## 19. Local Structured CSV Sample Runtime Acceptance Notes
 
@@ -928,6 +959,7 @@ Accepted ignored runtime artifacts:
 
 - `output/official_disclosures/local_structured_table_samples/600406_h1_product.csv`
 - `output/official_disclosures/20260528_233015/600406/normalized_tables_review.json`
+- `output/official_disclosures/20260529T002922/600406/csv_table_facts_review.json`
 
 Runtime result:
 
@@ -957,14 +989,24 @@ Boundaries:
 - no OCR, live CNInfo, provider call, token read, network, MCP, scoring change,
   P1.1 change, or trading advice.
 
-Latest accepted verification results are quoted: targeted tests `385 passed`,
-full pytest `1033 passed, 1 skipped`, and regression
+CSV table fact converter implementation, Strict Gate Patch, and retained CSV
+sample -> table facts runtime review are now accepted. The converter runtime
+review generated 6 runtime-review-only revenue facts with explicit
+`period=2025H1`, `unit=CNY`, `denominator=主营业务收入合计`,
+`classification_type=product`, `table_quality=structured_medium`, and
+`needs_human_review=true`. It preserved official segment names, source table
+id, row index, column name, `source_column_map`, caveat
+`local_structured_sample_requires_human_review`, and propagated reader
+warnings to caveats or conversion warnings. No verified fact was generated.
+
+Latest accepted verification results are quoted: targeted tests `424 passed`,
+full pytest latest `1072 passed, 1 skipped`, and regression
 `passed=47 failed=0 total=47`.
 
 Next recommended stage:
 
 ```text
-CSV normalized table -> business_composition_table_facts integration design
+CSV table facts -> official_disclosure_facts integration design
 ```
 
 ## 20. CSV To Table Facts Integration Design Notes
@@ -991,18 +1033,97 @@ Design summary:
   caveat `local_structured_sample_requires_human_review`;
 - `unreliable_text_copy` and `unusable` remain caveat-only.
 
+CSV table fact converter implementation, Strict Gate Patch, and retained CSV
+sample -> table facts runtime review are now accepted. The runtime acceptance
+summary is recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_CSV_TABLE_FACTS_RUNTIME_ACCEPTANCE_SUMMARY.md
+```
+
+Runtime records:
+
+- input CSV:
+  `output/official_disclosures/local_structured_table_samples/600406_h1_product.csv`;
+- runtime artifact:
+  `output/official_disclosures/20260529T002922/600406/csv_table_facts_review.json`;
+- generated 6 runtime-review-only revenue facts including `电网智能`,
+  `数能融合`, and `合计`;
+- no verified fact, no accepted manifest update, no fixture promotion, no
+  candidate generator integration, and no Research Report V1 integration.
+
 Next recommended stage:
 
 ```text
-CSV to table facts converter implementation
+CSV table facts -> official_disclosure_facts integration design
 ```
 
-Still do not jump directly to live CNInfo, PDF extraction, DOCX / Excel
+Still do not jump directly to live CNInfo, PDF extraction, DOCX / HTML / Excel
 readers, candidate generator integration, Research Report V1 integration,
-fixture promotion, accepted manifest changes, scoring changes, or trading
-advice.
+fixture promotion, accepted manifest changes, scoring changes, P1.1 changes,
+validator work, or trading advice.
 
-## 21. New Codex Conversation Recovery Prompt
+## 21. CSV Table Facts Runtime Acceptance Recovery Notes
+
+Treat
+`docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_CSV_TABLE_FACTS_RUNTIME_ACCEPTANCE_SUMMARY.md`
+as the current acceptance closeout for the retained CSV sample -> table facts
+runtime baseline.
+
+Current accepted status:
+
+- CSV table fact converter implementation accepted;
+- Strict Gate Patch accepted;
+- retained CSV sample -> table facts runtime review accepted;
+- retained CSV sample -> table facts runtime baseline frozen;
+- no `official_disclosure_facts.json` integration yet;
+- no accepted manifest update;
+- no fixture promotion;
+- no candidate generator integration;
+- no Research Report V1 integration.
+
+Runtime records:
+
+- input CSV:
+  `output/official_disclosures/local_structured_table_samples/600406_h1_product.csv`;
+- runtime artifact:
+  `output/official_disclosures/20260529T002922/600406/csv_table_facts_review.json`;
+- reader summary: headers = 7, rows = 6, raw strings preserved,
+  `delimiter_sniffed`, `unit_not_detected`, `period_not_detected`,
+  `classification_hint=product`, `table_quality_hint=structured_medium`, and
+  no reader-generated table facts;
+- converter summary: explicit `period=2025H1`, `unit=CNY`,
+  `denominator=主营业务收入合计`, `classification_type=product`,
+  `table_quality=structured_medium`, `needs_human_review=true`, 6
+  runtime-review-only revenue facts including `电网智能`, `数能融合`, and
+  `合计`, source row / column traceability, warning propagation, and no
+  verified facts.
+
+Accepted fail-closed checks:
+
+- no explicit period + `period_not_detected` -> fail closed;
+- no explicit unit + `unit_not_detected` -> fail closed;
+- duplicate revenue-like header -> `ambiguous_header` fail closed;
+- `table_quality=unreliable_text_copy` -> no table facts;
+- denominator omitted -> `denominator_missing` appears in
+  `conversion_warnings` and fact caveats if revenue facts are allowed.
+
+Latest accepted verification results are quoted: targeted tests `424 passed`,
+full pytest latest `1072 passed, 1 skipped`, and regression
+`passed=47 failed=0 total=47`.
+
+Next recommended stage:
+
+```text
+CSV table facts -> official_disclosure_facts integration design
+```
+
+Still do not enter live CNInfo, PDF extraction, DOCX / HTML / Excel reader,
+candidate generator integration, Research Report V1 integration, fixture
+promotion, accepted manifest updates, scoring / P1.1 changes, validator work,
+provider calls, token work, MCP, or trading advice.
+
+## 22. New Codex Conversation Recovery Prompt
 
 Copy this into a new Codex / AI conversation:
 

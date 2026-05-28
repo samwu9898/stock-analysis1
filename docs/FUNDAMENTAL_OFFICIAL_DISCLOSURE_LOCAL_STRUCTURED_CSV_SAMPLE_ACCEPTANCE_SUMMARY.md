@@ -16,9 +16,16 @@ scoring / readiness, P1.1, regression expected files, or tracked output.
 - Delimiter warning patch accepted.
 - Local structured CSV sample runtime review accepted.
 - Local structured CSV sample runtime baseline frozen.
+- CSV table fact converter implementation accepted.
+- Strict Gate Patch accepted.
+- Retained CSV sample -> table facts runtime review accepted.
+- Retained CSV sample -> table facts runtime baseline frozen.
 - No Excel / HTML / DOCX / PDF reader implemented.
 - No candidate generator integration.
 - No Research Report V1 integration.
+- No `official_disclosure_facts.json` integration yet.
+- No accepted manifest update.
+- No fixture promotion.
 
 ## CSV Sample Record
 
@@ -40,10 +47,16 @@ Record:
 
 ## Runtime Review Artifact Record
 
-Runtime artifact:
+Reader runtime artifact:
 
 ```text
 output/official_disclosures/20260528_233015/600406/normalized_tables_review.json
+```
+
+Current table facts runtime artifact:
+
+```text
+output/official_disclosures/20260529T002922/600406/csv_table_facts_review.json
 ```
 
 Record:
@@ -55,9 +68,13 @@ Record:
 - not Research Report V1 update;
 - not candidate generator output.
 
+The table facts runtime artifact contains normalized table summary,
+`table_facts`, `table_caveats`, `conversion_warnings`, validation summary, and
+`not_for_trading_advice=true`.
+
 ## Runtime Result Summary
 
-Accepted runtime observations:
+Accepted reader runtime observations:
 
 - headers = 7;
 - rows = 6;
@@ -69,7 +86,8 @@ Accepted runtime observations:
 - `period_not_detected`;
 - normalized table validation passed.
 
-The table facts experiment generated 3 runtime-review-only revenue facts:
+The reader-stage table facts experiment generated 3 runtime-review-only
+revenue facts before the dedicated converter runtime review:
 
 - `电网智能`;
 - `数能融合`;
@@ -84,12 +102,31 @@ All 3 runtime-review-only facts use:
 - `denominator=主营业务收入合计`;
 - caveat `local_structured_sample_requires_human_review`.
 
+The superseding retained CSV sample -> table facts converter runtime review
+generated 6 runtime-review-only revenue facts with explicit review parameters:
+
+- `period=2025H1`;
+- `unit=CNY`;
+- `denominator=主营业务收入合计`;
+- `classification_type=product`;
+- `table_quality=structured_medium`;
+- `needs_human_review=true`.
+
+Each accepted runtime-review-only converter fact preserves official segment
+names, source table id, source row index, source column name,
+`source_column_map`, period, unit, classification type, denominator, table
+quality, human-review requirement, and caveat
+`local_structured_sample_requires_human_review`. Reader warnings including
+`delimiter_sniffed`, `unit_not_detected`, and `period_not_detected` are
+propagated to caveats or conversion warnings. No verified fact was generated.
+
 ## Conservative Boundaries
 
 - CSV reader output is a normalized table, not an L1 fact.
 - Structured table facts are runtime review only.
 - No fixture write.
 - No accepted manifest update.
+- No `official_disclosure_facts.json` integration yet.
 - No Research Report V1 update.
 - No candidate generator integration.
 - Human review caveat required.
@@ -114,9 +151,10 @@ All 3 runtime-review-only facts use:
 Latest accepted verification results are quoted from the implementation and
 runtime review stages:
 
-- targeted tests `385 passed`;
-- full pytest `1033 passed, 1 skipped`;
+- targeted tests `424 passed`;
+- full pytest latest `1072 passed, 1 skipped`;
 - regression `passed=47 failed=0 total=47`;
+- runtime artifact validation passed;
 - token / secret / provider scan passed;
 - artifact boundary passed;
 - git tracked output remained empty.
@@ -128,6 +166,11 @@ This documentation-only cleanup stage did not rerun pytest or regression.
 - Sample is local manually prepared CSV.
 - Sample is not official raw table extraction.
 - Unit and period were not auto-detected from CSV header.
+- Facts are runtime-review-only.
+- Unit and period were supplied explicitly during converter review.
+- Current converter generates only revenue facts by default.
+- No cost / gross margin / YoY facts accepted yet.
+- No `official_disclosure_facts.json` integration yet.
 - No Excel reader.
 - No HTML table reader.
 - No DOCX reader.
@@ -151,7 +194,7 @@ Retained baseline artifacts:
 
 ## Next Recommended Stage
 
-Recommended next stage:
+Historical next stage at reader-runtime acceptance time:
 
 ```text
 CSV normalized table -> business_composition_table_facts integration design
@@ -163,8 +206,16 @@ Alternative later stage:
 Local HTML table reader design
 ```
 
-Preferred priority is `CSV normalized table -> business_composition_table_facts
-integration design`.
+That historical preferred priority was `CSV normalized table ->
+business_composition_table_facts integration design`.
+
+That design, converter implementation, Strict Gate Patch, and retained CSV
+sample -> table facts runtime review are now accepted. The current next
+recommended stage is:
+
+```text
+CSV table facts -> official_disclosure_facts integration design
+```
 
 Do not directly enter:
 
@@ -205,3 +256,30 @@ Still out of scope:
 - Research Report V1 integration;
 - live CNInfo / provider calls;
 - Excel / HTML / DOCX / PDF readers.
+
+## CSV Table Facts Runtime Acceptance Sync
+
+The retained CSV sample -> table facts runtime acceptance closeout is now
+recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_CSV_TABLE_FACTS_RUNTIME_ACCEPTANCE_SUMMARY.md
+```
+
+The accepted table facts runtime artifact is:
+
+```text
+output/official_disclosures/20260529T002922/600406/csv_table_facts_review.json
+```
+
+The runtime baseline confirms:
+
+- CSV table fact converter implementation accepted;
+- Strict Gate Patch accepted;
+- retained CSV sample -> table facts runtime review accepted;
+- retained CSV sample -> table facts runtime baseline frozen;
+- no candidate generator integration;
+- no Research Report V1 integration;
+- no `official_disclosure_facts.json` integration yet;
+- no accepted manifest update;
+- no fixture promotion.

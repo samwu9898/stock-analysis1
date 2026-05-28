@@ -12,10 +12,12 @@ scoring / readiness / P1.1, change regression expected files, generate output,
 read tokens, use the network, call CNInfo / Tushare / AkShare / provider
 runtime, connect MCP, execute smoke tests, or provide investment advice.
 
-Latest accepted verification results are quoted, not rerun here:
+Latest accepted verification results are quoted, not rerun here. The current
+superseding runtime acceptance summary is recorded in
+`docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_CSV_TABLE_FACTS_RUNTIME_ACCEPTANCE_SUMMARY.md`:
 
-- targeted tests `385 passed`
-- full pytest `1033 passed, 1 skipped`
+- targeted tests `424 passed`
+- full pytest latest `1072 passed, 1 skipped`
 - regression `passed=47 failed=0 total=47`
 
 Accepted prerequisite baseline:
@@ -30,6 +32,12 @@ Accepted prerequisite baseline:
   `output/official_disclosures/local_structured_table_samples/600406_h1_product.csv`
 - Retained runtime review artifact:
   `output/official_disclosures/20260528_233015/600406/normalized_tables_review.json`
+- CSV table fact converter implementation accepted.
+- Strict Gate Patch accepted.
+- Retained CSV sample -> table facts runtime review accepted.
+- Retained CSV sample -> table facts runtime baseline frozen.
+- Retained table facts runtime review artifact:
+  `output/official_disclosures/20260529T002922/600406/csv_table_facts_review.json`
 
 ## 1. Positioning
 
@@ -351,5 +359,76 @@ Recommended sequence:
 
 Do not skip directly to live CNInfo, PDF extraction, DOCX reader, Excel reader,
 candidate generator integration, Research Report V1 integration, fixture
-promotion, or validator work before the converter implementation and runtime
-review are accepted.
+promotion, or validator work. The converter implementation and retained sample
+runtime review are now accepted; the next recommended stage is
+`CSV table facts -> official_disclosure_facts integration design`.
+
+## 12. CSV Table Facts Runtime Acceptance Addendum
+
+CSV table fact converter implementation, Strict Gate Patch, and retained CSV
+sample -> table facts runtime review are accepted. The frozen runtime
+acceptance closeout is recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_CSV_TABLE_FACTS_RUNTIME_ACCEPTANCE_SUMMARY.md
+```
+
+Current retained input CSV:
+
+```text
+output/official_disclosures/local_structured_table_samples/600406_h1_product.csv
+```
+
+Current retained runtime review artifact:
+
+```text
+output/official_disclosures/20260529T002922/600406/csv_table_facts_review.json
+```
+
+Accepted reader runtime baseline:
+
+- headers = 7;
+- rows = 6;
+- raw strings preserved;
+- `delimiter_sniffed`, `unit_not_detected`, and `period_not_detected` visible;
+- `classification_hint=product`;
+- `table_quality_hint=structured_medium`;
+- reader did not generate table facts.
+
+Accepted converter runtime baseline:
+
+- explicit `period=2025H1`;
+- explicit `unit=CNY`;
+- explicit `denominator=主营业务收入合计`;
+- explicit `classification_type=product`;
+- `table_quality=structured_medium`;
+- `needs_human_review=true`;
+- generated 6 runtime-review-only revenue facts;
+- includes `电网智能`, `数能融合`, and `合计`;
+- preserves official segment names, source table id, row index, column name,
+  column map, period, unit, classification type, denominator, table quality,
+  human-review requirement, and caveat
+  `local_structured_sample_requires_human_review`;
+- propagates reader warnings into caveats or conversion warnings;
+- generates no verified fact.
+
+Accepted fail-closed checks include missing explicit period, missing explicit
+unit, duplicate revenue-like header -> `ambiguous_header`, caveat-only
+`unreliable_text_copy`, and denominator omission -> `denominator_missing`.
+
+Boundaries remain unchanged:
+
+- runtime-review-only table facts;
+- no `official_disclosure_facts.json` integration yet;
+- no accepted manifest update;
+- no fixture promotion;
+- no candidate generator integration;
+- no Research Report V1 integration;
+- no scoring / P1.1 / regression update;
+- no live CNInfo, provider call, token read, network, MCP, or trading advice.
+
+Next recommended stage:
+
+```text
+CSV table facts -> official_disclosure_facts integration design
+```
