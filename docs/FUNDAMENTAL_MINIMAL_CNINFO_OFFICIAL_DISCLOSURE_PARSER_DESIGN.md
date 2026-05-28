@@ -20,6 +20,9 @@ Latest accepted verification results are quoted, not rerun here:
 Local-file implementation, the Conservative Period Patch, and the local sample
 runtime review have since been accepted. The closeout is recorded in
 `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_PARSER_LOCAL_SAMPLE_ACCEPTANCE_SUMMARY.md`.
+The real local downloaded official filing sample runtime review has also been
+accepted and is recorded in
+`docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_PARSER_REAL_LOCAL_FILING_ACCEPTANCE_SUMMARY.md`.
 Latest accepted parser-stage verification results are quoted, not rerun in the
 documentation-only summary: targeted tests `298 passed`, full pytest latest
 `946 passed, 1 skipped`, and regression `passed=47 failed=0 total=47`.
@@ -130,6 +133,10 @@ Required interpretation boundary:
   strategy-specific labels at parse time.
 - Missing period, classification type, denominator, or unit must be recorded as
   a caveat, not inferred silently.
+- The accepted real local TXT filing review only detects business-composition
+  regions with caveats. It does not extract revenue, cost, gross margin,
+  revenue ratio, YoY, or segment values from copied PDF text because row /
+  column alignment is unreliable without a separate table parser.
 
 ### D. Earnings Preannouncement / Flash / Guidance
 
@@ -428,28 +435,41 @@ Accepted sequence:
    `output/official_disclosures/local_samples/600406_annual_report_sample.txt`.
 5. Ignored runtime artifact generation and validation at
    `output/official_disclosures/20260528_194020/600406/official_disclosure_facts.json`.
+6. Real local downloaded official filing sample runtime review using
+   `output/official_disclosures/local_real_samples/600406_2025_semiannual_report_real.txt`.
+7. Ignored real local filing runtime artifact validation at
+   `output/official_disclosures/20260528T125521Z/600406/official_disclosure_facts.json`.
 
 Recommended next sequence:
 
-1. `official_disclosure_facts -> candidate generator integration design`, or
-   real local downloaded official filing sample review from a user-provided
-   local text file.
-2. Add L1 evidence tier handling only after a separate accepted integration
+1. Official Disclosure Business Composition Table Parser Design.
+2. Do not extract numeric values from disordered TXT tables; design a separate
+   table parser that can prove table quality, source location, row / column
+   alignment, units, denominators, and total checks.
+3. Add L1 evidence tier handling only after a separate accepted integration
    design.
-3. Add freshness trigger integration only after separate policy acceptance.
-4. Later live CNInfo fetch design.
-5. Later management guidance tracker.
+4. Add candidate generator integration only after a separate accepted
+   integration design.
+5. Add Research Report V1 integration only after a separate accepted
+   integration design.
+6. Add freshness trigger integration only after separate policy acceptance.
+7. Later live CNInfo fetch design.
+8. Later management guidance tracker.
 
 Implementation should start with local files only. Any live CNInfo fetch, MCP
 connector, token handling, provider use, fixture promotion, validator, report
 rewrite, batch, or Dashboard behavior requires a separate design and acceptance
 stage.
 
-The accepted local sample runtime does not change this boundary. It used a
-local official-style sample text, not live CNInfo and not a full real
-announcement parse. It validated the schema / local-file reader / conservative
-extractor / writer / reader / validator minimum loop only. It does not make L1
-official disclosure facts eligible for direct Research Report V1 use.
+The accepted local sample and real local filing runtimes do not change this
+boundary. The first used local official-style sample text. The second used a
+user-prepared real local TXT copied or converted from the official `600406`
+2025 semiannual report PDF. Neither used live CNInfo, providers, tokens,
+network, or MCP. The real local filing review validated the schema /
+local-file reader / conservative extractor / business-composition section
+detection with caveat / writer / reader / validator loop only. It does not make
+L1 official disclosure facts eligible for direct candidate-generator or
+Research Report V1 use.
 
 ## 10. Documentation Sync Notes
 
@@ -459,6 +479,7 @@ This design should be referenced by:
 - `docs/FUNDAMENTAL_RESEARCH_REPORT_V1_DESIGN.md`
 - `docs/PROJECT_CONTEXT_HANDOFF.md`
 - `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_PARSER_LOCAL_SAMPLE_ACCEPTANCE_SUMMARY.md`
+- `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_PARSER_REAL_LOCAL_FILING_ACCEPTANCE_SUMMARY.md`
 
 The current accepted runtime baseline remains unchanged:
 
@@ -473,4 +494,7 @@ The current accepted runtime baseline remains unchanged:
 - Default path remains offline local artifacts / no live provider / no token /
   no network / no MCP.
 - Live CNInfo is not implemented.
+- PDF table parser is not implemented.
+- Candidate generator integration is not implemented.
 - L1 official disclosure integration is not implemented.
+- Research Report V1 integration is not implemented.

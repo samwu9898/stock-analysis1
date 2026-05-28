@@ -18,14 +18,27 @@ Latest accepted verification results are quoted, not rerun here:
 - full pytest latest `946 passed, 1 skipped`
 - regression `passed=47 failed=0 total=47`
 
+The real local downloaded filing sample runtime review has since been accepted
+and is recorded in
+`docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_PARSER_REAL_LOCAL_FILING_ACCEPTANCE_SUMMARY.md`.
+That later review used a user-prepared real local TXT sample for `600406` 2025
+semiannual report and froze the official disclosure parser real-local-file
+baseline.
+
 ## 1. Final status
 
 - Minimal official disclosure parser local-file implementation accepted.
 - Conservative Period Patch accepted.
 - Local sample runtime review accepted.
 - Local-file parser baseline frozen.
+- Real local official filing sample runtime accepted in the later review.
+- Official disclosure parser real-local-file baseline frozen in the later
+  review.
 - Live CNInfo fetch is not implemented.
+- PDF table parser is not implemented.
+- Candidate generator integration is not implemented.
 - L1 official disclosure integration is not implemented.
+- Research Report V1 integration is not implemented.
 
 This acceptance confirms only the local-file runtime minimum loop. It does not
 mean live CNInfo ingestion, complete real announcement parsing, or direct
@@ -142,7 +155,8 @@ This documentation-only summary did not rerun pytest or regression.
 ## 9. Known limitations
 
 - The sample is local official-style text, not live CNInfo.
-- No real downloaded full annual report sample has been accepted yet.
+- A real downloaded local official filing TXT sample has since been accepted,
+  but only for conservative local read / extract / write / validate behavior.
 - The parser does not parse PDF.
 - The parser does not parse complex tables.
 - The parser does not update `fact_candidates`.
@@ -150,24 +164,63 @@ This documentation-only summary did not rerun pytest or regression.
 - The parser does not update the accepted manifest.
 - L1 evidence tier integration remains future work.
 
-## 10. Next recommended stage
+## 10. Real local filing addendum
 
-Recommended next option A:
+The later real local filing acceptance used:
 
-- `official_disclosure_facts -> candidate generator integration design`
+```text
+output/official_disclosures/local_real_samples/600406_2025_semiannual_report_real.txt
+```
 
-Recommended next option B:
+It wrote only the ignored runtime artifact:
 
-- `real local downloaded official filing sample review`
-- The user manually provides a real downloaded annual report, semiannual
-  report, or announcement text file.
-- The parser reads that local file only, with no network access.
+```text
+output/official_disclosures/20260528T125521Z/600406/official_disclosure_facts.json
+```
+
+Recorded result:
+
+- input size `32961` bytes
+- sha256
+  `7a16dca91ac2d0a9ec6def90a17fa28e820f0ebdb87cdf86a0e9a6fb0df1acc3`
+- `document_type=semiannual_report`
+- `report_period=2025H1`
+- `disclosure_date=2025-08-28`
+- extraction confidence `medium`
+- main business L1 candidate generated from `source_section=主营业务`
+- `needs_human_review=true`
+- no verified fact generated
+- `source_documents=1`
+- `extracted_facts=1`
+
+Business composition regions were detected (`分行业`, `分产品`,
+`主营业务分行业情况`, `主营业务分产品情况`, `主营业务分地区情况`, and `分地区`),
+but only as `business_composition_section_detected` with
+`table_structure_unreliable_due_to_pdf_text_copy`. Revenue, cost, gross margin,
+revenue ratio, YoY, and segment values were not extracted because the TXT was
+copied or converted from PDF and table structure is unreliable.
+
+## 11. Next recommended stage
+
+Recommended next stage:
+
+```text
+Official Disclosure Business Composition Table Parser Design
+```
+
+The next design should not extract numeric values from disordered TXT tables.
+It should design an independent table parser, prefer official HTML table / PDF
+table extraction / DOCX table / structured table source, and explicitly model
+`table_quality`, source location, row / column alignment, unit, denominator,
+and total checks.
 
 Do not directly enter:
 
 - live CNInfo fetch;
 - Tushare;
 - MCP;
-- validator;
 - fixture promotion;
+- candidate generator integration;
+- Research Report V1 integration;
+- validator;
 - Dashboard / Batch implementation.
