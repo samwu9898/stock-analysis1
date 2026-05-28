@@ -3,24 +3,30 @@
 Date: 2026-05-28
 
 Stage: Fundamental Skill Research Report V1 Design, Cross-Industry Markdown
-Profile Acceptance, HTML Presentation Layer Design, and Three-Sample HTML
-Acceptance, followed by User Invocation / Report Orchestration Design.
+Profile Acceptance, HTML Presentation Layer Design, Three-Sample HTML
+Acceptance, User Invocation / Report Orchestration Design, and Three-Sample
+Offline Orchestration Acceptance.
 
 Status: design accepted, implementation accepted, Research Report V1 baseline
 frozen, cross-industry Markdown profile validation accepted for `600406`,
-`002371`, and `002050`, HTML renderer implementation accepted, and the
-three-sample HTML presentation baseline frozen. User invocation / report
-orchestration design is recorded in
-`docs/FUNDAMENTAL_SKILL_USER_INVOCATION_ORCHESTRATION_DESIGN.md`. This document
-records the accepted design boundary; the implementation, baseline freeze,
-profile acceptance, HTML acceptance, and orchestration design do not modify
-tests, fixtures, pipeline, scoring / readiness, Research Intelligence P1.1,
-Dashboard, regression expected files, provider-primary behavior, default output,
-provider raw artifacts, evidence packs, candidate reports, or review decision
-artifacts. They do not run real smoke tests, read `TUSHARE_TOKEN`, use the
-network, call Tushare or AkShare, connect MCP, promote fixture values,
-automatically merge providers, or output buy / sell advice, target prices,
-position sizing, portfolio weights, or technical trading advice.
+`002371`, and `002050`, HTML renderer implementation accepted, the
+three-sample HTML presentation baseline frozen, single-stock offline
+orchestration implementation accepted, Chinese summary patch accepted, and
+`600406` / `002371` / `002050` offline runtime acceptance complete. User
+invocation / report orchestration design is recorded in
+`docs/FUNDAMENTAL_SKILL_USER_INVOCATION_ORCHESTRATION_DESIGN.md`, and the
+offline orchestration closeout is recorded in
+`docs/FUNDAMENTAL_SKILL_OFFLINE_ORCHESTRATION_ACCEPTANCE_SUMMARY.md`. This
+document records the accepted design boundary; the implementation, baseline
+freeze, profile acceptance, HTML acceptance, orchestration design, and offline
+runtime acceptance do not modify tests, fixtures, pipeline, scoring /
+readiness, Research Intelligence P1.1, Dashboard, regression expected files,
+provider-primary behavior, default output, provider raw artifacts, evidence
+packs, candidate reports, or review decision artifacts. They do not run real
+smoke tests, read `TUSHARE_TOKEN`, use the network, call Tushare or AkShare,
+connect MCP, promote fixture values, automatically merge providers, or output
+buy / sell advice, target prices, position sizing, portfolio weights, or
+technical trading advice.
 
 Current design inputs reviewed:
 
@@ -48,13 +54,16 @@ recorded in
 three-sample HTML acceptance summary is recorded in
 `docs/FUNDAMENTAL_RESEARCH_REPORT_V1_HTML_ACCEPTANCE_SUMMARY.md`. User
 invocation / report orchestration design is recorded in
-`docs/FUNDAMENTAL_SKILL_USER_INVOCATION_ORCHESTRATION_DESIGN.md`. The next
-recommended work is user invocation / orchestration implementation, followed by
-end-to-end local runs for `600406`, `002371`, and `002050`; Dashboard / batch
-design should follow the accepted single-stock orchestration path. The next
-step is not more ad hoc single-target HTML generation, promote-rule design,
-validator implementation, fixture promotion, live provider report, official
-parser / CNInfo, or a Tushare primary switch.
+`docs/FUNDAMENTAL_SKILL_USER_INVOCATION_ORCHESTRATION_DESIGN.md`, and
+single-stock offline orchestration acceptance is recorded in
+`docs/FUNDAMENTAL_SKILL_OFFLINE_ORCHESTRATION_ACCEPTANCE_SUMMARY.md`. The next
+recommended work is user invocation CLI / command wrapper design or
+implementation so Codex can call the accepted offline orchestration through one
+command; Dashboard / batch design should follow only after the single-stock CLI
+is accepted. The next step is not more ad hoc single-target HTML generation,
+promote-rule design, validator implementation, fixture promotion, live provider
+report, official parser / CNInfo, MCP, Tushare token work, or a Tushare primary
+switch.
 
 ## 1. Goal Correction
 
@@ -677,25 +686,35 @@ Completed sequence:
 12. `600406`, `002371`, and `002050` HTML runtime artifact acceptance.
 13. HTML presentation layer three-sample baseline freeze.
 14. User invocation / report orchestration design.
+15. Single-stock offline orchestration implementation acceptance.
+16. Chinese summary patch acceptance.
+17. `600406`, `002371`, and `002050` one-sentence offline runtime acceptance.
+18. One-sentence local report invocation baseline freeze.
 
 Next recommended sequence:
 
-1. Commit the user invocation / report orchestration design documentation patch.
-2. Implement the single-stock user invocation / orchestration path.
-3. Run an end-to-end local orchestration for `600406`, then cross-profile local
-   runs for `002371` and `002050`.
-4. Evaluate Dashboard / batch report design after the single-stock path is
-   accepted, or separately do focused HTML visual refinement if requested.
+1. Commit the offline orchestration acceptance summary documentation patch.
+2. Enter user invocation CLI / command wrapper design or implementation.
+3. Let Codex call orchestration through one command, for example:
+
+```bash
+python -m src.fundamental_skill.research_report.generate_report --code 600406 --format html --data-mode offline_local_artifacts
+```
+
+4. Evaluate Dashboard / batch report design only after the single-stock CLI is
+   accepted.
 5. Keep caveats, evidence labels, data-quality notes, rebuttal conditions, and
    follow-up variables visible in any future display work.
 6. Later consider promote rules, validator, fixture promotion, live provider
-   report, official parser / CNInfo, and primary-provider switch only after the
-   report product experience is reviewed.
+   report, official parser / CNInfo, MCP, Tushare token work, and
+   primary-provider switch only after the report product experience and command
+   wrapper are reviewed.
 
 Do not continue into promote-rule design, validator implementation, fixture
-promotion, live provider report, official parser / CNInfo, or Tushare primary
-switch as the next step. The product line should now move from accepted
-single-report HTML generation into user-facing invocation / orchestration.
+promotion, live provider report, official parser / CNInfo, MCP, Tushare token
+work, or Tushare primary switch as the next step. The product line should now
+move from accepted one-sentence offline invocation into a formal CLI / command
+wrapper.
 
 ## 11. Presentation profile design addendum
 
@@ -763,8 +782,8 @@ structured payload, must not re-analyze or alter conclusions, must not hide
 caveats, and must not call providers, use the network, read tokens, connect
 MCP, or change promote rules, validators, fixtures, scoring, readiness, P1.1,
 or provider primary behavior. The HTML presentation baseline is frozen; the
-next recommended stage is Dashboard / batch report design or HTML visual
-refinement.
+single-stock offline orchestration runtime is now accepted, and the next
+recommended stage is user invocation CLI / command wrapper work.
 
 ## 13. HTML presentation layer design and acceptance addendum
 
@@ -812,11 +831,43 @@ render_research_report_v1_html(markdown: str, report: dict | None = None) -> str
 
 The writer should keep a strict output boundary under `output/research_reports/`.
 
-The next step is no longer more single-stock HTML generation. Dashboard / batch
-report design should wait until the single-stock user invocation /
-orchestration path is implemented and accepted, unless a separate stage asks
-only for focused HTML visual refinement. User invocation / report orchestration
-design is recorded in
-`docs/FUNDAMENTAL_SKILL_USER_INVOCATION_ORCHESTRATION_DESIGN.md`. Promote rules,
-validator, fixture promotion, live provider report, official parser / CNInfo,
-and Tushare primary remain later work.
+The next step is no longer more single-stock HTML generation. The single-stock
+user invocation / offline orchestration path is implemented and accepted for
+`600406`, `002371`, and `002050`; Dashboard / batch report design should wait
+until the single-stock CLI / command wrapper is accepted, unless a separate
+stage asks only for focused HTML visual refinement. User invocation / report
+orchestration design is recorded in
+`docs/FUNDAMENTAL_SKILL_USER_INVOCATION_ORCHESTRATION_DESIGN.md`, and the
+offline orchestration acceptance closeout is recorded in
+`docs/FUNDAMENTAL_SKILL_OFFLINE_ORCHESTRATION_ACCEPTANCE_SUMMARY.md`. Promote
+rules, validator, fixture promotion, live provider report, official parser /
+CNInfo, MCP, Tushare token work, and Tushare primary remain later work.
+
+## 14. Offline orchestration acceptance addendum
+
+Single-stock offline orchestration implementation, Chinese summary patch, and
+the `600406` / `002371` / `002050` one-sentence local report invocation runtime
+checks are accepted. The accepted flow is:
+
+```text
+user natural-language request
+  -> normalize request
+  -> safe offline flags
+  -> locate local artifacts
+  -> reuse accepted HTML
+  -> extract Chinese summary from Markdown
+  -> return HTML / Markdown / JSON paths
+  -> return opportunity / risk / evidence gap / data quality
+  -> not-for-trading-advice statement
+```
+
+Latest accepted results are quoted, not rerun here: targeted tests
+`147 passed`, full pytest `795 passed, 1 skipped`, and regression
+`passed=47 failed=0 total=47`.
+
+Next recommended stage: commit the documentation summary, then enter user
+invocation CLI / command wrapper design or implementation, for example:
+
+```bash
+python -m src.fundamental_skill.research_report.generate_report --code 600406 --format html --data-mode offline_local_artifacts
+```

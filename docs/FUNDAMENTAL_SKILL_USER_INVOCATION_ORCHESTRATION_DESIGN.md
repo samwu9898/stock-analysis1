@@ -2,15 +2,18 @@
 
 Date: 2026-05-28
 
-Stage: Fundamental Skill User Invocation / Report Orchestration Design.
+Stage: Fundamental Skill User Invocation / Report Orchestration Design and
+Three-Sample Offline Orchestration Acceptance Sync.
 
-Status: documentation-only design. This stage designs how an end user invokes
-the fundamental skill from Codex / GPT-5.5 with natural language and receives a
-finished Research Report V1 result. It does not implement orchestration code,
-change tests, change fixtures, change pipeline behavior, change scoring /
-readiness, change Research Intelligence P1.1, change regression expected files,
-generate output, run smoke tests, read `TUSHARE_TOKEN`, use the network, call
-Tushare or AkShare, connect MCP, or produce trading advice.
+Status: design accepted, single-stock offline orchestration implementation
+accepted, Chinese summary patch accepted, and three-sample offline runtime
+acceptance complete. The acceptance closeout is recorded in
+`docs/FUNDAMENTAL_SKILL_OFFLINE_ORCHESTRATION_ACCEPTANCE_SUMMARY.md`. This
+documentation sync does not change tests, change fixtures, change pipeline
+behavior, change scoring / readiness, change Research Intelligence P1.1, change
+regression expected files, generate output, run smoke tests, read
+`TUSHARE_TOKEN`, use the network, call Tushare or AkShare, connect MCP, or
+produce trading advice.
 
 Current accepted upstream state:
 
@@ -23,6 +26,11 @@ Current accepted upstream state:
 - HTML presentation baseline frozen.
 - HTML is a display layer: it must not re-analyze, change conclusions, or hide
   caveats.
+- Single-stock offline orchestration implementation accepted.
+- Chinese summary patch accepted.
+- `600406`, `002371`, and `002050` one-sentence offline runtime invocations
+  accepted.
+- One-sentence local report invocation baseline frozen.
 
 ## 1. Product Goal
 
@@ -465,7 +473,7 @@ chain:
 
 ## 11. Safety / Non-Goals
 
-This stage and the future V1 orchestration implementation must not:
+This documentation sync and the accepted V1 orchestration runtime must not:
 
 - read `TUSHARE_TOKEN`;
 - use the network;
@@ -516,8 +524,10 @@ should not replace the single-stock report generation path.
 
 Design relationship:
 
-- Finish the single-stock user invocation / orchestration design first.
-- Implement the single-stock orchestration path before batch.
+- The single-stock user invocation / orchestration design and offline runtime
+  implementation are accepted.
+- Package the single-stock invocation path behind a CLI / command wrapper
+  before batch.
 - Let batch reuse the same single-stock orchestration pipeline for each stock.
 - Let Dashboard read generated outputs and show status, summaries, caveats,
   evidence gaps, and artifact links.
@@ -532,18 +542,19 @@ and missing-artifact behavior.
 
 ## 13. Roadmap
 
-Recommended sequence:
+Completed sequence:
 
 1. Complete this design document.
-2. Implement user invocation / orchestration.
-3. Use `600406` for an end-to-end local run.
-4. Use `002371` and `002050` for cross-profile local runs.
-5. Design batch / Dashboard after the single-stock path is accepted.
-6. Keep future live provider mode later.
-7. Keep official parser / CNInfo later.
-8. Keep validator, fixture promotion, and Tushare primary later.
+2. Implement single-stock offline user invocation / orchestration.
+3. Accept the Chinese summary patch.
+4. Use `600406` for an end-to-end local offline runtime acceptance.
+5. Use `002371` for a cross-profile local offline runtime acceptance.
+6. Use `002050` for a cross-profile local offline runtime acceptance.
+7. Freeze the one-sentence local report invocation baseline.
+8. Record the acceptance closeout in
+   `docs/FUNDAMENTAL_SKILL_OFFLINE_ORCHESTRATION_ACCEPTANCE_SUMMARY.md`.
 
-Acceptance criteria for the future implementation stage:
+Accepted implementation criteria:
 
 - A user can ask for a report in natural language.
 - Codex normalizes the request into the schema above.
@@ -558,3 +569,17 @@ Acceptance criteria for the future implementation stage:
   connected in the default V1 path.
 - No buy / sell advice, target price, position sizing, portfolio weight,
   account action, or technical trading signal is emitted.
+
+Next recommended sequence:
+
+1. Commit the offline orchestration acceptance summary documentation patch.
+2. Enter user invocation CLI / command wrapper design or implementation.
+3. Let Codex call orchestration through one command, for example:
+
+```bash
+python -m src.fundamental_skill.research_report.generate_report --code 600406 --format html --data-mode offline_local_artifacts
+```
+
+4. Design batch / Dashboard only after the single-stock CLI is accepted.
+5. Keep future live provider mode, Tushare token, MCP, CNInfo, validator,
+   fixture promotion, and Tushare primary later.
