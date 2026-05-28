@@ -5,19 +5,18 @@ Date: 2026-05-28
 Stage: Fundamental Skill Official Disclosure Business Composition Table Parser
 Design.
 
-Status: documentation-only design. This stage does not implement code, change
-tests, change fixtures, change accepted manifests, change orchestration, change
-CLI behavior, change Research Report V1, change candidate generation, change
-review decisions, change pipeline / scoring / Research Intelligence P1.1,
-change regression expected files, generate output, submit runtime artifacts,
-run smoke tests, read `TUSHARE_TOKEN`, use the network, call CNInfo, call
-Tushare or AkShare, call any provider, connect MCP, or provide investment
-advice.
+Status: parser design accepted. The follow-on table schema / quality model
+implementation and caveat-only hardening patch are also accepted, and the
+schema / quality model baseline is frozen. The acceptance summary is recorded
+in
+`docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_BUSINESS_COMPOSITION_TABLE_SCHEMA_ACCEPTANCE_SUMMARY.md`.
+No reader, writer, HTML / DOCX / PDF / CSV / Excel parser, candidate-generator
+integration, or Research Report V1 integration is accepted yet.
 
 Latest accepted verification results are quoted, not rerun here:
 
-- targeted tests `298 passed`
-- full pytest latest `946 passed, 1 skipped`
+- targeted tests `350 passed`
+- full pytest latest `998 passed, 1 skipped`
 - regression `passed=47 failed=0 total=47`
 
 ## 1. Design Positioning
@@ -130,8 +129,8 @@ Field interpretation rules:
 | `structured_high` | Yes | Optional unless material | Yes | Later integration may allow | Row / column structure is complete, headers are clear, unit is clear, and totals can be checked. |
 | `structured_medium` | Yes, with caveats | Yes | Possible after integration | Later integration may allow | Structure is mostly complete, but source location, unit, denominator, or total checks need caveats. |
 | `partially_structured` | Limited fields only | Yes | Usually no unless accepted by a later policy | No by default | Some columns align, but one or more fields remain ambiguous; record only fields that pass checks. |
-| `unreliable_text_copy` | No | Yes | No | No | TXT copied from PDF or similar text order loss; record section detection and caveats only. |
-| `unusable` | No | Yes if retained | No | No | Missing table structure, missing source location, broken rows, or obvious copy / OCR corruption. |
+| `unreliable_text_copy` | No | Yes | No | No | Caveat-only. TXT copied from PDF or similar text order loss; record section detection through table caveats only. |
+| `unusable` | No | Yes if retained | No | No | Caveat-only. Missing table structure, missing source location, broken rows, or obvious copy / OCR corruption; record failure reason through table caveats only. |
 
 Quality assignment must happen before numeric extraction. If a table cannot be
 graded at least `partially_structured`, the parser must fail closed and emit
@@ -184,7 +183,7 @@ conditions apply:
 - Segment name cannot be located.
 - Table interpretation requires human judgement but has no source location.
 
-Allowed output in these cases:
+Allowed caveat output in these cases:
 
 - `business_composition_section_detected`
 - `table_structure_unreliable_due_to_pdf_text_copy`
@@ -193,6 +192,9 @@ Allowed output in these cases:
 
 Fail-closed means the module may preserve evidence that a relevant table region
 exists, but it must not invent row / column alignment or numeric values.
+After caveat-only hardening, `unreliable_text_copy` and `unusable` must not
+enter `table_facts` at all, even when the value is nonnumeric, null, or section
+detection text. They must be represented through `table_caveats`.
 
 ## 7. Official Disclosure Fact Schema Extension
 
@@ -313,7 +315,45 @@ Recommended sequence:
 8. Later PDF table extraction design.
 9. Later live CNInfo / official disclosure discovery design.
 
-The next recommended implementation step is table schema / quality model
-implementation. It should still remain local-file-first, fail-closed, and
-separate from candidate generation, Research Report V1, provider calls, tokens,
-MCP, fixture promotion, scoring, P1.1, and regression expected changes.
+Table schema / quality model implementation and caveat-only hardening are now
+accepted and frozen. The next recommended stage is:
+
+```text
+Local Structured Table Reader Design
+```
+
+It should first design a local structured table reader, preferably starting
+with CSV / Excel or local HTML table samples. DOCX table reading can remain an
+auxiliary path. PDF table extraction, live CNInfo, candidate generator
+integration, and Research Report V1 integration remain later separately
+accepted stages.
+
+## 12. Schema / Quality Model Acceptance Addendum
+
+The accepted implementation is:
+
+- `src/fundamental_skill/research_report/business_composition_table.py`
+- `tests/test_business_composition_table.py`
+
+Accepted capabilities:
+
+- table quality constants and policy lookup;
+- classification, evidence-tier, and extraction-confidence enums;
+- table fact builder and validator;
+- optional top-level in-memory payload builder and validator;
+- numeric-extraction permission helper;
+- machine-readable table caveat helpers;
+- secret-like data and forbidden recommendation-key rejection;
+- caveat-only hardening for `unreliable_text_copy` and `unusable`.
+
+Accepted boundaries:
+
+- no reader;
+- no writer;
+- no HTML / DOCX / PDF / CSV / Excel parser;
+- no fixture write;
+- no accepted manifest update;
+- no candidate generator integration;
+- no Research Report V1 integration;
+- no provider call, network use, token read, MCP, OCR, PDF extraction, scoring
+  change, P1.1 change, regression expected change, or trading advice.

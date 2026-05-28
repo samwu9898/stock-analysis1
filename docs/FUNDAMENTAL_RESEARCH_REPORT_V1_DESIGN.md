@@ -37,19 +37,23 @@ The real local filing parser acceptance summary is recorded in
 `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_PARSER_REAL_LOCAL_FILING_ACCEPTANCE_SUMMARY.md`.
 The independent business-composition table parser design is recorded in
 `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_BUSINESS_COMPOSITION_TABLE_PARSER_DESIGN.md`.
+The table schema / quality model implementation and caveat-only hardening
+acceptance summary is recorded in
+`docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_BUSINESS_COMPOSITION_TABLE_SCHEMA_ACCEPTANCE_SUMMARY.md`.
 Those summaries validate only the parser local-file and real-local-file
-minimum loops plus the table-parser design boundary; they do not wire L1
-official disclosure evidence into Research Report V1. This document
-records the accepted design boundary; the implementation, baseline freeze,
-profile acceptance, HTML acceptance, orchestration design, offline runtime
-acceptance, and CLI runtime acceptance do not modify tests, fixtures, pipeline,
-scoring / readiness, Research Intelligence P1.1, Dashboard, regression expected
-files, provider-primary behavior, default output, provider raw artifacts,
-evidence packs, candidate reports, or review decision artifacts. They do not
-run real smoke tests, read `TUSHARE_TOKEN`, use the network, call Tushare or
-AkShare, connect MCP, promote fixture values, automatically merge providers, or
-output buy / sell advice, target prices, position sizing, portfolio weights, or
-technical trading advice.
+minimum loops, the table-parser design boundary, and the in-memory table schema
+/ quality model. They do not wire L1 official disclosure evidence into
+Research Report V1. This document records the accepted design boundary; the
+implementation, baseline freeze, profile acceptance, HTML acceptance,
+orchestration design, offline runtime acceptance, CLI runtime acceptance, and
+table schema / quality model acceptance do not modify tests, fixtures,
+pipeline, scoring / readiness, Research Intelligence P1.1, Dashboard,
+regression expected files, provider-primary behavior, default output, provider
+raw artifacts, evidence packs, candidate reports, or review decision artifacts.
+They do not run real smoke tests, read `TUSHARE_TOKEN`, use the network, call
+Tushare or AkShare, connect MCP, promote fixture values, automatically merge
+providers, or output buy / sell advice, target prices, position sizing,
+portfolio weights, or technical trading advice.
 
 Current design inputs reviewed:
 
@@ -84,9 +88,9 @@ single-stock CLI runtime acceptance is recorded in
 `docs/FUNDAMENTAL_SKILL_CLI_RUNTIME_ACCEPTANCE_SUMMARY.md`. The manifest
 locator runtime acceptance is recorded in
 `docs/FUNDAMENTAL_ACCEPTED_MANIFEST_LOCATOR_RUNTIME_ACCEPTANCE_SUMMARY.md`.
-The next recommended official-disclosure work is table schema / quality model
-implementation for the independent Business Composition Table Parser. The next
-step is not more ad hoc
+The next recommended official-disclosure work is Local Structured Table Reader
+Design for the independent Business Composition Table Parser. The next step is
+not more ad hoc
 single-target HTML generation, promote-rule design, validator implementation,
 fixture promotion, live CNInfo fetch, live provider report, MCP, Tushare token
 work, or a Tushare primary switch.
@@ -757,7 +761,8 @@ promotion, live CNInfo fetch, live provider report, MCP, Tushare token work,
 or Tushare primary switch as the next step. The product line should now move
 from accepted manifest locator runtime baseline, Minimal CNInfo / official
 disclosure parser local + real-local-file acceptance, and Business Composition
-Table Parser Design into table schema / quality model implementation.
+Table Parser Design into Local Structured Table Reader Design. The table schema
+/ quality model implementation is already accepted and frozen.
 
 ## 11. Presentation profile design addendum
 
@@ -980,10 +985,11 @@ Manifest schema / writer / reader implementation, locator hardening, ignored
 runtime manifest generation, and retained runtime acceptance are now accepted
 for `600406`, `002371`, and `002050`. Minimal CNInfo / official disclosure
 parser design, local sample acceptance, real local filing acceptance, and
-business-composition table parser design are now recorded. The next recommended
-official-disclosure stage is table schema / quality model implementation for
-the independent Business Composition Table Parser. Batch / Dashboard can start
-after manifest closeout and should depend on manifest-located artifacts.
+business-composition table parser design plus schema / quality model
+acceptance are now recorded. The next recommended official-disclosure stage is
+Local Structured Table Reader Design for the independent Business Composition
+Table Parser. Batch / Dashboard can start after manifest closeout and should
+depend on manifest-located artifacts.
 Live Tushare provider mode, live CNInfo fetch, MCP, token work, validator,
 fixture promotion, and Tushare primary remain later separately accepted stages.
 
@@ -1122,16 +1128,20 @@ Research Report V1 boundary after official parser local-file acceptance:
 - No Research Report V1 builder, renderer, orchestration, CLI, scoring, P1.1,
   fixture, or accepted manifest behavior changes.
 
-Next recommended step after the Business Composition Table Parser Design is
-table schema / quality model implementation. Do not extract numeric values
-from disordered TXT tables, and do not jump directly into live CNInfo fetch,
-Tushare, MCP, validator, fixture promotion, candidate generator integration,
-Research Report V1 integration, Batch, or Dashboard implementation.
+Next recommended step after the Business Composition Table Schema / Quality
+Model acceptance is Local Structured Table Reader Design. Do not extract
+numeric values from disordered TXT tables, and do not jump directly into live
+CNInfo fetch, Tushare, MCP, validator, fixture promotion, candidate generator
+integration, Research Report V1 integration, Batch, or Dashboard
+implementation.
 
 ## 19. Business Composition Table Parser Design Addendum
 
 The independent table-parser design is recorded in
 `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_BUSINESS_COMPOSITION_TABLE_PARSER_DESIGN.md`.
+The table schema / quality model implementation and caveat-only hardening are
+accepted and frozen in
+`docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_BUSINESS_COMPOSITION_TABLE_SCHEMA_ACCEPTANCE_SUMMARY.md`.
 
 Research Report V1 relationship:
 
@@ -1141,8 +1151,8 @@ Research Report V1 relationship:
   separate candidate-generator and report-integration designs are accepted.
 - L1 table facts require `source_table_id`, row / column location, table
   quality, unit, denominator, period, and source location.
-- `unreliable_text_copy` table regions must remain caveats and must not become
-  report facts.
+- `unreliable_text_copy` and `unusable` are caveat-only table qualities and
+  must not enter `table_facts`; they must not become report facts.
 - The current `600406` real local TXT sample remains a boundary case: business
   composition sections were detected, but revenue, cost, gross margin, revenue
   ratio, YoY, and segment values were not extracted.
@@ -1155,6 +1165,17 @@ Boundaries:
 - No candidate generator integration yet.
 - No scoring / readiness / P1.1 / regression expected changes.
 - No live CNInfo, provider call, token read, network, MCP, OCR
-  implementation, or PDF extraction implementation.
+  implementation, PDF extraction implementation, or HTML / DOCX / CSV / Excel
+  table reader implementation.
 - No trading advice, target price, position sizing, portfolio weighting, or
   technical trading signal.
+
+Next recommended official-disclosure stage:
+
+```text
+Local Structured Table Reader Design
+```
+
+The reader design should remain separate from Research Report V1. Candidate
+generator integration and Research Report V1 integration require separate
+accepted designs after structured local table behavior is accepted.

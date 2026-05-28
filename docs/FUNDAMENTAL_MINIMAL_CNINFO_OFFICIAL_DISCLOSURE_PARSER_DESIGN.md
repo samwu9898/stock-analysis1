@@ -28,7 +28,10 @@ documentation-only summary: targeted tests `298 passed`, full pytest latest
 `946 passed, 1 skipped`, and regression `passed=47 failed=0 total=47`.
 The independent business-composition table parser design is recorded in
 `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_BUSINESS_COMPOSITION_TABLE_PARSER_DESIGN.md`.
-It is a later module, not part of the current minimal text parser.
+Its table schema / quality model implementation and caveat-only hardening are
+accepted and frozen in
+`docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_BUSINESS_COMPOSITION_TABLE_SCHEMA_ACCEPTANCE_SUMMARY.md`.
+It remains a separate module, not part of the current minimal text parser.
 
 ## 1. Design Positioning
 
@@ -447,12 +450,15 @@ Accepted sequence:
    `output/official_disclosures/20260528T125521Z/600406/official_disclosure_facts.json`.
 8. Official Disclosure Business Composition Table Parser Design recorded in
    `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_BUSINESS_COMPOSITION_TABLE_PARSER_DESIGN.md`.
+9. Business Composition Table Schema / Quality Model implementation and
+   caveat-only hardening accepted in
+   `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_BUSINESS_COMPOSITION_TABLE_SCHEMA_ACCEPTANCE_SUMMARY.md`.
 
 Recommended next sequence:
 
-1. Table schema / quality model implementation for the independent table
-   parser.
-2. DOCX / CSV / HTML local structured table reader design or implementation.
+1. Local Structured Table Reader Design for the independent table parser.
+2. Prefer CSV / Excel or local HTML table samples for the first structured
+   path; treat DOCX table reading as auxiliary.
 3. One structured local table sample runtime review.
 4. Add table facts to `official_disclosure_facts.json` only after table
    quality, source location, row / column alignment, units, denominators, and
@@ -488,6 +494,7 @@ Research Report V1 use.
 This design should be referenced by:
 
 - `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_BUSINESS_COMPOSITION_TABLE_PARSER_DESIGN.md`
+- `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_BUSINESS_COMPOSITION_TABLE_SCHEMA_ACCEPTANCE_SUMMARY.md`
 - `docs/FUNDAMENTAL_ACCEPTED_ARTIFACT_MANIFEST_FRESHNESS_DESIGN.md`
 - `docs/FUNDAMENTAL_RESEARCH_REPORT_V1_DESIGN.md`
 - `docs/PROJECT_CONTEXT_HANDOFF.md`
@@ -506,10 +513,12 @@ The current accepted runtime baseline remains unchanged:
   `output/research_reports/accepted_manifest.json`.
 - Default path remains offline local artifacts / no live provider / no token /
   no network / no MCP.
-- Business-composition table parser design is recorded, but implementation is
-  not accepted yet.
+- Business-composition table parser design is recorded; table schema / quality
+  model implementation and caveat-only hardening are accepted and frozen.
+- No business-composition table reader or writer is implemented yet.
 - Live CNInfo is not implemented.
 - PDF table parser is not implemented.
+- DOCX / HTML / CSV / Excel table readers are not implemented.
 - Candidate generator integration is not implemented.
 - L1 official disclosure integration is not implemented.
 - Research Report V1 integration is not implemented.
