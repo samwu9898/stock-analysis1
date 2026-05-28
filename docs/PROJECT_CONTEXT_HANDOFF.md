@@ -914,7 +914,60 @@ Next stage should be CSV Reader Schema / Implementation. Local HTML and DOCX
 remain later local structured paths; PDF extraction and live CNInfo remain
 later.
 
-## 19. New Codex Conversation Recovery Prompt
+## 19. Local Structured CSV Sample Runtime Acceptance Notes
+
+Local Structured CSV Reader implementation, delimiter warning patch, and local
+structured CSV sample runtime review are accepted. The runtime baseline is
+frozen and summarized in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_LOCAL_STRUCTURED_CSV_SAMPLE_ACCEPTANCE_SUMMARY.md
+```
+
+Accepted ignored runtime artifacts:
+
+- `output/official_disclosures/local_structured_table_samples/600406_h1_product.csv`
+- `output/official_disclosures/20260528_233015/600406/normalized_tables_review.json`
+
+Runtime result:
+
+- headers = 7;
+- rows = 6;
+- raw string cells preserved;
+- `delimiter_sniffed` warning visible;
+- `classification_hint=product`;
+- `table_quality_hint=structured_medium`;
+- `unit_not_detected`;
+- `period_not_detected`;
+- normalized table validation passed;
+- 3 runtime-review-only revenue facts for `电网智能`, `数能融合`, and `合计`
+  validated with `structured_medium`, `needs_human_review=true`,
+  `period=2025H1`, `classification_type=product`,
+  `denominator=主营业务收入合计`, and caveat
+  `local_structured_sample_requires_human_review`.
+
+Boundaries:
+
+- runtime artifacts are ignored output, not staged, not tracked, not fixtures,
+  not regression expected, and not accepted manifest updates;
+- no official disclosure facts write;
+- no candidate generator integration;
+- no Research Report V1 integration;
+- no Excel / HTML / DOCX / PDF reader;
+- no OCR, live CNInfo, provider call, token read, network, MCP, scoring change,
+  P1.1 change, or trading advice.
+
+Latest accepted verification results are quoted: targeted tests `385 passed`,
+full pytest `1033 passed, 1 skipped`, and regression
+`passed=47 failed=0 total=47`.
+
+Next recommended stage:
+
+```text
+CSV normalized table -> business_composition_table_facts integration design
+```
+
+## 20. New Codex Conversation Recovery Prompt
 
 Copy this into a new Codex / AI conversation:
 

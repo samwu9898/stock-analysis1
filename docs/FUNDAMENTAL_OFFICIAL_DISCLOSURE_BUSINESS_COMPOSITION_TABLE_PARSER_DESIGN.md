@@ -401,3 +401,47 @@ V1 reader design priority:
 5. TXT copied from PDF as caveat-only boundary.
 
 Recommended next stage: CSV reader schema / implementation.
+
+## 14. CSV Reader Runtime Acceptance Addendum
+
+Local Structured CSV Reader implementation, delimiter warning patch, and local
+structured CSV sample runtime review are now accepted. The runtime baseline is
+frozen and summarized in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_LOCAL_STRUCTURED_CSV_SAMPLE_ACCEPTANCE_SUMMARY.md
+```
+
+Accepted runtime observations:
+
+- sample path:
+  `output/official_disclosures/local_structured_table_samples/600406_h1_product.csv`;
+- review artifact:
+  `output/official_disclosures/20260528_233015/600406/normalized_tables_review.json`;
+- headers = 7 and rows = 6;
+- rows preserved as raw strings;
+- `delimiter_sniffed` warning visible;
+- `classification_hint=product`;
+- `table_quality_hint=structured_medium`;
+- `unit_not_detected`;
+- `period_not_detected`;
+- normalized table validation passed.
+
+Runtime table-fact experiment:
+
+- 3 revenue facts for `电网智能`, `数能融合`, and `合计`;
+- `structured_medium`;
+- `needs_human_review=true`;
+- `period=2025H1`;
+- `classification_type=product`;
+- `denominator=主营业务收入合计`;
+- caveat `local_structured_sample_requires_human_review`.
+
+The experiment does not promote facts into fixtures, accepted manifests,
+official disclosure facts, candidate generator output, or Research Report V1.
+
+Next recommended stage:
+
+```text
+CSV normalized table -> business_composition_table_facts integration design
+```

@@ -254,3 +254,50 @@ order, avoid silent numeric conversion, record delimiter / encoding caveats,
 and remain separate from output writes, fixtures, accepted manifests,
 candidate generation, Research Report V1, scoring, P1.1, regression expected
 files, providers, tokens, network, MCP, and trading advice.
+
+## 12. Local Structured CSV Sample Runtime Acceptance Sync
+
+Local Structured CSV Reader implementation, delimiter warning patch, and local
+structured CSV sample runtime review are now accepted. The runtime baseline is
+recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_LOCAL_STRUCTURED_CSV_SAMPLE_ACCEPTANCE_SUMMARY.md
+```
+
+The accepted runtime sample is:
+
+```text
+output/official_disclosures/local_structured_table_samples/600406_h1_product.csv
+```
+
+The accepted runtime review artifact is:
+
+```text
+output/official_disclosures/20260528_233015/600406/normalized_tables_review.json
+```
+
+Both remain ignored runtime artifacts, not fixtures, not regression expected
+files, and not accepted manifest updates.
+
+Table quality relationship:
+
+- CSV reader output remains a normalized table, not a table fact.
+- Runtime facts were experiment-only and validated through the accepted
+  business composition table validator.
+- Runtime facts used `structured_medium`, `needs_human_review=true`, and
+  caveat `local_structured_sample_requires_human_review`.
+- `unreliable_text_copy` remains caveat-only and copied PDF TXT still cannot
+  produce numeric facts.
+
+Latest accepted verification results:
+
+- targeted tests `385 passed`;
+- full pytest `1033 passed, 1 skipped`;
+- regression `passed=47 failed=0 total=47`.
+
+Next recommended stage:
+
+```text
+CSV normalized table -> business_composition_table_facts integration design
+```

@@ -1186,3 +1186,35 @@ CSV Reader Schema / Implementation
 The CSV reader implementation should remain separate from Research Report V1.
 Candidate generator integration and Research Report V1 integration require
 separate accepted designs after structured local table behavior is accepted.
+
+## 20. Local Structured CSV Sample Runtime Acceptance Boundary
+
+Local Structured CSV Reader implementation, delimiter warning patch, and local
+structured CSV sample runtime review are now accepted. The frozen runtime
+baseline is summarized in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_LOCAL_STRUCTURED_CSV_SAMPLE_ACCEPTANCE_SUMMARY.md
+```
+
+Research Report V1 boundary:
+
+- the CSV sample is ignored runtime output, not a fixture;
+- the normalized table review artifact is ignored runtime output;
+- no accepted manifest update;
+- no Research Report V1 builder, renderer, orchestration, or CLI change;
+- no candidate generator integration;
+- no report evidence promotion;
+- no scoring / readiness / P1.1 / regression expected change.
+
+Runtime table facts were review-only and used `structured_medium`,
+`needs_human_review=true`, and caveat
+`local_structured_sample_requires_human_review`. They are not Research Report
+V1 facts.
+
+Next recommended official-disclosure stage remains separate from Research
+Report V1:
+
+```text
+CSV normalized table -> business_composition_table_facts integration design
+```

@@ -349,3 +349,51 @@ The next implementation stage should be CSV reader schema / implementation.
 It should remain local-only, fail-closed, and separate from providers, tokens,
 MCP, fixtures, accepted manifests, candidate generation, Research Report V1,
 scoring, P1.1, regression expected files, and trading advice.
+
+## 12. CSV Implementation And Runtime Acceptance Addendum
+
+Local Structured CSV Reader implementation, delimiter warning patch, and local
+structured CSV sample runtime review are now accepted. The runtime baseline is
+frozen and summarized in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_LOCAL_STRUCTURED_CSV_SAMPLE_ACCEPTANCE_SUMMARY.md
+```
+
+Accepted runtime baseline artifacts remain ignored output:
+
+- `output/official_disclosures/local_structured_table_samples/600406_h1_product.csv`
+- `output/official_disclosures/20260528_233015/600406/normalized_tables_review.json`
+
+Runtime review result:
+
+- headers = 7;
+- rows = 6;
+- raw string cells preserved;
+- `delimiter_sniffed` warning visible;
+- `classification_hint=product`;
+- `table_quality_hint=structured_medium`;
+- `unit_not_detected`;
+- `period_not_detected`;
+- normalized table validation passed;
+- 3 runtime-review-only revenue facts were validated with
+  `structured_medium`, `needs_human_review=true`, `period=2025H1`,
+  `classification_type=product`, `denominator=主营业务收入合计`, and caveat
+  `local_structured_sample_requires_human_review`.
+
+Boundaries remain unchanged:
+
+- no Excel / HTML / DOCX / PDF reader;
+- no OCR;
+- no candidate generator integration;
+- no Research Report V1 integration;
+- no fixture write;
+- no accepted manifest update;
+- no regression expected update;
+- no live CNInfo, provider call, token read, network, MCP, or trading advice.
+
+Next recommended stage:
+
+```text
+CSV normalized table -> business_composition_table_facts integration design
+```
