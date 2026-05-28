@@ -84,6 +84,8 @@ _SAFE_DEFAULTS = {
     "language": "zh-CN",
     "strict_evidence_boundary": True,
 }
+_NON_CHINESE_SUMMARY_FALLBACK = "当前仅找到结构化摘要字段，建议打开 Markdown 报告查看中文摘要。"
+_CHINESE_CHAR_RE = re.compile(r"[\u4e00-\u9fff]")
 
 _PROVIDER_COMPARISON_INPUT_FILENAMES = (
     "tushare_fundamental.json",
@@ -381,6 +383,7 @@ def format_orchestration_response(result: dict[str, Any]) -> str:
         "reused": "已找到并复用",
         "failed_missing_artifacts": "未生成：缺少本地 artifact",
     }.get(status, status)
+    markdown_parts = _summary_parts_from_markdown_path(result.get("markdown_path"))
 
     lines = [
         f"报告状态：{status_text}",
@@ -388,11 +391,11 @@ def format_orchestration_response(result: dict[str, Any]) -> str:
         f"Markdown: {_display_path(result.get('markdown_path'))}",
         f"JSON: {_display_path(result.get('json_path'))}",
         "",
-        f"简短摘要：{_display_text(result.get('summary'))}",
-        f"最大机会：{_display_text(result.get('largest_opportunity'))}",
-        f"最大风险：{_display_text(result.get('largest_risk'))}",
-        f"最大证据缺口：{_display_text(result.get('largest_evidence_gap'))}",
-        f"数据质量状态：{_display_text(result.get('data_quality_status'))}",
+        f"简短摘要：{_user_facing_summary(result, markdown_parts)}",
+        f"最大机会：{_user_facing_detail(result, 'largest_opportunity', markdown_parts, '已定位结构化机会字段；建议打开 Markdown 报告查看中文机会说明。')}",
+        f"最大风险：{_user_facing_detail(result, 'largest_risk', markdown_parts, '已定位结构化风险字段；建议打开 Markdown 报告查看中文风险说明。')}",
+        f"最大证据缺口：{_user_facing_detail(result, 'largest_evidence_gap', markdown_parts, '已定位结构化证据缺口字段；建议打开 Markdown 报告查看中文证据说明。')}",
+        f"数据质量状态：{_user_facing_detail(result, 'data_quality_status', markdown_parts, '已定位结构化数据质量字段；建议打开 Markdown 报告查看中文数据质量说明。')}",
     ]
 
     missing = [str(item) for item in result.get("missing_artifacts") or []]
@@ -406,6 +409,12 @@ def format_orchestration_response(result: dict[str, Any]) -> str:
         ]
     )
     return "\n".join(lines)
+
+
+def extract_chinese_summary_from_markdown(markdown_text: str) -> str:
+    """Extract a short Chinese user-facing summary from accepted V1 Markdown."""
+
+    return _extract_chinese_summary_parts_from_markdown(markdown_text).get("summary", "")
 
 
 def _validate_orchestration_request(request: dict[str, Any]) -> dict[str, Any]:
@@ -467,6 +476,12 @@ def _build_result(
     actions_taken: list[str],
 ) -> dict[str, Any]:
     summary_fields = _summary_fields(report, status=status)
+    markdown_parts = _summary_parts_from_markdown_path(markdown_path)
+    if markdown_parts.get("summary"):
+        summary_fields["summary"] = markdown_parts["summary"]
+    elif not _contains_chinese(summary_fields["summary"]):
+        summary_fields["artifact_summary_raw"] = summary_fields["summary"]
+        summary_fields["summary"] = _NON_CHINESE_SUMMARY_FALLBACK
     for key in ("summary", "largest_opportunity", "largest_risk", "largest_evidence_gap", "data_quality_status"):
         _assert_no_positive_trading_output(summary_fields[key])
     return {
@@ -483,6 +498,131 @@ def _build_result(
         "missing_artifacts": missing_artifacts,
         "actions_taken": actions_taken,
     }
+
+
+def _user_facing_summary(result: dict[str, Any], markdown_parts: dict[str, str] | None = None) -> str:
+    markdown_summary = (markdown_parts or {}).get("summary")
+    if markdown_summary:
+        return markdown_summary
+
+    summary = _display_text(result.get("summary"))
+    if _contains_chinese(summary):
+        return summary
+    return _NON_CHINESE_SUMMARY_FALLBACK
+
+
+def _user_facing_detail(
+    result: dict[str, Any],
+    key: str,
+    markdown_parts: dict[str, str] | None,
+    fallback: str,
+) -> str:
+    markdown_detail = (markdown_parts or {}).get(key)
+    if markdown_detail:
+        return markdown_detail
+    value = _display_text(result.get(key))
+    if _contains_chinese(value):
+        return value
+    return fallback
+
+
+def _summary_parts_from_markdown_path(markdown_path: Any) -> dict[str, str]:
+    if not markdown_path:
+        return {}
+    path = Path(markdown_path)
+    if not path.is_file():
+        return {}
+    try:
+        markdown = _read_text_artifact(path)
+    except ReportArtifactError:
+        return {}
+    return _extract_chinese_summary_parts_from_markdown(markdown)
+
+
+def _extract_chinese_summary_parts_from_markdown(markdown_text: str) -> dict[str, str]:
+    if not isinstance(markdown_text, str) or not markdown_text.strip():
+        return {}
+
+    parts: dict[str, str] = {}
+    conclusion_lines = _clean_markdown_lines(_extract_markdown_section_lines(markdown_text, "一句话结论"), max_lines=4)
+    conclusion = " ".join(conclusion_lines)
+    if _contains_chinese(conclusion):
+        parts["summary"] = _short_text(conclusion, limit=480)
+        for line in conclusion_lines:
+            if "机会" in line and "largest_opportunity" not in parts:
+                parts["largest_opportunity"] = _short_text(line, limit=260)
+            if "风险" in line and "largest_risk" not in parts:
+                parts["largest_risk"] = _short_text(line, limit=260)
+            if "证据缺口" in line and "largest_evidence_gap" not in parts:
+                parts["largest_evidence_gap"] = _short_text(line, limit=260)
+
+    quick_read_lines = _clean_markdown_lines(
+        _extract_markdown_section_lines(markdown_text, "投研速读"),
+        max_lines=8,
+        bullets_only=True,
+    )
+    for line in quick_read_lines:
+        if ("数据可信度" in line or "数据质量" in line) and "data_quality_status" not in parts:
+            parts["data_quality_status"] = _short_text(line, limit=260)
+
+    if "summary" not in parts:
+        quick_summary = " ".join(quick_read_lines[:2])
+        if _contains_chinese(quick_summary):
+            parts["summary"] = _short_text(quick_summary, limit=480)
+
+    return parts
+
+
+def _extract_markdown_section_lines(markdown_text: str, heading: str) -> list[str]:
+    section: list[str] = []
+    in_section = False
+    expected_heading = f"## {heading}"
+
+    for line in markdown_text.splitlines():
+        stripped = line.strip()
+        if in_section and stripped.startswith("## "):
+            break
+        if not in_section and stripped == expected_heading:
+            in_section = True
+            continue
+        if in_section:
+            section.append(line)
+
+    return section
+
+
+def _compact_markdown_lines(lines: list[str], *, max_lines: int, bullets_only: bool = False) -> str:
+    return " ".join(_clean_markdown_lines(lines, max_lines=max_lines, bullets_only=bullets_only))
+
+
+def _clean_markdown_lines(lines: list[str], *, max_lines: int, bullets_only: bool = False) -> list[str]:
+    selected: list[str] = []
+    for line in lines:
+        cleaned = _clean_markdown_summary_line(line)
+        if not cleaned:
+            continue
+        if bullets_only and not _is_markdown_bullet(line):
+            continue
+        selected.append(cleaned)
+        if len(selected) >= max_lines:
+            break
+    return selected
+
+
+def _clean_markdown_summary_line(line: str) -> str:
+    cleaned = line.strip()
+    cleaned = re.sub(r"^[-*+]\s+", "", cleaned)
+    cleaned = re.sub(r"^\d+[.)、]\s+", "", cleaned)
+    cleaned = cleaned.replace("**", "").replace("`", "")
+    return " ".join(cleaned.split())
+
+
+def _is_markdown_bullet(line: str) -> bool:
+    return bool(re.match(r"^\s*(?:[-*+]|\d+[.)、])\s+", line))
+
+
+def _contains_chinese(text: Any) -> bool:
+    return bool(_CHINESE_CHAR_RE.search(str(text or "")))
 
 
 def _summary_fields(report: dict[str, Any] | None, *, status: str) -> dict[str, str]:

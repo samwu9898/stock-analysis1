@@ -11,6 +11,7 @@ from src.fundamental_skill.research_report.orchestration import (
     CANDIDATE_REVIEW_DECISIONS_FILENAME,
     FACT_CANDIDATES_FILENAME,
     ReportRequestError,
+    extract_chinese_summary_from_markdown,
     format_orchestration_response,
     locate_research_report_artifacts,
     normalize_report_request,
@@ -88,6 +89,33 @@ def _assert_under(path: Path | None, root: Path) -> None:
     if path is None:
         return
     path.resolve(strict=False).relative_to(root.resolve(strict=False))
+
+
+def _assert_no_positive_action_terms(response: str) -> None:
+    forbidden = (
+        "买入",
+        "卖出",
+        "持有建议",
+        "加仓",
+        "减仓",
+        "止损",
+        "确定性上涨",
+        "必然兑现",
+        "强烈推荐",
+        "buy",
+        "sell",
+        "target price",
+        "position sizing",
+        "stop loss",
+        "technical trading signal",
+        "strong recommend",
+    )
+    for term in forbidden:
+        assert term not in response.lower()
+
+    for term in ("目标价", "仓位", "技术面交易信号"):
+        matching_lines = [line for line in response.splitlines() if term in line]
+        assert matching_lines == ["重要声明：本报告仅用于基本面研究，不构成买卖建议，不包含目标价、仓位或技术面交易信号。"]
 
 
 def test_normalize_request_from_code_and_company_text():
@@ -251,6 +279,168 @@ def test_final_response_includes_paths_and_summary(tmp_path):
     assert "最大风险：" in response
     assert "最大证据缺口：" in response
     assert "数据质量状态：" in response
+
+
+def test_reused_html_with_markdown_prefers_chinese_one_sentence_over_english_json(tmp_path):
+    output_root = tmp_path / "research_reports"
+    code_dir = output_root / "20260528T010000" / "600406"
+    html_path = code_dir / HTML_OUTPUT_FILENAME
+    markdown_path = code_dir / MARKDOWN_OUTPUT_FILENAME
+    json_path = code_dir / JSON_OUTPUT_FILENAME
+    markdown = """# 600406 国电南瑞 基本面研究报告 V1
+
+## 一句话结论
+国电南瑞应优先作为电网设备和数字电网链路的本地研究样本跟踪。
+最大机会来自电网投资、调度系统和继电保护需求的公司层面验证。
+最大风险在于订单兑现、项目结算和回款节奏。
+最大证据缺口是主营构成口径和官方主营业务来源。
+
+## 研究员判断
+这一段不应进入聊天摘要。
+"""
+    _write_text(html_path, "<!doctype html><html><body>local accepted report</body></html>")
+    _write_text(markdown_path, markdown)
+    _write_json(json_path, _report())
+    before_markdown = markdown_path.read_bytes()
+    before_json = json_path.read_bytes()
+
+    result = run_single_stock_report_orchestration(
+        normalize_report_request(code="600406"),
+        output_root=output_root,
+        timestamp="20260528T020000",
+    )
+    response = format_orchestration_response(result)
+
+    assert result["status"] == "reused"
+    assert result["summary"].startswith("国电南瑞应优先作为电网设备")
+    assert "600406 currently reads as" not in result["summary"]
+    assert "600406 currently reads as" not in response
+    assert "Grid investment can support" not in response
+    assert "Accounts receivable" not in response
+    assert "main_business needs" not in response
+    assert "国电南瑞应优先作为电网设备" in response
+    assert "最大机会：最大机会来自电网投资" in response
+    assert "最大风险：最大风险在于订单兑现" in response
+    assert "最大证据缺口：最大证据缺口是主营构成口径" in response
+    assert "这一段不应进入聊天摘要" not in response
+    assert markdown_path.read_bytes() == before_markdown
+    assert json_path.read_bytes() == before_json
+
+
+def test_markdown_one_sentence_extraction_stops_before_next_heading():
+    markdown = """# 样本
+
+## 一句话结论
+第一行中文结论。
+第二行中文补充。
+
+## 投研速读
+- 不应跨 heading 出现。
+"""
+
+    summary = extract_chinese_summary_from_markdown(markdown)
+
+    assert summary == "第一行中文结论。 第二行中文补充。"
+    assert "不应跨 heading 出现" not in summary
+
+
+def test_markdown_quick_read_fallback_extracts_first_two_bullets():
+    markdown = """# 样本
+
+## 投研速读
+- 第一条中文速读。
+- 第二条中文速读。
+- 第三条不应进入摘要。
+
+## 研究员判断
+不应进入摘要。
+"""
+
+    summary = extract_chinese_summary_from_markdown(markdown)
+
+    assert summary == "第一条中文速读。 第二条中文速读。"
+    assert "第三条" not in summary
+    assert "研究员判断" not in summary
+
+
+def test_markdown_missing_does_not_present_english_json_summary_as_chinese(tmp_path):
+    output_root = tmp_path / "research_reports"
+    code_dir = output_root / "20260528T010000" / "600406"
+    html_path = code_dir / HTML_OUTPUT_FILENAME
+    json_path = code_dir / JSON_OUTPUT_FILENAME
+    _write_text(html_path, "<!doctype html><html><body>local accepted report</body></html>")
+    _write_json(json_path, _report())
+
+    result = run_single_stock_report_orchestration(
+        normalize_report_request(code="600406"),
+        output_root=output_root,
+        timestamp="20260528T020000",
+    )
+    response = format_orchestration_response(result)
+
+    assert result["status"] == "reused"
+    assert result["markdown_path"] is None
+    assert result["summary"] == "当前仅找到结构化摘要字段，建议打开 Markdown 报告查看中文摘要。"
+    assert "600406 currently reads as" not in response
+    assert "Grid investment can support" not in response
+    assert "当前仅找到结构化摘要字段，建议打开 Markdown 报告查看中文摘要。" in response
+    assert "建议打开 Markdown 报告查看中文机会说明" in response
+
+
+def test_final_response_does_not_copy_whole_markdown_report(tmp_path):
+    output_root = tmp_path / "research_reports"
+    code_dir = output_root / "20260528T010000" / "600406"
+    markdown_path = code_dir / MARKDOWN_OUTPUT_FILENAME
+    json_path = code_dir / JSON_OUTPUT_FILENAME
+    html_path = code_dir / HTML_OUTPUT_FILENAME
+    markdown = """# 600406 国电南瑞 基本面研究报告 V1
+
+## 一句话结论
+第一行中文摘要。
+第二行中文摘要。
+第三行中文摘要。
+第四行中文摘要。
+第五行不应进入聊天响应。
+
+## 深度正文
+这是一段很长的正文，不应被复制到最终聊天响应。
+"""
+    _write_text(html_path, "<!doctype html><html><body>local accepted report</body></html>")
+    _write_text(markdown_path, markdown)
+    _write_json(json_path, _report())
+
+    result = run_single_stock_report_orchestration(
+        normalize_report_request(code="600406"),
+        output_root=output_root,
+        timestamp="20260528T020000",
+    )
+    response = format_orchestration_response(result)
+
+    assert "第一行中文摘要" in response
+    assert "第四行中文摘要" in response
+    assert "第五行不应进入聊天响应" not in response
+    assert "这是一段很长的正文" not in response
+    assert len(result["summary"]) < 500
+
+
+def test_final_response_allows_only_negative_disclaimer_for_trading_terms(tmp_path):
+    output_root = tmp_path / "research_reports"
+    code_dir = output_root / "20260528T010000" / "600406"
+    _write_text(code_dir / HTML_OUTPUT_FILENAME, "<!doctype html><html><body>local accepted report</body></html>")
+    _write_text(
+        code_dir / MARKDOWN_OUTPUT_FILENAME,
+        "# 600406 国电南瑞 基本面研究报告 V1\n\n## 一句话结论\n国电南瑞适合作为电网设备基本面研究样本继续跟踪。\n",
+    )
+    _write_json(code_dir / JSON_OUTPUT_FILENAME, _report())
+
+    result = run_single_stock_report_orchestration(
+        normalize_report_request(code="600406"),
+        output_root=output_root,
+        timestamp="20260528T020000",
+    )
+    response = format_orchestration_response(result)
+
+    _assert_no_positive_action_terms(response)
 
 
 def test_final_response_includes_not_for_trading_advice_statement():
