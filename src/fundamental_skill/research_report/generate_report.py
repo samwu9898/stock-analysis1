@@ -93,6 +93,9 @@ def main(argv: list[str] | None = None, *, stdout: TextIO | None = None, stderr:
     if _missing_local_artifacts(result):
         print(f"status: 未生成_missing_local_artifacts\n{response}", file=out)
         return MISSING_LOCAL_ARTIFACTS_EXIT_CODE
+    if _invalid_manifest(result):
+        print(f"status: failed_invalid_manifest\n{response}", file=out)
+        return SAFETY_BOUNDARY_EXIT_CODE
 
     print(response, file=out)
     err.flush()
@@ -184,6 +187,10 @@ def _missing_local_artifacts(result: dict[str, Any]) -> bool:
         "failed_missing_artifacts",
         "未生成_missing_local_artifacts",
     }
+
+
+def _invalid_manifest(result: dict[str, Any]) -> bool:
+    return str(result.get("status") or "") == "failed_invalid_manifest"
 
 
 def _format_cli_error(status: str, message: str, missing_artifacts: list[str] | None = None) -> str:

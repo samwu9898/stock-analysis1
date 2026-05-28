@@ -18,6 +18,11 @@ from src.fundamental_skill.research_report.orchestration import (
     run_single_stock_report_orchestration,
 )
 import src.fundamental_skill.research_report.orchestration as orchestration_module
+from src.fundamental_skill.research_report.accepted_manifest import (
+    build_accepted_manifest,
+    compute_file_sha256,
+    write_accepted_manifest,
+)
 from src.fundamental_skill.research_report.research_report_v1 import OUTPUT_FILENAME as JSON_OUTPUT_FILENAME
 from src.fundamental_skill.research_report.research_report_v1_html import HTML_OUTPUT_FILENAME
 from src.fundamental_skill.research_report.research_report_v1_presentation import (
@@ -36,6 +41,92 @@ def _write_json(path: Path, payload: dict) -> None:
 def _write_text(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")
+
+
+def _artifact_relative_path(timestamp: str, code: str, filename: str) -> str:
+    return f"output/research_reports/{timestamp}/{code}/{filename}"
+
+
+def _write_manifest_artifact_bundle(
+    repo_root: Path,
+    *,
+    code: str = "600406",
+    html_timestamp: str = "20260528T010000",
+    markdown_timestamp: str | None = None,
+    json_timestamp: str | None = None,
+    freshness_status: str = "current",
+    freshness_reason: str = "accepted baseline",
+    supersedes: list[dict] | None = None,
+) -> tuple[Path, dict]:
+    markdown_timestamp = markdown_timestamp or html_timestamp
+    json_timestamp = json_timestamp or html_timestamp
+    html_rel = _artifact_relative_path(html_timestamp, code, HTML_OUTPUT_FILENAME)
+    markdown_rel = _artifact_relative_path(markdown_timestamp, code, MARKDOWN_OUTPUT_FILENAME)
+    json_rel = _artifact_relative_path(json_timestamp, code, JSON_OUTPUT_FILENAME)
+
+    html_path = repo_root / Path(html_rel)
+    markdown_path = repo_root / Path(markdown_rel)
+    json_path = repo_root / Path(json_rel)
+    _write_text(html_path, "<!doctype html><html><body>accepted manifest report</body></html>")
+    _write_text(
+        markdown_path,
+        "# Accepted report\n\n## Local summary\nAccepted manifest baseline with no trading advice.\n",
+    )
+    _write_json(json_path, _report(code=code))
+
+    entry = {
+        "code": code,
+        "company_name": "Manifest Sample",
+        "report_type": "fundamental_research_report_v1",
+        "presentation_profile": "stable_growth",
+        "accepted_artifacts": {
+            "html": html_rel,
+            "markdown": markdown_rel,
+            "json": json_rel,
+        },
+        "artifact_hashes": {
+            "html_sha256": compute_file_sha256(html_path),
+            "markdown_sha256": compute_file_sha256(markdown_path),
+            "json_sha256": compute_file_sha256(json_path),
+        },
+        "acceptance": {
+            "accepted_at": "2026-05-28T12:55:18+08:00",
+            "accepted_stage": "cli_runtime_acceptance",
+            "accepted_by": "human_or_codex_review",
+            "acceptance_notes": [],
+        },
+        "freshness": {
+            "freshness_status": freshness_status,
+            "source_data_period": "2025Q4",
+            "financial_report_period": "2025-12-31",
+            "valuation_as_of_date": "2026-05-28",
+            "report_generated_at": "2026-05-28T12:55:18+08:00",
+            "accepted_at": "2026-05-28T12:55:18+08:00",
+            "valid_until": "2026-06-30",
+            "last_freshness_check_at": "2026-05-28T12:55:18+08:00",
+            "freshness_reason": freshness_reason,
+            "staleness_triggers": [],
+            "manual_override": None,
+        },
+        "lineage": {
+            "supersedes": supersedes or [],
+            "superseded_by": None,
+            "source_artifacts": [],
+        },
+        "safety": {
+            "not_for_trading_advice": True,
+            "no_token": True,
+            "no_provider_call": True,
+        },
+    }
+    output_root = repo_root / "output" / "research_reports"
+    manifest = build_accepted_manifest(
+        [entry],
+        created_at="2026-05-28T12:55:18+08:00",
+        updated_at="2026-05-28T12:55:18+08:00",
+    )
+    write_accepted_manifest(manifest, output_root / "accepted_manifest.json")
+    return output_root, entry
 
 
 def _report(code: str = "600406", strategy_type: str = "stable_growth") -> dict:
@@ -177,6 +268,183 @@ def test_locator_reuses_existing_html(tmp_path):
 
     assert located["html_path"] == html_path.resolve(strict=False)
     assert located["missing_artifacts"] == []
+
+
+def test_manifest_current_happy_path_uses_manifest_not_timestamp_latest(tmp_path):
+    output_root, _ = _write_manifest_artifact_bundle(tmp_path, html_timestamp="20260528T010000")
+    latest_html = output_root / "20260528T020000" / "600406" / HTML_OUTPUT_FILENAME
+    _write_text(latest_html, "<!doctype html><html><body>experimental latest</body></html>")
+
+    located = locate_research_report_artifacts("600406", output_root)
+
+    assert located["html_path"] == (tmp_path / "output" / "research_reports" / "20260528T010000" / "600406" / HTML_OUTPUT_FILENAME).resolve(strict=False)
+    assert located["manifest_used"] is True
+    assert located["manifest_status"] == "used"
+    assert located["freshness_status"] == "current"
+    assert located["freshness_warning"] is None
+    assert "manifest_latest_conflict_warning" in located["manifest_warning"]
+
+
+def test_manifest_mixed_timestamp_bundle_for_002371_is_valid_and_located(tmp_path):
+    output_root, _ = _write_manifest_artifact_bundle(
+        tmp_path,
+        code="002371",
+        html_timestamp="20260528T125518",
+        markdown_timestamp="20260528T125518",
+        json_timestamp="20260527T220148",
+    )
+
+    located = locate_research_report_artifacts("002371", output_root)
+
+    assert located["manifest_used"] is True
+    assert "20260528T125518" in str(located["html_path"])
+    assert "20260528T125518" in str(located["markdown_path"])
+    assert "20260527T220148" in str(located["json_path"])
+
+
+def test_manifest_prevents_superseded_old_artifact_selection(tmp_path):
+    old_markdown_rel = _artifact_relative_path("20260527T220148", "002371", MARKDOWN_OUTPUT_FILENAME)
+    old_html_rel = _artifact_relative_path("20260528T090024", "002371", HTML_OUTPUT_FILENAME)
+    _write_text(tmp_path / Path(old_markdown_rel), "# old markdown")
+    _write_text(tmp_path / Path(old_html_rel), "<!doctype html><html><body>old html</body></html>")
+    supersedes = [
+        {
+            "artifact_type": "markdown",
+            "path": old_markdown_rel,
+            "sha256": compute_file_sha256(tmp_path / Path(old_markdown_rel)),
+            "superseded_reason": "professional_voice_regeneration",
+            "superseded_at": "2026-05-28T12:55:18+08:00",
+            "replacement_path": _artifact_relative_path("20260528T125518", "002371", MARKDOWN_OUTPUT_FILENAME),
+        },
+        {
+            "artifact_type": "html",
+            "path": old_html_rel,
+            "sha256": compute_file_sha256(tmp_path / Path(old_html_rel)),
+            "superseded_reason": "professional_voice_regeneration",
+            "superseded_at": "2026-05-28T12:55:18+08:00",
+            "replacement_path": _artifact_relative_path("20260528T125518", "002371", HTML_OUTPUT_FILENAME),
+        },
+    ]
+    output_root, _ = _write_manifest_artifact_bundle(
+        tmp_path,
+        code="002371",
+        html_timestamp="20260528T125518",
+        markdown_timestamp="20260528T125518",
+        json_timestamp="20260527T220148",
+        supersedes=supersedes,
+    )
+
+    located = locate_research_report_artifacts("002371", output_root)
+
+    assert located["manifest_used"] is True
+    assert "20260528T125518" in str(located["html_path"])
+    assert "20260528T090024" not in str(located["html_path"])
+    assert "20260527T220148" in str(located["json_path"])
+
+
+def test_missing_manifest_falls_back_with_warning(tmp_path):
+    output_root = tmp_path / "research_reports"
+    html_path = output_root / "20260528T010000" / "600406" / HTML_OUTPUT_FILENAME
+    _write_text(html_path, "<!doctype html><html><body>local accepted report</body></html>")
+
+    located = locate_research_report_artifacts("600406", output_root)
+
+    assert located["html_path"] == html_path.resolve(strict=False)
+    assert located["manifest_used"] is False
+    assert located["manifest_status"] == "missing"
+    assert "manifest_missing_warning" in located["manifest_warning"]
+
+
+def test_manifest_entry_missing_falls_back_with_warning(tmp_path):
+    output_root, _ = _write_manifest_artifact_bundle(tmp_path, code="002371")
+    fallback_html = output_root / "20260528T020000" / "600406" / HTML_OUTPUT_FILENAME
+    _write_text(fallback_html, "<!doctype html><html><body>fallback report</body></html>")
+
+    located = locate_research_report_artifacts("600406", output_root)
+
+    assert located["html_path"] == fallback_html.resolve(strict=False)
+    assert located["manifest_used"] is False
+    assert located["manifest_status"] == "entry_missing"
+    assert "manifest_entry_missing_warning" in located["manifest_warning"]
+
+
+@pytest.mark.parametrize("freshness_status", ["unknown", "stale"])
+def test_manifest_unknown_and_stale_are_usable_with_warning(tmp_path, freshness_status):
+    output_root, _ = _write_manifest_artifact_bundle(
+        tmp_path,
+        freshness_status=freshness_status,
+        freshness_reason=f"{freshness_status} freshness for test",
+    )
+
+    result = run_single_stock_report_orchestration(
+        normalize_report_request(code="600406"),
+        output_root=output_root,
+        timestamp="20260528T020000",
+    )
+    response = format_orchestration_response(result)
+
+    assert result["status"] == "reused"
+    assert result["manifest_used"] is True
+    assert result["freshness_status"] == freshness_status
+    assert result["freshness_warning"]
+    assert freshness_status in result["freshness_warning"]
+    assert freshness_status in response
+    assert "Freshness 提示：" in response
+
+
+@pytest.mark.parametrize("freshness_status", ["superseded", "invalidated"])
+def test_manifest_superseded_or_invalidated_fail_closed(tmp_path, freshness_status):
+    output_root, _ = _write_manifest_artifact_bundle(
+        tmp_path,
+        freshness_status=freshness_status,
+        freshness_reason=f"{freshness_status} entry cannot be accepted baseline",
+    )
+
+    result = run_single_stock_report_orchestration(
+        normalize_report_request(code="600406"),
+        output_root=output_root,
+        timestamp="20260528T020000",
+    )
+
+    assert result["status"] == "failed_invalid_manifest"
+    assert result["manifest_used"] is False
+    assert result["manifest_status"] == freshness_status
+    assert result["freshness_status"] == freshness_status
+    assert result["html_path"] is None
+
+
+def test_manifest_missing_referenced_file_fails_closed(tmp_path):
+    output_root, entry = _write_manifest_artifact_bundle(tmp_path)
+    missing_path = tmp_path / Path(entry["accepted_artifacts"]["markdown"])
+    missing_path.unlink()
+
+    result = run_single_stock_report_orchestration(
+        normalize_report_request(code="600406"),
+        output_root=output_root,
+        timestamp="20260528T020000",
+    )
+
+    assert result["status"] == "failed_invalid_manifest"
+    assert result["manifest_status"] == "invalid"
+    assert result["manifest_used"] is False
+    assert "<masked>" not in result["manifest_warning"]
+
+
+def test_manifest_hash_mismatch_fails_closed_without_secret_leak(tmp_path):
+    output_root, entry = _write_manifest_artifact_bundle(tmp_path)
+    html_path = tmp_path / Path(entry["accepted_artifacts"]["html"])
+    _write_text(html_path, "<!doctype html><html><body>changed</body></html>")
+
+    result = run_single_stock_report_orchestration(
+        normalize_report_request(code="600406"),
+        output_root=output_root,
+        timestamp="20260528T020000",
+    )
+
+    assert result["status"] == "failed_invalid_manifest"
+    assert result["manifest_status"] == "invalid"
+    assert result["manifest_used"] is False
+    assert "changed" not in result["manifest_warning"]
 
 
 def test_markdown_exists_but_html_missing_generates_html(tmp_path):

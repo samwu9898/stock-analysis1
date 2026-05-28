@@ -15,6 +15,17 @@ import re
 from pathlib import Path
 from typing import Any
 
+from .accepted_manifest import (
+    AcceptedManifestError,
+    MANIFEST_FILENAME,
+    ManifestEntryNotFoundError,
+    build_freshness_warning,
+    get_freshness_status,
+    get_manifest_entry,
+    is_manifest_entry_usable_by_default,
+    read_accepted_manifest,
+    verify_manifest_entry_hashes,
+)
 from src.fundamental_skill.ground_truth.auto_fact_candidate_generator import (
     build_fact_candidates_from_comparison_dir,
     write_fact_candidate_report,
@@ -175,7 +186,7 @@ def locate_research_report_artifacts(
     output_root: Path,
     provider_comparison_root: Path | None = None,
 ) -> dict[str, Any]:
-    """Locate the latest local Research Report V1 artifacts for one code."""
+    """Locate accepted local Research Report V1 artifacts for one code."""
 
     normalized_code = _normalize_required_code(code)
     root = Path(output_root)
@@ -194,6 +205,34 @@ def locate_research_report_artifacts(
         CANDIDATE_REVIEW_DECISIONS_FILENAME,
     )
 
+    manifest_path = root / MANIFEST_FILENAME
+    if manifest_path.is_file():
+        manifest_located = _locate_with_accepted_manifest(
+            normalized_code,
+            root,
+            manifest_path,
+            provider_artifacts=provider_artifacts,
+            timestamp_html_path=html_path,
+            timestamp_markdown_path=markdown_path,
+            timestamp_json_path=json_path,
+        )
+        manifest_located.update(
+            {
+                "fact_candidates_path": fact_candidates_path,
+                "candidate_review_decisions_path": decisions_path,
+                "provider_comparison_dir": provider_dir,
+                "provider_comparison_artifacts": provider_artifacts,
+            }
+        )
+        return manifest_located
+
+    manifest_metadata = _manifest_metadata(
+        manifest_path=manifest_path,
+        manifest_status="missing",
+        manifest_used=False,
+        manifest_warning="manifest_missing_warning: accepted manifest missing; fell back to timestamp locator",
+    )
+
     missing_artifacts: list[str] = []
     if not any((html_path, markdown_path, json_path)) and not _can_rebuild_from_provider_artifacts(provider_artifacts):
         missing_artifacts = _missing_local_artifact_checklist(normalized_code)
@@ -208,6 +247,153 @@ def locate_research_report_artifacts(
         "provider_comparison_dir": provider_dir,
         "provider_comparison_artifacts": provider_artifacts,
         "missing_artifacts": missing_artifacts,
+        **manifest_metadata,
+    }
+
+
+def _locate_with_accepted_manifest(
+    code: str,
+    output_root: Path,
+    manifest_path: Path,
+    *,
+    provider_artifacts: dict[str, Path],
+    timestamp_html_path: Path | None,
+    timestamp_markdown_path: Path | None,
+    timestamp_json_path: Path | None,
+) -> dict[str, Any]:
+    repo_root = _repo_root_for_output_root(output_root)
+    try:
+        manifest = read_accepted_manifest(manifest_path)
+        entry = get_manifest_entry(manifest, code)
+    except ManifestEntryNotFoundError:
+        return _timestamp_locator_result(
+            code,
+            timestamp_html_path,
+            timestamp_markdown_path,
+            timestamp_json_path,
+            provider_artifacts,
+            _manifest_metadata(
+                manifest_path=manifest_path,
+                manifest_status="entry_missing",
+                manifest_used=False,
+                manifest_warning="manifest_entry_missing_warning: accepted manifest entry missing; fell back to timestamp locator",
+            ),
+        )
+    except (AcceptedManifestError, OSError, json.JSONDecodeError):
+        return _manifest_fail_closed_result(
+            code,
+            manifest_path=manifest_path,
+            manifest_status="invalid",
+            manifest_warning="invalid_manifest_warning: accepted manifest is invalid; fail closed",
+        )
+
+    freshness_status = get_freshness_status(entry)
+    freshness_warning = build_freshness_warning(entry)
+    freshness_fields = _freshness_metadata_from_entry(entry, freshness_status, freshness_warning)
+
+    if not is_manifest_entry_usable_by_default(entry):
+        return _manifest_fail_closed_result(
+            code,
+            manifest_path=manifest_path,
+            manifest_status=freshness_status,
+            manifest_warning=f"invalid_manifest_warning: accepted manifest entry freshness_status={freshness_status}; fail closed",
+            **freshness_fields,
+        )
+
+    try:
+        verify_manifest_entry_hashes(entry, repo_root=repo_root)
+    except AcceptedManifestError:
+        return _manifest_fail_closed_result(
+            code,
+            manifest_path=manifest_path,
+            manifest_status="invalid",
+            manifest_warning="invalid_manifest_warning: accepted manifest artifact verification failed; fail closed",
+            **freshness_fields,
+        )
+
+    html_path = _manifest_artifact_path(entry, "html", repo_root)
+    markdown_path = _manifest_artifact_path(entry, "markdown", repo_root)
+    json_path = _manifest_artifact_path(entry, "json", repo_root)
+    manifest_warning = _manifest_latest_conflict_warning(
+        manifest_paths={
+            "html": html_path,
+            "markdown": markdown_path,
+            "json": json_path,
+        },
+        timestamp_paths={
+            "html": timestamp_html_path,
+            "markdown": timestamp_markdown_path,
+            "json": timestamp_json_path,
+        },
+    )
+
+    return {
+        "code": code,
+        "html_path": html_path,
+        "markdown_path": markdown_path,
+        "json_path": json_path,
+        "missing_artifacts": [],
+        **_manifest_metadata(
+            manifest_path=manifest_path,
+            manifest_status="used",
+            manifest_used=True,
+            manifest_warning=manifest_warning,
+            **freshness_fields,
+        ),
+    }
+
+
+def _timestamp_locator_result(
+    code: str,
+    html_path: Path | None,
+    markdown_path: Path | None,
+    json_path: Path | None,
+    provider_artifacts: dict[str, Path],
+    manifest_metadata: dict[str, Any],
+) -> dict[str, Any]:
+    missing_artifacts: list[str] = []
+    if not any((html_path, markdown_path, json_path)) and not _can_rebuild_from_provider_artifacts(provider_artifacts):
+        missing_artifacts = _missing_local_artifact_checklist(code)
+    return {
+        "code": code,
+        "html_path": html_path,
+        "markdown_path": markdown_path,
+        "json_path": json_path,
+        "missing_artifacts": missing_artifacts,
+        **manifest_metadata,
+    }
+
+
+def _manifest_fail_closed_result(
+    code: str,
+    *,
+    manifest_path: Path,
+    manifest_status: str,
+    manifest_warning: str,
+    freshness_status: str | None = None,
+    freshness_warning: str | None = None,
+    accepted_at: str | None = None,
+    valuation_as_of_date: str | None = None,
+    source_data_period: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "code": code,
+        "html_path": None,
+        "markdown_path": None,
+        "json_path": None,
+        "missing_artifacts": [],
+        "manifest_fail_closed": True,
+        **_manifest_metadata(
+            manifest_path=manifest_path,
+            manifest_status=manifest_status,
+            manifest_used=False,
+            manifest_warning=manifest_warning,
+            freshness_status=freshness_status,
+            freshness_warning=freshness_warning,
+            accepted_at=accepted_at,
+            valuation_as_of_date=valuation_as_of_date,
+            source_data_period=source_data_period,
+        ),
     }
 
 
@@ -229,6 +415,24 @@ def run_single_stock_report_orchestration(
 
     located = locate_research_report_artifacts(code, output_root, provider_comparison_root)
     actions_taken.append("located_local_artifacts")
+    manifest_metadata = _manifest_metadata_from_located(located)
+
+    if located.get("manifest_fail_closed"):
+        actions_taken.append("failed_closed_invalid_manifest")
+        return _build_result(
+            status="failed_invalid_manifest",
+            code=code,
+            company_name=company_name,
+            html_path=None,
+            markdown_path=None,
+            json_path=None,
+            fact_candidates_path=located["fact_candidates_path"],
+            candidate_review_decisions_path=located["candidate_review_decisions_path"],
+            report=None,
+            missing_artifacts=[],
+            actions_taken=actions_taken,
+            manifest_metadata=manifest_metadata,
+        )
 
     if located["html_path"]:
         report = _load_optional_report(located["json_path"])
@@ -252,6 +456,7 @@ def run_single_stock_report_orchestration(
             report=report,
             missing_artifacts=[],
             actions_taken=actions_taken,
+            manifest_metadata=manifest_metadata,
         )
 
     if located["markdown_path"]:
@@ -272,6 +477,7 @@ def run_single_stock_report_orchestration(
             report=report,
             missing_artifacts=[],
             actions_taken=actions_taken,
+            manifest_metadata=manifest_metadata,
         )
 
     if located["json_path"]:
@@ -293,6 +499,7 @@ def run_single_stock_report_orchestration(
             report=report,
             missing_artifacts=[],
             actions_taken=actions_taken,
+            manifest_metadata=manifest_metadata,
         )
 
     if _can_rebuild_from_provider_artifacts(located["provider_comparison_artifacts"]):
@@ -356,6 +563,7 @@ def run_single_stock_report_orchestration(
             report=report,
             missing_artifacts=[],
             actions_taken=actions_taken,
+            manifest_metadata=manifest_metadata,
         )
 
     actions_taken.append("failed_closed_missing_local_artifacts")
@@ -371,6 +579,7 @@ def run_single_stock_report_orchestration(
         report=None,
         missing_artifacts=located["missing_artifacts"] or _missing_local_artifact_checklist(code),
         actions_taken=actions_taken,
+        manifest_metadata=manifest_metadata,
     )
 
 
@@ -383,13 +592,24 @@ def format_orchestration_response(result: dict[str, Any]) -> str:
         "reused": "已找到并复用",
         "failed_missing_artifacts": "未生成：缺少本地 artifact",
     }.get(status, status)
+    if status == "failed_invalid_manifest":
+        status_text = "未生成：accepted manifest fail closed"
     markdown_parts = _summary_parts_from_markdown_path(result.get("markdown_path"))
+    combined_warning = " | ".join(
+        str(item) for item in (result.get("manifest_warning"), result.get("freshness_warning")) if item
+    )
 
     lines = [
         f"报告状态：{status_text}",
         f"HTML: {_display_path(result.get('html_path'))}",
         f"Markdown: {_display_path(result.get('markdown_path'))}",
         f"JSON: {_display_path(result.get('json_path'))}",
+        f"Manifest 状态：{_display_text(result.get('manifest_status'))}",
+        f"Freshness 状态：{_display_text(result.get('freshness_status'))}",
+        f"Freshness 提示：{_display_text(combined_warning or '无')}",
+        f"Accepted at：{_display_text(result.get('accepted_at'))}",
+        f"Valuation as-of date：{_display_text(result.get('valuation_as_of_date'))}",
+        f"Source data period：{_display_text(result.get('source_data_period'))}",
         "",
         f"简短摘要：{_user_facing_summary(result, markdown_parts)}",
         f"最大机会：{_user_facing_detail(result, 'largest_opportunity', markdown_parts, '已定位结构化机会字段；建议打开 Markdown 报告查看中文机会说明。')}",
@@ -474,6 +694,7 @@ def _build_result(
     report: dict[str, Any] | None,
     missing_artifacts: list[str],
     actions_taken: list[str],
+    manifest_metadata: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     summary_fields = _summary_fields(report, status=status)
     markdown_parts = _summary_parts_from_markdown_path(markdown_path)
@@ -497,7 +718,107 @@ def _build_result(
         "not_for_trading_advice": True,
         "missing_artifacts": missing_artifacts,
         "actions_taken": actions_taken,
+        **_normalized_manifest_metadata(manifest_metadata),
     }
+
+
+_MANIFEST_RESULT_FIELDS = (
+    "manifest_path",
+    "manifest_status",
+    "manifest_used",
+    "manifest_warning",
+    "freshness_status",
+    "freshness_warning",
+    "accepted_at",
+    "valuation_as_of_date",
+    "source_data_period",
+)
+
+
+def _manifest_metadata_from_located(located: dict[str, Any]) -> dict[str, Any]:
+    return {key: located.get(key) for key in _MANIFEST_RESULT_FIELDS}
+
+
+def _normalized_manifest_metadata(metadata: dict[str, Any] | None) -> dict[str, Any]:
+    normalized = {
+        "manifest_path": None,
+        "manifest_status": "missing",
+        "manifest_used": False,
+        "manifest_warning": None,
+        "freshness_status": "unknown",
+        "freshness_warning": None,
+        "accepted_at": None,
+        "valuation_as_of_date": None,
+        "source_data_period": None,
+    }
+    if metadata:
+        normalized.update({key: metadata.get(key) for key in _MANIFEST_RESULT_FIELDS if key in metadata})
+    return normalized
+
+
+def _manifest_metadata(
+    *,
+    manifest_path: Path,
+    manifest_status: str,
+    manifest_used: bool,
+    manifest_warning: str | None,
+    freshness_status: str | None = None,
+    freshness_warning: str | None = None,
+    accepted_at: str | None = None,
+    valuation_as_of_date: str | None = None,
+    source_data_period: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "manifest_path": manifest_path.resolve(strict=False),
+        "manifest_status": manifest_status,
+        "manifest_used": manifest_used,
+        "manifest_warning": manifest_warning,
+        "freshness_status": freshness_status or "unknown",
+        "freshness_warning": freshness_warning,
+        "accepted_at": accepted_at,
+        "valuation_as_of_date": valuation_as_of_date,
+        "source_data_period": source_data_period,
+    }
+
+
+def _freshness_metadata_from_entry(
+    entry: dict[str, Any],
+    freshness_status: str,
+    freshness_warning: str | None,
+) -> dict[str, Any]:
+    freshness = _dict_or_empty(entry.get("freshness"))
+    acceptance = _dict_or_empty(entry.get("acceptance"))
+    return {
+        "freshness_status": freshness_status,
+        "freshness_warning": freshness_warning,
+        "accepted_at": str(freshness.get("accepted_at") or acceptance.get("accepted_at") or ""),
+        "valuation_as_of_date": str(freshness.get("valuation_as_of_date") or ""),
+        "source_data_period": str(freshness.get("source_data_period") or ""),
+    }
+
+
+def _repo_root_for_output_root(output_root: Path) -> Path:
+    resolved = Path(output_root).resolve(strict=False)
+    if resolved.name == "research_reports" and resolved.parent.name == "output":
+        return resolved.parent.parent.resolve(strict=False)
+    return Path(".").resolve(strict=False)
+
+
+def _manifest_artifact_path(entry: dict[str, Any], kind: str, repo_root: Path) -> Path:
+    relative_path = str(entry["accepted_artifacts"][kind])
+    return (repo_root / Path(relative_path)).resolve(strict=False)
+
+
+def _manifest_latest_conflict_warning(
+    *,
+    manifest_paths: dict[str, Path | None],
+    timestamp_paths: dict[str, Path | None],
+) -> str | None:
+    for kind, manifest_path in manifest_paths.items():
+        timestamp_path = timestamp_paths.get(kind)
+        if manifest_path and timestamp_path and manifest_path.resolve(strict=False) != timestamp_path.resolve(strict=False):
+            return "manifest_latest_conflict_warning: accepted manifest differs from timestamp latest; manifest remained authoritative"
+    return None
 
 
 def _user_facing_summary(result: dict[str, Any], markdown_parts: dict[str, str] | None = None) -> str:
