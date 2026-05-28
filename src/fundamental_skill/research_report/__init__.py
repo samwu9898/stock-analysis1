@@ -23,6 +23,14 @@ from .research_report_v1_html import (
     render_research_report_v1_html,
     write_research_report_v1_html,
 )
+from .orchestration import (
+    ReportArtifactError,
+    ReportRequestError,
+    format_orchestration_response,
+    locate_research_report_artifacts,
+    normalize_report_request,
+    run_single_stock_report_orchestration,
+)
 
 __all__ = [
     "ALLOWED_EVIDENCE_LABELS",
@@ -34,9 +42,15 @@ __all__ = [
     "ResearchReportArtifactBoundaryError",
     "ResearchReportBuildError",
     "ResearchReportSecretError",
+    "ReportArtifactError",
+    "ReportRequestError",
     "build_research_report_v1",
+    "format_orchestration_response",
+    "locate_research_report_artifacts",
+    "normalize_report_request",
     "render_research_report_v1_html",
     "render_research_report_v1_markdown",
+    "run_single_stock_report_orchestration",
     "select_presentation_profile",
     "write_research_report_v1_html",
     "write_research_report_v1",
