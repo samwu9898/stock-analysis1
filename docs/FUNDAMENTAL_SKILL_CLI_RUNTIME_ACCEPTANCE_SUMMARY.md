@@ -13,6 +13,9 @@ regression expected files, provider-primary behavior, or runtime artifacts. It
 does not run smoke tests, read `TUSHARE_TOKEN`, use the network, call Tushare
 or AkShare, connect MCP, generate output, stage output, or provide investment
 advice.
+Accepted artifact manifest / freshness design is recorded in
+`docs/FUNDAMENTAL_ACCEPTED_ARTIFACT_MANIFEST_FRESHNESS_DESIGN.md`; this summary
+now treats manifest-first locator hardening as the recommended next stage.
 
 Latest verification results are quoted from the accepted stage input and were
 not rerun in this documentation-only stage:
@@ -102,16 +105,22 @@ free-written model report path.
 - Validator / fixture promotion / primary switch remain later work.
 - Runtime artifacts remain under ignored `output/`.
 - CLI is currently a command wrapper, not a full GUI / dashboard.
+- Current locator behavior still has a timestamp-latest fallback risk until the
+  accepted artifact manifest reader is implemented.
+- Freshness / staleness status is not yet printed by the accepted CLI runtime.
 
 ## 7. Next recommended stage
 
-1. Commit the CLI runtime acceptance summary documentation patch.
-2. Next stage can enter batch / dashboard design, or first add CLI usage
-   documentation.
-3. Keep live provider / Tushare token / MCP / CNInfo / official parser /
-   validator for later separately accepted stages.
-4. Do not continue single-stock CLI runtime generation unless a new sample or a
-   regression check requires it.
+1. Commit the accepted artifact manifest / freshness documentation patch.
+2. Enter manifest schema / writer / reader implementation.
+3. Harden CLI and orchestration locators so the accepted manifest is the
+   primary source of truth and timestamp-latest lookup is only a warned
+   fallback.
+4. Generate ignored runtime manifests for `600406`, `002371`, and `002050`,
+   then run a separately accepted manifest locator runtime stage.
+5. Keep live provider / Tushare token / MCP / CNInfo / official parser /
+   validator / fixture promotion / batch / dashboard for later separately
+   accepted stages.
 
 ## 8. Safety confirmation
 
@@ -124,3 +133,5 @@ This documentation-only CLI runtime acceptance summary confirms:
 - no output generated;
 - no runtime artifact submitted;
 - no investment advice output.
+- accepted artifact manifest / freshness design only, with no implementation
+  side effect.

@@ -17,6 +17,10 @@ generate runtime output, run smoke tests, read `TUSHARE_TOKEN`, use the
 network, call Tushare or AkShare, connect MCP, change scoring / readiness,
 change Research Intelligence P1.1, change regression expected files, or
 provide trading advice.
+Accepted artifact manifest / freshness design is recorded in
+`docs/FUNDAMENTAL_ACCEPTED_ARTIFACT_MANIFEST_FRESHNESS_DESIGN.md`; it defines
+future CLI locator and freshness stdout behavior but does not change the
+current accepted CLI runtime.
 
 Accepted upstream state:
 
@@ -33,6 +37,8 @@ Accepted upstream state:
 - CLI usage guide recorded in `docs/FUNDAMENTAL_SKILL_CLI_USAGE_GUIDE.md`.
 - Default mode remains `offline_local_artifacts`, `no_live_provider`, no token,
   no network, no provider call, and no MCP.
+- Future CLI locator behavior should read the accepted manifest first, expose
+  freshness status, and treat timestamp-latest lookup as a warned fallback.
 
 ## 1. CLI Goal
 
@@ -169,6 +175,23 @@ Allowed status values should be small and operational:
 Path fields should be printed even when some paths are unavailable; unavailable
 paths should be explicit, for example `未生成` or `缺失`, instead of omitted.
 
+Future manifest/freshness output behavior:
+
+- The CLI should prefer `output/research_reports/accepted_manifest.json` for
+  accepted artifact selection.
+- The CLI should add `freshness_status`, `freshness_warning`, `accepted_at`,
+  `valuation_as_of_date`, and `source_data_period` to stdout once the manifest
+  reader is implemented.
+- `freshness_status=current` can be returned without a freshness warning.
+- `freshness_status=unknown` or `stale` must be returned with a visible warning.
+- `freshness_status=superseded` or `invalidated` must not be returned as the
+  accepted baseline.
+- Missing manifest can fall back to timestamp lookup only with
+  `manifest_missing_warning`.
+- A missing manifest artifact path or hash mismatch must fail closed.
+- CLI must not network-check freshness, read tokens, call providers, connect
+  MCP, or auto-upgrade to live provider mode.
+
 ## 6. Error Behavior
 
 The CLI must fail closed.
@@ -187,6 +210,9 @@ Required error behavior:
 - Do not connect MCP or read local MCP config.
 - Do not generate a free-written model report outside the accepted artifact
   chain.
+- Do not hide freshness status when the future accepted manifest reports
+  `unknown`, `stale`, `superseded`, or `invalidated`.
+- Do not regenerate automatically only because an accepted artifact is stale.
 
 Missing checklist should name local requirements, such as:
 
@@ -207,6 +233,8 @@ Suggested exit-code design:
 - `3`: missing local artifacts.
 - `4`: safety boundary violation.
 - `5`: unsupported mode or unsupported argument combination.
+- Future `6`: accepted manifest integrity failure, such as missing manifest
+  target file or hash mismatch.
 
 ## 7. Safety / Non-Goals
 
@@ -320,6 +348,9 @@ The CLI implementation acceptance criteria are:
 - CLI output includes status, HTML path, Markdown path, JSON path, Chinese
   summary, maximum opportunity, maximum risk, maximum evidence gap, data-quality
   status, and important statement.
+- Future CLI output should add `freshness_status`, `freshness_warning`,
+  `accepted_at`, `valuation_as_of_date`, and `source_data_period` when the
+  accepted manifest is implemented.
 - Missing target and missing local artifacts fail closed.
 - No provider, network, token, MCP, fixture, scoring, P1.1, regression, or
   runtime-output submission side effect is introduced.
@@ -360,13 +391,14 @@ Acceptance result:
 
 After CLI runtime acceptance, the next recommended sequence is:
 
-1. Commit the CLI usage guide documentation patch.
-2. Enter batch / Dashboard design.
-3. Keep live provider, Tushare token, MCP, CNInfo, official parser, validator,
-   fixture promotion, and primary-provider switch for later separately accepted
-   stages.
-4. Do not continue single-stock CLI runtime generation unless a new sample or a
-   regression check requires it.
+1. Commit the accepted artifact manifest / freshness documentation patch.
+2. Enter manifest schema / writer / reader implementation.
+3. Harden CLI and orchestration locators to read the accepted manifest first.
+4. Generate ignored runtime manifests for `600406`, `002371`, and `002050`,
+   then run a separately accepted manifest locator runtime stage.
+5. Keep live provider, Tushare token, MCP, CNInfo, official parser, validator,
+   fixture promotion, primary-provider switch, batch, and Dashboard for later
+   separately accepted stages.
 
 The operational usage guide for Codex and developers is recorded in
 `docs/FUNDAMENTAL_SKILL_CLI_USAGE_GUIDE.md`. It should be the first reference

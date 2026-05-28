@@ -19,6 +19,9 @@ sync does not change tests, change fixtures, change pipeline behavior, change
 scoring / readiness, change Research Intelligence P1.1, change regression
 expected files, generate output, run smoke tests, read `TUSHARE_TOKEN`, use the
 network, call Tushare or AkShare, connect MCP, or produce trading advice.
+Accepted artifact manifest / freshness design is recorded in
+`docs/FUNDAMENTAL_ACCEPTED_ARTIFACT_MANIFEST_FRESHNESS_DESIGN.md`; it is a
+future locator hardening design only and does not change the current runtime.
 
 Current accepted upstream state:
 
@@ -45,6 +48,9 @@ Current accepted upstream state:
   `20260528T125518` professional-voice regenerated artifacts; user-facing
   orchestration baseline should use the `20260528T125518` Markdown / HTML
   artifacts.
+- Accepted manifest / freshness design is recorded. Future orchestration should
+  prefer the manifest over timestamp-latest artifact selection and surface
+  freshness warnings, while remaining offline and local-only.
 
 ## 1. Product Goal
 
@@ -182,7 +188,9 @@ The single-stock orchestration pipeline is:
 1. Parse user request.
 2. Resolve stock code and company name from user text and local metadata.
 3. Normalize request schema and enforce default safety flags.
-4. Locate existing local artifacts for the stock and selected data mode.
+4. Locate accepted local artifacts for the stock and selected data mode. Future
+   locator hardening should read the accepted artifact manifest first and use
+   timestamp-latest lookup only as a warned fallback.
 5. If an artifact is missing, decide whether offline regeneration is possible.
 6. Generate or locate `fact_candidates.json`.
 7. Generate or locate `candidate_review_decisions.json`.
@@ -200,6 +208,7 @@ The final response should include:
 - JSON path;
 - short Chinese summary;
 - data-quality caveat;
+- future freshness status / warning when the accepted manifest provides it;
 - not-for-trading-advice statement;
 - if applicable, missing-artifact diagnostics and the next data items needed.
 
@@ -230,6 +239,10 @@ Rules:
 - Do not connect MCP.
 - Do not read local MCP config.
 - Reuse existing Research Report V1, Markdown, or HTML artifacts when present.
+- Future locator behavior should prefer
+  `output/research_reports/accepted_manifest.json` when present. Missing
+  manifest can fall back to local timestamp lookup only with a
+  `manifest_missing_warning`.
 - If offline regeneration is possible from already available local artifacts,
   run only the accepted local deterministic builders.
 - If required upstream local artifacts are missing, stop and report the missing
@@ -506,7 +519,31 @@ Negative disclaimer wording such as "not trading advice", "no target price",
 or "no position sizing" is allowed as boundary clarification. Positive
 investment-action language remains prohibited.
 
-## 12. Relation To Dashboard / Batch
+## 12. Relation To Accepted Manifest / Freshness
+
+Accepted artifact manifest / freshness design is now recorded in
+`docs/FUNDAMENTAL_ACCEPTED_ARTIFACT_MANIFEST_FRESHNESS_DESIGN.md`.
+
+Future orchestration behavior:
+
+- Prefer accepted manifest entries over timestamp-latest artifact discovery.
+- Treat the manifest as the user-facing accepted artifact selector for HTML,
+  Markdown, and JSON.
+- Surface `freshness_status`, `freshness_warning`, `accepted_at`,
+  `valuation_as_of_date`, and `source_data_period` when available.
+- Allow `current` artifacts by default.
+- Allow `unknown` and `stale` artifacts only with visible warnings in V1.
+- Do not use `superseded` or `invalidated` artifacts as accepted baselines.
+- Fail closed if a manifest path is missing or an artifact hash mismatches.
+- Keep the behavior offline: no provider call, no network, no token read, and
+  no MCP.
+
+The manifest is not a fixture, not a validator, not CNInfo ingestion, not
+evidence-tier promotion, and not report conclusion rewriting. It records which
+runtime artifacts have been accepted and whether they are fresh enough to be
+returned without a warning.
+
+## 13. Relation To Dashboard / Batch
 
 User invocation / orchestration is the single-stock closed loop:
 
@@ -529,9 +566,13 @@ Design relationship:
   implementation are accepted.
 - The single-stock CLI / command wrapper design is recorded and should be
   implemented and accepted before batch.
-- Let batch reuse the same single-stock orchestration pipeline for each stock.
-- Let Dashboard read generated outputs and show status, summaries, caveats,
-  evidence gaps, and artifact links.
+- Let batch reuse the same single-stock orchestration pipeline for each stock,
+  with manifest-first accepted artifact lookup.
+- Let Dashboard read manifest-located outputs and show status, freshness,
+  summaries, caveats, evidence gaps, and artifact links.
+- Dashboard may sort or filter by `freshness_status` and
+  `research_completeness`, but must not rank by target price, implied upside, or
+  buy / sell action.
 - Dashboard may provide a reader / audit view, but it should not become the
   report generator's hidden source of truth.
 - Batch status should distinguish generated, reused, skipped, and missing-data
@@ -541,7 +582,7 @@ The first batch design should avoid new analysis logic. It should be a
 composition layer over the same request schema, data-mode rules, safety gates,
 and missing-artifact behavior.
 
-## 13. Roadmap
+## 14. Roadmap
 
 Completed sequence:
 
@@ -561,6 +602,8 @@ Completed sequence:
 12. Freeze the single-stock offline CLI baseline.
 13. Record the CLI runtime acceptance closeout in
     `docs/FUNDAMENTAL_SKILL_CLI_RUNTIME_ACCEPTANCE_SUMMARY.md`.
+14. Record accepted artifact manifest / freshness design in
+    `docs/FUNDAMENTAL_ACCEPTED_ARTIFACT_MANIFEST_FRESHNESS_DESIGN.md`.
 
 Accepted implementation criteria:
 
@@ -580,9 +623,11 @@ Accepted implementation criteria:
 
 Next recommended sequence:
 
-1. Commit the CLI runtime acceptance summary documentation patch.
-2. Enter batch / Dashboard design, or first add CLI usage documentation.
-3. Keep future live provider mode, Tushare token, MCP, CNInfo, official parser,
-   validator, fixture promotion, and Tushare primary later.
-4. Do not continue single-stock CLI runtime generation unless a new sample or a
-   regression check requires it.
+1. Commit the accepted artifact manifest / freshness documentation patch.
+2. Enter manifest schema / writer / reader implementation.
+3. Harden orchestration and CLI locators to read the accepted manifest first.
+4. Generate ignored runtime manifests for `600406`, `002371`, and `002050`,
+   then run a separately accepted manifest locator runtime stage.
+5. Keep future live provider mode, Tushare token, MCP, CNInfo, official parser,
+   validator, fixture promotion, Tushare primary, batch, and Dashboard for
+   later separately accepted stages.
