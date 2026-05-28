@@ -10,10 +10,14 @@ implementation is accepted; and the three-sample HTML presentation baseline is
 frozen. The HTML design is recorded in
 `docs/FUNDAMENTAL_RESEARCH_REPORT_V1_HTML_PRESENTATION_DESIGN.md`, and the
 HTML acceptance summary is recorded in
-`docs/FUNDAMENTAL_RESEARCH_REPORT_V1_HTML_ACCEPTANCE_SUMMARY.md`. The accepted
+`docs/FUNDAMENTAL_RESEARCH_REPORT_V1_HTML_ACCEPTANCE_SUMMARY.md`. User
+invocation / report orchestration design is recorded in
+`docs/FUNDAMENTAL_SKILL_USER_INVOCATION_ORCHESTRATION_DESIGN.md`. The accepted
 profiles are `stable_growth_grid_equipment`, `semiconductor_equipment_cycle`,
 and `advanced_manufacturing_thermal_management`. The next recommended stage is
-Dashboard / batch report design or HTML visual refinement, not more
+single-stock user invocation / orchestration implementation, then local
+end-to-end runs for `600406`, `002371`, and `002050`; Dashboard / batch should
+follow that accepted single-stock path. The next step is not more ad hoc
 single-target HTML generation, promote rules, validator, fixture promotion,
 Tushare primary, live provider report, official parser / CNInfo, or another
 smoke.
@@ -27,7 +31,10 @@ This project is an A-share fundamental AI analysis Skill: it only performs funda
 The current target workflow is:
 
 ```text
-stock code
+natural-language Codex / GPT-5.5 request
+  -> structured user request
+  -> local report orchestration
+  -> stock code
   -> real public data
   -> deterministic fundamental pipeline
   -> evidence pack
@@ -36,17 +43,28 @@ stock code
   -> AI prompt / report
   -> optional Fundamental HTML Report Generator v2.1
   -> optional HTML Report Visual Audit Tool v1
+  -> final HTML path + Markdown path + JSON path + short Chinese summary
   -> Dashboard v3 report reader / audit view
 ```
 
-The system should turn an A-share stock code into auditable public-data blocks, run a deterministic fundamental pipeline, assemble evidence for AI consumption, optionally generate Research Intelligence P0 research-question artifacts, optionally generate the accepted Research Intelligence P1.1 driver-matrix artifacts for the currently supported strategy types, generate or preview an AI analyst prompt/report, optionally render a pure-fundamental Chinese HTML report, optionally audit the HTML visually, and expose the result in a local Dashboard v3 reader for Chinese fundamental-report inspection and audit.
+The system should let a user ask Codex / GPT-5.5 for a report in natural
+language, normalize that request into a structured local-only report request,
+turn an A-share stock code into auditable public-data blocks, run a
+deterministic fundamental pipeline, assemble evidence for AI consumption,
+optionally generate Research Intelligence P0 research-question artifacts,
+optionally generate the accepted Research Intelligence P1.1 driver-matrix
+artifacts for the currently supported strategy types, generate or preview an AI
+analyst prompt/report, render a pure-fundamental Chinese Markdown / HTML
+Research Report V1 output, return paths plus a short Chinese summary, and later
+expose the result in a local Dashboard v3 reader for Chinese
+fundamental-report inspection and audit.
 
 ## 3. Current Architecture
 
 Core modules:
 
 - `RealDataConnector`: fetches real public A-share data into raw JSON blocks.
-- `Data Provider Abstraction`: Phase 1 skeleton, Phase 2 `AkShareProvider` adapter, Phase 3 `TushareProvider` mocked MVP, Phase 4 dual-source comparison dry-run tooling, Phase 4 local real-token smoke gate documentation, Phase 4 real-token smoke gate safety skeleton, Phase 4 score / confidence explainability implementation, Phase 4 explainability narrative hints patch, narrative-hints artifact review, and Phase 4 closeout / baseline freeze have been accepted. Phase 4 is documented in `docs/DATA_PROVIDER_PHASE4_DUAL_SOURCE_COMPARISON_DESIGN.md`, `docs/DATA_PROVIDER_PHASE4_LOCAL_REAL_TOKEN_SMOKE_GATE.md`, `docs/DATA_PROVIDER_PHASE4_REAL_TOKEN_SMOKE_IMPLEMENTATION_DESIGN.md`, `docs/DATA_PROVIDER_PHASE4_SCORE_CONFIDENCE_EXPLAINABILITY_DESIGN.md`, and `docs/DATA_PROVIDER_PHASE4_CLOSEOUT_RELEASE_NOTE.md`. Fundamental Research Report V1 design, implementation, baseline freeze, presentation profile registry, cross-industry Markdown profile acceptance for `600406`, `002371`, and `002050`, HTML renderer implementation, and three-sample HTML acceptance are complete; the HTML presentation baseline is frozen. The next recommended step is Dashboard / batch report design or HTML visual refinement, not more single-target HTML generation, promote-rule design, manual field filling, fixture promotion, validator implementation, Tushare primary switch, live provider report, official parser / CNInfo, or another Phase 4 smoke. Tushare must not become primary, AkShare / Tushare data must not be automatically merged, drift must not be automatically accepted, and the default `real_stock_runner`, deterministic pipeline, `evidence_pack`, P1.1, HTML / Dashboard, classifier, scoring / readiness, default output, `output/reports`, default `diff_report`, and regression expected files remain unchanged. `AkShareProvider` remains a thin wrapper around `RealDataConnector`.
+- `Data Provider Abstraction`: Phase 1 skeleton, Phase 2 `AkShareProvider` adapter, Phase 3 `TushareProvider` mocked MVP, Phase 4 dual-source comparison dry-run tooling, Phase 4 local real-token smoke gate documentation, Phase 4 real-token smoke gate safety skeleton, Phase 4 score / confidence explainability implementation, Phase 4 explainability narrative hints patch, narrative-hints artifact review, and Phase 4 closeout / baseline freeze have been accepted. Phase 4 is documented in `docs/DATA_PROVIDER_PHASE4_DUAL_SOURCE_COMPARISON_DESIGN.md`, `docs/DATA_PROVIDER_PHASE4_LOCAL_REAL_TOKEN_SMOKE_GATE.md`, `docs/DATA_PROVIDER_PHASE4_REAL_TOKEN_SMOKE_IMPLEMENTATION_DESIGN.md`, `docs/DATA_PROVIDER_PHASE4_SCORE_CONFIDENCE_EXPLAINABILITY_DESIGN.md`, and `docs/DATA_PROVIDER_PHASE4_CLOSEOUT_RELEASE_NOTE.md`. Fundamental Research Report V1 design, implementation, baseline freeze, presentation profile registry, cross-industry Markdown profile acceptance for `600406`, `002371`, and `002050`, HTML renderer implementation, and three-sample HTML acceptance are complete; the HTML presentation baseline is frozen. User invocation / report orchestration design is recorded in `docs/FUNDAMENTAL_SKILL_USER_INVOCATION_ORCHESTRATION_DESIGN.md`. The next recommended step is single-stock user invocation / orchestration implementation, not more ad hoc single-target HTML generation, promote-rule design, manual field filling, fixture promotion, validator implementation, Tushare primary switch, live provider report, official parser / CNInfo, Dashboard / batch, or another Phase 4 smoke. Tushare must not become primary, AkShare / Tushare data must not be automatically merged, drift must not be automatically accepted, and the default `real_stock_runner`, deterministic pipeline, `evidence_pack`, P1.1, HTML / Dashboard, classifier, scoring / readiness, default output, `output/reports`, default `diff_report`, and regression expected files remain unchanged. `AkShareProvider` remains a thin wrapper around `RealDataConnector`.
 - `ExternalCommodityPriceConnector`: adds configured commodity-price context for resource stocks.
 - `FundamentalDataAdapter`: normalizes raw JSON into pipeline input.
 - `StockClassifier`: classifies the stock into a fundamental `strategy_type`.
@@ -59,13 +77,22 @@ Core modules:
 - `Research Intelligence P0/P0.1`: independent AI analyst artifact builder that reads only `evidence_pack`, builds a research intelligence pack and research question set, and acts as a research-question discovery layer rather than a report renderer or trading system. P0.1 sharpens generic missing-evidence prompts into strategy-type-aware research questions.
 - `Research Intelligence P1.1`: independent driver-factor matrix artifact builder for `ai_datacenter_infrastructure`, `life_science_cxo_services`, `satellite_communication_infrastructure`, `low_altitude_economy_infrastructure`, the first Resource slice `resource_swing + 000426`, the first Semiconductor slice `semiconductor_cycle + 002371`, the first Advanced Manufacturing slice `advanced_manufacturing_growth + 002050`, and the first Stable Growth slice `stable_growth + 600406`. It reads `evidence_pack` plus an optional P0 pack, writes `research_intelligence_p1` and `research_questions_p1` artifacts, enforces `company_transmission_path` and source-bucket independence, keeps missing evidence `not_assessable` first, and stays outside the HTML / Dashboard main chain. The Semiconductor multi-sample observation has completed: `002371` is the accepted positive sample, `688012 / 688981 / 603501 / 300604` were validation samples, and `300308 / 300476` were boundary / negative samples. Advanced Manufacturing multi-sample observation is complete, and the `601689` boundary data completion smoke is complete. Advanced Manufacturing first-version support remains limited to `advanced_manufacturing_growth + 002050`; `601689` was classified as `advanced_manufacturing_growth` but correctly stopped at `unsupported_pilot_strategy` / `not_assessable` as a later validation / boundary sample. Stable Growth first-version support remains limited to `stable_growth + 600406`; `002028` is validation / boundary only, and `600276` is excluded.
 - `Fundamental HTML Report Generator v2.1`: upper AI analyst display capability that creates a model prompt for structured `FundamentalHtmlReport` JSON and renders an existing formal JSON into self-contained HTML.
+- `Fundamental Skill User Invocation / Report Orchestration`: design-only
+  natural-language Codex / GPT-5.5 entry layer that parses a user request into
+  a structured local report request, locates or regenerates allowed local
+  artifacts, returns HTML / Markdown / JSON paths plus a short Chinese summary,
+  and keeps the default V1 path offline with no token read, no provider call,
+  no MCP, and no trading advice.
 - `HTML Report Visual Audit Tool v1`: local Playwright / Chromium screenshot and manifest tool for existing HTML reports.
 - `Dashboard v3`: local Streamlit fundamental AI report reader / auditor. The main view is Chinese-first and highlights the top conclusion, one-line conclusion, strategy / sub-type explanations, evidence map, risks, evidence gaps, must-track indicators, confidence breakdown, data quality, report stale / mismatch status, and schema / safety / garbled guard state. Evidence Pack, Source Trace, Raw JSON, Prompt, and legacy fields are collapsed as audit material.
 
 Flow:
 
 ```text
-stock_code
+natural-language Codex / GPT-5.5 request
+  -> structured report request
+  -> local orchestration data-mode gate
+  -> stock_code
   -> RealDataConnector
   -> raw JSON blocks
   -> FundamentalDataAdapter
@@ -84,18 +111,27 @@ stock_code
   -> ai_prompt / ai_report
   -> html report prompt -> model-generated FundamentalHtmlReport JSON -> render_existing -> self-contained HTML
   -> visual audit screenshots + manifest
+  -> final HTML path + Markdown path + JSON path + short Chinese summary
   -> Dashboard v3 report reader / audit display
 ```
 
 ## 4. Current Core Module Versions
 
 - `RealDataConnector v2.3a`
-- `Data Provider Abstraction Phase 4 dry-run + real-token smoke gate + explainability frozen`: `TushareClient` mocked abstraction and `TushareProvider` mocked mapping accepted; `ProviderRouter` optional modes remain `auto`, `akshare`, `tushare`, and `dual_compare`; `compare_providers`, `comparison_artifacts`, `diff_classifier`, `token_leak_scanner`, `real_token_smoke_gate`, `tushare_sdk_transport`, and `score_confidence_explainability.py` are accepted isolated tooling. Phase 4 artifact writes, when explicitly enabled, are isolated under `output/provider_comparison/<timestamp>/<code>/`; `score_confidence_explainability.json` is written only under `output/provider_comparison/<timestamp>/<code>/` when explicit `--explainability` is enabled. Default dry-run does not generate `output/provider_comparison`, does not write production output, does not run HTML, and does not run Research Intelligence P1.1. `--include-p1` is off by default. The real-token smoke path requires explicit `--real-token-smoke --provider-transport sdk`, fails closed without a token before SDK calls, rejects `--token`, and keeps `http` / `mcp-local` reserved fail-closed; `--explainability` cannot be combined with `--real-token-smoke` in V1. Research Report V1 is implemented, baseline frozen, profile registry accepted, cross-industry Markdown validation accepted, HTML renderer implementation accepted, and the three-sample HTML baseline frozen; the next recommended step is Dashboard / batch report design or HTML visual refinement, not another Phase 4 smoke, not more single-target HTML generation, not promote-rule design, not validator implementation, not fixture promotion, and not Tushare primary switch.
+- `Data Provider Abstraction Phase 4 dry-run + real-token smoke gate + explainability frozen`: `TushareClient` mocked abstraction and `TushareProvider` mocked mapping accepted; `ProviderRouter` optional modes remain `auto`, `akshare`, `tushare`, and `dual_compare`; `compare_providers`, `comparison_artifacts`, `diff_classifier`, `token_leak_scanner`, `real_token_smoke_gate`, `tushare_sdk_transport`, and `score_confidence_explainability.py` are accepted isolated tooling. Phase 4 artifact writes, when explicitly enabled, are isolated under `output/provider_comparison/<timestamp>/<code>/`; `score_confidence_explainability.json` is written only under `output/provider_comparison/<timestamp>/<code>/` when explicit `--explainability` is enabled. Default dry-run does not generate `output/provider_comparison`, does not write production output, does not run HTML, and does not run Research Intelligence P1.1. `--include-p1` is off by default. The real-token smoke path requires explicit `--real-token-smoke --provider-transport sdk`, fails closed without a token before SDK calls, rejects `--token`, and keeps `http` / `mcp-local` reserved fail-closed; `--explainability` cannot be combined with `--real-token-smoke` in V1. Research Report V1 is implemented, baseline frozen, profile registry accepted, cross-industry Markdown validation accepted, HTML renderer implementation accepted, the three-sample HTML baseline frozen, and user invocation / report orchestration design recorded; the next recommended step is single-stock user invocation / orchestration implementation, not another Phase 4 smoke, not more single-target HTML generation, not Dashboard / batch before single-stock orchestration, not promote-rule design, not validator implementation, not fixture promotion, and not Tushare primary switch.
 - `Fundamental Ground Truth Benchmark Design`: documentation-only design for a reviewed factual benchmark covering canonical `basic_info`, `financial_metrics`, `valuation_metrics`, and `business_composition` fields. It defines the V1 sample pool, source priority, tolerance rules, future fixture shape, future validator boundary, and its relationship with regression, Tushare block-level primary design, and P1.1 deep validation. It does not make the user manually find most values; reviewed ground truth should be populated only after automatic candidate generation and auto-accept / human-review gates.
 - `Fundamental Auto Fact Candidate Generator Design`: documentation-only design for an automated candidate layer that extracts provider fact candidates from Tushare / AkShare / existing provider artifacts / future CNInfo or announcement parsers, records source trace, period, unit, confidence, conflict status, and review status, and routes only accepted or human-reviewed facts toward the ground-truth fixture. It does not add code, alter the fixture, implement a validator, call providers, read tokens, connect MCP, modify pipeline behavior, switch primary providers, or change regression expected files.
 - `Fundamental Candidate Report Review Protocol Design`: documentation-only design for converting `manual_review_priority_queue` into a few high-value review actions. The first `600406` plan prioritizes `valuation_metrics.as_of_date`, `business_composition.period`, `business_composition.classification_type`, and `business_composition.revenue_ratio`; the design is accepted and is now followed by the review decisions artifact design. It explicitly does not promote fixtures, run validators, call providers, read tokens, connect MCP, switch primary behavior, or merge AkShare / Tushare.
 - `Fundamental Candidate Review Decisions Artifact Design`: documentation-only design for `candidate_review_decisions.json`, the intermediate audit artifact between `fact_candidates.json` / `manual_review_priority_queue` and future promote rules. It defines runtime output path, schema, outcome enum, follow-up enum, summary counts, and the first `600406` Priority A / B decision plan. It is not ground truth, not fixture promotion, not a validator, not a provider merge, and not an investment-advice artifact.
 - `Fundamental Research Report V1`: design accepted, implementation accepted, first `600406` runtime artifact accepted, baseline frozen, presentation profile registry accepted, cross-industry Markdown profile validation accepted for `600406`, `002371`, and `002050`, HTML renderer implementation accepted, and three-sample HTML baseline frozen. The accepted modules are `src/fundamental_skill/research_report/research_report_v1.py`, `src/fundamental_skill/research_report/research_report_v1_html.py`, `src/fundamental_skill/research_report/__init__.py`, and `tests/test_research_report_v1.py`; the first accepted ignored runtime artifact is `output/research_reports/20260527T103241/600406/fundamental_research_report_v1.json`. The accepted Markdown artifacts are listed in `docs/FUNDAMENTAL_RESEARCH_REPORT_V1_MARKDOWN_PROFILE_ACCEPTANCE_SUMMARY.md`, and the accepted HTML artifacts are listed in `docs/FUNDAMENTAL_RESEARCH_REPORT_V1_HTML_ACCEPTANCE_SUMMARY.md`. It returns from the data-quality audit chain to professional fundamental research output with executive summary, data quality, macro context, industry context, company fundamentals, opportunities, risks, evidence gaps, rebuttal conditions, follow-up variables, evidence labels, source artifact references, and accepted presentation-layer HTML. It reads existing local artifacts only and does not call providers, read tokens, connect MCP, write fixtures, alter scoring / readiness, alter P1.1, switch Tushare primary, merge AkShare / Tushare, or provide trading advice.
+- `Fundamental Skill User Invocation / Report Orchestration Design`:
+  documentation-only design for the Codex / GPT-5.5 natural-language entry
+  point. It defines request parsing, schema normalization, data modes,
+  single-stock artifact orchestration, missing-artifact behavior, final response
+  shape, future CLI shape, and Dashboard / batch relationship. It keeps the
+  current V1 default at `offline_local_artifacts`, `no_live_provider`,
+  `allow_network=false`, `allow_token_read=false`, and
+  `strict_evidence_boundary=true`.
 - `ExternalCommodityPriceConnector v1.1`
 - `AI Analyst Layer prompt_only`
 - `Research Intelligence P0/P0.1`
@@ -306,11 +342,11 @@ Do not add a new industry framework only because one stock is popular or difficu
 - HTML report generation v2.1 does not automatically call an API; it creates prompts and renders existing formal `FundamentalHtmlReport` JSON.
 - Data Provider Abstraction Phase 2 is accepted. The default real-stock path still directly uses `RealDataConnector`; `ProviderRouter` is not connected to the production runner. Phase 2 did not connect real Tushare, read real tokens, read local MCP config, call MCP, add network calls, change deterministic pipeline behavior, change P1.1, change HTML / Dashboard, or change regression expected outputs. Latest recorded verification after Phase 2 acceptance: pytest `520 passed`; regression suite `passed=47 failed=0 total=47`.
 - Tushare migration Phase 3 mocked MVP is implemented and accepted. Phase 3 includes `TushareClient` abstraction, mocked transport, mocked response mapping for `basic_info`, `financial_indicator`, `valuation`, `business_composition`, explicit missing / fallback `news`, `fetch_status` / `errors` / `source_trace`, token safety, no-token fail-closed behavior, and mock tests only. Canonical raw output remains `meta`, `blocks`, `fetch_status`, and `errors`; canonical raw blocks remain `basic_info`, `financial_indicator`, `valuation`, `business_composition`, and `news`. Mocked tests cover `stock_basic -> basic_info`, `income / balancesheet / cashflow / fina_indicator -> financial_indicator`, `daily_basic -> valuation`, `fina_mainbz -> business_composition`, and `news -> missing / fallback`. Phase 3 did not do real token smoke, MCP integration, real network calls in tests, `provider=auto` primary switch, dual-source comparison, news replacement, `commodity_prices` replacement, industry-specific operating indicators, minute / realtime technical data, classifier / scoring / readiness changes, `evidence_pack` schema changes, HTML / P1.1 changes, or regression expected changes. Real tokens must never be written to code, docs, tests, logs, output, commits, or review comments; docs may only use `<TUSHARE_TOKEN>` as a placeholder, and MCP URL text from local config must not enter the repository. Latest Phase 3 verification: targeted tests `36 passed`; full `pytest` `541 passed`; regression suite `passed=47 failed=0 total=47`.
-- Provider migration roadmap snapshot: Phase 0 completed; Phase 1 accepted; Phase 2 accepted; Phase 3 accepted; Phase 4 dry-run accepted; Phase 4 local real-token smoke gate documentation completed; Phase 4 real-token smoke gate safety skeleton implemented and accepted; third local real-token smoke review completed as `partial_pass_data_review_required`; Phase 4 score / confidence explainability design, implementation, acceptance, narrative hints patch, narrative-hints artifact review, and closeout baseline freeze completed. Fundamental Ground Truth Benchmark Design is recorded in `docs/FUNDAMENTAL_GROUND_TRUTH_BENCHMARK_DESIGN.md`, the fixture skeleton is present, Auto Fact Candidate Generator Design is recorded in `docs/FUNDAMENTAL_AUTO_FACT_CANDIDATE_GENERATOR_DESIGN.md`, Candidate Report Review Protocol Design is recorded and accepted in `docs/FUNDAMENTAL_CANDIDATE_REPORT_REVIEW_PROTOCOL_DESIGN.md`, Candidate Review Decisions Artifact Design is recorded in `docs/FUNDAMENTAL_CANDIDATE_REVIEW_DECISIONS_ARTIFACT_DESIGN.md`, and Research Report V1 design, implementation, baseline freeze, presentation profile registry acceptance, cross-industry Markdown profile acceptance, HTML renderer implementation, and three-sample HTML acceptance are complete. Next is Dashboard / batch report design or HTML visual refinement, not another Phase 4 smoke, not more single-target HTML generation, not manual field filling, not fixture promotion, not validator implementation, not promote-rule design, and not Tushare primary switch. Later work can evaluate promote rules, controlled fixture promotion, Tushare block-level primary design, P1.1 deep validation, `fina_mainbz` `type=P/D/I` ratio derivation, live provider report, official parser / CNInfo, and sidecar data availability design.
+- Provider migration roadmap snapshot: Phase 0 completed; Phase 1 accepted; Phase 2 accepted; Phase 3 accepted; Phase 4 dry-run accepted; Phase 4 local real-token smoke gate documentation completed; Phase 4 real-token smoke gate safety skeleton implemented and accepted; third local real-token smoke review completed as `partial_pass_data_review_required`; Phase 4 score / confidence explainability design, implementation, acceptance, narrative hints patch, narrative-hints artifact review, and closeout baseline freeze completed. Fundamental Ground Truth Benchmark Design is recorded in `docs/FUNDAMENTAL_GROUND_TRUTH_BENCHMARK_DESIGN.md`, the fixture skeleton is present, Auto Fact Candidate Generator Design is recorded in `docs/FUNDAMENTAL_AUTO_FACT_CANDIDATE_GENERATOR_DESIGN.md`, Candidate Report Review Protocol Design is recorded and accepted in `docs/FUNDAMENTAL_CANDIDATE_REPORT_REVIEW_PROTOCOL_DESIGN.md`, Candidate Review Decisions Artifact Design is recorded in `docs/FUNDAMENTAL_CANDIDATE_REVIEW_DECISIONS_ARTIFACT_DESIGN.md`, Research Report V1 design, implementation, baseline freeze, presentation profile registry acceptance, cross-industry Markdown profile acceptance, HTML renderer implementation, and three-sample HTML acceptance are complete, and User Invocation / Report Orchestration Design is recorded in `docs/FUNDAMENTAL_SKILL_USER_INVOCATION_ORCHESTRATION_DESIGN.md`. Next is single-stock user invocation / orchestration implementation, not another Phase 4 smoke, not more ad hoc single-target HTML generation, not Dashboard / batch before the single-stock path, not manual field filling, not fixture promotion, not validator implementation, not promote-rule design, and not Tushare primary switch. Later work can evaluate promote rules, controlled fixture promotion, Tushare block-level primary design, P1.1 deep validation, `fina_mainbz` `type=P/D/I` ratio derivation, live provider report, official parser / CNInfo, and sidecar data availability design.
 - Data Provider Phase 4 dual-source comparison dry-run tooling is implemented and accepted. Phase 4 remains comparison-only / local-acceptance-gated: `AkShareProvider -> raw dict -> FundamentalSkillPipeline.analyze_from_dict -> EvidencePackBuilder.build` versus `TushareProvider -> raw dict -> FundamentalSkillPipeline.analyze_from_dict -> EvidencePackBuilder.build`. Added modules are `compare_providers`, `comparison_artifacts`, `diff_classifier`, `token_leak_scanner`, `real_token_smoke_gate`, `tushare_sdk_transport`, and `score_confidence_explainability.py`. Default dry-run does not generate `output/provider_comparison`, does not write production output, does not run HTML, and does not run P1.1. Artifact writes, when explicitly enabled, are allowed only under `output/provider_comparison/<timestamp>/<code>/`; `score_confidence_explainability.json` is allowlisted only for explicit `--explainability` and does not change default `diff_report.json` / `diff_report.md`. The accepted artifact can include top-level `narrative_hints[]`; each hint is reviewer-facing only, has `automatic_acceptance=false` and `not_for_scoring=true`, does not change score / confidence / drift acceptance, does not enter scoring / classifier / readiness, does not write back canonical fields, and is not a primary-switch or automatic-merge basis. Forbidden writes include `output/raw_<code>.json`, `output/fundamental_<code>.json`, `output/evidence_pack_<code>.json`, `output/reports`, default output, and report output. P1.1 comparison is off by default and requires `--include-p1`; real-token smoke requires explicit `--real-token-smoke --provider-transport sdk`, rejects CLI token input, fails closed with no token before SDK calls, and keeps `http` / `mcp-local` reserved fail-closed; `--explainability` cannot be combined with `--real-token-smoke` in V1. The gate scans repo tracked files, staged diff, docs / tests / source, target output, payloads, and diff reports; it baselines `output/reports` and default output path sets plus SHA-256 hashes; cleanup is limited to a strict timestamp directory under `output/provider_comparison`. The diff classifier marks `strategy_type_drift`, classification / confidence / score / P1 drift as `review_required`, treats secret-risk findings as blockers, adds reviewer-aid drift subcategory values for explainability, and does not automatically accept drift. The token scanner covers secret-like credential patterns and emits only location plus `<masked>`. Latest explainability narrative-hints acceptance verification: targeted tests `27 passed`; full `pytest` `648 passed, 1 skipped`; regression suite `passed=47 failed=0 total=47`.
 - Data Provider Phase 4 third local real-token smoke review artifact root was `output/provider_comparison/20260526T233804`. Current conclusion is `partial_pass_data_review_required`: token leak, artifact-boundary failure, default output pollution, `output/reports` modification, and regression expected modification were not observed; Tushare endpoints were usable; non-news blocks were non-empty; canonical shape was correct; `market_cap` units and `gross_margin` were corrected; business-level `gross_margin` was derived; there was no `missing_field_regression`, `strategy_type_drift`, or `classification_drift`. Remaining score drift and confidence drift for `000426` / `002837` are now covered by accepted comparison-only explainability tooling. Latest third-smoke verification: full `pytest` `630 passed, 1 skipped`; regression suite `passed=47 failed=0 total=47`. Latest explainability implementation verification: targeted tests `38 passed`; full `pytest` `644 passed, 1 skipped`; regression suite `passed=47 failed=0 total=47`. Do not switch Tushare primary, do not automatically merge, do not automatically accept drift, and do not run another real-token smoke unless later provider mapping or sidecar execution changes require it.
 - Data Provider Phase 4 narrative hints patch is accepted as an explainability extension. Accepted hint coverage: `600406` `business_quality_main_business_gap` / `business_ratio_missing`; `002050` `advanced_manufacturing_business_exposure_gap`; `002371` `semiconductor_business_text_or_ratio_gap` / `semiconductor_financial_inputs_available`; `603259` `cxo_domain_proxy_gap`; `000426` `external_sidecar_missing` / `commodity_context_provider_independent`; `002837` `domain_evidence_missing` / `liquid_cooling_revenue_share_missing` / `orders_customer_validation_batch_delivery_missing`. Latest narrative-hints verification: targeted tests `27 passed`; full `pytest` `648 passed, 1 skipped`; regression suite `passed=47 failed=0 total=47`.
-- Data Provider Phase 4 closeout / baseline freeze is complete. Tushare is usable for comparison but remains non-primary; AkShare / Tushare data must not be automatically merged; drift must not be automatically accepted. The third-smoke artifact root is timestamp `20260526T233804` under `output/provider_comparison/`; it can remain as a local, ignored, untracked review artifact. Ground Truth Benchmark, Auto Fact Candidate Generator, Candidate Report Review Protocol, Candidate Review Decisions Artifact, and Research Report V1 are documented; Research Report V1 implementation and baseline freeze are complete, the `600406`, `002371`, and `002050` Markdown profiles have passed cross-industry acceptance, the HTML renderer implementation is accepted, and the three-sample HTML baseline is frozen. The next recommended phase is Dashboard / batch report design or HTML visual refinement.
+- Data Provider Phase 4 closeout / baseline freeze is complete. Tushare is usable for comparison but remains non-primary; AkShare / Tushare data must not be automatically merged; drift must not be automatically accepted. The third-smoke artifact root is timestamp `20260526T233804` under `output/provider_comparison/`; it can remain as a local, ignored, untracked review artifact. Ground Truth Benchmark, Auto Fact Candidate Generator, Candidate Report Review Protocol, Candidate Review Decisions Artifact, Research Report V1, and User Invocation / Report Orchestration are documented; Research Report V1 implementation and baseline freeze are complete, the `600406`, `002371`, and `002050` Markdown profiles have passed cross-industry acceptance, the HTML renderer implementation is accepted, and the three-sample HTML baseline is frozen. The next recommended phase is single-stock user invocation / orchestration implementation.
 - `002050` 三花智控 is an internal successful HTML report sample candidate after v2.1 and visual audit acceptance.
 - `output/`, `output/reports/`, `output/visual_audit/`, `data/`, and `cache/` are generated/runtime artifacts and should not be committed.
 - Some industries remain uncovered, including banks, medical devices, and intelligent driving. CXO is covered by `life_science_cxo_services`, and AI datacenter infrastructure is covered by `ai_datacenter_infrastructure` v1, but both still have conservative public-data limits.
@@ -320,20 +356,28 @@ Do not add a new industry framework only because one stock is popular or difficu
 
 - Current Research Report V1 presentation step: the HTML renderer
   implementation is accepted and the three-sample HTML baseline is frozen.
-  Next useful directions are Dashboard / batch report design or HTML visual
-  refinement. HTML must consume Markdown / presentation-layer output or the
-  Research Report V1 structured payload; it must not re-analyze, change
-  conclusions, hide caveats, call providers, use the network, read tokens,
-  connect MCP, change tests, change scoring / readiness, change P1.1, change
-  fixtures, or change regression expected files.
+  User invocation / report orchestration design is recorded in
+  `docs/FUNDAMENTAL_SKILL_USER_INVOCATION_ORCHESTRATION_DESIGN.md`. Next useful
+  direction is single-stock user invocation / orchestration implementation,
+  followed by local end-to-end runs for `600406`, `002371`, and `002050`.
+  Dashboard / batch should follow the accepted single-stock path. HTML must
+  consume Markdown / presentation-layer output or the Research Report V1
+  structured payload; it must not re-analyze, change conclusions, hide caveats,
+  call providers, use the network, read tokens, connect MCP, change tests,
+  change scoring / readiness, change P1.1, change fixtures, or change
+  regression expected files.
 - Keep `README.md` and `docs/PROJECT_CONTEXT_HANDOFF.md` synchronized after major project changes.
 - Keep `docs/DATA_PROVIDER_ABSTRACTION_TUSHARE_MIGRATION_DESIGN.md` synchronized with the accepted provider-migration phase boundary.
-- For data-source migration and research-report output, score / confidence explainability implementation and narrative hints are accepted, the Fundamental Ground Truth Benchmark fixture skeleton is present, the Auto Fact Candidate Generator design is documented, the `600406` V1.1 candidate report has been generated and passed usability review / audit, Candidate Report Review Protocol Design is accepted, Candidate Review Decisions Artifact Design is documented, `600406` `candidate_review_decisions.json` exists as an intermediate audit artifact, and Research Report V1 design, implementation, baseline freeze, presentation profile registry, cross-industry Markdown profile acceptance, HTML renderer implementation, and three-sample HTML acceptance are complete. Next useful step is Dashboard / batch report design or HTML visual refinement. Promote-rule design, controlled fixture promotion, standalone validator, `fina_mainbz` `type=P/D/I` selected-period ratio derivation evaluation, Tushare primary switch, live provider report, official parser / CNInfo, and sidecar policy design should remain later work. Do not run another real-token smoke unless later provider mapping or sidecar execution changes require it, do not request or read a token, do not connect MCP or read local MCP config, do not call Tushare or use the network, do not switch `provider=auto` primary behavior, do not auto-merge AkShare / Tushare data, do not auto-accept drift, and do not wire provider routing into the default production runner without a separate acceptance cycle.
+- For data-source migration and research-report output, score / confidence explainability implementation and narrative hints are accepted, the Fundamental Ground Truth Benchmark fixture skeleton is present, the Auto Fact Candidate Generator design is documented, the `600406` V1.1 candidate report has been generated and passed usability review / audit, Candidate Report Review Protocol Design is accepted, Candidate Review Decisions Artifact Design is documented, `600406` `candidate_review_decisions.json` exists as an intermediate audit artifact, Research Report V1 design, implementation, baseline freeze, presentation profile registry, cross-industry Markdown profile acceptance, HTML renderer implementation, and three-sample HTML acceptance are complete, and User Invocation / Report Orchestration Design is recorded. Next useful step is single-stock user invocation / orchestration implementation. Promote-rule design, controlled fixture promotion, standalone validator, `fina_mainbz` `type=P/D/I` selected-period ratio derivation evaluation, Tushare primary switch, live provider report, official parser / CNInfo, Dashboard / batch, and sidecar policy design should remain later work. Do not run another real-token smoke unless later provider mapping or sidecar execution changes require it, do not request or read a token, do not connect MCP or read local MCP config, do not call Tushare or use the network, do not switch `provider=auto` primary behavior, do not auto-merge AkShare / Tushare data, do not auto-accept drift, and do not wire provider routing into the default production runner without a separate acceptance cycle.
 - Research Intelligence P0.1 baseline does not need more repair unless new samples reveal generic fallback wording or weak industry context. Next useful directions are multi-sample real use, P1 design, or longitudinal resolved-question workflows.
 - For Research Intelligence P1.1, the accepted Resource baseline should remain frozen at `resource_swing + 000426` until later validation is explicitly designed. Do not expand `resource_core`, `601899`, or `603993` in P1.1 without a new design / implementation / acceptance cycle, and do not jump directly into P1.2 or P1.3 before current P1.1 artifact behavior is observed across more samples.
 - For Research Intelligence P1.1, the accepted Semiconductor baseline should remain frozen at `semiconductor_cycle + 002371`, the accepted Advanced Manufacturing baseline should remain frozen at `advanced_manufacturing_growth + 002050`, and the accepted Stable Growth baseline should remain frozen at `stable_growth + 600406` unless a new design / implementation / acceptance cycle expands them. Do not expand `601689`, `002028`, `600276`, `688012`, `688981`, `603501`, `300604`, `300308`, or `300476` into first-version support without a new design / implementation / acceptance cycle. Future work can evaluate `right_trend_growth` or P1.2, but should not widen the accepted P1.1 slices implicitly.
 - HTML Report Generator v2.1 baseline does not need more repair unless the user reports a specific visual or content issue.
-- Based on user feedback, continue with Dashboard / batch report design or HTML visual refinement. Do not continue generating more single-stock Research Report V1 HTML artifacts unless a new stage explicitly requests that scope.
+- Based on user feedback, continue with single-stock user invocation /
+  orchestration implementation. Do not continue generating more ad hoc
+  single-stock Research Report V1 HTML artifacts, and do not move to Dashboard
+  / batch before the single-stock invocation path is accepted unless a new stage
+  explicitly requests that scope.
 - Keep AI Datacenter v1 conservative unless public data sources can reliably validate orders / backlog, customer structure, cabinet / MW / PUE / rack utilization, liquid-cooling revenue, datacenter revenue split, and customer capex-cycle evidence.
 - Do not rush into `technical_skill` or `trader_skill`.
 - Do not connect trading accounts, add target prices, introduce technical analysis, or turn reports into trading recommendations.
@@ -389,6 +433,7 @@ Final status:
 - Cross-industry Markdown validation passed.
 - Three-sample HTML validation passed.
 - HTML presentation layer baseline frozen.
+- User invocation / report orchestration design recorded.
 
 Cross-contamination result:
 
@@ -423,12 +468,41 @@ HTML presentation layer design:
   no default output, no fixtures, no regression expected changes, no scoring /
   readiness changes, no P1.1 changes, and no trading advice.
 
-Next recommended stage: Dashboard / batch report design or HTML visual
-refinement. More single-target HTML generation is not the next step. Promote
-rules, validator, fixture promotion, live provider report, official parser /
-CNInfo, and Tushare primary remain later work.
+User invocation / report orchestration design:
 
-## 15. New Codex Conversation Recovery Prompt
+- design doc:
+  `docs/FUNDAMENTAL_SKILL_USER_INVOCATION_ORCHESTRATION_DESIGN.md`
+- entry point: natural-language Codex / GPT-5.5 request;
+- default request mode: `offline_local_artifacts`, `no_live_provider`,
+  `allow_network=false`, `allow_token_read=false`;
+- output response: HTML path, Markdown path, JSON path, short Chinese summary,
+  maximum opportunity, maximum risk, maximum evidence gap, data-quality status,
+  and not-for-trading-advice statement;
+- boundary: no token read, no network, no provider call, no MCP, no free-form
+  model report outside the artifact chain, no hidden caveats, no target price,
+  no position sizing, and no technical trading signal.
+
+Next recommended stage: single-stock user invocation / orchestration
+implementation, followed by local end-to-end runs for `600406`, `002371`, and
+cross-profile runs for `002371` / `002050`. Dashboard / batch should follow the
+accepted single-stock orchestration path. Promote rules, validator, fixture
+promotion, live provider report, official parser / CNInfo, and Tushare primary
+remain later work.
+
+## 15. User Invocation / Orchestration Recovery Notes
+
+When resuming this project, treat
+`docs/FUNDAMENTAL_SKILL_USER_INVOCATION_ORCHESTRATION_DESIGN.md` as the current
+product-stage design. The next work should implement a single user-facing
+orchestration command / entry point that hides `fact_candidates`,
+`candidate_review_decisions`, JSON, Markdown, and HTML internals from the user.
+
+Default invocation must be local-only and must not read `TUSHARE_TOKEN`, use
+the network, call Tushare / AkShare, connect MCP, change tests, change
+fixtures, change scoring / readiness, change P1.1, change regression expected
+files, write runtime artifacts into git, or provide trading advice.
+
+## 16. New Codex Conversation Recovery Prompt
 
 Copy this into a new Codex / AI conversation:
 

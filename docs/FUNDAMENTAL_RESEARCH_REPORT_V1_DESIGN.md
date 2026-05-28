@@ -4,21 +4,23 @@ Date: 2026-05-28
 
 Stage: Fundamental Skill Research Report V1 Design, Cross-Industry Markdown
 Profile Acceptance, HTML Presentation Layer Design, and Three-Sample HTML
-Acceptance.
+Acceptance, followed by User Invocation / Report Orchestration Design.
 
 Status: design accepted, implementation accepted, Research Report V1 baseline
 frozen, cross-industry Markdown profile validation accepted for `600406`,
 `002371`, and `002050`, HTML renderer implementation accepted, and the
-three-sample HTML presentation baseline frozen. This document records the
-accepted design boundary; the implementation, baseline freeze, profile
-acceptance, and HTML acceptance do not modify tests, fixtures, pipeline,
-scoring / readiness, Research Intelligence P1.1, Dashboard, regression expected
-files, provider-primary behavior, default output, provider raw artifacts,
-evidence packs, candidate reports, or review decision artifacts. They do not
-run real smoke tests, read `TUSHARE_TOKEN`, use the network, call Tushare or
-AkShare, connect MCP, promote fixture values, automatically merge providers, or
-output buy / sell advice, target prices, position sizing, portfolio weights, or
-technical trading advice.
+three-sample HTML presentation baseline frozen. User invocation / report
+orchestration design is recorded in
+`docs/FUNDAMENTAL_SKILL_USER_INVOCATION_ORCHESTRATION_DESIGN.md`. This document
+records the accepted design boundary; the implementation, baseline freeze,
+profile acceptance, HTML acceptance, and orchestration design do not modify
+tests, fixtures, pipeline, scoring / readiness, Research Intelligence P1.1,
+Dashboard, regression expected files, provider-primary behavior, default output,
+provider raw artifacts, evidence packs, candidate reports, or review decision
+artifacts. They do not run real smoke tests, read `TUSHARE_TOKEN`, use the
+network, call Tushare or AkShare, connect MCP, promote fixture values,
+automatically merge providers, or output buy / sell advice, target prices,
+position sizing, portfolio weights, or technical trading advice.
 
 Current design inputs reviewed:
 
@@ -44,11 +46,15 @@ their respective presentation profiles. The HTML presentation layer design is
 recorded in
 `docs/FUNDAMENTAL_RESEARCH_REPORT_V1_HTML_PRESENTATION_DESIGN.md`, and the
 three-sample HTML acceptance summary is recorded in
-`docs/FUNDAMENTAL_RESEARCH_REPORT_V1_HTML_ACCEPTANCE_SUMMARY.md`. The next
-recommended work is Dashboard / batch report design or HTML visual refinement,
-not more single-target HTML generation, promote-rule design, validator
-implementation, fixture promotion, live provider report, or a Tushare primary
-switch.
+`docs/FUNDAMENTAL_RESEARCH_REPORT_V1_HTML_ACCEPTANCE_SUMMARY.md`. User
+invocation / report orchestration design is recorded in
+`docs/FUNDAMENTAL_SKILL_USER_INVOCATION_ORCHESTRATION_DESIGN.md`. The next
+recommended work is user invocation / orchestration implementation, followed by
+end-to-end local runs for `600406`, `002371`, and `002050`; Dashboard / batch
+design should follow the accepted single-stock orchestration path. The next
+step is not more ad hoc single-target HTML generation, promote-rule design,
+validator implementation, fixture promotion, live provider report, official
+parser / CNInfo, or a Tushare primary switch.
 
 ## 1. Goal Correction
 
@@ -670,21 +676,26 @@ Completed sequence:
 11. HTML renderer implementation acceptance.
 12. `600406`, `002371`, and `002050` HTML runtime artifact acceptance.
 13. HTML presentation layer three-sample baseline freeze.
+14. User invocation / report orchestration design.
 
 Next recommended sequence:
 
-1. Commit the HTML baseline documentation patch.
-2. Evaluate Dashboard / batch report design, or first do HTML visual refinement.
-3. Keep caveats, evidence labels, data-quality notes, rebuttal conditions, and
+1. Commit the user invocation / report orchestration design documentation patch.
+2. Implement the single-stock user invocation / orchestration path.
+3. Run an end-to-end local orchestration for `600406`, then cross-profile local
+   runs for `002371` and `002050`.
+4. Evaluate Dashboard / batch report design after the single-stock path is
+   accepted, or separately do focused HTML visual refinement if requested.
+5. Keep caveats, evidence labels, data-quality notes, rebuttal conditions, and
    follow-up variables visible in any future display work.
-4. Later consider promote rules, validator, fixture promotion, live provider
+6. Later consider promote rules, validator, fixture promotion, live provider
    report, official parser / CNInfo, and primary-provider switch only after the
    report product experience is reviewed.
 
 Do not continue into promote-rule design, validator implementation, fixture
 promotion, live provider report, official parser / CNInfo, or Tushare primary
-switch as the next step. The product line should now move from single-report
-HTML generation into product experience design or focused visual refinement.
+switch as the next step. The product line should now move from accepted
+single-report HTML generation into user-facing invocation / orchestration.
 
 ## 11. Presentation profile design addendum
 
@@ -802,6 +813,10 @@ render_research_report_v1_html(markdown: str, report: dict | None = None) -> str
 The writer should keep a strict output boundary under `output/research_reports/`.
 
 The next step is no longer more single-stock HTML generation. Dashboard / batch
-report design or HTML visual refinement can proceed as the next product-stage
-choice. Promote rules, validator, fixture promotion, live provider report,
-official parser / CNInfo, and Tushare primary remain later work.
+report design should wait until the single-stock user invocation /
+orchestration path is implemented and accepted, unless a separate stage asks
+only for focused HTML visual refinement. User invocation / report orchestration
+design is recorded in
+`docs/FUNDAMENTAL_SKILL_USER_INVOCATION_ORCHESTRATION_DESIGN.md`. Promote rules,
+validator, fixture promotion, live provider report, official parser / CNInfo,
+and Tushare primary remain later work.

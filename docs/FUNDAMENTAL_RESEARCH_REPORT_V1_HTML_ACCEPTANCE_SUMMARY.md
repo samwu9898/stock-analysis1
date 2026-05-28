@@ -8,12 +8,15 @@ Summary.
 Status: documentation-only acceptance summary. This stage records that the
 Research Report V1 HTML presentation-layer implementation and the three accepted
 HTML runtime artifacts for `600406`, `002371`, and `002050` have passed
-acceptance. It freezes the three-sample HTML presentation baseline and does not
-modify code, tests, fixtures, pipeline behavior, scoring / readiness, Research
-Intelligence P1.1, regression expected files, provider-primary behavior, or
-runtime artifacts. It does not run a real smoke test, read `TUSHARE_TOKEN`, use
-the network, call Tushare or AkShare, connect MCP, generate output, stage output,
-or provide investment advice.
+acceptance. It freezes the three-sample HTML presentation baseline. The next
+user-facing orchestration design is recorded in
+`docs/FUNDAMENTAL_SKILL_USER_INVOCATION_ORCHESTRATION_DESIGN.md` and does not
+change the HTML baseline. This summary does not modify code, tests, fixtures,
+pipeline behavior, scoring / readiness, Research Intelligence P1.1, regression
+expected files, provider-primary behavior, or runtime artifacts. It does not run
+a real smoke test, read `TUSHARE_TOKEN`, use the network, call Tushare or
+AkShare, connect MCP, generate output, stage output, or provide investment
+advice.
 
 Latest verification results are quoted from the accepted stage input and were
 not rerun in this documentation-only stage:
@@ -87,16 +90,21 @@ not manually edit the accepted runtime artifacts to chase stricter wording.
 - `002371` and `002050` content thickness can still be improved.
 - Batch report has not been designed or accepted.
 - Dashboard work has not been done for this Research Report V1 HTML baseline.
+- User invocation / report orchestration is now designed but not implemented.
 - Live provider report remains later work.
 - Fixture promotion, validator, primary switch, promote rules, and Tushare
   primary remain later work.
 
 ## 7. Next recommended stage
 
-1. Commit this HTML baseline documentation patch.
-2. Next work can move to Dashboard / batch report design, or first do HTML
-   visual refinement.
-3. Live provider report, official parser / CNInfo, fixture promotion,
+1. Commit the user invocation / report orchestration design documentation patch.
+2. Next work should move to single-stock user invocation / orchestration
+   implementation, then local end-to-end runs for `600406`, `002371`, and
+   `002050`.
+3. Dashboard / batch report design should follow the accepted single-stock
+   orchestration path, unless a separate stage asks only for focused HTML visual
+   refinement.
+4. Live provider report, official parser / CNInfo, fixture promotion,
    validator, and Tushare primary remain later work.
 
 ## 8. Safety confirmation
@@ -110,3 +118,15 @@ This documentation-only acceptance summary confirms:
 - no new output generated;
 - no runtime artifact submitted;
 - no investment advice output.
+
+## 9. User invocation follow-up
+
+`docs/FUNDAMENTAL_SKILL_USER_INVOCATION_ORCHESTRATION_DESIGN.md` defines the
+natural-language Codex / GPT-5.5 entry point, normalized request schema,
+single-stock orchestration pipeline, data-mode rules, missing-artifact
+behavior, role split, final response shape, future CLI shape, safety non-goals,
+and relationship to Dashboard / batch.
+
+That design keeps HTML as the final presentation layer. It does not ask HTML to
+re-analyze, change conclusions, hide caveats, call providers, use the network,
+read tokens, connect MCP, or produce trading advice.
