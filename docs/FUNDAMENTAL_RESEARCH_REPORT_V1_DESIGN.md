@@ -1216,8 +1216,8 @@ Runtime table facts were review-only and used `structured_medium`,
 `local_structured_sample_requires_human_review`. They are not Research Report
 V1 facts.
 
-Next recommended official-disclosure stage remains separate from Research
-Report V1:
+Historical next recommended official-disclosure stage remained separate from
+Research Report V1:
 
 ```text
 CSV table facts -> official_disclosure_facts integration design
@@ -1306,3 +1306,44 @@ Do not directly enter live CNInfo, PDF extraction, DOCX / HTML / Excel reader,
 candidate generator integration, Research Report V1 integration, fixture
 promotion, accepted manifest update, validator work, scoring / P1.1 changes,
 or trading advice.
+
+## 23. Table Facts To Official Disclosure Facts Integration Design Boundary
+
+The table facts -> `official_disclosure_facts.json` integration design is now
+recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_TABLE_FACTS_TO_OFFICIAL_DISCLOSURE_FACTS_INTEGRATION_DESIGN.md
+```
+
+Research Report V1 boundary remains unchanged:
+
+- this is official disclosure parser artifact assembly, not report assembly;
+- table facts remain caveated L1 official disclosure candidates;
+- table facts are not report-ready facts;
+- no verified fact is generated;
+- no Research Report V1 builder, renderer, orchestration, CLI, accepted
+  manifest, scoring, readiness, P1.1, or regression expected behavior changes;
+- candidate generator integration remains later work;
+- Research Report V1 L1 evidence integration remains later work.
+
+Design relationship:
+
+- future implementation may append table-derived facts to
+  `official_disclosure_facts.extracted_facts[]`;
+- table facts should use the `business_composition.*` namespace;
+- optional `source_tables[]` may preserve normalized table trace;
+- optional `table_caveats[]` may preserve table-level caveats and failed
+  gates;
+- `not_for_trading_advice=true` remains mandatory.
+
+Current next recommended official-disclosure stage:
+
+```text
+Table facts -> official_disclosure_facts integration implementation
+```
+
+Do not directly enter candidate generator integration, Research Report V1
+integration, fixture promotion, accepted manifest updates, live CNInfo, PDF
+extraction, provider calls, token work, MCP, scoring / P1.1 changes, or trading
+advice.

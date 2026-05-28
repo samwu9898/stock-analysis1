@@ -409,3 +409,44 @@ Next recommended stage:
 ```text
 CSV table facts -> official_disclosure_facts integration design
 ```
+
+## 15. Table Facts To Official Disclosure Facts Integration Design Sync
+
+The table facts -> `official_disclosure_facts.json` integration design is now
+recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_TABLE_FACTS_TO_OFFICIAL_DISCLOSURE_FACTS_INTEGRATION_DESIGN.md
+```
+
+Schema / quality model relationship:
+
+- accepted table facts continue to be validated through
+  `validate_table_fact(...)`;
+- accepted table facts should be appended to
+  `official_disclosure_facts.extracted_facts[]` under the
+  `business_composition.*` namespace in the future implementation stage;
+- optional `source_tables[]` preserves normalized table trace;
+- optional `table_caveats[]` preserves table-level caveats and failed gates;
+- `structured_medium` table facts keep `needs_human_review=true`;
+- `local_structured_sample_requires_human_review` remains a fact caveat;
+- `unreliable_text_copy` and `unusable` remain caveat-only and append no
+  facts;
+- no table fact becomes a verified fact.
+
+Boundaries remain unchanged:
+
+- no code implementation in this design stage;
+- no fixture write;
+- no accepted manifest update;
+- no candidate generator integration;
+- no Research Report V1 integration;
+- no scoring / P1.1 / regression update;
+- no live CNInfo, provider call, token read, network, MCP, smoke, or trading
+  advice.
+
+Current next recommended stage:
+
+```text
+Table facts -> official_disclosure_facts integration implementation
+```

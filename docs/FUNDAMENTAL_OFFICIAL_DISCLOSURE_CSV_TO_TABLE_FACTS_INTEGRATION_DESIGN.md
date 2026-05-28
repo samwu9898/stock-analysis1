@@ -432,3 +432,31 @@ Next recommended stage:
 ```text
 CSV table facts -> official_disclosure_facts integration design
 ```
+
+## 13. Table Facts To Official Disclosure Facts Integration Design Sync
+
+The table facts -> `official_disclosure_facts.json` integration design is now
+recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_TABLE_FACTS_TO_OFFICIAL_DISCLOSURE_FACTS_INTEGRATION_DESIGN.md
+```
+
+This keeps the CSV converter boundary intact:
+
+- converter output remains `table_facts`, `table_caveats`, and
+  `conversion_warnings`;
+- official-disclosure assembly is a later internal artifact step;
+- table facts become entries in `official_disclosure_facts.extracted_facts[]`
+  only after integration implementation and validation;
+- optional `source_tables[]` stores normalized table trace;
+- optional `table_caveats[]` stores table-level caveats;
+- table facts remain caveated L1 official disclosure candidates;
+- no verified fact is generated;
+- no candidate generator or Research Report V1 integration is included.
+
+Current next recommended stage:
+
+```text
+Table facts -> official_disclosure_facts integration implementation
+```

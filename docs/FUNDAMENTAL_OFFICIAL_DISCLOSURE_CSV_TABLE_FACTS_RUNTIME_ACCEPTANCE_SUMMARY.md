@@ -187,7 +187,7 @@ provider calls, or network checks.
 
 ## 11. Next Recommended Stage
 
-Recommended next stage:
+Historical next stage at runtime acceptance time:
 
 ```text
 CSV table facts -> official_disclosure_facts integration design
@@ -210,3 +210,41 @@ Do not directly enter:
 - Research Report V1 integration;
 - fixture promotion;
 - validator.
+
+## 12. Table Facts To Official Disclosure Facts Integration Design Sync
+
+The CSV table facts -> `official_disclosure_facts.json` integration design is
+now recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_TABLE_FACTS_TO_OFFICIAL_DISCLOSURE_FACTS_INTEGRATION_DESIGN.md
+```
+
+Design scope:
+
+- internal official disclosure parser artifact assembly;
+- keep `extracted_facts[]` as the unified fact list;
+- append table-derived facts under the `business_composition.*` namespace;
+- add optional `source_tables[]` for normalized table trace;
+- add optional `table_caveats[]` for table-level warnings and failed gates;
+- preserve source document, source table, row / column location, unit, period,
+  denominator, `table_quality`, and human-review caveats;
+- keep `not_for_trading_advice=true`;
+- generate no verified fact.
+
+Still out of scope:
+
+- implementation;
+- fixture write;
+- accepted manifest update;
+- candidate generator integration;
+- Research Report V1 integration;
+- scoring / P1.1 / regression changes;
+- live CNInfo, provider call, token read, network, MCP, smoke, or trading
+  advice.
+
+Current next recommended stage:
+
+```text
+Table facts -> official_disclosure_facts integration implementation
+```

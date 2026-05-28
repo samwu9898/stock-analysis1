@@ -458,7 +458,7 @@ Accepted sequence:
 10. Local Structured Table Reader Design recorded in
     `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_LOCAL_STRUCTURED_TABLE_READER_DESIGN.md`.
 
-Recommended next sequence:
+Historical recommended next sequence:
 
 1. CSV reader schema / implementation for the independent table parser.
 2. One local CSV structured sample runtime review.
@@ -494,7 +494,47 @@ detection with caveat / writer / reader / validator loop only. It does not make
 L1 official disclosure facts eligible for direct candidate-generator or
 Research Report V1 use.
 
-## 10. Documentation Sync Notes
+## 10. Table Facts To Official Disclosure Facts Integration Design Sync
+
+The table facts -> `official_disclosure_facts.json` integration design is now
+recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_TABLE_FACTS_TO_OFFICIAL_DISCLOSURE_FACTS_INTEGRATION_DESIGN.md
+```
+
+This design extends the future parser artifact assembly contract while keeping
+the minimal parser boundary unchanged:
+
+- `extracted_facts[]` remains the unified fact list;
+- table facts use the `business_composition.*` namespace;
+- optional `source_tables[]` preserves normalized table trace;
+- optional `table_caveats[]` preserves table-level caveats and failed gates;
+- table facts remain caveated L1 official disclosure candidates, not reviewed
+  facts;
+- `not_for_trading_advice=true` remains mandatory;
+- no verified fact is generated;
+- candidate generator integration remains later work;
+- Research Report V1 integration remains later work.
+
+The current retained CSV table facts runtime artifact is:
+
+```text
+output/official_disclosures/20260529T002922/600406/csv_table_facts_review.json
+```
+
+Current next recommended stage:
+
+```text
+Table facts -> official_disclosure_facts integration implementation
+```
+
+The implementation stage should remain local-only, fail-closed, and separate
+from live CNInfo, providers, tokens, network, MCP, fixtures, accepted
+manifests, candidate generation, Research Report V1, scoring, P1.1,
+regression expected files, and trading advice.
+
+## 11. Documentation Sync Notes
 
 This design should be referenced by:
 
