@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import inspect
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -29,6 +31,50 @@ from src.fundamental_skill.research_report.accepted_manifest import (
     verify_manifest_entry_hashes,
     write_accepted_manifest,
 )
+
+
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+_REAL_MANIFEST_PATH = _REPO_ROOT / "output" / "research_reports" / "accepted_manifest.json"
+
+
+def _file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def snapshot_real_manifest_state() -> dict[str, object]:
+    if not _REAL_MANIFEST_PATH.exists():
+        return {"exists": False}
+
+    stat = _REAL_MANIFEST_PATH.stat()
+    return {
+        "exists": True,
+        "sha256": _file_sha256(_REAL_MANIFEST_PATH),
+        "mtime_ns": stat.st_mtime_ns,
+        "size": stat.st_size,
+    }
+
+
+def assert_real_manifest_unchanged(snapshot: dict[str, object]) -> None:
+    if not snapshot["exists"]:
+        assert not _REAL_MANIFEST_PATH.exists()
+    else:
+        stat = _REAL_MANIFEST_PATH.stat()
+        assert _file_sha256(_REAL_MANIFEST_PATH) == snapshot["sha256"]
+        assert stat.st_mtime_ns == snapshot["mtime_ns"]
+        assert stat.st_size == snapshot["size"]
+
+    result = subprocess.run(
+        ["git", "ls-files", "output"],
+        cwd=_REPO_ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert result.stdout.splitlines() == []
 
 
 def _sha(value: str) -> str:
@@ -439,11 +485,12 @@ def test_reader_roundtrip(tmp_path):
 
 
 def test_no_real_output_path_writes(tmp_path):
+    real_manifest_snapshot = snapshot_real_manifest_state()
     payload = _manifest()
     path = write_accepted_manifest(payload, tmp_path / "accepted_manifest.json")
 
     assert path.is_file()
-    assert not (Path.cwd() / "output" / "research_reports" / "accepted_manifest.json").exists()
+    assert_real_manifest_unchanged(real_manifest_snapshot)
 
 
 def test_accepted_manifest_module_has_no_provider_env_network_mcp_or_runner_imports():

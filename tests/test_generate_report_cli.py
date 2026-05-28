@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import hashlib
 import inspect
 import json
+import subprocess
 from io import StringIO
 from pathlib import Path
 
@@ -16,6 +18,9 @@ from src.fundamental_skill.research_report.accepted_manifest import (
     write_accepted_manifest,
 )
 
+
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+_REAL_MANIFEST_PATH = _REPO_ROOT / "output" / "research_reports" / "accepted_manifest.json"
 
 _POSITIVE_TRADING_TERMS = (
     "买入",
@@ -340,8 +345,44 @@ def _assert_no_positive_trading_advice_terms(stdout: str) -> None:
         assert term.lower() not in scanned
 
 
-def _assert_real_output_manifest_not_created() -> None:
-    assert not (Path.cwd() / "output" / "research_reports" / "accepted_manifest.json").exists()
+def _file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def snapshot_real_manifest_state() -> dict[str, object]:
+    if not _REAL_MANIFEST_PATH.exists():
+        return {"exists": False}
+
+    stat = _REAL_MANIFEST_PATH.stat()
+    return {
+        "exists": True,
+        "sha256": _file_sha256(_REAL_MANIFEST_PATH),
+        "mtime_ns": stat.st_mtime_ns,
+        "size": stat.st_size,
+    }
+
+
+def assert_real_manifest_unchanged(snapshot: dict[str, object]) -> None:
+    if not snapshot["exists"]:
+        assert not _REAL_MANIFEST_PATH.exists()
+    else:
+        stat = _REAL_MANIFEST_PATH.stat()
+        assert _file_sha256(_REAL_MANIFEST_PATH) == snapshot["sha256"]
+        assert stat.st_mtime_ns == snapshot["mtime_ns"]
+        assert stat.st_size == snapshot["size"]
+
+    result = subprocess.run(
+        ["git", "ls-files", "output"],
+        cwd=_REPO_ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert result.stdout.splitlines() == []
 
 
 def _assert_paths_are_tmp_only(stdout: str, tmp_path: Path) -> None:
@@ -507,7 +548,7 @@ def test_stdout_contains_manifest_and_freshness_fields(monkeypatch):
 
 
 def test_direct_cli_current_manifest_happy_path_uses_tmp_manifest_artifacts(tmp_path):
-    _assert_real_output_manifest_not_created()
+    real_manifest_snapshot = snapshot_real_manifest_state()
     bundle = _write_fake_cli_artifacts(tmp_path)
     _write_fake_manifest(tmp_path, bundle, freshness_status="current")
 
@@ -527,11 +568,11 @@ def test_direct_cli_current_manifest_happy_path_uses_tmp_manifest_artifacts(tmp_
     assert _FULL_BODY_SENTINEL not in stdout
     _assert_no_positive_trading_advice_terms(stdout)
     _assert_paths_are_tmp_only(stdout, tmp_path)
-    _assert_real_output_manifest_not_created()
+    assert_real_manifest_unchanged(real_manifest_snapshot)
 
 
 def test_direct_cli_missing_manifest_falls_back_to_timestamp_artifacts(tmp_path):
-    _assert_real_output_manifest_not_created()
+    real_manifest_snapshot = snapshot_real_manifest_state()
     bundle = _write_fake_cli_artifacts(tmp_path, timestamp="20260528T131415")
 
     exit_code, stdout = _run_direct_cli(bundle["output_root"])
@@ -547,11 +588,12 @@ def test_direct_cli_missing_manifest_falls_back_to_timestamp_artifacts(tmp_path)
     assert "unknown" in stdout
     _assert_no_positive_trading_advice_terms(stdout)
     _assert_paths_are_tmp_only(stdout, tmp_path)
-    _assert_real_output_manifest_not_created()
+    assert_real_manifest_unchanged(real_manifest_snapshot)
 
 
 @pytest.mark.parametrize("freshness_status", ["stale", "unknown"])
 def test_direct_cli_stale_or_unknown_manifest_is_visible_with_warning(tmp_path, freshness_status):
+    real_manifest_snapshot = snapshot_real_manifest_state()
     bundle = _write_fake_cli_artifacts(tmp_path)
     _write_fake_manifest(tmp_path, bundle, freshness_status=freshness_status)
 
@@ -564,11 +606,12 @@ def test_direct_cli_stale_or_unknown_manifest_is_visible_with_warning(tmp_path, 
     assert str(bundle["html_path"].resolve(strict=False)) in stdout
     _assert_no_positive_trading_advice_terms(stdout)
     _assert_paths_are_tmp_only(stdout, tmp_path)
-    _assert_real_output_manifest_not_created()
+    assert_real_manifest_unchanged(real_manifest_snapshot)
 
 
 @pytest.mark.parametrize("freshness_status", ["superseded", "invalidated"])
 def test_direct_cli_superseded_or_invalidated_manifest_fails_closed_without_timestamp_fallback(tmp_path, freshness_status):
+    real_manifest_snapshot = snapshot_real_manifest_state()
     bundle = _write_fake_cli_artifacts(tmp_path)
     _write_fake_manifest(tmp_path, bundle, freshness_status=freshness_status)
 
@@ -584,10 +627,11 @@ def test_direct_cli_superseded_or_invalidated_manifest_fails_closed_without_time
     assert str(bundle["json_path"].resolve(strict=False)) not in stdout
     assert "fake accepted html shell" not in stdout
     _assert_no_positive_trading_advice_terms(stdout)
-    _assert_real_output_manifest_not_created()
+    assert_real_manifest_unchanged(real_manifest_snapshot)
 
 
 def test_direct_cli_manifest_hash_mismatch_fails_closed_without_artifact_or_secret_leak(tmp_path):
+    real_manifest_snapshot = snapshot_real_manifest_state()
     bundle = _write_fake_cli_artifacts(tmp_path)
     _write_fake_manifest(tmp_path, bundle, freshness_status="current", hash_mismatch=True)
 
@@ -605,7 +649,7 @@ def test_direct_cli_manifest_hash_mismatch_fails_closed_without_artifact_or_secr
     assert _ENGLISH_JSON_SUMMARY_SENTINEL not in stdout
     assert "<masked>" not in stdout
     _assert_no_positive_trading_advice_terms(stdout)
-    _assert_real_output_manifest_not_created()
+    assert_real_manifest_unchanged(real_manifest_snapshot)
 
 
 def test_stdout_has_no_positive_trading_advice_terms(monkeypatch):
