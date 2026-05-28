@@ -1218,3 +1218,26 @@ Report V1:
 ```text
 CSV normalized table -> business_composition_table_facts integration design
 ```
+
+## 21. CSV To Table Facts Integration Design Boundary
+
+The CSV normalized table -> business composition table facts integration design
+is now recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_CSV_TO_TABLE_FACTS_INTEGRATION_DESIGN.md
+```
+
+Research Report V1 boundary remains unchanged:
+
+- converter design is internal to the Business Composition Table Parser;
+- converter output is not report evidence by default;
+- no Research Report V1 builder / renderer / orchestration / CLI changes;
+- no accepted manifest update;
+- no candidate generator integration;
+- no fixture promotion;
+- no scoring / readiness / P1.1 / regression expected change.
+
+Future Research Report V1 use of table facts requires separate candidate
+generator integration and report L1 evidence integration designs after the CSV
+converter implementation and runtime review are accepted.

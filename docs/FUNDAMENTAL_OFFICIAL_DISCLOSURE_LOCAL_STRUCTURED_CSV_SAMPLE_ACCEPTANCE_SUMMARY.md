@@ -176,3 +176,32 @@ Do not directly enter:
 - Research Report V1 integration;
 - fixture promotion;
 - validator.
+
+## CSV To Table Facts Integration Design Sync
+
+The next-stage design is now recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_CSV_TO_TABLE_FACTS_INTEGRATION_DESIGN.md
+```
+
+Design scope:
+
+- convert normalized CSV tables into `business_composition_table_facts` or
+  `table_caveats`;
+- remain inside the Business Composition Table Parser boundary;
+- require explicit column mapping or reviewed header allowlists;
+- preserve official segment names and source row / column locations;
+- require unit, period, denominator, classification, and table quality gates;
+- propagate `reader_warnings` into table caveats or fact caveats;
+- keep local CSV facts `structured_medium` and human-review-only by default.
+
+Still out of scope:
+
+- fixture writes;
+- accepted manifest updates;
+- official disclosure facts writer integration;
+- candidate generator integration;
+- Research Report V1 integration;
+- live CNInfo / provider calls;
+- Excel / HTML / DOCX / PDF readers.

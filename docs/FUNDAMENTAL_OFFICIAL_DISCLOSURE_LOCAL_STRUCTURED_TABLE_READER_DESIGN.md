@@ -397,3 +397,29 @@ Next recommended stage:
 ```text
 CSV normalized table -> business_composition_table_facts integration design
 ```
+
+## 13. CSV To Table Facts Integration Design Sync
+
+The CSV normalized table -> business composition table facts integration design
+is now recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_CSV_TO_TABLE_FACTS_INTEGRATION_DESIGN.md
+```
+
+This design keeps the reader boundary intact:
+
+- reader output remains a normalized table, not an L1 fact;
+- reader warnings must be propagated into table caveats or fact caveats;
+- delimiter inference remains visible through `delimiter_sniffed`;
+- conversion requires explicit column mapping or reviewed header allowlists;
+- conversion requires row / column location, unit, period, classification, and
+  denominator gates;
+- `unreliable_text_copy` and `unusable` remain caveat-only;
+- no candidate generator or Research Report V1 integration is included.
+
+Next recommended stage:
+
+```text
+CSV to table facts converter implementation
+```

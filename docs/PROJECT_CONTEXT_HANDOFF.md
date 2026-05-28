@@ -967,7 +967,42 @@ Next recommended stage:
 CSV normalized table -> business_composition_table_facts integration design
 ```
 
-## 20. New Codex Conversation Recovery Prompt
+## 20. CSV To Table Facts Integration Design Notes
+
+The CSV normalized table -> business composition table facts integration design
+is now recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_CSV_TO_TABLE_FACTS_INTEGRATION_DESIGN.md
+```
+
+Design summary:
+
+- internal Business Composition Table Parser conversion, not candidate
+  generator integration and not Research Report V1 integration;
+- input is a normalized table from `local_structured_table_reader.py`;
+- output is either `business_composition_table_facts` or `table_caveats`;
+- `reader_warnings` must propagate into table caveats or fact caveats;
+- column mapping requires explicit mapping or reviewed header allowlists;
+- row mapping preserves official segment names and `source_row_index`;
+- unit, period, denominator, classification, and table quality gates are
+  required before numeric facts;
+- local CSV defaults to `structured_medium`, `needs_human_review=true`, and
+  caveat `local_structured_sample_requires_human_review`;
+- `unreliable_text_copy` and `unusable` remain caveat-only.
+
+Next recommended stage:
+
+```text
+CSV to table facts converter implementation
+```
+
+Still do not jump directly to live CNInfo, PDF extraction, DOCX / Excel
+readers, candidate generator integration, Research Report V1 integration,
+fixture promotion, accepted manifest changes, scoring changes, or trading
+advice.
+
+## 21. New Codex Conversation Recovery Prompt
 
 Copy this into a new Codex / AI conversation:
 

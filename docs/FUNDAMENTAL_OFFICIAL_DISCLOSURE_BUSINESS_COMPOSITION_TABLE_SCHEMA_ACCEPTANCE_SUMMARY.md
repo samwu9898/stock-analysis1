@@ -301,3 +301,37 @@ Next recommended stage:
 ```text
 CSV normalized table -> business_composition_table_facts integration design
 ```
+
+## 13. CSV To Table Facts Integration Design Sync
+
+The CSV normalized table -> business composition table facts integration design
+is now recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_CSV_TO_TABLE_FACTS_INTEGRATION_DESIGN.md
+```
+
+The design uses the accepted `business_composition_table.py` schema without
+changing it. Future converter implementation should call the existing
+`build_table_fact(...)`, `build_table_caveat(...)`, and validators after
+passing mapping and quality gates.
+
+Design requirements:
+
+- explicit `source_column_map`;
+- preserved official `segment_name`;
+- preserved `source_row_index` and `source_column_name`;
+- explicit unit and period before numeric facts;
+- denominator or accepted caveat for relevant fields;
+- default local CSV `table_quality=structured_medium`;
+- default `needs_human_review=true`;
+- caveat `local_structured_sample_requires_human_review`;
+- no verified fact generation;
+- no fixture, accepted manifest, candidate generator, or Research Report V1
+  side effects.
+
+Next recommended stage:
+
+```text
+CSV to table facts converter implementation
+```
