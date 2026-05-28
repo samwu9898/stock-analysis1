@@ -17,6 +17,13 @@ Latest accepted verification results are quoted, not rerun here:
 - full pytest with retained manifest `899 passed, 1 skipped`
 - regression `passed=47 failed=0 total=47`
 
+Local-file implementation, the Conservative Period Patch, and the local sample
+runtime review have since been accepted. The closeout is recorded in
+`docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_PARSER_LOCAL_SAMPLE_ACCEPTANCE_SUMMARY.md`.
+Latest accepted parser-stage verification results are quoted, not rerun in the
+documentation-only summary: targeted tests `298 passed`, full pytest latest
+`946 passed, 1 skipped`, and regression `passed=47 failed=0 total=47`.
+
 ## 1. Design Positioning
 
 The minimal CNInfo / official disclosure parser is future official-evidence
@@ -412,23 +419,37 @@ manifest, and scoring boundaries explicit in command flags and review notes.
 
 ## 9. Roadmap
 
-Recommended sequence:
+Accepted sequence:
 
 1. Minimal CNInfo / official disclosure parser design.
 2. Parser schema / local-file reader implementation.
-3. One local downloaded filing sample.
-4. Extract `main_business` / `business_composition` from one sample.
-5. Generate `official_disclosure_facts.json` artifact.
-6. Feed official facts into candidate generator design.
-7. Add L1 evidence tier handling.
-8. Add freshness trigger integration.
-9. Later live CNInfo fetch design.
-10. Later management guidance tracker.
+3. Conservative Period Patch.
+4. Local sample runtime review using
+   `output/official_disclosures/local_samples/600406_annual_report_sample.txt`.
+5. Ignored runtime artifact generation and validation at
+   `output/official_disclosures/20260528_194020/600406/official_disclosure_facts.json`.
+
+Recommended next sequence:
+
+1. `official_disclosure_facts -> candidate generator integration design`, or
+   real local downloaded official filing sample review from a user-provided
+   local text file.
+2. Add L1 evidence tier handling only after a separate accepted integration
+   design.
+3. Add freshness trigger integration only after separate policy acceptance.
+4. Later live CNInfo fetch design.
+5. Later management guidance tracker.
 
 Implementation should start with local files only. Any live CNInfo fetch, MCP
 connector, token handling, provider use, fixture promotion, validator, report
 rewrite, batch, or Dashboard behavior requires a separate design and acceptance
 stage.
+
+The accepted local sample runtime does not change this boundary. It used a
+local official-style sample text, not live CNInfo and not a full real
+announcement parse. It validated the schema / local-file reader / conservative
+extractor / writer / reader / validator minimum loop only. It does not make L1
+official disclosure facts eligible for direct Research Report V1 use.
 
 ## 10. Documentation Sync Notes
 
@@ -437,6 +458,7 @@ This design should be referenced by:
 - `docs/FUNDAMENTAL_ACCEPTED_ARTIFACT_MANIFEST_FRESHNESS_DESIGN.md`
 - `docs/FUNDAMENTAL_RESEARCH_REPORT_V1_DESIGN.md`
 - `docs/PROJECT_CONTEXT_HANDOFF.md`
+- `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_PARSER_LOCAL_SAMPLE_ACCEPTANCE_SUMMARY.md`
 
 The current accepted runtime baseline remains unchanged:
 
@@ -450,3 +472,5 @@ The current accepted runtime baseline remains unchanged:
   `output/research_reports/accepted_manifest.json`.
 - Default path remains offline local artifacts / no live provider / no token /
   no network / no MCP.
+- Live CNInfo is not implemented.
+- L1 official disclosure integration is not implemented.

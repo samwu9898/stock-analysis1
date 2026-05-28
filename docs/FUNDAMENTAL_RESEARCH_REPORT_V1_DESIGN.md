@@ -30,7 +30,11 @@ now also links the accepted artifact manifest / freshness design recorded in
 manifest locator runtime acceptance closeout recorded in
 `docs/FUNDAMENTAL_ACCEPTED_MANIFEST_LOCATOR_RUNTIME_ACCEPTANCE_SUMMARY.md`.
 Minimal CNInfo / official disclosure parser design is recorded in
-`docs/FUNDAMENTAL_MINIMAL_CNINFO_OFFICIAL_DISCLOSURE_PARSER_DESIGN.md`. This document
+`docs/FUNDAMENTAL_MINIMAL_CNINFO_OFFICIAL_DISCLOSURE_PARSER_DESIGN.md`. This
+document also records the local sample parser acceptance summary in
+`docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_PARSER_LOCAL_SAMPLE_ACCEPTANCE_SUMMARY.md`.
+That summary validates only the parser local-file minimum loop and does not
+wire L1 official disclosure evidence into Research Report V1. This document
 records the accepted design boundary; the implementation, baseline freeze,
 profile acceptance, HTML acceptance, orchestration design, offline runtime
 acceptance, and CLI runtime acceptance do not modify tests, fixtures, pipeline,
@@ -721,13 +725,16 @@ Next recommended sequence:
 
 1. Submit the manifest locator runtime acceptance summary documentation patch.
 2. Minimal CNInfo / official disclosure parser design.
-3. Parser schema / local-file reader implementation, or A-share specific risk
+3. Official disclosure parser local-file implementation and local sample
+   runtime review.
+4. `official_disclosure_facts -> candidate generator integration design`, real
+   local downloaded official filing sample review, or A-share specific risk
    framework design.
-4. Start batch / dashboard design after manifest closeout, and make it depend
+5. Start batch / dashboard design after manifest closeout, and make it depend
    on manifest-located artifacts.
-5. Keep caveats, evidence labels, data-quality notes, rebuttal conditions, and
+6. Keep caveats, evidence labels, data-quality notes, rebuttal conditions, and
    follow-up variables visible in any future display work.
-6. Later consider promote rules, validator, fixture promotion, live provider
+7. Later consider promote rules, validator, fixture promotion, live provider
    report, MCP, Tushare token work, and
    primary-provider switch only after a separately accepted stage.
 
@@ -735,8 +742,9 @@ Do not continue into promote-rule design, validator implementation, fixture
 promotion, live provider report, MCP, Tushare token work, or Tushare primary
 switch as the next step. The product line should now move from accepted
 manifest locator runtime baseline and Minimal CNInfo / official disclosure
-parser design into parser schema / local-file reader implementation, or
-A-share specific risk framework design.
+parser local sample acceptance into `official_disclosure_facts -> candidate
+generator integration design`, real local downloaded official filing sample
+review, or A-share specific risk framework design.
 
 ## 11. Presentation profile design addendum
 
@@ -895,8 +903,9 @@ The CLI runtime acceptance closeout is recorded in
 `docs/FUNDAMENTAL_SKILL_CLI_RUNTIME_ACCEPTANCE_SUMMARY.md`. Manifest locator
 runtime acceptance is recorded in
 `docs/FUNDAMENTAL_ACCEPTED_MANIFEST_LOCATOR_RUNTIME_ACCEPTANCE_SUMMARY.md`.
-Next recommended stage: parser schema / local-file reader implementation for
-the official disclosure parser, or A-share specific risk framework design.
+Next recommended stage: `official_disclosure_facts -> candidate generator
+integration design`, real local downloaded official filing sample review from a
+user-provided local text file, or A-share specific risk framework design.
 
 ## 15. CLI runtime acceptance addendum
 
@@ -1039,6 +1048,39 @@ Boundaries:
 - Official parser triggers are not trading signals, target-price inputs, or
   position-sizing inputs.
 
-Next recommended step after this design is parser schema / local-file reader
-implementation, followed by one local downloaded filing sample for
-`main_business` and `business_composition` extraction.
+Local sample runtime acceptance:
+
+- Minimal official disclosure parser local-file implementation accepted.
+- Conservative Period Patch accepted.
+- Local sample runtime review accepted.
+- Local-file parser baseline frozen.
+- Local sample:
+  `output/official_disclosures/local_samples/600406_annual_report_sample.txt`.
+- Runtime artifact:
+  `output/official_disclosures/20260528_194020/600406/official_disclosure_facts.json`.
+- Validated flow: local sample text -> `read_local_official_text` ->
+  `extract_periodic_report_basics` -> `extract_main_business_candidate` ->
+  `build_official_disclosure_facts` -> `write_official_disclosure_facts` ->
+  `read_official_disclosure_facts` -> `validate_official_disclosure_facts`.
+- Accepted result: `document_type=annual_report`, `report_period=2025A`,
+  `disclosure_date=2026-04-30`, main-business candidate from `主营业务`,
+  `source_documents=1`, `extracted_facts=4`, all L1 facts have source
+  location, and `not_for_trading_advice=true`.
+
+Research Report V1 boundary after local sample acceptance:
+
+- The local sample is not live CNInfo.
+- The local sample is not a complete real announcement parse.
+- The runtime artifact is ignored output, not a fixture, not a regression
+  expected file, not an accepted manifest update, and not a Research Report V1
+  update.
+- L1 official disclosure facts are not yet candidate-generator inputs.
+- L1 official disclosure facts are not yet accepted report evidence.
+- No Research Report V1 builder, renderer, orchestration, CLI, scoring, P1.1,
+  fixture, or accepted manifest behavior changes.
+
+Next recommended step after local sample acceptance is either
+`official_disclosure_facts -> candidate generator integration design`, or real
+local downloaded official filing sample review from a user-provided local text
+file. Do not jump directly into live CNInfo fetch, Tushare, MCP, validator,
+fixture promotion, Batch, or Dashboard implementation.
