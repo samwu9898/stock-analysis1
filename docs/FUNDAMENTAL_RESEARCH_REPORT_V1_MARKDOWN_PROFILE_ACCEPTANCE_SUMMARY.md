@@ -44,13 +44,17 @@ were not rerun here:
 - HTML renderer implementation accepted.
 - `600406`, `002371`, and `002050` HTML accepted.
 - HTML presentation layer baseline frozen.
+- Older `002371` Markdown / HTML runtime artifacts were superseded by the
+  `20260528T125518` professional-voice regenerated artifacts; user-facing
+  orchestration baseline should use the `20260528T125518` Markdown / HTML
+  artifacts.
 
 ## 2. Accepted Markdown artifacts
 
 | code | company | profile | industry focus | accepted runtime artifact path | known limitations |
 | --- | --- | --- | --- | --- | --- |
 | `600406` | 国电南瑞 | `stable_growth_grid_equipment` | Grid equipment, digital grid, power automation | `output/research_reports/20260527T210301/600406/fundamental_research_report_v1.md` | Main-business official source, business-composition period / classification / ratio, and valuation-date evidence still depend on later evidence enrichment. |
-| `002371` | 北方华创 | `semiconductor_equipment_cycle` | Semiconductor equipment, domestic substitution, wafer-fab capex | `output/research_reports/20260527T220148/002371/fundamental_research_report_v1.md` | Content thickness remains V1 draft-level; orders, delivery, acceptance, revenue recognition, and collection evidence can be strengthened later. |
+| `002371` | 北方华创 | `semiconductor_equipment_cycle` | Semiconductor equipment, domestic substitution, wafer-fab capex | `output/research_reports/20260528T125518/002371/fundamental_research_report_v1.md` | Content thickness remains V1 draft-level; orders, delivery, acceptance, revenue recognition, and collection evidence can be strengthened later. |
 | `002050` | 三花智控 | `advanced_manufacturing_thermal_management` | Thermal management, refrigeration control, new-energy vehicles, new-business optionality | `output/research_reports/20260528T003826/002050/fundamental_research_report_v1.md` | Content thickness remains V1 draft-level; segment revenue, customer structure, orders, and collection evidence can be strengthened later. |
 
 ## 3. Cross-contamination summary
@@ -82,7 +86,7 @@ presentation baseline:
 | code | company | profile | accepted HTML artifact |
 | --- | --- | --- | --- |
 | `600406` | 国电南瑞 | `stable_growth_grid_equipment` | `output/research_reports/20260528T012952/600406/fundamental_research_report_v1.html` |
-| `002371` | 北方华创 | `semiconductor_equipment_cycle` | `output/research_reports/20260528T090024/002371/fundamental_research_report_v1.html` |
+| `002371` | 北方华创 | `semiconductor_equipment_cycle` | `output/research_reports/20260528T125518/002371/fundamental_research_report_v1.html` |
 | `002050` | 三花智控 | `advanced_manufacturing_thermal_management` | `output/research_reports/20260528T091133/002050/fundamental_research_report_v1.html` |
 
 HTML acceptance confirmed artifact boundary, secret scan, external resource

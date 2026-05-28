@@ -6,8 +6,10 @@ Stage: Fundamental Skill User Invocation / Report Orchestration Design and
 Three-Sample Offline Orchestration Acceptance Sync.
 
 Status: design accepted, single-stock offline orchestration implementation
-accepted, Chinese summary patch accepted, and three-sample offline runtime
-acceptance complete. The acceptance closeout is recorded in
+accepted, Chinese summary patch accepted, three-sample offline runtime
+acceptance complete, and CLI / command wrapper design recorded in
+`docs/FUNDAMENTAL_SKILL_USER_INVOCATION_CLI_DESIGN.md`. The acceptance closeout
+is recorded in
 `docs/FUNDAMENTAL_SKILL_OFFLINE_ORCHESTRATION_ACCEPTANCE_SUMMARY.md`. This
 documentation sync does not change tests, change fixtures, change pipeline
 behavior, change scoring / readiness, change Research Intelligence P1.1, change
@@ -31,6 +33,11 @@ Current accepted upstream state:
 - `600406`, `002371`, and `002050` one-sentence offline runtime invocations
   accepted.
 - One-sentence local report invocation baseline frozen.
+- User invocation CLI / command wrapper design recorded.
+- Older `002371` Markdown / HTML runtime artifacts were superseded by the
+  `20260528T125518` professional-voice regenerated artifacts; user-facing
+  orchestration baseline should use the `20260528T125518` Markdown / HTML
+  artifacts.
 
 ## 1. Product Goal
 
@@ -397,58 +404,43 @@ not suggest live-provider access unless the user explicitly asks for it.
 
 ## 9. CLI / Command Design
 
-Future implementation can expose a single orchestration command so users and
-Codex do not manually run multiple builders.
+The detailed CLI / command wrapper design is recorded in
+`docs/FUNDAMENTAL_SKILL_USER_INVOCATION_CLI_DESIGN.md`.
 
-Example command:
+The stable command target for future implementation is:
 
-```bat
-python -m src.fundamental_skill.research_report.generate_report ^
-  --code 600406 ^
-  --format html ^
-  --data-mode offline_local_artifacts ^
-  --output-root output/research_reports
+```bash
+python -m src.fundamental_skill.research_report.generate_report --code 600406 --format html --data-mode offline_local_artifacts
 ```
 
-Shorter all-formats command:
+Company-name invocation should also be supported through the same command:
 
-```bat
-python -m src.fundamental_skill.research_report.run ^
-  --code 600406 ^
-  --all-formats
+```bash
+python -m src.fundamental_skill.research_report.generate_report --company-name 北方华创 --format html
 ```
 
-Possible future CLI arguments:
+The CLI goal is to let Codex trigger the accepted orchestration with one stable
+command. It should call `normalize_report_request`,
+`run_single_stock_report_orchestration`, and `format_orchestration_response`;
+it should not reimplement report logic, import old runners, import provider
+runtime modules, call providers, read tokens, connect MCP, or create a second
+reporting pipeline.
 
-```text
---code 600406
---company-name 国电南瑞
---stock-pool path/to/pool.json
---format json|markdown|html|all
---data-mode offline_local_artifacts|local_provider_comparison|future_live_provider
---provider-mode no_live_provider
---provider-transport none
---output-root output/research_reports
---reasoning-level high
---strict-evidence-boundary
---no-network
---no-token-read
---not-for-trading-advice
-```
-
-CLI defaults for current V1:
+Current V1 CLI defaults remain:
 
 - `--format html`;
 - `--data-mode offline_local_artifacts`;
 - `--provider-mode no_live_provider`;
 - `--provider-transport none`;
-- `--no-network`;
-- `--no-token-read`;
-- `--strict-evidence-boundary`;
-- `--not-for-trading-advice`.
+- `--no-network true`;
+- `--no-token-read true`;
+- `--strict-evidence-boundary true`;
+- `--not-for-trading-advice true`.
 
-This stage designs the command surface only. It does not implement commands or
-wire them into the package.
+This orchestration document records the relationship; the CLI document is the
+source of truth for command arguments, output behavior, error behavior, safety
+boundaries, implementation suggestions, and future implementation acceptance
+criteria.
 
 ## 10. Legacy Entry Point Reuse Boundary
 
@@ -526,8 +518,8 @@ Design relationship:
 
 - The single-stock user invocation / orchestration design and offline runtime
   implementation are accepted.
-- Package the single-stock invocation path behind a CLI / command wrapper
-  before batch.
+- The single-stock CLI / command wrapper design is recorded and should be
+  implemented and accepted before batch.
 - Let batch reuse the same single-stock orchestration pipeline for each stock.
 - Let Dashboard read generated outputs and show status, summaries, caveats,
   evidence gaps, and artifact links.
@@ -553,6 +545,8 @@ Completed sequence:
 7. Freeze the one-sentence local report invocation baseline.
 8. Record the acceptance closeout in
    `docs/FUNDAMENTAL_SKILL_OFFLINE_ORCHESTRATION_ACCEPTANCE_SUMMARY.md`.
+9. Record the user invocation CLI / command wrapper design in
+   `docs/FUNDAMENTAL_SKILL_USER_INVOCATION_CLI_DESIGN.md`.
 
 Accepted implementation criteria:
 
@@ -572,14 +566,15 @@ Accepted implementation criteria:
 
 Next recommended sequence:
 
-1. Commit the offline orchestration acceptance summary documentation patch.
-2. Enter user invocation CLI / command wrapper design or implementation.
+1. Commit the CLI / command wrapper design documentation patch.
+2. Enter user invocation CLI / command wrapper implementation.
 3. Let Codex call orchestration through one command, for example:
 
 ```bash
 python -m src.fundamental_skill.research_report.generate_report --code 600406 --format html --data-mode offline_local_artifacts
 ```
 
-4. Design batch / Dashboard only after the single-stock CLI is accepted.
+4. Design batch / Dashboard only after the single-stock CLI implementation is
+   accepted.
 5. Keep future live provider mode, Tushare token, MCP, CNInfo, validator,
    fixture promotion, and Tushare primary later.

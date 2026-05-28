@@ -22,8 +22,13 @@ signals.
 Accepted HTML runtime artifacts:
 
 - `output/research_reports/20260528T012952/600406/fundamental_research_report_v1.html`
-- `output/research_reports/20260528T090024/002371/fundamental_research_report_v1.html`
+- `output/research_reports/20260528T125518/002371/fundamental_research_report_v1.html`
 - `output/research_reports/20260528T091133/002050/fundamental_research_report_v1.html`
+
+Older `002371` Markdown / HTML runtime artifacts were superseded by the
+`20260528T125518` professional-voice regenerated artifacts; user-facing
+orchestration baseline should use the `20260528T125518` Markdown / HTML
+artifacts.
 
 ## 1. HTML Layer Positioning
 

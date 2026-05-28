@@ -32,13 +32,17 @@ not rerun in this documentation-only stage:
 - `002050` HTML accepted.
 - Three-sample HTML validation passed.
 - HTML presentation layer baseline frozen.
+- Older `002371` Markdown / HTML runtime artifacts were superseded by the
+  `20260528T125518` professional-voice regenerated artifacts; user-facing
+  orchestration baseline should use the `20260528T125518` Markdown / HTML
+  artifacts.
 
 ## 2. Accepted artifacts table
 
 | code | company | profile | accepted HTML artifact path | acceptance result | key validation points | known limitations |
 | --- | --- | --- | --- | --- | --- | --- |
 | `600406` | 国电南瑞 | `stable_growth_grid_equipment` | `output/research_reports/20260528T012952/600406/fundamental_research_report_v1.html` | Accepted | Artifact boundary, secret scan, external resource scan, HTML structure, content consistency, profile isolation, data-quality caveat visibility, and no investment-action output passed. | V1 static HTML presentation layer only; not a Dashboard; content depth still depends on later official-source and evidence enrichment. |
-| `002371` | 北方华创 | `semiconductor_equipment_cycle` | `output/research_reports/20260528T090024/002371/fundamental_research_report_v1.html` | Accepted | Artifact boundary, secret scan, external resource scan, HTML structure, content consistency, semiconductor-equipment profile isolation, caveat visibility, and no investment-action output passed. | Content thickness remains V1 draft-level and can be strengthened with later orders, delivery, acceptance, revenue-recognition, collection, CNInfo, and official-parser evidence. |
+| `002371` | 北方华创 | `semiconductor_equipment_cycle` | `output/research_reports/20260528T125518/002371/fundamental_research_report_v1.html` | Accepted | Artifact boundary, secret scan, external resource scan, HTML structure, content consistency, semiconductor-equipment profile isolation, caveat visibility, and no investment-action output passed. | Content thickness remains V1 draft-level and can be strengthened with later orders, delivery, acceptance, revenue-recognition, collection, CNInfo, and official-parser evidence. |
 | `002050` | 三花智控 | `advanced_manufacturing_thermal_management` | `output/research_reports/20260528T091133/002050/fundamental_research_report_v1.html` | Accepted | Artifact boundary, secret scan, external resource scan, HTML structure, content consistency, thermal-management profile isolation, caveat visibility, and no investment-action output passed. | Content thickness remains V1 draft-level and can be strengthened with later segment revenue, customer structure, orders, collections, CNInfo, and official-parser evidence. |
 
 ## 3. Acceptance summary

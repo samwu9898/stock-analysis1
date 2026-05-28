@@ -445,13 +445,17 @@ validator / fixture promotion / Tushare primary 仍后置。
 - presentation profile registry accepted。
 - professional analyst voice gate accepted。
 - cross-industry Markdown validation passed。
+- Older `002371` Markdown / HTML runtime artifacts were superseded by the
+  `20260528T125518` professional-voice regenerated artifacts; user-facing
+  orchestration baseline should use the `20260528T125518` Markdown / HTML
+  artifacts。
 
 三个 accepted runtime artifacts：
 
 | code | company | profile | product readability score | accepted runtime artifact |
 | --- | --- | --- | --- | --- |
 | `600406` | 国电南瑞 | `stable_growth_grid_equipment` | 8/10 | `output/research_reports/20260527T210301/600406/fundamental_research_report_v1.md` |
-| `002371` | 北方华创 | `semiconductor_equipment_cycle` | 7.5/10 | `output/research_reports/20260527T220148/002371/fundamental_research_report_v1.md` |
+| `002371` | 北方华创 | `semiconductor_equipment_cycle` | 7.5/10 | `output/research_reports/20260528T125518/002371/fundamental_research_report_v1.md` |
 | `002050` | 三花智控 | `advanced_manufacturing_thermal_management` | 8/10 | `output/research_reports/20260528T003826/002050/fundamental_research_report_v1.md` |
 
 Cross-contamination result:
