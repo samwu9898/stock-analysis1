@@ -1,0 +1,351 @@
+# Fundamental Official Disclosure Local Structured Table Reader Design
+
+Date: 2026-05-28
+
+Stage: Fundamental Skill Local Structured Table Reader Design.
+
+Status: documentation-only design. This stage does not implement code, change
+tests, change fixtures, change accepted manifests, change orchestration, change
+CLI behavior, change Research Report V1, change candidate generation, change
+review decisions, change pipeline / scoring / Research Intelligence P1.1,
+change regression expected files, generate output, submit runtime artifacts,
+run smoke tests, read `TUSHARE_TOKEN`, use the network, call CNInfo, call
+Tushare or AkShare, call any provider, connect MCP, or provide investment
+advice.
+
+Latest accepted verification results are quoted, not rerun here:
+
+- targeted tests `350 passed`
+- full pytest `998 passed, 1 skipped`
+- regression `passed=47 failed=0 total=47`
+
+Accepted prerequisite baseline:
+
+- Minimal official disclosure parser local-file implementation accepted.
+- Real local official filing sample runtime accepted.
+- Business Composition Table Parser Design accepted.
+- Table schema / quality model implementation accepted.
+- Caveat-only hardening accepted.
+- Table schema / quality model baseline frozen.
+- Current `600406_2025_semiannual_report_real.txt` remains an
+  `unreliable_text_copy` boundary sample.
+
+## 1. Design Positioning
+
+The local structured table reader is the input-reading layer for the Business
+Composition Table Parser. It is not the table fact validator itself.
+
+Its goals are to:
+
+- read user-provided local structured or semi-structured table files;
+- produce a unified normalized table representation;
+- preserve source location, row index, column names, unit hints, period hints,
+  and classification hints;
+- pass normalized tables to the accepted table quality model;
+- avoid direct table fact writes unless a later implementation stage explicitly
+  designs that behavior;
+- avoid direct candidate generator integration;
+- avoid direct Research Report V1 integration.
+
+It is not:
+
+- live CNInfo;
+- a provider;
+- PDF OCR;
+- full PDF table extraction;
+- fixture promotion;
+- a validator;
+- Research Report integration;
+- candidate generator integration;
+- Dashboard or Batch;
+- an investment advice system.
+
+## 2. Reader Source Priority
+
+V1 local structured reader source priority:
+
+1. CSV / Excel structured export.
+2. Local HTML table.
+3. DOCX table.
+4. Future PDF table extraction output.
+5. TXT copied from PDF only as an `unreliable_text_copy` boundary, not a
+   structured reader input.
+
+Design implications:
+
+- CSV / Excel is the best first implementation target because users can provide
+  explicit rows, columns, headers, and values with minimal parser ambiguity.
+- Local HTML table is the second preferred path when real `<table>` structure
+  is preserved.
+- DOCX table can be an auxiliary path for user-converted local samples, but it
+  should not be treated as a flawless official source.
+- PDF table extraction remains later work and must have a separate design.
+- Live CNInfo remains later work and must have a separate design.
+- TXT copied from PDF must not participate in numeric extraction.
+
+## 3. Normalized Table Representation
+
+Reader output should use a normalized in-memory table representation such as:
+
+```json
+{
+  "source_document_id": "doc_001",
+  "source_table_id": "table_001",
+  "source_file_path": "",
+  "source_format": "csv",
+  "source_section": "主营业务分产品情况",
+  "source_page_or_anchor": "",
+  "table_title": "",
+  "headers": [],
+  "rows": [],
+  "row_count": 0,
+  "column_count": 0,
+  "detected_unit": "",
+  "detected_period": "",
+  "classification_hint": "",
+  "reader_warnings": [],
+  "table_quality_hint": ""
+}
+```
+
+Rules:
+
+- Reader output is not an L1 table fact.
+- Reader output must be evaluated by the table quality model before any table
+  fact is built.
+- Reader output must preserve original headers and row order.
+- Reader output must not silently rewrite official segment names.
+- Reader output must not silently infer unit, period, or denominator.
+- `headers` and `rows` should preserve raw cell strings where possible.
+- `reader_warnings` should carry machine-readable reasons for ambiguity.
+- `table_quality_hint` is only a hint and cannot bypass quality assignment.
+
+## 4. CSV / Excel Reader Design
+
+### CSV
+
+CSV should be the first local structured implementation path.
+
+Design requirements:
+
+- Support UTF-8 and UTF-8-SIG.
+- Require the first row, or a caller-specified row, to be the header row.
+- Preserve column names exactly as read.
+- Preserve raw cell strings.
+- Do not automatically convert all numeric-looking strings into numbers.
+- Do not silently delete empty columns.
+- Record delimiter and encoding caveats.
+- Record warnings for duplicate headers, empty headers, ragged rows, and
+  unexpectedly blank rows.
+- Do not treat a CSV table as L1 until quality, unit, period, classification,
+  denominator, and row / column alignment checks pass.
+
+### Excel
+
+Excel may be designed in the same implementation stage as CSV or deferred one
+stage later.
+
+Design requirements:
+
+- Sheet selection must be explicit or carefully caveated.
+- The default reader must not read every sheet as accepted input.
+- The caller may specify a sheet name or index.
+- Auto-selected sheet names must be recorded with a caveat.
+- Do not depend on hidden formula recalculation.
+- Preserve raw cell values as exposed by the workbook.
+- Record merged-cell caveats.
+- Record hidden-row, hidden-column, formula-only, and multiple-table warnings
+  when detected.
+- Do not treat workbook formatting as authoritative evidence for unit, period,
+  or denominator.
+
+## 5. Local HTML Table Reader Design
+
+Local HTML table reading is the second preferred path when a filing or
+structured export preserves actual `<table>` markup.
+
+Design requirements:
+
+- Read only local `.html` or `.htm` files.
+- Do not use the network.
+- Do not load external resources.
+- Parse only `<table>` content.
+- Assign each table a table index and stable `source_table_id`.
+- Preserve header rows.
+- Preserve row order and visible cell text.
+- Record caveats when `rowspan` or `colspan` must be expanded.
+- Do not execute JavaScript.
+- Do not read remote URLs.
+- Do not download external CSS, images, scripts, or fonts.
+- Record warnings for missing headers, nested tables, multiple candidate
+  business-composition tables, and table layout ambiguity.
+
+## 6. DOCX Table Reader Design
+
+DOCX table reading is an auxiliary path for user-converted local samples.
+
+Design requirements:
+
+- Read only local `.docx` files.
+- Use only user-provided local conversions.
+- Do not treat DOCX as the primary path.
+- Record `source_origin=local_converted_from_official_pdf` or an equivalent
+  caveat when the DOCX came from a PDF conversion.
+- Preserve table index and table order.
+- Record merged-cell caveats.
+- Record warnings for split tables, repeated headers, missing headers, and
+  conversion artifacts.
+- Do not treat Word conversion output as a flawless official table.
+- Require a future real-sample runtime review before DOCX is accepted as a
+  numeric extraction source.
+
+## 7. Quality Gate Relationship
+
+Reader output must pass through the following gates before table facts can be
+accepted:
+
+- table quality assignment;
+- row / column alignment checks;
+- unit checks;
+- period checks;
+- classification type checks;
+- denominator checks;
+- total checks.
+
+The reader does not directly decide L1 eligibility. It cannot bypass
+`business_composition_table.py` table fact validation. It may preserve source
+evidence and warnings, but table fact construction remains a separate accepted
+schema / quality model responsibility.
+
+## 8. Fail-Closed Rules
+
+The reader must not generate structured table facts when any of these
+conditions apply:
+
+- header missing;
+- row length unstable;
+- unit unknown;
+- period unknown;
+- classification unknown;
+- segment column missing;
+- revenue column missing;
+- merged cells unresolved;
+- `rowspan` / `colspan` ambiguous;
+- formula-only value;
+- multiple tables mixed;
+- external resource dependency;
+- text copied from PDF;
+- parser confidence low.
+
+Allowed output in those cases:
+
+- normalized table warnings;
+- table caveats;
+- `business_composition_section_detected`;
+- `table_structure_unreliable_due_to_pdf_text_copy`;
+- `business_composition_table_unusable`.
+
+`unreliable_text_copy` and `unusable` remain caveat-only and must not enter
+`table_facts`.
+
+## 9. Artifact Design
+
+Two future artifact options are available.
+
+### Option A: Standalone Normalized Tables Artifact
+
+Future optional path:
+
+```text
+output/official_disclosures/<timestamp>/<code>/normalized_tables.json
+```
+
+Pros:
+
+- keeps reader output separate from accepted fact output;
+- supports runtime review of source-table normalization before fact extraction;
+- makes table-reader debugging easier;
+- avoids bloating `official_disclosure_facts.json` before the table fact schema
+  integration is accepted.
+
+Cons:
+
+- adds one more runtime artifact;
+- requires explicit linkage from future facts to normalized table records.
+
+### Option B: Embed Source Tables In Official Disclosure Facts
+
+Future conceptual shape:
+
+- `official_disclosure_facts.json.source_tables`
+- `official_disclosure_facts.json.table_caveats`
+
+Pros:
+
+- keeps document facts and table evidence in one payload;
+- easier to bundle source tables with emitted table facts.
+
+Cons:
+
+- risks mixing reader diagnostics with accepted facts too early;
+- can encourage downstream consumers to treat normalized tables as facts;
+- increases payload size and validation surface.
+
+### V1 Recommendation
+
+V1 should prefer Option A: standalone ignored runtime artifact
+`normalized_tables.json` for reader runtime review. After reader behavior is
+accepted, a later integration design can decide whether selected normalized
+table metadata should be embedded as `source_tables` inside
+`official_disclosure_facts.json`.
+
+Artifact boundary:
+
+- runtime artifact remains ignored;
+- not a fixture;
+- not regression expected;
+- does not update accepted manifest;
+- does not directly change reports;
+- does not enter candidate generator or Research Report V1.
+
+## 10. Safety / Non-Goals
+
+This design does not:
+
+- read tokens;
+- use the network;
+- call CNInfo;
+- call Tushare or AkShare;
+- call any provider;
+- connect MCP;
+- execute JavaScript;
+- load external resources;
+- perform OCR;
+- perform PDF table extraction;
+- write output in this design stage;
+- write fixtures;
+- change scoring, readiness, P1.1, or regression expected files;
+- integrate the candidate generator;
+- integrate Research Report V1;
+- provide trading advice.
+
+## 11. Roadmap
+
+Recommended sequence:
+
+1. Local Structured Table Reader Design.
+2. CSV reader schema / implementation.
+3. One local CSV structured sample runtime review.
+4. Local HTML table reader design / implementation.
+5. DOCX table reader design / implementation.
+6. Table quality integration runtime review.
+7. Add table facts to `official_disclosure_facts.json`.
+8. Candidate generator integration design.
+9. Research Report V1 L1 evidence integration design.
+10. Later PDF table extraction design.
+11. Later live CNInfo / official disclosure discovery design.
+
+The next implementation stage should be CSV reader schema / implementation.
+It should remain local-only, fail-closed, and separate from providers, tokens,
+MCP, fixtures, accepted manifests, candidate generation, Research Report V1,
+scoring, P1.1, regression expected files, and trading advice.

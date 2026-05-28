@@ -88,9 +88,9 @@ single-stock CLI runtime acceptance is recorded in
 `docs/FUNDAMENTAL_SKILL_CLI_RUNTIME_ACCEPTANCE_SUMMARY.md`. The manifest
 locator runtime acceptance is recorded in
 `docs/FUNDAMENTAL_ACCEPTED_MANIFEST_LOCATOR_RUNTIME_ACCEPTANCE_SUMMARY.md`.
-The next recommended official-disclosure work is Local Structured Table Reader
-Design for the independent Business Composition Table Parser. The next step is
-not more ad hoc
+The next recommended official-disclosure work is CSV Reader Schema /
+Implementation for the independent Business Composition Table Parser. The next
+step is not more ad hoc
 single-target HTML generation, promote-rule design, validator implementation,
 fixture promotion, live CNInfo fetch, live provider report, MCP, Tushare token
 work, or a Tushare primary switch.
@@ -736,23 +736,26 @@ Completed sequence:
 30. Real local official filing sample runtime review using the `600406` 2025
     semiannual report TXT sample.
 31. Official Disclosure Business Composition Table Parser Design.
+32. Business Composition Table Schema / Quality Model acceptance.
+33. Local Structured Table Reader Design.
 
 Next recommended sequence:
 
-1. Table schema / quality model implementation for the independent table
-   parser.
-2. DOCX / CSV / HTML local structured table reader design or implementation.
-3. One structured local table sample runtime review.
-4. Add table facts to `official_disclosure_facts.json` only after source
+1. CSV reader schema / implementation for the independent table parser.
+2. One local CSV structured sample runtime review.
+3. Local HTML table reader design / implementation.
+4. DOCX table reader design / implementation.
+5. Table quality integration runtime review.
+6. Add table facts to `official_disclosure_facts.json` only after source
    location, table quality, row / column alignment, unit, denominator, and
    total checks are explicit.
-5. Add candidate generator integration only after a separate accepted design.
-6. Add Research Report V1 integration only after a separate accepted design.
-7. Start batch / dashboard design after manifest closeout, and make it depend
+7. Add candidate generator integration only after a separate accepted design.
+8. Add Research Report V1 integration only after a separate accepted design.
+9. Start batch / dashboard design after manifest closeout, and make it depend
    on manifest-located artifacts.
-8. Keep caveats, evidence labels, data-quality notes, rebuttal conditions, and
+10. Keep caveats, evidence labels, data-quality notes, rebuttal conditions, and
    follow-up variables visible in any future display work.
-9. Later consider promote rules, validator, fixture promotion, live provider
+11. Later consider promote rules, validator, fixture promotion, live provider
    report, MCP, Tushare token work, and
    primary-provider switch only after a separately accepted stage.
 
@@ -761,8 +764,9 @@ promotion, live CNInfo fetch, live provider report, MCP, Tushare token work,
 or Tushare primary switch as the next step. The product line should now move
 from accepted manifest locator runtime baseline, Minimal CNInfo / official
 disclosure parser local + real-local-file acceptance, and Business Composition
-Table Parser Design into Local Structured Table Reader Design. The table schema
-/ quality model implementation is already accepted and frozen.
+Table Parser Design into CSV Reader Schema / Implementation. The table schema
+/ quality model implementation and Local Structured Table Reader Design are
+already accepted / recorded.
 
 ## 11. Presentation profile design addendum
 
@@ -921,8 +925,8 @@ The CLI runtime acceptance closeout is recorded in
 `docs/FUNDAMENTAL_SKILL_CLI_RUNTIME_ACCEPTANCE_SUMMARY.md`. Manifest locator
 runtime acceptance is recorded in
 `docs/FUNDAMENTAL_ACCEPTED_MANIFEST_LOCATOR_RUNTIME_ACCEPTANCE_SUMMARY.md`.
-Next recommended official-disclosure stage: table schema / quality model
-implementation for the independent Business Composition Table Parser.
+Next recommended official-disclosure stage: CSV Reader Schema /
+Implementation for the independent Business Composition Table Parser.
 
 ## 15. CLI runtime acceptance addendum
 
@@ -986,10 +990,10 @@ runtime manifest generation, and retained runtime acceptance are now accepted
 for `600406`, `002371`, and `002050`. Minimal CNInfo / official disclosure
 parser design, local sample acceptance, real local filing acceptance, and
 business-composition table parser design plus schema / quality model
-acceptance are now recorded. The next recommended official-disclosure stage is
-Local Structured Table Reader Design for the independent Business Composition
-Table Parser. Batch / Dashboard can start after manifest closeout and should
-depend on manifest-located artifacts.
+acceptance and Local Structured Table Reader Design are now recorded. The next
+recommended official-disclosure stage is CSV Reader Schema / Implementation for
+the independent Business Composition Table Parser. Batch / Dashboard can start
+after manifest closeout and should depend on manifest-located artifacts.
 Live Tushare provider mode, live CNInfo fetch, MCP, token work, validator,
 fixture promotion, and Tushare primary remain later separately accepted stages.
 
@@ -1128,9 +1132,9 @@ Research Report V1 boundary after official parser local-file acceptance:
 - No Research Report V1 builder, renderer, orchestration, CLI, scoring, P1.1,
   fixture, or accepted manifest behavior changes.
 
-Next recommended step after the Business Composition Table Schema / Quality
-Model acceptance is Local Structured Table Reader Design. Do not extract
-numeric values from disordered TXT tables, and do not jump directly into live
+Next recommended step after Local Structured Table Reader Design is CSV Reader
+Schema / Implementation. Do not extract numeric values from disordered TXT
+tables, and do not jump directly into live
 CNInfo fetch, Tushare, MCP, validator, fixture promotion, candidate generator
 integration, Research Report V1 integration, Batch, or Dashboard
 implementation.
@@ -1170,12 +1174,15 @@ Boundaries:
 - No trading advice, target price, position sizing, portfolio weighting, or
   technical trading signal.
 
+Local Structured Table Reader Design is recorded in
+`docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_LOCAL_STRUCTURED_TABLE_READER_DESIGN.md`.
+
 Next recommended official-disclosure stage:
 
 ```text
-Local Structured Table Reader Design
+CSV Reader Schema / Implementation
 ```
 
-The reader design should remain separate from Research Report V1. Candidate
-generator integration and Research Report V1 integration require separate
-accepted designs after structured local table behavior is accepted.
+The CSV reader implementation should remain separate from Research Report V1.
+Candidate generator integration and Research Report V1 integration require
+separate accepted designs after structured local table behavior is accepted.

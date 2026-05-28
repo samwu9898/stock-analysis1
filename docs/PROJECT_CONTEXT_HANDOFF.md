@@ -48,13 +48,16 @@ Business composition table schema / quality model implementation and
 caveat-only hardening are accepted and frozen; the acceptance summary is
 recorded in
 `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_BUSINESS_COMPOSITION_TABLE_SCHEMA_ACCEPTANCE_SUMMARY.md`.
+Local Structured Table Reader Design is recorded in
+`docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_LOCAL_STRUCTURED_TABLE_READER_DESIGN.md`.
 The retained ignored manifest is `output/research_reports/accepted_manifest.json`
 with SHA256
 `C1F97162A59DE113CD4C9F1A9531AEC3A915A3D6F09365098201234E6F5BEB7F`, size
 `7678`, mtime UTC `2026-05-28 10:17:55`, three `current` entries, and
 manifest-first runtime acceptance for `600406`, `002371`, and `002050`. The
-next recommended official-disclosure stage is Local Structured Table Reader
-Design for the independent Business Composition Table Parser. The next step is
+next recommended official-disclosure stage is CSV Reader Schema /
+Implementation for the independent Business Composition Table Parser. The next
+step is
 not more ad hoc
 single-target HTML generation, more single-stock CLI runtime generation, CLI
 usage documentation, promote rules, validator, fixture promotion, Tushare
@@ -119,9 +122,10 @@ Core modules:
   Fundamental Research Report V1, HTML, offline orchestration, CLI, accepted
   manifest locator, Minimal CNInfo / official disclosure parser local +
   real-local-file acceptance, Business Composition Table Parser Design, and
-  Business Composition Table Schema / Quality Model acceptance are recorded.
-  The next recommended official-disclosure step is Local Structured Table
-  Reader Design for the independent Business Composition Table Parser, not
+  Business Composition Table Schema / Quality Model acceptance, and Local
+  Structured Table Reader Design are recorded. The next recommended
+  official-disclosure step is CSV Reader Schema / Implementation for the
+  independent Business Composition Table Parser, not
   batch / Dashboard design, not more ad hoc single-target HTML generation, not
   fixture promotion, not validator implementation, not Tushare primary switch,
   not live CNInfo fetch, not live provider report, not MCP, not token work, not
@@ -193,11 +197,12 @@ natural-language Codex / GPT-5.5 request
   Report V1, single-stock offline orchestration / CLI, accepted manifest
   locator, Minimal CNInfo / official disclosure parser local + real-local-file
   acceptance, Business Composition Table Parser Design, and Business
-  Composition Table Schema / Quality Model acceptance are recorded. The next
-  recommended official-disclosure step is Local Structured Table Reader
-  Design, not another Phase 4 smoke, not more single-target HTML generation,
-  not fixture promotion, not Tushare primary switch, not live CNInfo fetch, not
-  candidate generator integration, and not Research Report V1 integration.
+  Composition Table Schema / Quality Model acceptance, and Local Structured
+  Table Reader Design are recorded. The next recommended official-disclosure
+  step is CSV Reader Schema / Implementation, not another Phase 4 smoke, not
+  more single-target HTML generation, not fixture promotion, not Tushare
+  primary switch, not live CNInfo fetch, not candidate generator integration,
+  and not Research Report V1 integration.
 - `Fundamental Ground Truth Benchmark Design`: documentation-only design for a reviewed factual benchmark covering canonical `basic_info`, `financial_metrics`, `valuation_metrics`, and `business_composition` fields. It defines the V1 sample pool, source priority, tolerance rules, future fixture shape, future validator boundary, and its relationship with regression, Tushare block-level primary design, and P1.1 deep validation. It does not make the user manually find most values; reviewed ground truth should be populated only after automatic candidate generation and auto-accept / human-review gates.
 - `Fundamental Auto Fact Candidate Generator Design`: documentation-only design for an automated candidate layer that extracts provider fact candidates from Tushare / AkShare / existing provider artifacts / future CNInfo or announcement parsers, records source trace, period, unit, confidence, conflict status, and review status, and routes only accepted or human-reviewed facts toward the ground-truth fixture. It does not add code, alter the fixture, implement a validator, call providers, read tokens, connect MCP, modify pipeline behavior, switch primary providers, or change regression expected files.
 - `Fundamental Candidate Report Review Protocol Design`: documentation-only design for converting `manual_review_priority_queue` into a few high-value review actions. The first `600406` plan prioritizes `valuation_metrics.as_of_date`, `business_composition.period`, `business_composition.classification_type`, and `business_composition.revenue_ratio`; the design is accepted and is now followed by the review decisions artifact design. It explicitly does not promote fixtures, run validators, call providers, read tokens, connect MCP, switch primary behavior, or merge AkShare / Tushare.
@@ -223,8 +228,8 @@ natural-language Codex / GPT-5.5 request
   through `table_caveats`, not `table_facts`. This is not live CNInfo, not PDF
   table parsing, not a fixture, not regression expected, not an accepted
   manifest update, not candidate generator integration, and not Research
-  Report V1 integration. Next recommended stage is Local Structured Table
-  Reader Design for the independent table parser.
+  Report V1 integration. Next recommended stage is CSV Reader Schema /
+  Implementation for the independent table parser.
 - `Fundamental Skill User Invocation / Report Orchestration`:
   accepted single-stock offline Codex / GPT-5.5 natural-language entry point.
   It defines request parsing, schema normalization, data modes, single-stock
@@ -456,9 +461,10 @@ Do not add a new industry framework only because one stock is popular or difficu
   Decisions Artifact Design, Research Report V1, offline orchestration / CLI,
   accepted manifest locator, Minimal CNInfo / official disclosure parser
   local + real-local-file acceptance, Business Composition Table Parser
-  Design, and Business Composition Table Schema / Quality Model acceptance are
-  complete or recorded. Next is Local Structured Table Reader Design for the
-  independent table parser, not another Phase 4 smoke, not more ad hoc
+  Design, Business Composition Table Schema / Quality Model acceptance, and
+  Local Structured Table Reader Design are complete or recorded. Next is CSV
+  Reader Schema / Implementation for the independent table parser, not another
+  Phase 4 smoke, not more ad hoc
   single-target HTML generation, not manual field filling, not fixture
   promotion, not validator implementation, not promote-rule design, not live
   CNInfo fetch, not candidate generator integration, not Research Report V1
@@ -477,10 +483,10 @@ Do not add a new industry framework only because one stock is popular or difficu
   CLI / Command Wrapper, accepted artifact manifest / freshness design,
   manifest locator runtime acceptance, Minimal CNInfo / official disclosure
   parser design, official parser local sample acceptance, real local filing
-  acceptance, business-composition table parser design, and table schema /
-  quality model acceptance are documented. The next recommended
-  official-disclosure phase is Local Structured Table Reader Design for the
-  independent table parser.
+  acceptance, business-composition table parser design, table schema / quality
+  model acceptance, and Local Structured Table Reader Design are documented.
+  The next recommended official-disclosure phase is CSV Reader Schema /
+  Implementation for the independent table parser.
 - `002050` 三花智控 is an internal successful HTML report sample candidate after v2.1 and visual audit acceptance.
 - `output/`, `output/reports/`, `output/visual_audit/`, `data/`, and `cache/` are generated/runtime artifacts and should not be committed.
 - Some industries remain uncovered, including banks, medical devices, and intelligent driving. CXO is covered by `life_science_cxo_services`, and AI datacenter infrastructure is covered by `ai_datacenter_infrastructure` v1, but both still have conservative public-data limits.
@@ -509,10 +515,10 @@ Do not add a new industry framework only because one stock is popular or difficu
   manifest locator runtime acceptance is recorded in
   `docs/FUNDAMENTAL_ACCEPTED_MANIFEST_LOCATOR_RUNTIME_ACCEPTANCE_SUMMARY.md`.
   Minimal CNInfo / official disclosure parser design, local sample acceptance,
-  real local filing acceptance, and business-composition table parser design
-  plus schema / quality model acceptance are recorded. Next useful
-  official-disclosure direction is Local Structured Table Reader Design for
-  the independent table parser.
+  real local filing acceptance, business-composition table parser design,
+  schema / quality model acceptance, and Local Structured Table Reader Design
+  are recorded. Next useful official-disclosure direction is CSV Reader Schema
+  / Implementation for the independent table parser.
   HTML must
   consume Markdown / presentation-layer output or the Research Report V1
   structured payload; it must not re-analyze, change conclusions, hide caveats,
@@ -525,9 +531,10 @@ Do not add a new industry framework only because one stock is popular or difficu
   explainability implementation, Research Report V1, offline orchestration /
   CLI, accepted manifest locator, Minimal CNInfo / official disclosure parser
   local + real-local-file acceptance, Business Composition Table Parser
-  Design, and Business Composition Table Schema / Quality Model acceptance are
-  complete or recorded. Next useful official-disclosure step is Local
-  Structured Table Reader Design for the independent table parser. Promote-rule
+  Design, Business Composition Table Schema / Quality Model acceptance, and
+  Local Structured Table Reader Design are complete or recorded. Next useful
+  official-disclosure step is CSV Reader Schema / Implementation for the
+  independent table parser. Promote-rule
   design, controlled fixture promotion, standalone validator, candidate
   generator integration, Research Report V1 integration, Tushare primary
   switch, live CNInfo fetch, live provider report, MCP, token work, sidecar
@@ -713,11 +720,11 @@ locator runtime acceptance is recorded in
 
 Minimal CNInfo / official disclosure parser design, local sample runtime
 acceptance, real local filing acceptance, Business Composition Table Parser
-Design, and Business Composition Table Schema / Quality Model acceptance are
-now recorded. Next recommended official-disclosure stage: Local Structured
-Table Reader Design. Do not continue single-stock CLI runtime generation or
-redo CLI usage documentation unless a new sample, regression check, or
-usage-surface change requires it.
+Design, Business Composition Table Schema / Quality Model acceptance, and
+Local Structured Table Reader Design are now recorded. Next recommended
+official-disclosure stage: CSV Reader Schema / Implementation. Do not continue
+single-stock CLI runtime generation or redo CLI usage documentation unless a
+new sample, regression check, or usage-surface change requires it.
 Batch / Dashboard can start after manifest closeout as a manifest-dependent
 layer. Promote rules, validator, fixture promotion, live provider report, MCP,
 Tushare token work, and Tushare primary remain later work.
@@ -846,6 +853,8 @@ Business composition table parser design is recorded in
 Business composition table schema / quality model implementation and
 caveat-only hardening are accepted and frozen in
 `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_BUSINESS_COMPOSITION_TABLE_SCHEMA_ACCEPTANCE_SUMMARY.md`.
+Local Structured Table Reader Design is recorded in
+`docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_LOCAL_STRUCTURED_TABLE_READER_DESIGN.md`.
 The accepted model defines table source priority, `table_quality`, row /
 column alignment requirements, fail-closed caveats, and an in-memory table-fact
 schema. The current `600406` real local TXT remains a negative / boundary
@@ -868,7 +877,7 @@ Latest accepted verification results are quoted: targeted tests `350 passed`,
 full pytest `998 passed, 1 skipped`, and regression
 `passed=47 failed=0 total=47`.
 
-Next recommended stage: Local Structured Table Reader Design for the
+Next recommended stage: CSV Reader Schema / Implementation for the
 independent table parser. Live CNInfo fetch, MCP, provider calls, token work,
 validator work, fixture promotion, candidate generator integration, Research
 Report V1 integration, scoring changes, P1.1 changes, manifest updates, report
@@ -899,9 +908,11 @@ Important boundary:
 - no structured local table sample runtime review exists yet;
 - no candidate generator or Research Report V1 integration exists yet.
 
-Next stage should be Local Structured Table Reader Design, preferably starting
-with CSV / Excel or local HTML table samples. DOCX table reading can be
-auxiliary; PDF extraction and live CNInfo remain later.
+Local Structured Table Reader Design is recorded in
+`docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_LOCAL_STRUCTURED_TABLE_READER_DESIGN.md`.
+Next stage should be CSV Reader Schema / Implementation. Local HTML and DOCX
+remain later local structured paths; PDF extraction and live CNInfo remain
+later.
 
 ## 19. New Codex Conversation Recovery Prompt
 

@@ -31,6 +31,8 @@ The independent business-composition table parser design is recorded in
 Its table schema / quality model implementation and caveat-only hardening are
 accepted and frozen in
 `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_BUSINESS_COMPOSITION_TABLE_SCHEMA_ACCEPTANCE_SUMMARY.md`.
+The Local Structured Table Reader Design is recorded in
+`docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_LOCAL_STRUCTURED_TABLE_READER_DESIGN.md`.
 It remains a separate module, not part of the current minimal text parser.
 
 ## 1. Design Positioning
@@ -453,26 +455,29 @@ Accepted sequence:
 9. Business Composition Table Schema / Quality Model implementation and
    caveat-only hardening accepted in
    `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_BUSINESS_COMPOSITION_TABLE_SCHEMA_ACCEPTANCE_SUMMARY.md`.
+10. Local Structured Table Reader Design recorded in
+    `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_LOCAL_STRUCTURED_TABLE_READER_DESIGN.md`.
 
 Recommended next sequence:
 
-1. Local Structured Table Reader Design for the independent table parser.
-2. Prefer CSV / Excel or local HTML table samples for the first structured
-   path; treat DOCX table reading as auxiliary.
-3. One structured local table sample runtime review.
-4. Add table facts to `official_disclosure_facts.json` only after table
+1. CSV reader schema / implementation for the independent table parser.
+2. One local CSV structured sample runtime review.
+3. Local HTML table reader design / implementation.
+4. DOCX table reader design / implementation.
+5. Table quality integration runtime review.
+6. Add table facts to `official_disclosure_facts.json` only after table
    quality, source location, row / column alignment, units, denominators, and
    total checks are explicit.
-5. Add L1 evidence tier handling only after a separate accepted integration
+7. Add L1 evidence tier handling only after a separate accepted integration
    design.
-6. Add candidate generator integration only after a separate accepted
+8. Add candidate generator integration only after a separate accepted
    integration design.
-7. Add Research Report V1 integration only after a separate accepted
+9. Add Research Report V1 integration only after a separate accepted
    integration design.
-8. Add freshness trigger integration only after separate policy acceptance.
-9. Later PDF table extraction design.
-10. Later live CNInfo fetch design.
-11. Later management guidance tracker.
+10. Add freshness trigger integration only after separate policy acceptance.
+11. Later PDF table extraction design.
+12. Later live CNInfo fetch design.
+13. Later management guidance tracker.
 
 Implementation should start with local files only. Any live CNInfo fetch, MCP
 connector, token handling, provider use, fixture promotion, validator, report
@@ -495,6 +500,7 @@ This design should be referenced by:
 
 - `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_BUSINESS_COMPOSITION_TABLE_PARSER_DESIGN.md`
 - `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_BUSINESS_COMPOSITION_TABLE_SCHEMA_ACCEPTANCE_SUMMARY.md`
+- `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_LOCAL_STRUCTURED_TABLE_READER_DESIGN.md`
 - `docs/FUNDAMENTAL_ACCEPTED_ARTIFACT_MANIFEST_FRESHNESS_DESIGN.md`
 - `docs/FUNDAMENTAL_RESEARCH_REPORT_V1_DESIGN.md`
 - `docs/PROJECT_CONTEXT_HANDOFF.md`
@@ -515,6 +521,8 @@ The current accepted runtime baseline remains unchanged:
   no network / no MCP.
 - Business-composition table parser design is recorded; table schema / quality
   model implementation and caveat-only hardening are accepted and frozen.
+- Local Structured Table Reader Design is recorded; no reader implementation is
+  accepted yet.
 - No business-composition table reader or writer is implemented yet.
 - Live CNInfo is not implemented.
 - PDF table parser is not implemented.

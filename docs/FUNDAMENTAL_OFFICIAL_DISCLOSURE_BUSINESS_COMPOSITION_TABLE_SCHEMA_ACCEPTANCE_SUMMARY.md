@@ -203,7 +203,7 @@ Known limitations:
 
 ## 10. Next Recommended Stage
 
-Recommended next stage:
+Recommended next stage at schema acceptance time:
 
 ```text
 Local Structured Table Reader Design
@@ -225,3 +225,32 @@ The next stage should remain fail-closed, local-first, and separate from
 provider calls, tokens, MCP, fixtures, accepted manifests, report generation,
 candidate generation, scoring, P1.1, regression expected files, and trading
 advice.
+
+## 11. Local Structured Table Reader Design Sync
+
+Local Structured Table Reader Design is now recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_LOCAL_STRUCTURED_TABLE_READER_DESIGN.md
+```
+
+That design keeps the table schema / quality model baseline unchanged:
+
+- reader output is a normalized table representation, not a table fact;
+- reader output must pass through the accepted table quality model;
+- `unreliable_text_copy` and `unusable` remain caveat-only and cannot enter
+  `table_facts`;
+- no reader, writer, candidate generator integration, or Research Report V1
+  integration is implemented by the design-only stage.
+
+Updated recommended next stage:
+
+```text
+CSV Reader Schema / Implementation
+```
+
+The CSV implementation should be local-only, preserve raw headers and row
+order, avoid silent numeric conversion, record delimiter / encoding caveats,
+and remain separate from output writes, fixtures, accepted manifests,
+candidate generation, Research Report V1, scoring, P1.1, regression expected
+files, providers, tokens, network, MCP, and trading advice.

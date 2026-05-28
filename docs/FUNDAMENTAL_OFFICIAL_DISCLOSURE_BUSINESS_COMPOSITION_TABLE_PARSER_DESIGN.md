@@ -12,6 +12,9 @@ in
 `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_BUSINESS_COMPOSITION_TABLE_SCHEMA_ACCEPTANCE_SUMMARY.md`.
 No reader, writer, HTML / DOCX / PDF / CSV / Excel parser, candidate-generator
 integration, or Research Report V1 integration is accepted yet.
+The local structured table reader design is recorded in
+`docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_LOCAL_STRUCTURED_TABLE_READER_DESIGN.md`.
+It is documentation-only and does not implement a reader.
 
 Latest accepted verification results are quoted, not rerun here:
 
@@ -78,6 +81,18 @@ Rules:
   path.
 - PDF table extraction requires a separate implementation design.
 - Live CNInfo and online discovery remain later work.
+
+For the Local Structured Table Reader V1 design, implementation priority is
+more conservative and local-sample-first:
+
+1. CSV / Excel structured export.
+2. Local HTML table.
+3. DOCX table.
+4. Future PDF table extraction output.
+5. TXT copied from PDF as an `unreliable_text_copy` boundary only.
+
+This reader priority is recorded in
+`docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_LOCAL_STRUCTURED_TABLE_READER_DESIGN.md`.
 
 ## 3. Business Composition Fields
 
@@ -316,17 +331,18 @@ Recommended sequence:
 9. Later live CNInfo / official disclosure discovery design.
 
 Table schema / quality model implementation and caveat-only hardening are now
-accepted and frozen. The next recommended stage is:
+accepted and frozen. Local Structured Table Reader Design is now recorded. The
+next recommended stage is:
 
 ```text
-Local Structured Table Reader Design
+CSV Reader Schema / Implementation
 ```
 
-It should first design a local structured table reader, preferably starting
-with CSV / Excel or local HTML table samples. DOCX table reading can remain an
-auxiliary path. PDF table extraction, live CNInfo, candidate generator
-integration, and Research Report V1 integration remain later separately
-accepted stages.
+It should implement the first local structured table path for CSV, preserving
+raw headers, row order, raw cell strings, delimiter / encoding caveats, and
+reader warnings. Excel, local HTML, and DOCX remain later local structured
+paths. PDF table extraction, live CNInfo, candidate generator integration, and
+Research Report V1 integration remain later separately accepted stages.
 
 ## 12. Schema / Quality Model Acceptance Addendum
 
@@ -357,3 +373,31 @@ Accepted boundaries:
 - no Research Report V1 integration;
 - no provider call, network use, token read, MCP, OCR, PDF extraction, scoring
   change, P1.1 change, regression expected change, or trading advice.
+
+## 13. Local Structured Table Reader Design Addendum
+
+The local structured table reader design is recorded in
+`docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_LOCAL_STRUCTURED_TABLE_READER_DESIGN.md`.
+
+Accepted design boundary:
+
+- the reader is an input-reading layer for the Business Composition Table
+  Parser;
+- reader output is a normalized table representation, not an L1 table fact;
+- reader output must preserve source location, row index, headers, raw row
+  order, unit hints, period hints, and classification hints;
+- reader output must pass through table quality, row / column alignment, unit,
+  period, classification, denominator, and total checks;
+- the reader cannot bypass `business_composition_table.py` validation;
+- TXT copied from PDF remains an `unreliable_text_copy` boundary and does not
+  participate in numeric extraction.
+
+V1 reader design priority:
+
+1. CSV / Excel structured export.
+2. Local HTML table.
+3. DOCX table.
+4. Future PDF table extraction output.
+5. TXT copied from PDF as caveat-only boundary.
+
+Recommended next stage: CSV reader schema / implementation.
