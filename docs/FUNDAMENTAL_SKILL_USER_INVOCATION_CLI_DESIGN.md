@@ -6,14 +6,17 @@ Stage: Fundamental Skill User Invocation CLI / Command Wrapper Design and
 Runtime Acceptance Sync.
 
 Status: design accepted, CLI implementation accepted, three-sample CLI runtime
-acceptance complete, and single-stock offline CLI baseline frozen. This
-document remains the command argument, output behavior, error behavior, and
-safety-boundary design source. The runtime acceptance closeout is recorded in
-`docs/FUNDAMENTAL_SKILL_CLI_RUNTIME_ACCEPTANCE_SUMMARY.md`. This documentation
-sync does not implement code, change tests, change fixtures, generate runtime
-output, run smoke tests, read `TUSHARE_TOKEN`, use the network, call Tushare or
-AkShare, connect MCP, change scoring / readiness, change Research Intelligence
-P1.1, change regression expected files, or provide trading advice.
+acceptance complete, single-stock offline CLI baseline frozen, and CLI usage
+guide recorded. This document remains the command argument, output behavior,
+error behavior, and safety-boundary design source. The runtime acceptance
+closeout is recorded in
+`docs/FUNDAMENTAL_SKILL_CLI_RUNTIME_ACCEPTANCE_SUMMARY.md`, and the CLI usage
+guide is recorded in `docs/FUNDAMENTAL_SKILL_CLI_USAGE_GUIDE.md`. This
+documentation sync does not implement code, change tests, change fixtures,
+generate runtime output, run smoke tests, read `TUSHARE_TOKEN`, use the
+network, call Tushare or AkShare, connect MCP, change scoring / readiness,
+change Research Intelligence P1.1, change regression expected files, or
+provide trading advice.
 
 Accepted upstream state:
 
@@ -27,6 +30,7 @@ Accepted upstream state:
 - Single-stock offline CLI baseline frozen.
 - CLI runtime acceptance summary recorded in
   `docs/FUNDAMENTAL_SKILL_CLI_RUNTIME_ACCEPTANCE_SUMMARY.md`.
+- CLI usage guide recorded in `docs/FUNDAMENTAL_SKILL_CLI_USAGE_GUIDE.md`.
 - Default mode remains `offline_local_artifacts`, `no_live_provider`, no token,
   no network, no provider call, and no MCP.
 
@@ -356,10 +360,15 @@ Acceptance result:
 
 After CLI runtime acceptance, the next recommended sequence is:
 
-1. Commit the CLI runtime acceptance summary documentation patch.
-2. Enter batch / Dashboard design, or first add CLI usage documentation.
+1. Commit the CLI usage guide documentation patch.
+2. Enter batch / Dashboard design.
 3. Keep live provider, Tushare token, MCP, CNInfo, official parser, validator,
    fixture promotion, and primary-provider switch for later separately accepted
    stages.
 4. Do not continue single-stock CLI runtime generation unless a new sample or a
    regression check requires it.
+
+The operational usage guide for Codex and developers is recorded in
+`docs/FUNDAMENTAL_SKILL_CLI_USAGE_GUIDE.md`. It should be the first reference
+for the accepted commands, Codex invocation behavior, parameters, stdout
+fields, error handling, and safety guardrails.
