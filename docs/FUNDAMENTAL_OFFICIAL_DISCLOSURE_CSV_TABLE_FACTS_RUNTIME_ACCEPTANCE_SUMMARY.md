@@ -248,3 +248,48 @@ Current next recommended stage:
 ```text
 Table facts -> official_disclosure_facts integration implementation
 ```
+
+## 13. Official Disclosure Facts With Tables Runtime Acceptance Sync
+
+The downstream table facts -> `official_disclosure_facts` runtime review is now
+accepted after explicit source-document alignment. Current closeout:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_FACTS_WITH_TABLES_RUNTIME_ACCEPTANCE_SUMMARY.md
+```
+
+Source lineage correction:
+
+- old CSV table facts review artifact used
+  `source_document_id=doc_600406_2025H1_real_local`;
+- base official payload contained
+  `source_document_id=600406_2025_semiannual_report_real`;
+- the mismatch stop gate correctly failed closed and produced no integration
+  artifact;
+- the accepted runtime rebuilt the normalized table and table facts using
+  `600406_2025_semiannual_report_real`.
+
+Accepted runtime result:
+
+- 6 retained CSV revenue facts appended to
+  `official_disclosure_facts.extracted_facts[]`;
+- integrated `extracted_facts=7`;
+- original base fact preserved;
+- `source_tables=1`, `table_caveats=4`,
+  `table_conversion_warnings=4`;
+- all table facts are `structured_medium`, require human review, and retain
+  `local_structured_sample_requires_human_review`;
+- no candidate generator integration, no Research Report V1 integration, no
+  fixture promotion, and no accepted manifest update.
+
+Accepted runtime artifact:
+
+```text
+output/official_disclosures/20260528T173612Z/600406/official_disclosure_facts_with_tables_review.json
+```
+
+Current next recommended stage:
+
+```text
+official_disclosure_facts -> candidate generator integration design
+```

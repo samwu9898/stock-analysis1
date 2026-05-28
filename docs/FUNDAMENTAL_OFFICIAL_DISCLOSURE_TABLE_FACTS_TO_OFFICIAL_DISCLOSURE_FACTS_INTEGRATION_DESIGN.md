@@ -517,3 +517,51 @@ Do not skip directly to live CNInfo, PDF extraction, DOCX / HTML / Excel
 reader, candidate generator integration, Research Report V1 integration,
 fixture promotion, accepted manifest update, validator work, scoring / P1.1
 change, or trading-advice output.
+
+## 12. Runtime Acceptance Summary Sync
+
+The table facts -> `official_disclosure_facts` integration implementation and
+source-document alignment runtime review are now accepted. The runtime baseline
+is frozen and recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_FACTS_WITH_TABLES_RUNTIME_ACCEPTANCE_SUMMARY.md
+```
+
+Accepted aligned runtime artifact:
+
+```text
+output/official_disclosures/20260528T173612Z/600406/official_disclosure_facts_with_tables_review.json
+```
+
+Acceptance notes:
+
+- the previous `source_document_id` mismatch stop gate was correct and
+  generated no integration artifact;
+- aligned input rebuilt the CSV normalized table and table facts with
+  `source_document_id=600406_2025_semiannual_report_real`;
+- integration appended 6 `structured_medium` revenue table facts to
+  `extracted_facts[]`;
+- `extracted_facts` increased from 1 to 7;
+- `source_tables=1`, `table_caveats=4`, and
+  `table_conversion_warnings=4`;
+- `source_documents` remained 1;
+- all table facts remain caveated L1 official disclosure candidates requiring
+  human review;
+- no verified fact, fixture, accepted manifest update, candidate generator
+  output, or Research Report V1 evidence was produced;
+- explicit source lineage alignment remains mandatory, and mismatch must
+  continue to fail closed without automatic source id rewriting.
+
+Latest accepted verification results are quoted here, not rerun by this
+documentation-only sync: targeted tests `466 passed`, full pytest latest
+`1114 passed, 1 skipped`, and regression `passed=47 failed=0 total=47`.
+
+Current next recommended stage:
+
+```text
+official_disclosure_facts -> candidate generator integration design
+```
+
+Do not directly enter Research Report V1 integration, fixture promotion,
+validator work, live CNInfo, PDF extraction, Dashboard, or Batch.

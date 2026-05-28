@@ -570,3 +570,47 @@ The current accepted runtime baseline remains unchanged:
 - Candidate generator integration is not implemented.
 - L1 official disclosure integration is not implemented.
 - Research Report V1 integration is not implemented.
+
+## 12. Official Disclosure Facts With Tables Runtime Acceptance Sync
+
+The minimal official disclosure payload can now be assembled with retained CSV
+table facts in a runtime-review-only path after source-document alignment. The
+accepted closeout is recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_FACTS_WITH_TABLES_RUNTIME_ACCEPTANCE_SUMMARY.md
+```
+
+Runtime acceptance record:
+
+- base payload:
+  `output/official_disclosures/20260528T125521Z/600406/official_disclosure_facts.json`;
+- aligned source document id:
+  `600406_2025_semiannual_report_real`;
+- integrated runtime artifact:
+  `output/official_disclosures/20260528T173612Z/600406/official_disclosure_facts_with_tables_review.json`;
+- base `source_documents=1`;
+- base `extracted_facts=1`;
+- integrated `extracted_facts=7`;
+- `source_tables=1`, `table_caveats=4`,
+  `table_conversion_warnings=4`;
+- `source_documents` remained 1;
+- no verified fact.
+
+Parser boundary remains conservative:
+
+- table facts are runtime-review-only caveated L1 official disclosure
+  candidates;
+- explicit `source_document_id` alignment is mandatory;
+- source lineage mismatch must fail closed;
+- no automatic source id rewriting;
+- no candidate generator integration yet;
+- no Research Report V1 integration yet;
+- no live CNInfo, provider call, token read, network, MCP, fixture promotion,
+  or accepted manifest update.
+
+Current next recommended official-disclosure stage:
+
+```text
+official_disclosure_facts -> candidate generator integration design
+```

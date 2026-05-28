@@ -460,3 +460,39 @@ Current next recommended stage:
 ```text
 Table facts -> official_disclosure_facts integration implementation
 ```
+
+## 14. Official Disclosure Facts With Tables Runtime Acceptance Sync
+
+The CSV converter baseline remains unchanged, and its retained facts have now
+been accepted through the table facts -> `official_disclosure_facts` runtime
+review after explicit source-document alignment.
+
+Closeout document:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_FACTS_WITH_TABLES_RUNTIME_ACCEPTANCE_SUMMARY.md
+```
+
+Aligned runtime facts:
+
+- source document id aligned to `600406_2025_semiannual_report_real`;
+- 6 revenue facts generated from the retained CSV sample;
+- examples: `电网智能` `12224749159.44`, `数能融合` `3900471200.41`,
+  and `合计` `24211165881.72`;
+- all facts preserve source table / row / column / column map;
+- all facts are `structured_medium` and require human review;
+- all facts remain caveated L1 official disclosure candidates.
+
+Boundaries remain:
+
+- no fixture promotion;
+- no accepted manifest update;
+- no candidate generator integration yet;
+- no Research Report V1 integration yet;
+- no live CNInfo, provider call, token read, network, MCP, or trading advice.
+
+Current next recommended stage:
+
+```text
+official_disclosure_facts -> candidate generator integration design
+```

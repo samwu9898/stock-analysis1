@@ -1177,7 +1177,109 @@ candidate generator integration, Research Report V1 integration, fixture
 promotion, accepted manifest updates, scoring / P1.1 changes, validator work,
 provider calls, token work, MCP, or trading advice.
 
-## 23. New Codex Conversation Recovery Prompt
+## 23. Official Disclosure Facts With Tables Runtime Acceptance
+
+Treat
+`docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_FACTS_WITH_TABLES_RUNTIME_ACCEPTANCE_SUMMARY.md`
+as the current documentation-only closeout for the retained CSV table facts ->
+`official_disclosure_facts` runtime baseline.
+
+Current accepted status:
+
+- table facts -> `official_disclosure_facts` integration implementation
+  accepted;
+- previous `source_document_id` mismatch stop gate triggered correctly;
+- source-document alignment runtime review accepted;
+- table facts -> `official_disclosure_facts` runtime baseline frozen;
+- no candidate generator integration;
+- no Research Report V1 integration;
+- no fixture promotion;
+- no accepted manifest update;
+- no live CNInfo.
+
+Previous stop gate:
+
+- base official payload source document id:
+  `600406_2025_semiannual_report_real`;
+- old CSV table facts source document id:
+  `doc_600406_2025H1_real_local`;
+- integration correctly stopped due to source lineage mismatch;
+- no integration artifact was generated in the stopped run;
+- this was correct fail-closed behavior.
+
+Aligned runtime record:
+
+- base official disclosure facts:
+  `output/official_disclosures/20260528T125521Z/600406/official_disclosure_facts.json`;
+- retained CSV:
+  `output/official_disclosures/local_structured_table_samples/600406_h1_product.csv`;
+- old CSV table facts review:
+  `output/official_disclosures/20260529T002922/600406/csv_table_facts_review.json`;
+- aligned `source_document_id`:
+  `600406_2025_semiannual_report_real`;
+- integrated runtime artifact:
+  `output/official_disclosures/20260528T173612Z/600406/official_disclosure_facts_with_tables_review.json`.
+
+Runtime result:
+
+- base `source_documents=1`;
+- base `extracted_facts=1`;
+- integrated `extracted_facts=7`;
+- original fact preserved;
+- 6 revenue facts appended, including `电网智能`, `数能融合`, and `合计`;
+- example revenues: `12224749159.44`, `3900471200.41`, and
+  `24211165881.72`;
+- `source_tables=1`, `table_caveats=4`,
+  `table_conversion_warnings=4`;
+- `source_documents` remained 1;
+- `not_for_trading_advice=true`;
+- no verified fact.
+
+Validation and boundary:
+
+- `validate_official_disclosure_table_integration_payload(...)` passed;
+- `validate_official_disclosure_facts(...)` passed;
+- integrated table facts passed `validate_table_fact(...)`;
+- all table facts reference the existing source document;
+- source table trace valid;
+- `table_quality_hint=structured_medium` and
+  `table_quality_final=structured_medium`;
+- no `fact_id` collision;
+- no source table trace conflict;
+- no caveat-only table facts;
+- base payload, retained CSV, and old CSV table facts review unchanged;
+- runtime artifact is ignored, untracked, unstaged, not a fixture, not a
+  regression expected file, not an accepted manifest update, not Research
+  Report V1 output, and not candidate generator output.
+
+Safety:
+
+- input CSV, base payload, old CSV table facts review artifact, new integrated
+  runtime artifact, git diff, and staged diff scanned clean;
+- no token, Bearer, MCP URL, `.env`, local secret path, provider credential, or
+  trading recommendation keys;
+- no `TUSHARE_TOKEN` read;
+- no network;
+- no CNInfo / Tushare / AkShare / provider call;
+- no MCP.
+
+Latest accepted verification results are quoted: targeted tests `466 passed`,
+full pytest latest `1114 passed, 1 skipped`, and regression
+`passed=47 failed=0 total=47`.
+
+Current next recommended stage:
+
+```text
+official_disclosure_facts -> candidate generator integration design
+```
+
+That stage should design how text facts and table facts in
+`official_disclosure_facts` enter `fact_candidates`. It should still not enter
+Research Report V1 integration, fixture promotion, accepted manifest updates,
+live CNInfo, PDF extraction, Dashboard, Batch, provider calls, token work, MCP,
+or trading advice.
+
+## 24. New Codex Conversation Recovery Prompt
 
 Copy this into a new Codex / AI conversation:
 

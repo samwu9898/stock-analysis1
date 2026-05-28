@@ -1347,3 +1347,51 @@ Do not directly enter candidate generator integration, Research Report V1
 integration, fixture promotion, accepted manifest updates, live CNInfo, PDF
 extraction, provider calls, token work, MCP, scoring / P1.1 changes, or trading
 advice.
+
+## 24. Official Disclosure Facts With Tables Runtime Acceptance Boundary
+
+The table facts -> `official_disclosure_facts` runtime baseline is now frozen
+after explicit `source_document_id` alignment. Closeout:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_FACTS_WITH_TABLES_RUNTIME_ACCEPTANCE_SUMMARY.md
+```
+
+Accepted runtime artifact:
+
+```text
+output/official_disclosures/20260528T173612Z/600406/official_disclosure_facts_with_tables_review.json
+```
+
+Research Report V1 boundary remains unchanged:
+
+- integrated table facts are runtime-review-only;
+- facts are caveated L1 official disclosure candidates requiring human review;
+- facts are not verified facts;
+- facts are not report-ready evidence;
+- no Research Report V1 builder, renderer, orchestration, CLI, accepted
+  manifest, fixture, scoring, readiness, P1.1, or regression expected behavior
+  changed;
+- no candidate generator integration exists yet;
+- no Research Report V1 L1 evidence integration exists yet.
+
+Runtime result summary:
+
+- base `extracted_facts=1`;
+- integrated `extracted_facts=7`;
+- 6 revenue facts appended;
+- `source_tables=1`, `table_caveats=4`,
+  `table_conversion_warnings=4`;
+- `source_documents` remained 1;
+- `not_for_trading_advice=true`;
+- no verified fact.
+
+Current next recommended stage is not Research Report V1 integration:
+
+```text
+official_disclosure_facts -> candidate generator integration design
+```
+
+Do not directly enter Research Report V1 integration, fixture promotion,
+validator work, live CNInfo, PDF extraction, Dashboard, Batch, provider calls,
+token work, MCP, or trading advice.
