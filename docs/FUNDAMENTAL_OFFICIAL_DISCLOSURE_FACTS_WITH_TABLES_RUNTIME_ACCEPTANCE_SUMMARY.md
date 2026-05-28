@@ -177,8 +177,8 @@ Confirmed:
 
 Latest accepted verification results:
 
-- targeted tests `466 passed`;
-- full pytest latest `1114 passed, 1 skipped`;
+- targeted tests `496 passed`;
+- full pytest latest `1144 passed, 1 skipped`;
 - regression `passed=47 failed=0 total=47`;
 - runtime artifact validation passed;
 - artifact boundary passed;
@@ -195,7 +195,8 @@ provider calls, token reads, network access, or MCP.
 - Facts require human review.
 - Current path only validates revenue facts.
 - No cost / gross margin / YoY facts accepted yet.
-- No candidate generator output yet.
+- No provider-centric `fact_candidates.json` output yet; independent official
+  candidate payload runtime review is now accepted separately.
 - No Research Report V1 integration yet.
 - No live CNInfo.
 - No PDF / DOCX / HTML / Excel reader integration.
@@ -256,16 +257,76 @@ The current runtime baseline remains unchanged:
 - `source_tables=1`;
 - `table_caveats=4`;
 - `table_conversion_warnings=4`;
-- no candidate generator output yet;
+- no provider-centric `fact_candidates.json` output yet;
 - no Research Report V1 integration yet.
+
+## 14. Official Candidate Payload Runtime Acceptance Sync
+
+The official disclosure facts with tables baseline has now been consumed by the
+accepted official disclosure candidate adapter in a runtime review recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_CANDIDATE_PAYLOAD_RUNTIME_ACCEPTANCE_SUMMARY.md
+```
+
+Runtime records:
+
+- input official disclosure facts with tables:
+  `output/official_disclosures/20260528T173612Z/600406/official_disclosure_facts_with_tables_review.json`;
+- generated official candidate payload review artifact:
+  `output/official_disclosures/20260528T182057Z/600406/official_disclosure_candidates_review.json`;
+- both artifacts are ignored runtime artifacts, not staged, not tracked, not
+  fixtures, not regression expected files, and not accepted manifest updates.
+
+Accepted candidate payload summary:
+
+- `version=official_disclosure_fact_candidates.v1`;
+- `source_type=official_disclosure`;
+- `candidate_rows=7`;
+- 1 main business candidate;
+- 6 revenue table candidates;
+- table segments: `电网智能`, `数能融合`, `能源低碳`, `工业互联`,
+  `集成及其他`, and `合计`;
+- all rows use `evidence_tier=L1_official_disclosure`;
+- main business and all table revenue candidates are
+  `manual_review_required`;
+- `structured_medium` remains manual review;
+- no `verified_fact`, no `review_status=verified`, and no `auto_verified`.
+
+Propagation and caveats:
+
+- `table_caveats[]` entered `candidate_caveats`;
+- `table_conversion_warnings[]` entered `integration_warnings`;
+- `local_structured_sample_requires_human_review`, `delimiter_sniffed`,
+  `unit_not_detected`, and `period_not_detected` were preserved;
+- `denominator_missing` was not present in this input;
+- `source_page_or_anchor` is empty in the current input and preserved as empty;
+- this source trace caveat is accepted because trace remains closed through
+  source document + source section + table row / column / source_column_map;
+- do not silently invent page or anchor.
+
+Boundary remains unchanged:
+
+- no provider-centric `fact_candidates.json`;
+- no candidate generator main path modification;
+- no Research Report V1 integration;
+- no fixture promotion;
+- no accepted manifest update;
+- no live CNInfo;
+- no token read, network, provider call, MCP, live fetch, scoring / P1.1
+  change, regression expected change, or trading advice.
+
+Latest accepted verification results are quoted, not rerun here: targeted
+tests `496 passed`, full pytest latest `1144 passed, 1 skipped`, and
+regression `passed=47 failed=0 total=47`.
 
 Next recommended stage:
 
 ```text
-official_disclosure_facts -> candidate generator integration implementation
+official candidate payload -> provider-centric fact_candidates bridge design
 ```
 
-That future implementation must remain separate from fixture promotion,
-accepted manifest updates, Research Report V1 integration, provider calls,
-token reads, network access, MCP, scoring / P1.1 changes, regression expected
-changes, and trading advice.
+That future bridge design must remain separate from fixture promotion, accepted
+manifest updates, Research Report V1 integration, provider calls, token reads,
+network access, MCP, scoring / P1.1 changes, regression expected changes, and
+trading advice.

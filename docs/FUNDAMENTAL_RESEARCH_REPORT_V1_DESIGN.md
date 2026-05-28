@@ -1430,14 +1430,83 @@ Current runtime baseline remains:
 - `source_tables=1`;
 - `table_caveats=4`;
 - `table_conversion_warnings=4`;
-- no candidate generator output;
+- no provider-centric `fact_candidates.json` output;
 - no Research Report V1 L1 evidence integration.
 
-Next recommended official-disclosure stage:
+Historical next recommended official-disclosure stage, now completed by
+adapter implementation and runtime acceptance:
 
 ```text
 official_disclosure_facts -> candidate generator integration implementation
 ```
 
+Current next recommended official-disclosure stage:
+
+```text
+official candidate payload -> provider-centric fact_candidates bridge design
+```
+
 Research Report V1 L1 evidence integration remains a later separate design
-after candidate-generator integration and review-decision handling.
+after the provider-centric candidate bridge and review-decision handling.
+
+## 26. Official Candidate Payload Runtime Acceptance Boundary
+
+The official disclosure facts with tables -> official candidate payload
+runtime review is accepted and frozen in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_CANDIDATE_PAYLOAD_RUNTIME_ACCEPTANCE_SUMMARY.md
+```
+
+Runtime records:
+
+- input artifact:
+  `output/official_disclosures/20260528T173612Z/600406/official_disclosure_facts_with_tables_review.json`;
+- official candidate payload review artifact:
+  `output/official_disclosures/20260528T182057Z/600406/official_disclosure_candidates_review.json`.
+
+Research Report V1 boundary remains unchanged:
+
+- the output is an independent official candidate payload;
+- it is not merged into provider-centric `fact_candidates.json`;
+- it is not Research Report V1 evidence;
+- it is not a report artifact update;
+- it is not a fixture;
+- it is not an accepted manifest update;
+- it does not modify builder, renderer, orchestration, CLI, scoring,
+  readiness, P1.1, or regression expected behavior.
+
+Accepted payload summary:
+
+- `version=official_disclosure_fact_candidates.v1`;
+- `source_type=official_disclosure`;
+- `candidate_rows=7`;
+- 1 main business candidate;
+- 6 revenue table candidates;
+- table segments: `电网智能`, `数能融合`, `能源低碳`, `工业互联`,
+  `集成及其他`, and `合计`;
+- all rows use `evidence_tier=L1_official_disclosure`;
+- all current candidates remain `manual_review_required`;
+- `source_page_or_anchor` is empty in the current input and preserved as empty;
+- source trace remains closed through source document + source section + table
+  row / column / source_column_map;
+- no `verified_fact`, no `review_status=verified`, and no `auto_verified`.
+
+Boundary and safety:
+
+- no provider-centric `fact_candidates.json` was generated;
+- no candidate generator main path was modified;
+- no caveat became a report conclusion;
+- no token read, network, CNInfo / Tushare / AkShare / provider call, MCP,
+  live fetch, fixture promotion, accepted manifest update, scoring / P1.1
+  change, regression expected change, or trading advice.
+
+Next recommended official-disclosure stage remains before Research Report V1:
+
+```text
+official candidate payload -> provider-centric fact_candidates bridge design
+```
+
+Do not directly enter Research Report V1 integration, fixture promotion,
+validator work, live CNInfo, Tushare primary switch, Dashboard / Batch, or
+trading advice.

@@ -381,7 +381,7 @@ Fail-closed cases:
 
 ## 10. Relation To Current Runtime Baseline
 
-Current accepted baseline:
+Current accepted official disclosure facts baseline:
 
 - base official facts with main-business official text;
 - integrated table facts review artifact:
@@ -392,17 +392,42 @@ Current accepted baseline:
 - `table_caveats=4`;
 - `table_conversion_warnings=4`;
 - no verified fact;
-- no candidate generator output yet.
+- no provider-centric candidate generator output.
+
+Current accepted official candidate payload baseline:
+
+- official disclosure candidate adapter implementation accepted;
+- runtime review artifact:
+  `output/official_disclosures/20260528T182057Z/600406/official_disclosure_candidates_review.json`;
+- `version=official_disclosure_fact_candidates.v1`;
+- `source_type=official_disclosure`;
+- `candidate_rows=7`;
+- 1 main business candidate;
+- 6 revenue table candidates;
+- table segments: `电网智能`, `数能融合`, `能源低碳`, `工业互联`,
+  `集成及其他`, and `合计`;
+- all rows use `evidence_tier=L1_official_disclosure`;
+- main business and all revenue table candidates remain
+  `manual_review_required`;
+- `source_page_or_anchor` is empty in the current input and preserved as empty;
+- trace remains closed through source document + source section + table row /
+  column / source_column_map;
+- no `verified_fact`, no `review_status=verified`, and no `auto_verified`;
+- no provider-centric `fact_candidates.json`;
+- no candidate generator main path modification;
+- no Research Report V1 integration;
+- no fixture promotion;
+- no accepted manifest update.
 
 Latest accepted verification results are quoted here, not rerun by this
 documentation-only stage:
 
-- targeted tests `466 passed`;
-- full pytest latest `1114 passed, 1 skipped`;
+- targeted tests `496 passed`;
+- full pytest latest `1144 passed, 1 skipped`;
 - regression `passed=47 failed=0 total=47`.
 
-This stage does not generate a new runtime artifact and does not change the
-frozen baseline.
+This documentation-only acceptance summary does not generate a new runtime
+artifact and does not change the frozen baseline.
 
 ## 11. Safety / Non-Goals
 
@@ -433,16 +458,24 @@ position-sizing inputs, buy / sell / hold labels, or trading signals.
 
 ## 12. Roadmap
 
-Recommended sequence:
+Completed sequence:
 
 1. `official_disclosure_facts -> candidate generator integration` design.
-2. Integration implementation.
-3. Retained 600406 runtime review.
-4. Candidate review decision design / update.
-5. Research Report V1 L1 evidence integration design.
-6. Live CNInfo / official disclosure discovery later.
+2. Official disclosure candidate adapter implementation.
+3. Retained 600406 official facts with tables -> official candidate payload
+   runtime review.
+4. Runtime acceptance summary and baseline freeze.
 
-The next stage after this documentation patch should be the integration
-implementation, still without fixture promotion, accepted manifest updates,
-Research Report V1 integration, provider calls, token reads, MCP, scoring /
-P1.1 changes, regression expected changes, or trading advice.
+Recommended next stage:
+
+```text
+official candidate payload -> provider-centric fact_candidates bridge design
+```
+
+The bridge design should decide how an independent official candidate payload
+can coexist with or be referenced by provider-centric `fact_candidates.json`
+without silently changing the existing provider-centric schema.
+
+Do not proceed directly to Research Report V1 integration, fixture promotion,
+validator work, live CNInfo, Tushare primary switch, Dashboard / Batch, scoring
+/ P1.1 changes, regression expected changes, or trading advice.

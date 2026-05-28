@@ -599,3 +599,62 @@ This addendum does not write code, generate `fact_candidates.json`, write
 fixtures, update accepted manifests, call providers, read tokens, connect MCP,
 change scoring / P1.1 / regression expected files, or integrate Research
 Report V1.
+
+## 17. Official Candidate Payload Runtime Acceptance Addendum
+
+The official disclosure candidate adapter implementation and the retained
+official disclosure facts with tables -> official candidate payload runtime
+review are now accepted. The frozen runtime closeout is recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_CANDIDATE_PAYLOAD_RUNTIME_ACCEPTANCE_SUMMARY.md
+```
+
+Runtime records:
+
+- input official disclosure facts with tables:
+  `output/official_disclosures/20260528T173612Z/600406/official_disclosure_facts_with_tables_review.json`;
+- official candidate payload review artifact:
+  `output/official_disclosures/20260528T182057Z/600406/official_disclosure_candidates_review.json`.
+
+Accepted payload summary:
+
+- `version=official_disclosure_fact_candidates.v1`;
+- `source_type=official_disclosure`;
+- `candidate_rows=7`;
+- 1 main business candidate;
+- 6 revenue table candidates;
+- table segments: `电网智能`, `数能融合`, `能源低碳`, `工业互联`,
+  `集成及其他`, and `合计`;
+- all rows use `evidence_tier=L1_official_disclosure`;
+- main business and table revenue candidates remain
+  `manual_review_required`;
+- no `verified_fact`, no `review_status=verified`, and no `auto_verified`.
+
+Candidate generator boundary:
+
+- the accepted runtime artifact is an independent official candidate payload;
+- it is not provider-centric `fact_candidates.json`;
+- it is not candidate generator main output;
+- it does not modify the existing provider-centric candidate generator schema;
+- it does not enter Research Report V1;
+- it does not promote fixtures or update accepted manifests.
+
+Known bridge problem:
+
+- existing `fact_candidates.json` remains provider-centric;
+- official candidate payload needs a separate bridge design before it can
+  coexist with or be referenced by provider-centric candidates;
+- the bridge must preserve official source trace, candidate caveats, and human
+  review status without implying verified facts or report conclusions.
+
+Next recommended stage:
+
+```text
+official candidate payload -> provider-centric fact_candidates bridge design
+```
+
+Do not proceed directly to Research Report V1 integration, fixture promotion,
+validator work, live CNInfo, Tushare primary switch, Dashboard / Batch, scoring
+/ P1.1 changes, regression expected changes, provider calls, token reads, MCP,
+or trading advice.

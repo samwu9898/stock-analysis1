@@ -65,14 +65,16 @@ Table facts -> `official_disclosure_facts` runtime acceptance is recorded in
 `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_FACTS_WITH_TABLES_RUNTIME_ACCEPTANCE_SUMMARY.md`.
 Official disclosure facts -> candidate generator integration design is recorded
 in
-`docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_FACTS_TO_CANDIDATE_GENERATOR_INTEGRATION_DESIGN.md`.
+`docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_FACTS_TO_CANDIDATE_GENERATOR_INTEGRATION_DESIGN.md`,
+and official candidate payload runtime acceptance is recorded in
+`docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_CANDIDATE_PAYLOAD_RUNTIME_ACCEPTANCE_SUMMARY.md`.
 The retained ignored manifest is `output/research_reports/accepted_manifest.json`
 with SHA256
 `C1F97162A59DE113CD4C9F1A9531AEC3A915A3D6F09365098201234E6F5BEB7F`, size
 `7678`, mtime UTC `2026-05-28 10:17:55`, three `current` entries, and
 manifest-first runtime acceptance for `600406`, `002371`, and `002050`. The
 next recommended official-disclosure stage is
-`official_disclosure_facts -> candidate generator integration implementation`.
+`official candidate payload -> provider-centric fact_candidates bridge design`.
 The next step is
 not more ad hoc
 single-target HTML generation, more single-stock CLI runtime generation, CLI
@@ -142,9 +144,10 @@ Core modules:
   to table facts integration design, CSV table facts runtime acceptance, and
   table facts -> `official_disclosure_facts.json` integration design,
   official disclosure facts with tables runtime acceptance, and official
-  disclosure facts -> candidate generator integration design are recorded. The
-  next recommended official-disclosure step is
-  `official_disclosure_facts -> candidate generator integration implementation`,
+  disclosure facts -> candidate generator integration design are recorded, and
+  official candidate payload runtime acceptance is frozen. The next recommended
+  official-disclosure step is
+  `official candidate payload -> provider-centric fact_candidates bridge design`,
   not
   batch / Dashboard design, not more ad hoc single-target HTML generation, not
   fixture promotion, not validator implementation, not Tushare primary switch,
@@ -256,8 +259,9 @@ natural-language Codex / GPT-5.5 request
   table facts runtime review are now accepted. Table facts ->
   `official_disclosure_facts.json` integration implementation and runtime
   acceptance are accepted. Official disclosure facts -> candidate generator
-  integration design is recorded. Next recommended stage is
-  `official_disclosure_facts -> candidate generator integration implementation`.
+  integration design and official candidate payload runtime acceptance are
+  recorded. Next recommended stage is
+  `official candidate payload -> provider-centric fact_candidates bridge design`.
 - `Fundamental Skill User Invocation / Report Orchestration`:
   accepted single-stock offline Codex / GPT-5.5 natural-language entry point.
   It defines request parsing, schema normalization, data modes, single-stock
@@ -494,9 +498,10 @@ Do not add a new industry framework only because one stock is popular or difficu
   acceptance, CSV to table facts integration design, and CSV table facts
   runtime acceptance, and table facts -> `official_disclosure_facts.json`
   integration design, official disclosure facts with tables runtime
-  acceptance, and official disclosure facts -> candidate generator integration
-  design are complete or recorded. Next is
-  `official_disclosure_facts -> candidate generator integration implementation`,
+  acceptance, official disclosure facts -> candidate generator integration
+  design, and official candidate payload runtime acceptance are complete or
+  recorded. Next is
+  `official candidate payload -> provider-centric fact_candidates bridge design`,
   not another
   Phase 4 smoke, not more ad hoc
   single-target HTML generation, not manual field filling, not fixture
@@ -522,10 +527,10 @@ Do not add a new industry framework only because one stock is popular or difficu
   Local Structured CSV runtime acceptance, CSV to table facts integration
   design, CSV table facts runtime acceptance, and table facts ->
   `official_disclosure_facts.json` integration design, official disclosure
-  facts with tables runtime acceptance, and official disclosure facts ->
-  candidate generator integration design are documented. The next recommended
-  official-disclosure phase is
-  `official_disclosure_facts -> candidate generator integration implementation`.
+  facts with tables runtime acceptance, official disclosure facts -> candidate
+  generator integration design, and official candidate payload runtime
+  acceptance are documented. The next recommended official-disclosure phase is
+  `official candidate payload -> provider-centric fact_candidates bridge design`.
 - `002050` 三花智控 is an internal successful HTML report sample candidate after v2.1 and visual audit acceptance.
 - `output/`, `output/reports/`, `output/visual_audit/`, `data/`, and `cache/` are generated/runtime artifacts and should not be committed.
 - Some industries remain uncovered, including banks, medical devices, and intelligent driving. CXO is covered by `life_science_cxo_services`, and AI datacenter infrastructure is covered by `ai_datacenter_infrastructure` v1, but both still have conservative public-data limits.
@@ -559,10 +564,10 @@ Do not add a new industry framework only because one stock is popular or difficu
   are recorded. Local Structured CSV runtime acceptance, CSV to table facts
   integration design, CSV table facts runtime acceptance, and table facts ->
   `official_disclosure_facts.json` integration design, official disclosure
-  facts with tables runtime acceptance, and official disclosure facts ->
-  candidate generator integration design are also recorded. Next useful
-  official-disclosure direction is
-  `official_disclosure_facts -> candidate generator integration implementation`.
+  facts with tables runtime acceptance, official disclosure facts -> candidate
+  generator integration design, and official candidate payload runtime
+  acceptance are also recorded. Next useful official-disclosure direction is
+  `official candidate payload -> provider-centric fact_candidates bridge design`.
   HTML must
   consume Markdown / presentation-layer output or the Research Report V1
   structured payload; it must not re-analyze, change conclusions, hide caveats,
@@ -580,9 +585,10 @@ Do not add a new industry framework only because one stock is popular or difficu
   acceptance, CSV to table facts integration design, and CSV table facts
   runtime acceptance, and table facts -> `official_disclosure_facts.json`
   integration design, official disclosure facts with tables runtime
-  acceptance, and official disclosure facts -> candidate generator integration
-  design are complete or recorded. Next useful official-disclosure step is
-  `official_disclosure_facts -> candidate generator integration implementation`.
+  acceptance, official disclosure facts -> candidate generator integration
+  design, and official candidate payload runtime acceptance are complete or
+  recorded. Next useful official-disclosure step is
+  `official candidate payload -> provider-centric fact_candidates bridge design`.
   Promote-rule
   design, controlled fixture promotion, standalone validator, candidate
   review update, Research Report V1 integration, Tushare primary
@@ -925,10 +931,11 @@ Key accepted table-schema decisions:
 - Section detection and unusable-table reasons must be expressed through
   `table_caveats`.
 - CSV reader, CSV table fact converter, table facts ->
-  `official_disclosure_facts` integration, and official disclosure facts ->
-  candidate generator integration design are now accepted / recorded, but no
-  HTML / DOCX / PDF / Excel parser, candidate generator implementation, or
-  Research Report V1 integration is implemented.
+  `official_disclosure_facts` integration, official disclosure facts ->
+  candidate generator integration design, and official candidate payload
+  runtime acceptance are now accepted / recorded, but no HTML / DOCX / PDF /
+  Excel parser, provider-centric candidate bridge, candidate generator main
+  path integration, or Research Report V1 integration is implemented.
 
 Latest accepted verification results are quoted for the current CSV table facts
 runtime baseline: targeted tests `424 passed`, full pytest latest
@@ -936,7 +943,7 @@ runtime baseline: targeted tests `424 passed`, full pytest latest
 `passed=47 failed=0 total=47`.
 
 Next recommended stage:
-`official_disclosure_facts -> candidate generator integration implementation`.
+`official candidate payload -> provider-centric fact_candidates bridge design`.
 Live CNInfo fetch, MCP, provider calls, token work, validator work, fixture
 promotion, Research Report V1 integration, scoring changes, P1.1 changes,
 manifest updates, report rewrites, batch, and Dashboard remain separate later
@@ -969,8 +976,9 @@ Important boundary:
   runtime acceptance are accepted;
 - official disclosure facts -> candidate generator integration design is
   recorded;
-- no candidate generator implementation or Research Report V1 integration
-  exists yet.
+- official candidate payload runtime acceptance is frozen;
+- no provider-centric candidate bridge, candidate generator main path
+  integration, or Research Report V1 integration exists yet.
 
 Local Structured Table Reader Design is recorded in
 `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_LOCAL_STRUCTURED_TABLE_READER_DESIGN.md`.
@@ -987,7 +995,7 @@ Official disclosure facts -> candidate generator integration design is recorded
 in
 `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_FACTS_TO_CANDIDATE_GENERATOR_INTEGRATION_DESIGN.md`.
 Next stage should be
-`official_disclosure_facts -> candidate generator integration implementation`.
+`official candidate payload -> provider-centric fact_candidates bridge design`.
 Local HTML, DOCX, and Excel remain later local structured paths; PDF extraction
 and live CNInfo remain later.
 
@@ -1198,16 +1206,23 @@ acceptance:
 Table facts -> official_disclosure_facts integration implementation
 ```
 
-Current next recommended stage:
+Historical next recommended stage, now completed by adapter implementation and
+runtime acceptance:
 
 ```text
 official_disclosure_facts -> candidate generator integration implementation
 ```
 
-The future candidate generator implementation should use the retained official
-facts with tables baseline, remain fail-closed, and avoid live CNInfo,
-providers, tokens, network, MCP, fixtures, accepted manifests, Research Report
-V1, scoring / P1.1 changes, regression expected changes, and trading advice.
+Current next recommended stage:
+
+```text
+official candidate payload -> provider-centric fact_candidates bridge design
+```
+
+The bridge design should use the retained official candidate payload baseline,
+remain fail-closed, and avoid live CNInfo, providers, tokens, network, MCP,
+fixtures, accepted manifests, Research Report V1, scoring / P1.1 changes,
+regression expected changes, and trading advice.
 
 Still do not enter live CNInfo, PDF extraction, DOCX / HTML / Excel reader,
 Research Report V1 integration, fixture
@@ -1300,8 +1315,8 @@ Safety:
 - no CNInfo / Tushare / AkShare / provider call;
 - no MCP.
 
-Latest accepted verification results are quoted: targeted tests `466 passed`,
-full pytest latest `1114 passed, 1 skipped`, and regression
+Latest accepted verification results are quoted: targeted tests `496 passed`,
+full pytest latest `1144 passed, 1 skipped`, and regression
 `passed=47 failed=0 total=47`.
 
 Official disclosure facts -> candidate generator integration design is now
@@ -1311,17 +1326,25 @@ recorded in:
 docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_FACTS_TO_CANDIDATE_GENERATOR_INTEGRATION_DESIGN.md
 ```
 
-Current next recommended stage:
+Historical next recommended stage, now completed by adapter implementation and
+runtime acceptance:
 
 ```text
 official_disclosure_facts -> candidate generator integration implementation
 ```
 
-That stage should implement how text facts and table facts in
-`official_disclosure_facts` enter `fact_candidates`. It should still not enter
-Research Report V1 integration, fixture promotion, accepted manifest updates,
-live CNInfo, PDF extraction, Dashboard, Batch, provider calls, token work, MCP,
-scoring / P1.1 changes, regression expected changes, or trading advice.
+Current next recommended stage:
+
+```text
+official candidate payload -> provider-centric fact_candidates bridge design
+```
+
+That stage should design how the independent official candidate payload can
+coexist with or be referenced by provider-centric `fact_candidates.json`. It
+should still not enter Research Report V1 integration, fixture promotion,
+accepted manifest updates, live CNInfo, PDF extraction, Dashboard, Batch,
+provider calls, token work, MCP, scoring / P1.1 changes, regression expected
+changes, or trading advice.
 
 ## 24. Official Disclosure Facts To Candidate Generator Integration Design
 
@@ -1363,16 +1386,139 @@ Safety boundary:
 - no trading advice.
 
 Latest accepted verification results remain quoted, not rerun by this
-documentation-only stage: targeted tests `466 passed`, full pytest latest
-`1114 passed, 1 skipped`, and regression `passed=47 failed=0 total=47`.
+documentation-only stage: targeted tests `496 passed`, full pytest latest
+`1144 passed, 1 skipped`, and regression `passed=47 failed=0 total=47`.
 
-Current next recommended stage:
+Historical next recommended stage, now completed by adapter implementation and
+runtime acceptance:
 
 ```text
 official_disclosure_facts -> candidate generator integration implementation
 ```
 
-## 25. New Codex Conversation Recovery Prompt
+Current next recommended stage:
+
+```text
+official candidate payload -> provider-centric fact_candidates bridge design
+```
+
+The bridge design should remain documentation-only first and should not enter
+Research Report V1 integration, fixture promotion, validator work, live CNInfo,
+Tushare primary switch, Dashboard / Batch, scoring / P1.1 changes, regression
+expected changes, provider calls, token reads, MCP, or trading advice.
+
+## 25. Official Candidate Payload Runtime Acceptance
+
+Treat
+`docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_CANDIDATE_PAYLOAD_RUNTIME_ACCEPTANCE_SUMMARY.md`
+as the current documentation-only closeout for the retained official disclosure
+facts with tables -> official candidate payload runtime baseline.
+
+Current accepted status:
+
+- official disclosure candidate adapter implementation accepted;
+- official disclosure facts with tables -> official candidate payload runtime
+  review accepted;
+- official disclosure facts -> official candidate payload runtime baseline
+  frozen;
+- no provider-centric `fact_candidates.json` output;
+- no candidate generator main path modification;
+- no Research Report V1 integration;
+- no fixture promotion;
+- no accepted manifest update;
+- no live CNInfo.
+
+Runtime records:
+
+- input artifact:
+  `output/official_disclosures/20260528T173612Z/600406/official_disclosure_facts_with_tables_review.json`;
+- generated official candidate payload review artifact:
+  `output/official_disclosures/20260528T182057Z/600406/official_disclosure_candidates_review.json`;
+- both are ignored runtime artifacts, not staged, not tracked, not fixtures,
+  not regression expected files, not accepted manifest updates, not Research
+  Report V1 updates, and not candidate generator main output.
+
+Accepted input summary:
+
+- `source_documents=1`;
+- `extracted_facts=7`;
+- 1 `basic_info.main_business_official_text` fact;
+- 6 `business_composition.product_segment.revenue` table facts;
+- `source_tables=1`;
+- `table_caveats=4`;
+- `table_conversion_warnings=4`;
+- `not_for_trading_advice=true`;
+- no verified fact.
+
+Accepted candidate payload summary:
+
+- `version=official_disclosure_fact_candidates.v1`;
+- `source_type=official_disclosure`;
+- `candidate_rows=7`;
+- 1 main business candidate;
+- 6 revenue table candidates;
+- table segments: `电网智能`, `数能融合`, `能源低碳`, `工业互联`,
+  `集成及其他`, and `合计`;
+- all rows use `evidence_tier=L1_official_disclosure`;
+- main business candidate and 6 table revenue candidates are
+  `manual_review_required`;
+- `structured_medium` remains manual review;
+- no `verified_fact`, no `review_status=verified`, and no `auto_verified`.
+
+Caveat and source trace notes:
+
+- `table_caveats[]` entered `candidate_caveats`;
+- `table_conversion_warnings[]` entered `integration_warnings`;
+- `local_structured_sample_requires_human_review`, `delimiter_sniffed`,
+  `unit_not_detected`, and `period_not_detected` were preserved;
+- `denominator_missing` was not present in this input;
+- current input has empty `source_page_or_anchor`, and candidate rows preserve
+  it as empty;
+- this is accepted as a baseline caveat because trace remains closed through
+  source document + source section + table row / column / source_column_map;
+- do not silently invent page or anchor.
+
+Validation and boundary:
+
+- `validate_official_disclosure_candidate_payload(...)` passed;
+- all rows passed `validate_official_disclosure_candidate_row(...)`;
+- input SHA256 before / after unchanged:
+  `cb67702d3c9db77b0ae1c4710a369981e2d74c53b279eaf1295049a64ed1ced4`;
+- token / secret / provider scan passed;
+- artifact boundary passed;
+- no token read, network, CNInfo / Tushare / AkShare / provider call, MCP,
+  live fetch, fixture promotion, accepted manifest update, Research Report V1
+  integration, candidate generator main path integration, scoring / P1.1
+  change, regression expected change, or trading advice.
+
+Latest accepted verification results are quoted, not rerun by this
+documentation-only stage: targeted tests `496 passed`, full pytest latest
+`1144 passed, 1 skipped`, and regression `passed=47 failed=0 total=47`.
+
+Known limitations:
+
+- output is an independent official candidate payload;
+- not merged into provider-centric `fact_candidates.json`;
+- existing candidate generator schema remains provider-centric;
+- no Research Report V1 integration;
+- no fixture promotion;
+- no standalone promotion validator;
+- no live CNInfo;
+- `source_page_or_anchor` is empty in current input;
+- official candidates still require human review;
+- table facts currently cover revenue only, not cost / gross margin / YoY.
+
+Current next recommended stage:
+
+```text
+official candidate payload -> provider-centric fact_candidates bridge design
+```
+
+Do not directly enter Research Report V1 integration, fixture promotion,
+validator work, live CNInfo, Tushare primary switch, Dashboard / Batch, or
+trading advice.
+
+## 26. New Codex Conversation Recovery Prompt
 
 Copy this into a new Codex / AI conversation:
 
