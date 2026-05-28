@@ -540,3 +540,62 @@ they implement:
 - official parser ingestion
 - block-level Tushare primary behavior
 - any provider merge or fallback decision that changes production output
+
+## 16. Official Disclosure Candidate Integration Addendum
+
+The official disclosure facts -> candidate generator integration design is now
+recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_FACTS_TO_CANDIDATE_GENERATOR_INTEGRATION_DESIGN.md
+```
+
+This addendum extends the candidate generator design without changing
+implementation. Future official-disclosure ingestion should keep one unified
+`fact_candidates.json` and add official rows with:
+
+- `source_type=official_disclosure`;
+- `evidence_tier=L1_official_disclosure`;
+- `source_document_id`;
+- `source_section`;
+- `source_page_or_anchor`;
+- `source_table_id`;
+- `source_row_index`;
+- `source_column_name`;
+- `source_column_map`;
+- `classification_type`;
+- `segment_name`;
+- `denominator`;
+- `table_quality`;
+- `extraction_confidence`;
+- `needs_human_review`;
+- `caveats`;
+- `not_for_trading_advice=true`.
+
+Official review-status vocabulary for this integration:
+
+- `auto_candidate`;
+- `manual_review_required`;
+- `blocked_by_caveat`;
+- `unsupported_or_missing`.
+
+Rules:
+
+- `needs_human_review=true` maps to `manual_review_required`;
+- missing unit, period, or denominator maps to `blocked_by_caveat` for fields
+  that require them;
+- `structured_medium` table quality usually remains
+  `manual_review_required`;
+- `structured_high` may still require manual review until a separate
+  auto-accept policy is accepted;
+- `unreliable_text_copy` and `unusable` table qualities do not emit fact
+  candidates;
+- same `field_path` + same period + different value between official and
+  provider candidates is a manual-review conflict;
+- official candidates do not overwrite Tushare or AkShare candidates;
+- no official row is a `verified_fact`.
+
+This addendum does not write code, generate `fact_candidates.json`, write
+fixtures, update accepted manifests, call providers, read tokens, connect MCP,
+change scoring / P1.1 / regression expected files, or integrate Research
+Report V1.

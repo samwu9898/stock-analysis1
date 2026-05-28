@@ -84,7 +84,7 @@ Input rules:
 - source document metadata must identify the document that the table belongs
   to;
 - table facts do not become reviewed facts through assembly;
-- candidate generator integration remains later work.
+- candidate generator implementation remains later work.
 
 ## 3. `official_disclosure_facts.json` Schema Extension
 
@@ -557,7 +557,7 @@ Latest accepted verification results are quoted here, not rerun by this
 documentation-only sync: targeted tests `466 passed`, full pytest latest
 `1114 passed, 1 skipped`, and regression `passed=47 failed=0 total=47`.
 
-Current next recommended stage:
+Historical next recommended stage, now recorded in a separate design:
 
 ```text
 official_disclosure_facts -> candidate generator integration design
@@ -565,3 +565,42 @@ official_disclosure_facts -> candidate generator integration design
 
 Do not directly enter Research Report V1 integration, fixture promotion,
 validator work, live CNInfo, PDF extraction, Dashboard, or Batch.
+
+## 13. Candidate Generator Integration Design Sync
+
+The next official-disclosure design stage is now recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_FACTS_TO_CANDIDATE_GENERATOR_INTEGRATION_DESIGN.md
+```
+
+The accepted design keeps the table facts -> `official_disclosure_facts`
+assembly boundary intact and defines only how the assembled official payload
+should later be consumed by the candidate generator.
+
+Key sync points:
+
+- table-derived facts stay inside `official_disclosure_facts.extracted_facts[]`
+  before candidate generation;
+- future candidate rows should use `source_type=official_disclosure` and
+  `evidence_tier=L1_official_disclosure`;
+- revenue table facts are the V1 design sample;
+- cost, gross margin, and YoY facts remain later work;
+- row / column trace, `source_table_id`, `source_document_id`,
+  `source_column_map`, classification, segment, denominator, table quality,
+  extraction confidence, caveats, and human-review flags must survive mapping;
+- `structured_medium` table facts remain manual-review candidates;
+- `unreliable_text_copy` and `unusable` table qualities do not emit fact
+  candidates;
+- source lineage mismatch emits no candidate row;
+- no candidate is a `verified_fact`.
+
+Next recommended stage:
+
+```text
+official_disclosure_facts -> candidate generator integration implementation
+```
+
+Do not skip to Research Report V1 integration, fixture promotion, accepted
+manifest updates, live CNInfo, provider calls, token work, MCP, scoring /
+P1.1 changes, regression expected changes, or trading advice.

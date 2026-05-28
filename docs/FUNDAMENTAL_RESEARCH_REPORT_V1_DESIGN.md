@@ -1169,7 +1169,7 @@ Boundaries:
 - No direct Research Report V1 rewrite.
 - No direct accepted manifest update.
 - No fixture write or promotion.
-- No candidate generator integration yet.
+- No candidate generator implementation yet.
 - No scoring / readiness / P1.1 / regression expected changes.
 - No live CNInfo, provider call, token read, network, MCP, OCR
   implementation, PDF extraction implementation, or HTML / DOCX / CSV / Excel
@@ -1324,7 +1324,7 @@ Research Report V1 boundary remains unchanged:
 - no verified fact is generated;
 - no Research Report V1 builder, renderer, orchestration, CLI, accepted
   manifest, scoring, readiness, P1.1, or regression expected behavior changes;
-- candidate generator integration remains later work;
+- candidate generator implementation remains later work;
 - Research Report V1 L1 evidence integration remains later work.
 
 Design relationship:
@@ -1372,7 +1372,7 @@ Research Report V1 boundary remains unchanged:
 - no Research Report V1 builder, renderer, orchestration, CLI, accepted
   manifest, fixture, scoring, readiness, P1.1, or regression expected behavior
   changed;
-- no candidate generator integration exists yet;
+- no candidate generator implementation / output exists yet;
 - no Research Report V1 L1 evidence integration exists yet.
 
 Runtime result summary:
@@ -1386,7 +1386,8 @@ Runtime result summary:
 - `not_for_trading_advice=true`;
 - no verified fact.
 
-Current next recommended stage is not Research Report V1 integration:
+Historical next recommended stage, now recorded in a separate design and still
+not Research Report V1 integration:
 
 ```text
 official_disclosure_facts -> candidate generator integration design
@@ -1395,3 +1396,48 @@ official_disclosure_facts -> candidate generator integration design
 Do not directly enter Research Report V1 integration, fixture promotion,
 validator work, live CNInfo, PDF extraction, Dashboard, Batch, provider calls,
 token work, MCP, or trading advice.
+
+## 25. Official Disclosure Facts To Candidate Generator Boundary
+
+The official disclosure facts -> candidate generator integration design is now
+recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_FACTS_TO_CANDIDATE_GENERATOR_INTEGRATION_DESIGN.md
+```
+
+Research Report V1 boundary remains unchanged:
+
+- the design is candidate-generator input design, not report integration;
+- official text facts and table facts may later become
+  `fact_candidates.json` rows;
+- candidate rows should carry `source_type=official_disclosure` and
+  `evidence_tier=L1_official_disclosure`;
+- candidate rows must preserve official source document, section, page /
+  anchor, table, row, column, classification, segment, denominator, quality,
+  confidence, caveats, and human-review flags;
+- official candidates do not directly enter Research Report V1;
+- official candidates do not overwrite provider candidates;
+- official candidates do not become `verified_fact`;
+- no Research Report V1 builder, renderer, orchestration, CLI, accepted
+  manifest, fixture, scoring, readiness, P1.1, or regression expected behavior
+  changed.
+
+Current runtime baseline remains:
+
+- integrated `extracted_facts=7`;
+- 6 revenue facts;
+- `source_tables=1`;
+- `table_caveats=4`;
+- `table_conversion_warnings=4`;
+- no candidate generator output;
+- no Research Report V1 L1 evidence integration.
+
+Next recommended official-disclosure stage:
+
+```text
+official_disclosure_facts -> candidate generator integration implementation
+```
+
+Research Report V1 L1 evidence integration remains a later separate design
+after candidate-generator integration and review-decision handling.

@@ -195,14 +195,14 @@ provider calls, token reads, network access, or MCP.
 - Facts require human review.
 - Current path only validates revenue facts.
 - No cost / gross margin / YoY facts accepted yet.
-- No candidate generator integration yet.
+- No candidate generator output yet.
 - No Research Report V1 integration yet.
 - No live CNInfo.
 - No PDF / DOCX / HTML / Excel reader integration.
 
 ## 12. Next Recommended Stage
 
-Recommended next stage:
+Historical next stage, now recorded in a separate design:
 
 ```text
 official_disclosure_facts -> candidate generator integration design
@@ -225,3 +225,47 @@ Do not directly enter:
 - live CNInfo;
 - PDF extraction;
 - Dashboard / Batch.
+
+## 13. Candidate Generator Integration Design Sync
+
+The official disclosure facts -> candidate generator integration design is now
+recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_FACTS_TO_CANDIDATE_GENERATOR_INTEGRATION_DESIGN.md
+```
+
+Design position:
+
+- `official_disclosure_facts.json` is the future official-evidence input to
+  `fact_candidates.json`;
+- text facts and table facts can become official disclosure candidates;
+- `source_type=official_disclosure` and
+  `evidence_tier=L1_official_disclosure` must be preserved;
+- source document, section, page / anchor, table, row, column, column map,
+  classification, segment, denominator, quality, confidence, and caveats must
+  remain traceable;
+- `needs_human_review=true` and
+  `local_structured_sample_requires_human_review` must pass through;
+- no official candidate is promoted to `verified_fact`.
+
+The current runtime baseline remains unchanged:
+
+- integrated `extracted_facts=7`;
+- 6 revenue facts;
+- `source_tables=1`;
+- `table_caveats=4`;
+- `table_conversion_warnings=4`;
+- no candidate generator output yet;
+- no Research Report V1 integration yet.
+
+Next recommended stage:
+
+```text
+official_disclosure_facts -> candidate generator integration implementation
+```
+
+That future implementation must remain separate from fixture promotion,
+accepted manifest updates, Research Report V1 integration, provider calls,
+token reads, network access, MCP, scoring / P1.1 changes, regression expected
+changes, and trading advice.

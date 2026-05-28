@@ -514,7 +514,7 @@ the minimal parser boundary unchanged:
   facts;
 - `not_for_trading_advice=true` remains mandatory;
 - no verified fact is generated;
-- candidate generator integration remains later work;
+- candidate generator implementation remains later work;
 - Research Report V1 integration remains later work.
 
 The current retained CSV table facts runtime artifact is:
@@ -604,13 +604,54 @@ Parser boundary remains conservative:
 - explicit `source_document_id` alignment is mandatory;
 - source lineage mismatch must fail closed;
 - no automatic source id rewriting;
-- no candidate generator integration yet;
+- no candidate generator implementation yet;
 - no Research Report V1 integration yet;
 - no live CNInfo, provider call, token read, network, MCP, fixture promotion,
   or accepted manifest update.
 
-Current next recommended official-disclosure stage:
+Historical next recommended official-disclosure stage, now recorded in a
+separate design:
 
 ```text
 official_disclosure_facts -> candidate generator integration design
+```
+
+## 13. Official Disclosure Facts To Candidate Generator Design Sync
+
+The official disclosure facts -> candidate generator integration design is now
+recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_FACTS_TO_CANDIDATE_GENERATOR_INTEGRATION_DESIGN.md
+```
+
+Parser relationship:
+
+- `official_disclosure_facts.json` remains a local official-disclosure parser
+  artifact;
+- future candidate generation may read `source_documents[]`,
+  `extracted_facts[]`, `source_tables[]`, `table_caveats[]`,
+  `table_conversion_warnings[]`, `extraction_warnings[]`, and
+  `data_quality_caveats[]`;
+- official text facts and table facts are both candidate sources;
+- `L1_official_disclosure`, source location, extraction confidence, caveats,
+  and human-review requirements must be preserved;
+- official candidates do not overwrite provider candidates;
+- no official candidate becomes a `verified_fact`.
+
+Current parser boundary remains unchanged:
+
+- no live CNInfo;
+- no provider call;
+- no token read;
+- no network;
+- no MCP;
+- no fixture promotion;
+- no accepted manifest update;
+- no Research Report V1 integration.
+
+Next recommended stage:
+
+```text
+official_disclosure_facts -> candidate generator integration implementation
 ```
