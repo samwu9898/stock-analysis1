@@ -37,9 +37,9 @@ FORBIDDEN_TRADING_TERMS = (
     "K线",
 )
 
-GRID_TERMS = ("国网 / 南网", "特高压")
-SEMICONDUCTOR_TERMS = ("半导体设备", "晶圆厂 capex", "晶圆厂资本开支", "国产替代")
-THERMAL_TERMS = ("热管理", "机器人 / 新业务")
+GRID_TERMS = ("国网 / 南网", "国网", "南网", "特高压", "电网投资", "数字电网")
+SEMICONDUCTOR_TERMS = ("半导体设备", "晶圆厂资本开支", "国产替代", "设备订单")
+THERMAL_TERMS = ("热管理", "机器人 / 新业务", "机器人", "新业务")
 PM_BODY_FORBIDDEN_TERMS = (
     "Presentation Profile",
     "profile_id",
@@ -51,6 +51,11 @@ PM_BODY_FORBIDDEN_TERMS = (
     "schema",
     "candidate_review",
     "raw field",
+    "不能直接写成",
+    "不能直接等同",
+    "需要避免把",
+    "不得",
+    "不允许",
     "按 profile 排序展示",
     "当前适用",
 )
@@ -416,7 +421,7 @@ def test_600406_uses_grid_profile_without_semiconductor_or_robotics_terms():
     assert "特高压 / 配网" in markdown
     assert "电网投资决定需求入口" in markdown
     assert "电网设备交付和结算节奏可能拉长现金回收" in markdown
-    assert "合同负债只能作为订单可见度线索，不等于 backlog" in markdown
+    assert "合同负债可以作为订单可见度线索，但仍需与订单、交付、收入确认和回款共同验证" in markdown
     assert all(line.startswith("- 如果") and "，则" in line for line in rebuttal_lines)
     _assert_pm_body_professional(markdown)
     for term in SEMICONDUCTOR_TERMS + ("机器人 / 新业务",):
@@ -430,20 +435,61 @@ def test_002371_uses_semiconductor_profile_without_grid_terms():
     assert "presentation_profile_id: `semiconductor_equipment_cycle`" in markdown
     assert "北方华创更适合作为半导体设备国产替代和晶圆厂资本开支周期的核心跟踪样本" in markdown
     assert "半导体设备" in markdown
-    assert "国内晶圆厂 capex" in markdown
+    assert "国内晶圆厂资本开支" in markdown
     assert "国产替代和设备导入" in markdown
     assert "研发投入转化" in markdown
     assert "存货和收入错配" in markdown
-    assert "资本开支周期决定设备需求入口，但不是公司订单事实" in markdown
+    assert "资本开支周期决定设备需求入口，但公司订单仍需进一步验证" in markdown
     assert "国产替代影响长期份额和估值理解" in markdown
-    assert "研发投入只有转化为产品进展、客户验证和商业化收入" in markdown
+    assert "研发投入只有在产品进展、客户验证和商业化收入形成闭环后" in markdown
     assert "三者需要共同验证设备需求和收入确认节奏" in markdown
+    assert "单一指标不足以支撑强结论" in markdown
+    assert "周期波动" in markdown
     assert "周期走弱会影响设备订单、交付和收入确认" in markdown
     assert "如果国产替代和设备导入缺少客户验证、交付和收入确认证据，则只能保留为研究假设" in markdown
     assert all(line.startswith("- 如果") and "，则" in line for line in rebuttal_lines)
     _assert_pm_body_professional(markdown)
     for term in GRID_TERMS:
         assert term not in markdown
+
+
+def test_002371_pm_body_uses_analyst_evidence_language_without_guardrail_phrases():
+    markdown = render_research_report_v1_markdown(_fake_report("002371", "semiconductor_cycle"))
+    body = _main_body(markdown)
+
+    for term in (
+        "不能直接写成",
+        "不能直接等同",
+        "需要避免把",
+        "Presentation Profile",
+        "semiconductor_equipment_cycle",
+        "business_composition.",
+        "basic_info.",
+        "valuation_metrics.",
+    ):
+        assert term not in body
+    for phrase in (
+        "收入兑现仍需要客户验证",
+        "商业化收入形成闭环",
+        "共同验证",
+        "单一指标不足以支撑强结论",
+    ):
+        assert phrase in body
+    for term in (
+        "半导体设备",
+        "晶圆厂资本开支",
+        "国产替代",
+        "设备订单",
+        "存货",
+        "研发投入",
+        "毛利率",
+        "客户验证",
+        "产线扩张",
+        "周期波动",
+    ):
+        assert term in body
+    for term in GRID_TERMS + THERMAL_TERMS:
+        assert term not in body
 
 
 def test_002050_uses_thermal_management_profile_without_grid_or_semiconductor_terms():
@@ -536,8 +582,8 @@ def test_markdown_preserves_data_quality_caveats_and_boundaries():
     body = _main_body(markdown)
 
     assert "结论强度：上述数据缺口必须保留在阅读判断中" in markdown
-    assert "合同负债只能作为订单可见度线索，不等于 backlog" in markdown
-    assert "资本开支只能作为投入节奏线索，不等于订单、产能释放、收入或增长兑现" in markdown
+    assert "合同负债可以作为订单可见度线索，但仍需与订单、交付、收入确认和回款共同验证" in markdown
+    assert "资本开支可以提示投入节奏，但对订单、产能释放、收入和增长兑现的判断仍需公司级证据支持" in markdown
     assert "候选字段不能升级为已确认事实" in markdown
     assert "研发投入未能转化为产品进展和客户验证，会削弱产品竞争力判断" in markdown
     assert "存货增长如果无法对应后续收入确认，会影响需求判断并增加减值风险" in markdown

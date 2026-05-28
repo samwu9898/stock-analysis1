@@ -111,6 +111,11 @@ _PM_BODY_FORBIDDEN_TERMS = (
     "schema",
     "candidate_review",
     "raw field",
+    "不能直接写成",
+    "不能直接等同",
+    "需要避免把",
+    "不得",
+    "不允许",
     "按 profile 排序展示",
     "当前适用",
 )
@@ -222,7 +227,7 @@ PRESENTATION_PROFILE_REGISTRY: dict[str, ResearchReportPresentationProfile] = {
             "周期波动",
         ),
         opportunity_paths=(
-            ("domestic_fab_capex", "国内晶圆厂 capex"),
+            ("domestic_fab_capex", "国内晶圆厂资本开支"),
             ("localization_and_tool_adoption", "国产替代和设备导入"),
             ("rd_conversion", "研发投入转化"),
             ("orders_inventory_contract_liabilities_validation", "订单 / 存货 / 合同负债验证"),
@@ -235,12 +240,12 @@ PRESENTATION_PROFILE_REGISTRY: dict[str, ResearchReportPresentationProfile] = {
             ("rd_conversion_failure", "研发投入无法转化"),
             ("gross_margin_pressure", "毛利率压力"),
             ("customer_validation_gap", "客户验证不足"),
-            ("capex_cadence_slowdown", "capex 节奏放缓"),
+            ("capex_cadence_slowdown", "资本开支节奏放缓"),
         ),
         industry_transmission_paths=(
-            "国内晶圆厂 capex 是行业需求入口，但必须再验证公司设备订单、交付、验收、收入确认和回款。",
-            "国产替代和设备导入是研究假设，不能直接写成公司收入兑现。",
-            "研发投入需要产品进展、客户验证和商业化收入证据，不能直接写成技术壁垒。",
+            "国内晶圆厂资本开支是行业需求入口，但公司设备订单、交付、验收、收入确认和回款仍需继续验证。",
+            "国产替代和设备导入目前更适合作为研究假设，收入兑现仍需要客户验证、导入进展、订单、交付和批量收入证据支撑。",
+            "研发投入只有在产品进展、客户验证和商业化收入形成闭环后，才会增强产品竞争力判断。",
         ),
         follow_up_variables=(
             "国内晶圆厂资本开支节奏",
@@ -253,7 +258,7 @@ PRESENTATION_PROFILE_REGISTRY: dict[str, ResearchReportPresentationProfile] = {
             "如果国产替代缺少客户验证和收入确认证据，则只能保留为研究假设。",
             "如果研发投入缺少产品进展和商业化收入证据，则技术壁垒判断需要保持克制。",
             "如果库存变化缺少订单和收入确认配合，则需求强弱判断需要降级。",
-            "如果 capex 缺少公司订单证据，则只能作为产业周期线索。",
+            "如果资本开支缺少公司订单证据，则只能作为产业周期线索。",
             "如果客户验证、导入或认证缺少批量收入证据，则商业化判断需要保留弹性。",
             "如果合同负债缺少交付和收入确认配合，则只能作为订单可见度线索。",
         ),
@@ -261,7 +266,7 @@ PRESENTATION_PROFILE_REGISTRY: dict[str, ResearchReportPresentationProfile] = {
             "设备订单、交付、验收、收入确认和回款之间的公司级证据",
             "研发投入对应产品进展、客户导入和商业化收入证据",
             "存货构成、周转、跌价风险和收入错配证据",
-            "晶圆厂 capex 到公司订单的传导证据",
+            "晶圆厂资本开支到公司订单的传导证据",
         ),
         forbidden_terms_when_not_selected=("半导体设备", "晶圆厂 capex", "晶圆厂资本开支", "国产替代", "设备订单"),
     ),
@@ -295,7 +300,7 @@ PRESENTATION_PROFILE_REGISTRY: dict[str, ResearchReportPresentationProfile] = {
             ("customer_concentration", "客户集中度"),
             ("new_business_realization_shortfall", "新业务兑现不足"),
             ("gross_margin_pressure", "毛利率压力"),
-            ("inventory_receivable_capex_expansion_risk", "存货 / 应收 / capex 扩张风险"),
+            ("inventory_receivable_capex_expansion_risk", "存货 / 应收 / 资本开支扩张风险"),
             ("new_business_revenue_share_gap", "新业务收入占比证据不足"),
         ),
         industry_transmission_paths=(
@@ -572,7 +577,7 @@ def _research_judgement(company_name: str, profile: ResearchReportPresentationPr
     if profile.profile_id == "stable_growth_grid_equipment":
         return (
             f"{company_name}的核心问题不是电网投资景气本身，而是景气如何传导到公司订单、收入确认、"
-            "毛利率和现金流；当前报告应把电网需求作为验证路径，而不是直接写成公司兑现。"
+            "毛利率和现金流；当前报告应把电网需求作为验证路径，收入兑现仍需公司级订单与交付证据支撑。"
         )
     if profile.profile_id == "semiconductor_equipment_cycle":
         return (
@@ -581,7 +586,7 @@ def _research_judgement(company_name: str, profile: ResearchReportPresentationPr
         )
     return (
         f"{company_name}可以按“{profile.display_name}”研究主线阅读，但行业语言只决定表达顺序，"
-        "不改变证据标注，不把候选字段写成已确认事实，也不把行业叙事写成公司兑现。"
+        "证据标注仍保持候选边界，候选字段和行业叙事仍需公司级证据后才支持兑现判断。"
     )
 
 
@@ -590,30 +595,30 @@ def _render_quick_read(profile: ResearchReportPresentationProfile) -> list[str]:
         return [
             "- 研究主线：制冷控制基本盘提供稳定性观察，新能源车热管理和机器人 / 新业务提供待验证的成长选项。",
             "- 机会排序：新能源车热管理、制冷控制基本盘、客户和产品结构升级、新业务可选项、毛利率和经营质量候选支撑。",
-            "- 风险排序：汽车需求波动、客户集中度、新业务兑现不足、毛利率压力、存货 / 应收 / capex 扩张风险、新业务收入占比证据不足。",
+            "- 风险排序：汽车需求波动、客户集中度、新业务兑现不足、毛利率压力、存货 / 应收 / 资本开支扩张风险、新业务收入占比证据不足。",
             "- 证据边界：候选财务和估值字段只支持基础研究观察，客户结构、产品结构和新业务收入占比仍需复核。",
-            "- 阅读方式：行业空间和客户线索只能作为验证路径，不能直接写成公司收入或利润兑现。",
+            "- 阅读方式：行业空间和客户线索更适合作为验证路径，公司收入或利润兑现仍需订单、客户和收入确认支持。",
         ]
     if profile.profile_id == "stable_growth_grid_equipment":
         return [
             "- 研究主线：电网投资、国网 / 南网招标、特高压 / 配网和数字电网决定需求入口，公司层面仍需订单、收入、毛利率和现金流验证。",
             "- 机会排序：电网投资与招标、数字电网 / 调度 / 信息通信、特高压 / 配网、电力自动化 / 继电保护、经营质量候选支撑。",
             "- 风险排序：应收账款与经营现金流、招标和订单节奏、毛利率压力、合同负债可见度、主营构成口径、估值日期。",
-            "- 证据边界：行业景气只能作为需求路径，不能直接替代公司订单、收入或现金流兑现。",
+            "- 证据边界：行业景气更适合作为需求路径，公司订单、收入和现金流兑现仍需公司级证据支撑。",
         ]
     if profile.profile_id == "semiconductor_equipment_cycle":
         return [
             "- 研究主线：半导体设备国产替代和晶圆厂资本开支决定需求入口，公司层面仍需订单、交付、验收、收入确认和回款验证。",
-            "- 机会排序：国内晶圆厂 capex、国产替代和设备导入、研发投入转化、订单 / 存货 / 合同负债验证、产品结构和毛利率改善。",
-            "- 风险排序：半导体周期下行、订单兑现不足、存货和收入错配、研发投入转化不足、毛利率压力、客户验证不足、capex 节奏放缓。",
-            "- 证据边界：capex、国产替代和研发投入只能构成研究假设，不能直接写成公司收入兑现或技术壁垒。",
+            "- 机会排序：国内晶圆厂资本开支、国产替代和设备导入、研发投入转化、订单 / 存货 / 合同负债验证、产品结构和毛利率改善。",
+            "- 风险排序：半导体周期下行、周期波动、订单兑现不足、存货和收入错配、研发投入转化不足、毛利率压力、客户验证不足、资本开支节奏放缓。",
+            "- 证据边界：资本开支、国产替代和研发投入目前更适合作为研究假设，收入兑现和产品竞争力判断仍需客户验证、订单、交付、产品进展和商业化收入证据支撑。",
         ]
     return [
         f"- 研究主线：{profile.display_name}。",
         f"- 行业关键词：{_join(profile.keywords)}。",
         f"- 机会排序：{_join(_path_titles(profile.opportunity_paths))}。",
         f"- 风险排序：{_join(_path_titles(profile.risk_paths))}。",
-        "- 当前报告只把行业逻辑写成研究框架和后续验证路径，不写成公司已经兑现的事实。",
+        "- 当前报告只把行业逻辑作为研究框架和后续验证路径，公司兑现判断仍需后续证据支撑。",
     ]
 
 
@@ -662,8 +667,8 @@ def _render_company_fundamentals(metrics: dict[str, dict[str, Any]], quality: di
             f"- {_field_label(field_path)}：{_format_metric_value(metric, field_path)}"
             f"（证据等级：{_evidence_text(metric.get('evidence_label'))}）。"
         )
-    lines.append("- 合同负债只能作为订单可见度线索，不等于 backlog。")
-    lines.append("- 资本开支只能作为投入节奏线索，不等于订单、产能释放、收入或增长兑现。")
+    lines.append("- 合同负债可以作为订单可见度线索，但仍需与订单、交付、收入确认和回款共同验证。")
+    lines.append("- 资本开支可以提示投入节奏，但对订单、产能释放、收入和增长兑现的判断仍需公司级证据支持。")
     return lines
 
 
@@ -734,7 +739,7 @@ def _profile_specific_path_line(*, profile_id: str, section: str, path_id: str, 
                 "当前证据状态为{evidence}，需要结合毛利率、收入结构和现金流继续验证。"
             ),
             "inventory_receivable_capex_expansion_risk": (
-                "**存货 / 应收 / capex 扩张风险**：投入和营运资本扩张若快于收入和现金流兑现，会削弱经营质量；"
+                "**存货 / 应收 / 资本开支扩张风险**：投入和营运资本扩张若快于收入和现金流兑现，会削弱经营质量；"
                 "当前证据状态为{evidence}，需要同时看存货、应收账款、资本开支、经营现金流和收入匹配。"
             ),
             "new_business_revenue_share_gap": (
@@ -801,20 +806,20 @@ def _profile_specific_path_line(*, profile_id: str, section: str, path_id: str, 
     if profile_id == "semiconductor_equipment_cycle" and section == "opportunity":
         semi_opportunities = {
             "domestic_fab_capex": (
-                "**国内晶圆厂 capex**：资本开支周期决定设备需求入口，但不是公司订单事实；当前证据状态为{evidence}，"
+                "**国内晶圆厂资本开支**：资本开支周期决定设备需求入口，但公司订单仍需进一步验证；当前证据状态为{evidence}，"
                 "需要订单、交付、验收、收入确认和回款证据。"
             ),
             "localization_and_tool_adoption": (
-                "**国产替代和设备导入**：国产替代影响长期份额和估值理解，但不能直接等同收入兑现；"
-                "当前证据状态为{evidence}，需要客户验证、导入进展和批量收入证据。"
+                "**国产替代和设备导入**：国产替代影响长期份额和估值理解，收入兑现仍需要客户验证、"
+                "导入进展、订单、交付和批量收入证据支撑；当前证据状态为{evidence}。"
             ),
             "rd_conversion": (
-                "**研发投入转化**：研发投入只有转化为产品进展、客户验证和商业化收入，才支持竞争力判断；"
+                "**研发投入转化**：研发投入只有在产品进展、客户验证和商业化收入形成闭环后，才会增强产品竞争力判断；"
                 "当前证据状态为{evidence}，需要产品和客户侧证据。"
             ),
             "orders_inventory_contract_liabilities_validation": (
                 "**订单 / 存货 / 合同负债验证**：三者需要共同验证设备需求和收入确认节奏；当前证据状态为{evidence}，"
-                "需要避免把单一指标写成需求强弱。"
+                "需求强度需要通过订单、合同负债、收入确认和回款共同验证，单一指标不足以支撑强结论。"
             ),
             "product_mix_and_margin_improvement": (
                 "**产品结构和毛利率改善**：产品组合决定国产替代质量和利润弹性；当前证据状态为{evidence}，"
@@ -850,7 +855,7 @@ def _profile_specific_path_line(*, profile_id: str, section: str, path_id: str, 
                 "需要客户验证和批量收入证据。"
             ),
             "capex_cadence_slowdown": (
-                "**capex 节奏放缓**：晶圆厂资本开支放缓会削弱需求路径；当前证据状态为{evidence}，"
+                "**资本开支节奏放缓**：晶圆厂资本开支放缓会削弱需求路径；当前证据状态为{evidence}，"
                 "仍需公司订单和交付节奏确认影响。"
             ),
         }
@@ -879,7 +884,7 @@ def _render_rebuttal_conditions(report: dict[str, Any], profile: ResearchReportP
             "- 如果制冷控制基本盘收入稳定性、毛利率或现金流走弱，则会削弱基本盘判断。",
             "- 如果客户结构、产品结构和主营构成缺少清晰证据，则客户和产品升级只能保留为待验证假设。",
             "- 如果机器人 / 新业务缺乏订单、客户、量产、交付和收入确认证据，则只能保留为可选项，不能提升为核心增长判断。",
-            "- 如果存货、应收和 capex 扩张快于收入和现金流兑现，则会削弱经营质量判断。",
+            "- 如果存货、应收和资本开支扩张快于收入和现金流兑现，则会削弱经营质量判断。",
             "- 如果新业务收入占比缺少可复核口径，则新业务仍只适合作为待验证变量，不能支撑利润增长判断。",
         ]
     if profile.profile_id == "stable_growth_grid_equipment":
