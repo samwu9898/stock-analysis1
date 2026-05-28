@@ -8,7 +8,10 @@ Three-Sample Offline Orchestration Acceptance Sync.
 Status: design accepted, single-stock offline orchestration implementation
 accepted, Chinese summary patch accepted, three-sample offline runtime
 acceptance complete, CLI / command wrapper implementation accepted, three-sample
-CLI runtime acceptance complete, and single-stock offline CLI baseline frozen.
+CLI runtime acceptance complete, single-stock offline CLI baseline frozen,
+accepted manifest module accepted, manifest-first locator hardening accepted,
+retained runtime manifest review accepted, and manifest locator runtime
+baseline frozen.
 The orchestration acceptance closeout is recorded in
 `docs/FUNDAMENTAL_SKILL_OFFLINE_ORCHESTRATION_ACCEPTANCE_SUMMARY.md`, the CLI
 design is recorded in
@@ -21,7 +24,9 @@ expected files, generate output, run smoke tests, read `TUSHARE_TOKEN`, use the
 network, call Tushare or AkShare, connect MCP, or produce trading advice.
 Accepted artifact manifest / freshness design is recorded in
 `docs/FUNDAMENTAL_ACCEPTED_ARTIFACT_MANIFEST_FRESHNESS_DESIGN.md`; it is a
-future locator hardening design only and does not change the current runtime.
+now implemented as the accepted manifest-first runtime locator baseline. The
+runtime closeout is recorded in
+`docs/FUNDAMENTAL_ACCEPTED_MANIFEST_LOCATOR_RUNTIME_ACCEPTANCE_SUMMARY.md`.
 
 Current accepted upstream state:
 
@@ -48,9 +53,10 @@ Current accepted upstream state:
   `20260528T125518` professional-voice regenerated artifacts; user-facing
   orchestration baseline should use the `20260528T125518` Markdown / HTML
   artifacts.
-- Accepted manifest / freshness design is recorded. Future orchestration should
-  prefer the manifest over timestamp-latest artifact selection and surface
-  freshness warnings, while remaining offline and local-only.
+- Accepted manifest / freshness design is recorded and manifest-first locator
+  hardening is accepted. Orchestration now prefers the retained ignored
+  manifest over timestamp-latest artifact selection, surfaces manifest and
+  freshness status, and remains offline and local-only.
 
 ## 1. Product Goal
 
@@ -188,8 +194,8 @@ The single-stock orchestration pipeline is:
 1. Parse user request.
 2. Resolve stock code and company name from user text and local metadata.
 3. Normalize request schema and enforce default safety flags.
-4. Locate accepted local artifacts for the stock and selected data mode. Future
-   locator hardening should read the accepted artifact manifest first and use
+4. Locate accepted local artifacts for the stock and selected data mode. The
+   accepted locator reads the accepted artifact manifest first and uses
    timestamp-latest lookup only as a warned fallback.
 5. If an artifact is missing, decide whether offline regeneration is possible.
 6. Generate or locate `fact_candidates.json`.
@@ -524,7 +530,7 @@ investment-action language remains prohibited.
 Accepted artifact manifest / freshness design is now recorded in
 `docs/FUNDAMENTAL_ACCEPTED_ARTIFACT_MANIFEST_FRESHNESS_DESIGN.md`.
 
-Future orchestration behavior:
+Accepted orchestration behavior:
 
 - Prefer accepted manifest entries over timestamp-latest artifact discovery.
 - Treat the manifest as the user-facing accepted artifact selector for HTML,
@@ -537,6 +543,12 @@ Future orchestration behavior:
 - Fail closed if a manifest path is missing or an artifact hash mismatches.
 - Keep the behavior offline: no provider call, no network, no token read, and
   no MCP.
+
+The retained manifest baseline is frozen for `600406`, `002371`, and `002050`.
+All three CLI / orchestration runtime checks returned exit code `0`,
+`Manifest 状态：used`, and `Freshness 状态：current`; no
+`manifest_missing_warning`, timestamp fallback warning, English JSON summary
+leak, full body dump, or positive trading advice was observed.
 
 The manifest is not a fixture, not a validator, not CNInfo ingestion, not
 evidence-tier promotion, and not report conclusion rewriting. It records which
@@ -604,6 +616,12 @@ Completed sequence:
     `docs/FUNDAMENTAL_SKILL_CLI_RUNTIME_ACCEPTANCE_SUMMARY.md`.
 14. Record accepted artifact manifest / freshness design in
     `docs/FUNDAMENTAL_ACCEPTED_ARTIFACT_MANIFEST_FRESHNESS_DESIGN.md`.
+15. Accept manifest schema / writer / reader and manifest-first locator
+    hardening.
+16. Accept retained runtime manifest review for `600406`, `002371`, and
+    `002050`.
+17. Freeze the manifest locator runtime baseline and record the closeout in
+    `docs/FUNDAMENTAL_ACCEPTED_MANIFEST_LOCATOR_RUNTIME_ACCEPTANCE_SUMMARY.md`.
 
 Accepted implementation criteria:
 
@@ -623,11 +641,11 @@ Accepted implementation criteria:
 
 Next recommended sequence:
 
-1. Commit the accepted artifact manifest / freshness documentation patch.
-2. Enter manifest schema / writer / reader implementation.
-3. Harden orchestration and CLI locators to read the accepted manifest first.
-4. Generate ignored runtime manifests for `600406`, `002371`, and `002050`,
-   then run a separately accepted manifest locator runtime stage.
-5. Keep future live provider mode, Tushare token, MCP, CNInfo, official parser,
-   validator, fixture promotion, Tushare primary, batch, and Dashboard for
-   later separately accepted stages.
+1. Submit the manifest locator runtime acceptance summary documentation patch.
+2. Enter Minimal CNInfo / official disclosure parser design, or A-share
+   specific risk framework design.
+3. Start batch / Dashboard design only after manifest closeout, and make it
+   depend on manifest-located artifacts.
+4. Keep future live provider mode, Tushare token, MCP, CNInfo parser
+   implementation, validator, fixture promotion, and Tushare primary for later
+   separately accepted stages.

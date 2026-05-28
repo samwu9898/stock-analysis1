@@ -6,9 +6,11 @@ Stage: Fundamental Skill User Invocation CLI / Command Wrapper Design and
 Runtime Acceptance Sync.
 
 Status: design accepted, CLI implementation accepted, three-sample CLI runtime
-acceptance complete, single-stock offline CLI baseline frozen, and CLI usage
-guide recorded. This document remains the command argument, output behavior,
-error behavior, and safety-boundary design source. The runtime acceptance
+acceptance complete, single-stock offline CLI baseline frozen, CLI usage guide
+recorded, accepted manifest module accepted, manifest-first locator hardening
+accepted, retained runtime manifest review accepted, and manifest locator
+runtime baseline frozen. This document remains the command argument, output
+behavior, error behavior, and safety-boundary design source. The runtime acceptance
 closeout is recorded in
 `docs/FUNDAMENTAL_SKILL_CLI_RUNTIME_ACCEPTANCE_SUMMARY.md`, and the CLI usage
 guide is recorded in `docs/FUNDAMENTAL_SKILL_CLI_USAGE_GUIDE.md`. This
@@ -19,8 +21,9 @@ change Research Intelligence P1.1, change regression expected files, or
 provide trading advice.
 Accepted artifact manifest / freshness design is recorded in
 `docs/FUNDAMENTAL_ACCEPTED_ARTIFACT_MANIFEST_FRESHNESS_DESIGN.md`; it defines
-future CLI locator and freshness stdout behavior but does not change the
-current accepted CLI runtime.
+the accepted CLI locator and freshness stdout behavior. Manifest locator
+runtime acceptance closeout is recorded in
+`docs/FUNDAMENTAL_ACCEPTED_MANIFEST_LOCATOR_RUNTIME_ACCEPTANCE_SUMMARY.md`.
 
 Accepted upstream state:
 
@@ -37,8 +40,10 @@ Accepted upstream state:
 - CLI usage guide recorded in `docs/FUNDAMENTAL_SKILL_CLI_USAGE_GUIDE.md`.
 - Default mode remains `offline_local_artifacts`, `no_live_provider`, no token,
   no network, no provider call, and no MCP.
-- Future CLI locator behavior should read the accepted manifest first, expose
-  freshness status, and treat timestamp-latest lookup as a warned fallback.
+- CLI locator behavior reads the accepted manifest first, exposes manifest and
+  freshness status, and treats timestamp-latest lookup as a warned fallback.
+  The retained runtime manifest baseline is frozen for `600406`, `002371`, and
+  `002050`.
 
 ## 1. CLI Goal
 
@@ -175,13 +180,13 @@ Allowed status values should be small and operational:
 Path fields should be printed even when some paths are unavailable; unavailable
 paths should be explicit, for example `未生成` or `缺失`, instead of omitted.
 
-Future manifest/freshness output behavior:
+Accepted manifest/freshness output behavior:
 
-- The CLI should prefer `output/research_reports/accepted_manifest.json` for
+- The CLI prefers `output/research_reports/accepted_manifest.json` for
   accepted artifact selection.
-- The CLI should add `freshness_status`, `freshness_warning`, `accepted_at`,
-  `valuation_as_of_date`, and `source_data_period` to stdout once the manifest
-  reader is implemented.
+- The CLI displays manifest status, freshness status, freshness warnings,
+  `accepted_at`, `valuation_as_of_date`, and `source_data_period` when
+  available.
 - `freshness_status=current` can be returned without a freshness warning.
 - `freshness_status=unknown` or `stale` must be returned with a visible warning.
 - `freshness_status=superseded` or `invalidated` must not be returned as the
@@ -191,6 +196,12 @@ Future manifest/freshness output behavior:
 - A missing manifest artifact path or hash mismatch must fail closed.
 - CLI must not network-check freshness, read tokens, call providers, connect
   MCP, or auto-upgrade to live provider mode.
+
+Runtime acceptance confirmed that `600406`, `002371`, and `002050` all return
+exit code `0`, `Manifest 状态：used`, and `Freshness 状态：current` from the
+retained ignored manifest. No `manifest_missing_warning`, timestamp fallback
+warning, English JSON summary leak, full body dump, profile cross-contamination,
+or positive trading advice was observed.
 
 ## 6. Error Behavior
 
@@ -348,9 +359,9 @@ The CLI implementation acceptance criteria are:
 - CLI output includes status, HTML path, Markdown path, JSON path, Chinese
   summary, maximum opportunity, maximum risk, maximum evidence gap, data-quality
   status, and important statement.
-- Future CLI output should add `freshness_status`, `freshness_warning`,
+- CLI output exposes manifest status, freshness status, freshness warning,
   `accepted_at`, `valuation_as_of_date`, and `source_data_period` when the
-  accepted manifest is implemented.
+  accepted manifest provides them.
 - Missing target and missing local artifacts fail closed.
 - No provider, network, token, MCP, fixture, scoring, P1.1, regression, or
   runtime-output submission side effect is introduced.
@@ -375,30 +386,38 @@ Acceptance result:
 
 - CLI implementation accepted.
 - `600406`, `002371`, and `002050` CLI runtime accepted.
+- Manifest-first locator hardening accepted.
+- Retained runtime manifest review accepted.
+- Manifest locator runtime baseline frozen.
 - Exit code `0` for all three accepted CLI runtime runs.
 - Stdout Chinese and operational.
 - Selected HTML / Markdown / JSON artifacts correct.
+- All retained-manifest CLI runs showed `Manifest 状态：used`.
+- All retained-manifest CLI runs showed `Freshness 状态：current`.
+- No `manifest_missing_warning`.
+- No timestamp fallback warning.
 - No English JSON summary leaked.
 - No full report body dumped.
 - No cross-profile contamination.
 - Artifact boundary passed.
 - Token / secret / provider scan passed.
 - Forbidden output check passed.
-- Latest quoted verification: targeted tests `163 passed`, full pytest
-  `811 passed, 1 skipped`, and regression `passed=47 failed=0 total=47`.
+- Latest quoted verification: targeted tests with retained manifest
+  `251 passed`, full pytest with retained manifest `899 passed, 1 skipped`,
+  and regression `passed=47 failed=0 total=47`.
 
 ## 12. Next Recommended Step
 
-After CLI runtime acceptance, the next recommended sequence is:
+After manifest locator runtime acceptance, the next recommended sequence is:
 
-1. Commit the accepted artifact manifest / freshness documentation patch.
-2. Enter manifest schema / writer / reader implementation.
-3. Harden CLI and orchestration locators to read the accepted manifest first.
-4. Generate ignored runtime manifests for `600406`, `002371`, and `002050`,
-   then run a separately accepted manifest locator runtime stage.
-5. Keep live provider, Tushare token, MCP, CNInfo, official parser, validator,
-   fixture promotion, primary-provider switch, batch, and Dashboard for later
-   separately accepted stages.
+1. Submit the manifest locator runtime acceptance summary documentation patch.
+2. Enter Minimal CNInfo / official disclosure parser design, or A-share
+   specific risk framework design.
+3. Start batch / Dashboard design after manifest closeout, and make it depend
+   on manifest-located artifacts.
+4. Keep live provider, Tushare token, MCP, validator, fixture promotion,
+   primary-provider switch, and live smoke work for later separately accepted
+   stages.
 
 The operational usage guide for Codex and developers is recorded in
 `docs/FUNDAMENTAL_SKILL_CLI_USAGE_GUIDE.md`. It should be the first reference

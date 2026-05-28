@@ -14,7 +14,9 @@ three-sample HTML presentation baseline frozen, single-stock offline
 orchestration implementation accepted, Chinese summary patch accepted,
 `600406` / `002371` / `002050` offline runtime acceptance complete, CLI
 implementation accepted, `600406` / `002371` / `002050` CLI runtime acceptance
-complete, and the single-stock offline CLI baseline frozen. User invocation /
+complete, single-stock offline CLI baseline frozen, accepted manifest module
+accepted, manifest-first locator hardening accepted, retained runtime manifest
+review accepted, and manifest locator runtime baseline frozen. User invocation /
 report orchestration design is recorded in
 `docs/FUNDAMENTAL_SKILL_USER_INVOCATION_ORCHESTRATION_DESIGN.md`, the offline
 orchestration closeout is recorded in
@@ -24,7 +26,9 @@ design is recorded in
 acceptance closeout is recorded in
 `docs/FUNDAMENTAL_SKILL_CLI_RUNTIME_ACCEPTANCE_SUMMARY.md`. This document
 now also links the accepted artifact manifest / freshness design recorded in
-`docs/FUNDAMENTAL_ACCEPTED_ARTIFACT_MANIFEST_FRESHNESS_DESIGN.md`. This document
+`docs/FUNDAMENTAL_ACCEPTED_ARTIFACT_MANIFEST_FRESHNESS_DESIGN.md` and the
+manifest locator runtime acceptance closeout recorded in
+`docs/FUNDAMENTAL_ACCEPTED_MANIFEST_LOCATOR_RUNTIME_ACCEPTANCE_SUMMARY.md`. This document
 records the accepted design boundary; the implementation, baseline freeze,
 profile acceptance, HTML acceptance, orchestration design, offline runtime
 acceptance, and CLI runtime acceptance do not modify tests, fixtures, pipeline,
@@ -66,12 +70,14 @@ invocation / report orchestration design is recorded in
 single-stock offline orchestration acceptance is recorded in
 `docs/FUNDAMENTAL_SKILL_OFFLINE_ORCHESTRATION_ACCEPTANCE_SUMMARY.md`. The
 single-stock CLI runtime acceptance is recorded in
-`docs/FUNDAMENTAL_SKILL_CLI_RUNTIME_ACCEPTANCE_SUMMARY.md`. The next
-recommended work is accepted artifact manifest / freshness implementation now
-that Codex can call the accepted offline orchestration through one command. The
-next step is not more ad hoc single-target HTML generation, promote-rule
-design, validator implementation, fixture promotion, live provider report,
-official parser / CNInfo, MCP, Tushare token work, or a Tushare primary switch.
+`docs/FUNDAMENTAL_SKILL_CLI_RUNTIME_ACCEPTANCE_SUMMARY.md`. The manifest
+locator runtime acceptance is recorded in
+`docs/FUNDAMENTAL_ACCEPTED_MANIFEST_LOCATOR_RUNTIME_ACCEPTANCE_SUMMARY.md`.
+The next recommended work is Minimal CNInfo / official disclosure parser
+design, or A-share specific risk framework design. The next step is not more
+ad hoc single-target HTML generation, promote-rule design, validator
+implementation, fixture promotion, live provider report, MCP, Tushare token
+work, or a Tushare primary switch.
 
 ## 1. Goal Correction
 
@@ -702,25 +708,31 @@ Completed sequence:
 20. CLI implementation acceptance.
 21. `600406`, `002371`, and `002050` CLI runtime acceptance.
 22. Single-stock offline CLI baseline freeze.
+23. Accepted manifest module acceptance.
+24. Manifest-first locator hardening acceptance.
+25. Runtime-aware test boundary acceptance.
+26. Retained runtime manifest review acceptance for `600406`, `002371`, and
+    `002050`.
+27. Manifest locator runtime baseline freeze.
 
 Next recommended sequence:
 
-1. Commit the accepted artifact manifest / freshness documentation patch.
-2. Enter manifest schema / writer / reader implementation.
-3. Harden orchestration and CLI locators to read the accepted manifest first.
-4. Generate ignored runtime manifests for `600406`, `002371`, and `002050`,
-   then run a separately accepted manifest locator runtime stage.
-5. Keep caveats, evidence labels, data-quality notes, rebuttal conditions, and
+1. Submit the manifest locator runtime acceptance summary documentation patch.
+2. Enter Minimal CNInfo / official disclosure parser design, or A-share
+   specific risk framework design.
+3. Start batch / dashboard design after manifest closeout, and make it depend
+   on manifest-located artifacts.
+4. Keep caveats, evidence labels, data-quality notes, rebuttal conditions, and
    follow-up variables visible in any future display work.
-6. Later consider promote rules, validator, fixture promotion, live provider
-   report, official parser / CNInfo, MCP, Tushare token work, and
+5. Later consider promote rules, validator, fixture promotion, live provider
+   report, MCP, Tushare token work, and
    primary-provider switch only after a separately accepted stage.
 
 Do not continue into promote-rule design, validator implementation, fixture
-promotion, live provider report, official parser / CNInfo, MCP, Tushare token
-work, or Tushare primary switch as the next step. The product line should now
-move from accepted single-stock offline CLI into accepted manifest
-implementation and locator hardening.
+promotion, live provider report, MCP, Tushare token work, or Tushare primary
+switch as the next step. The product line should now move from accepted
+manifest locator runtime baseline into Minimal CNInfo / official disclosure
+parser design or A-share specific risk framework design.
 
 ## 11. Presentation profile design addendum
 
@@ -876,9 +888,11 @@ Latest accepted results are quoted, not rerun here: targeted tests
 `passed=47 failed=0 total=47`.
 
 The CLI runtime acceptance closeout is recorded in
-`docs/FUNDAMENTAL_SKILL_CLI_RUNTIME_ACCEPTANCE_SUMMARY.md`. Next recommended
-stage: commit the manifest / freshness documentation summary, then enter
-manifest schema / writer / reader implementation and locator hardening.
+`docs/FUNDAMENTAL_SKILL_CLI_RUNTIME_ACCEPTANCE_SUMMARY.md`. Manifest locator
+runtime acceptance is recorded in
+`docs/FUNDAMENTAL_ACCEPTED_MANIFEST_LOCATOR_RUNTIME_ACCEPTANCE_SUMMARY.md`.
+Next recommended stage: Minimal CNInfo / official disclosure parser design, or
+A-share specific risk framework design.
 
 ## 15. CLI runtime acceptance addendum
 
@@ -937,8 +951,48 @@ contract:
   are under `20260528T125518`, while accepted JSON remains under
   `20260527T220148`.
 
-The next recommended stage is manifest schema / writer / reader
-implementation, followed by locator hardening and ignored runtime manifest
-generation for `600406`, `002371`, and `002050`. Batch / Dashboard, CNInfo /
-official parser, live Tushare provider mode, MCP, token work, validator,
-fixture promotion, and Tushare primary remain later separately accepted stages.
+Manifest schema / writer / reader implementation, locator hardening, ignored
+runtime manifest generation, and retained runtime acceptance are now accepted
+for `600406`, `002371`, and `002050`. The next recommended stage is Minimal
+CNInfo / official disclosure parser design, or A-share specific risk framework
+design. Batch / Dashboard can start after manifest closeout and should depend
+on manifest-located artifacts. Live Tushare provider mode, MCP, token work,
+validator, fixture promotion, and Tushare primary remain later separately
+accepted stages.
+
+## 17. Manifest locator runtime acceptance addendum
+
+Accepted manifest module, manifest-first locator hardening, runtime-aware test
+boundary, and retained runtime manifest review are accepted. The retained
+ignored manifest is `output/research_reports/accepted_manifest.json`, remains
+ignored by `.gitignore`, is not tracked or staged, and `git ls-files output`
+remains empty.
+
+Runtime manifest record:
+
+- SHA256:
+  `C1F97162A59DE113CD4C9F1A9531AEC3A915A3D6F09365098201234E6F5BEB7F`
+- size: `7678`
+- mtime UTC: `2026-05-28 10:17:55`
+- entries: `3`
+- all freshness statuses: `current`
+
+Manifest-first runtime acceptance confirmed:
+
+- `600406` CLI runtime accepted.
+- `002371` CLI runtime accepted, with accepted HTML / Markdown under
+  `20260528T125518` and accepted JSON under `20260527T220148`.
+- `002050` CLI runtime accepted.
+- All three CLI runs showed `Manifest 状态：used` and
+  `Freshness 状态：current`.
+- No `manifest_missing_warning`, timestamp fallback warning, English JSON
+  summary leak, full body dump, profile cross-contamination, or positive
+  trading advice was observed.
+
+Latest accepted verification results are quoted, not rerun here: targeted
+tests with retained manifest `251 passed`, full pytest with retained manifest
+`899 passed, 1 skipped`, and regression `passed=47 failed=0 total=47`.
+
+The manifest does not promote evidence labels, verify official facts, implement
+CNInfo parsing, act as a validator, or promote fixtures. Future runtime updates
+must pass acceptance before the manifest is updated.

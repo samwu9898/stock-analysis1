@@ -4,17 +4,28 @@ Date: 2026-05-28
 
 Stage: Fundamental Skill Accepted Artifact Manifest + Freshness Model Design.
 
-Status: documentation-only design. This stage does not implement code, change
-tests, change fixtures, change pipeline behavior, change scoring / readiness,
-change Research Intelligence P1.1, change regression expected files, generate
-output, write runtime artifacts, run smoke tests, read `TUSHARE_TOKEN`, use the
-network, call Tushare or AkShare, connect MCP, or provide investment advice.
+Status: design accepted, accepted manifest module accepted, manifest-first
+locator hardening accepted, runtime-aware test boundary accepted, retained
+runtime manifest review accepted, and manifest locator runtime baseline frozen
+for `600406`, `002371`, and `002050`. This documentation sync does not
+implement code, change tests, change fixtures, change pipeline behavior, change
+scoring / readiness, change Research Intelligence P1.1, change regression
+expected files, generate output, write runtime artifacts, run smoke tests, read
+`TUSHARE_TOKEN`, use the network, call Tushare or AkShare, connect MCP, or
+provide investment advice.
 
 Latest accepted verification results are quoted, not rerun here:
 
-- targeted tests `163 passed`
-- full pytest `811 passed, 1 skipped`
+- targeted tests with retained manifest `251 passed`
+- full pytest with retained manifest `899 passed, 1 skipped`
 - regression `passed=47 failed=0 total=47`
+
+Manifest locator runtime acceptance closeout is recorded in
+`docs/FUNDAMENTAL_ACCEPTED_MANIFEST_LOCATOR_RUNTIME_ACCEPTANCE_SUMMARY.md`.
+The retained ignored runtime manifest is
+`output/research_reports/accepted_manifest.json` with SHA256
+`C1F97162A59DE113CD4C9F1A9531AEC3A915A3D6F09365098201234E6F5BEB7F`, size
+`7678`, and mtime UTC `2026-05-28 10:17:55`.
 
 ## 1. Design Goal
 
@@ -262,7 +273,7 @@ detected by parser version metadata. V1 does not perform any of those checks.
 
 ## 7. Locator Behavior
 
-Future locator rules:
+Accepted locator rules:
 
 1. Read the accepted manifest first.
 2. If a manifest entry exists and `freshness_status=current`, use the manifest
@@ -287,7 +298,7 @@ accepted baseline selector.
 
 ## 8. CLI Behavior
 
-Future CLI behavior:
+Accepted CLI behavior:
 
 - CLI locates accepted artifacts through the manifest first.
 - CLI stdout displays freshness status.
@@ -408,14 +419,47 @@ This stage must not:
 
 ## 14. Roadmap
 
-Recommended sequence:
+Completed sequence:
 
 1. Manifest + freshness design.
 2. Manifest schema / writer / reader implementation.
 3. Locator hardening: orchestration / CLI read manifest first.
 4. `600406` / `002371` / `002050` manifest runtime generation.
 5. Manifest locator runtime acceptance.
-6. Minimal CNInfo / official disclosure parser design.
-7. A-share specific risk framework design.
-8. Batch / dashboard design.
-9. Live Tushare provider design / smoke later.
+
+Next recommended sequence:
+
+1. Submit the manifest locator runtime acceptance summary documentation patch.
+2. Enter Minimal CNInfo / official disclosure parser design, or A-share
+   specific risk framework design.
+3. Start batch / dashboard design only after manifest closeout, and make it
+   depend on manifest-located artifacts.
+4. Keep live Tushare provider, token, MCP, and smoke work later.
+
+## 15. Runtime acceptance summary addendum
+
+The retained runtime manifest scenario is accepted. The real ignored manifest
+remains at `output/research_reports/accepted_manifest.json`, is ignored by
+`.gitignore`, is not tracked, is not staged, and `git ls-files output` remains
+empty.
+
+The manifest contains three current entries:
+
+- `600406` / 国电南瑞.
+- `002371` / 北方华创.
+- `002050` / 三花智控.
+
+Manifest validation passed through `read_accepted_manifest`,
+`validate_accepted_manifest`, and `verify_manifest_entry_hashes`. All accepted
+artifacts exist and all hashes match. The `002371` mixed timestamp bundle is
+the accepted baseline: HTML / Markdown under `20260528T125518`, JSON under
+`20260527T220148`, with old Markdown
+`output/research_reports/20260527T220148/002371/fundamental_research_report_v1.md`
+and old HTML
+`output/research_reports/20260528T090024/002371/fundamental_research_report_v1.html`
+kept only as superseded lineage.
+
+Runtime-aware tests no longer require the real manifest to be absent. When the
+real manifest exists, tests assert that hash, mtime, and size remain unchanged;
+when it is absent, tests assert that they do not create it. The tests write
+only tmpdir and keep runtime output untracked.
