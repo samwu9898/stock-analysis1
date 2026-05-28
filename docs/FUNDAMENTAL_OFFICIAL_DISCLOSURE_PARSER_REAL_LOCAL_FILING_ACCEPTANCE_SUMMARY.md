@@ -22,6 +22,8 @@ Latest accepted verification results are quoted, not rerun here:
 
 - Real local official filing sample runtime accepted.
 - Official disclosure parser real-local-file baseline frozen.
+- Business composition table parser design is now recorded in
+  `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_BUSINESS_COMPOSITION_TABLE_PARSER_DESIGN.md`.
 - Live CNInfo is not implemented.
 - PDF table parser is not implemented.
 - Candidate generator integration is not implemented.
@@ -177,26 +179,33 @@ This documentation-only summary did not rerun pytest or regression.
 - The parser does not parse PDF.
 - The parser does not parse complex tables.
 - Business composition values are not extracted.
+- The same TXT should be treated as a negative / boundary sample for
+  `unreliable_text_copy`, not as a structured numeric table source.
 - L1 evidence tier integration is still future work.
 - Candidate generator integration is still future work.
 - Research Report V1 integration is still future work.
 - Live CNInfo is still future work.
 
-## 11. Next recommended stage
+## 11. Business Composition Table Parser Design Sync
 
-Recommended next stage:
+The next design stage is now recorded in:
 
 ```text
-Official Disclosure Business Composition Table Parser Design
+docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_BUSINESS_COMPOSITION_TABLE_PARSER_DESIGN.md
 ```
 
-Goal:
+Confirmed design boundary:
 
-- Do not extract numeric values from disordered TXT tables.
-- Design an independent table parser.
-- Prefer official HTML table, PDF table extraction, DOCX table, or another
-  structured table source.
-- Explicitly model `table_quality`, source location, row / column alignment,
-  unit, denominator, and total checks.
-- Continue to prohibit live CNInfo, Tushare, MCP, fixture promotion, and
-  Research Report V1 integration during that design stage.
+- The table parser is independent from the current minimal text parser.
+- Source priority is official HTML table, later PDF table extraction, DOCX
+  table, CSV / Excel structured table, then TXT copied from PDF for section
+  detection only.
+- `unreliable_text_copy` does not permit revenue, cost, gross margin, revenue
+  ratio, YoY, or segment extraction.
+- L1 table facts require `source_table_id` plus row / column location, unit,
+  denominator, period, and table quality.
+- Candidate generator integration and Research Report V1 integration remain
+  separate later designs.
+- Next recommended implementation stage is table schema / quality model
+  implementation, still without live CNInfo, Tushare, MCP, fixture promotion,
+  accepted manifest updates, scoring / P1.1 changes, or report integration.

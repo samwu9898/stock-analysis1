@@ -35,9 +35,11 @@ document also records the local sample parser acceptance summary in
 `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_PARSER_LOCAL_SAMPLE_ACCEPTANCE_SUMMARY.md`.
 The real local filing parser acceptance summary is recorded in
 `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_PARSER_REAL_LOCAL_FILING_ACCEPTANCE_SUMMARY.md`.
+The independent business-composition table parser design is recorded in
+`docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_BUSINESS_COMPOSITION_TABLE_PARSER_DESIGN.md`.
 Those summaries validate only the parser local-file and real-local-file
-minimum loops and do not wire L1 official disclosure evidence into Research
-Report V1. This document
+minimum loops plus the table-parser design boundary; they do not wire L1
+official disclosure evidence into Research Report V1. This document
 records the accepted design boundary; the implementation, baseline freeze,
 profile acceptance, HTML acceptance, orchestration design, offline runtime
 acceptance, and CLI runtime acceptance do not modify tests, fixtures, pipeline,
@@ -82,8 +84,9 @@ single-stock CLI runtime acceptance is recorded in
 `docs/FUNDAMENTAL_SKILL_CLI_RUNTIME_ACCEPTANCE_SUMMARY.md`. The manifest
 locator runtime acceptance is recorded in
 `docs/FUNDAMENTAL_ACCEPTED_MANIFEST_LOCATOR_RUNTIME_ACCEPTANCE_SUMMARY.md`.
-The next recommended official-disclosure work is Official Disclosure Business
-Composition Table Parser Design. The next step is not more ad hoc
+The next recommended official-disclosure work is table schema / quality model
+implementation for the independent Business Composition Table Parser. The next
+step is not more ad hoc
 single-target HTML generation, promote-rule design, validator implementation,
 fixture promotion, live CNInfo fetch, live provider report, MCP, Tushare token
 work, or a Tushare primary switch.
@@ -728,29 +731,33 @@ Completed sequence:
     runtime review.
 30. Real local official filing sample runtime review using the `600406` 2025
     semiannual report TXT sample.
+31. Official Disclosure Business Composition Table Parser Design.
 
 Next recommended sequence:
 
-1. Official Disclosure Business Composition Table Parser Design.
-2. Do not extract numeric values from disordered TXT tables; design a separate
-   table parser with table quality, source location, row / column alignment,
-   unit, denominator, and total checks.
-3. Add candidate generator integration only after a separate accepted design.
-4. Add Research Report V1 integration only after a separate accepted design.
-5. Start batch / dashboard design after manifest closeout, and make it depend
+1. Table schema / quality model implementation for the independent table
+   parser.
+2. DOCX / CSV / HTML local structured table reader design or implementation.
+3. One structured local table sample runtime review.
+4. Add table facts to `official_disclosure_facts.json` only after source
+   location, table quality, row / column alignment, unit, denominator, and
+   total checks are explicit.
+5. Add candidate generator integration only after a separate accepted design.
+6. Add Research Report V1 integration only after a separate accepted design.
+7. Start batch / dashboard design after manifest closeout, and make it depend
    on manifest-located artifacts.
-6. Keep caveats, evidence labels, data-quality notes, rebuttal conditions, and
+8. Keep caveats, evidence labels, data-quality notes, rebuttal conditions, and
    follow-up variables visible in any future display work.
-7. Later consider promote rules, validator, fixture promotion, live provider
+9. Later consider promote rules, validator, fixture promotion, live provider
    report, MCP, Tushare token work, and
    primary-provider switch only after a separately accepted stage.
 
 Do not continue into promote-rule design, validator implementation, fixture
 promotion, live CNInfo fetch, live provider report, MCP, Tushare token work,
 or Tushare primary switch as the next step. The product line should now move
-from accepted manifest locator runtime baseline and Minimal CNInfo / official
-disclosure parser local + real-local-file acceptance into Official Disclosure
-Business Composition Table Parser Design.
+from accepted manifest locator runtime baseline, Minimal CNInfo / official
+disclosure parser local + real-local-file acceptance, and Business Composition
+Table Parser Design into table schema / quality model implementation.
 
 ## 11. Presentation profile design addendum
 
@@ -909,8 +916,8 @@ The CLI runtime acceptance closeout is recorded in
 `docs/FUNDAMENTAL_SKILL_CLI_RUNTIME_ACCEPTANCE_SUMMARY.md`. Manifest locator
 runtime acceptance is recorded in
 `docs/FUNDAMENTAL_ACCEPTED_MANIFEST_LOCATOR_RUNTIME_ACCEPTANCE_SUMMARY.md`.
-Next recommended official-disclosure stage: Official Disclosure Business
-Composition Table Parser Design.
+Next recommended official-disclosure stage: table schema / quality model
+implementation for the independent Business Composition Table Parser.
 
 ## 15. CLI runtime acceptance addendum
 
@@ -972,10 +979,11 @@ contract:
 Manifest schema / writer / reader implementation, locator hardening, ignored
 runtime manifest generation, and retained runtime acceptance are now accepted
 for `600406`, `002371`, and `002050`. Minimal CNInfo / official disclosure
-parser design, local sample acceptance, and real local filing acceptance are
-now recorded. The next recommended official-disclosure stage is Official
-Disclosure Business Composition Table Parser Design. Batch / Dashboard can
-start after manifest closeout and should depend on manifest-located artifacts.
+parser design, local sample acceptance, real local filing acceptance, and
+business-composition table parser design are now recorded. The next recommended
+official-disclosure stage is table schema / quality model implementation for
+the independent Business Composition Table Parser. Batch / Dashboard can start
+after manifest closeout and should depend on manifest-located artifacts.
 Live Tushare provider mode, live CNInfo fetch, MCP, token work, validator,
 fixture promotion, and Tushare primary remain later separately accepted stages.
 
@@ -1114,9 +1122,39 @@ Research Report V1 boundary after official parser local-file acceptance:
 - No Research Report V1 builder, renderer, orchestration, CLI, scoring, P1.1,
   fixture, or accepted manifest behavior changes.
 
-Next recommended step after real local filing acceptance is Official
-Disclosure Business Composition Table Parser Design. Do not extract numeric
-values from disordered TXT tables, and do not jump directly into live CNInfo
-fetch, Tushare, MCP, validator, fixture promotion, candidate generator
-integration, Research Report V1 integration, Batch, or Dashboard
-implementation.
+Next recommended step after the Business Composition Table Parser Design is
+table schema / quality model implementation. Do not extract numeric values
+from disordered TXT tables, and do not jump directly into live CNInfo fetch,
+Tushare, MCP, validator, fixture promotion, candidate generator integration,
+Research Report V1 integration, Batch, or Dashboard implementation.
+
+## 19. Business Composition Table Parser Design Addendum
+
+The independent table-parser design is recorded in
+`docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_BUSINESS_COMPOSITION_TABLE_PARSER_DESIGN.md`.
+
+Research Report V1 relationship:
+
+- The table parser is a future official-disclosure module, not part of the
+  current report builder, renderer, orchestration, or CLI path.
+- Future table facts may strengthen data-quality assessment only after
+  separate candidate-generator and report-integration designs are accepted.
+- L1 table facts require `source_table_id`, row / column location, table
+  quality, unit, denominator, period, and source location.
+- `unreliable_text_copy` table regions must remain caveats and must not become
+  report facts.
+- The current `600406` real local TXT sample remains a boundary case: business
+  composition sections were detected, but revenue, cost, gross margin, revenue
+  ratio, YoY, and segment values were not extracted.
+
+Boundaries:
+
+- No direct Research Report V1 rewrite.
+- No direct accepted manifest update.
+- No fixture write or promotion.
+- No candidate generator integration yet.
+- No scoring / readiness / P1.1 / regression expected changes.
+- No live CNInfo, provider call, token read, network, MCP, OCR
+  implementation, or PDF extraction implementation.
+- No trading advice, target price, position sizing, portfolio weighting, or
+  technical trading signal.

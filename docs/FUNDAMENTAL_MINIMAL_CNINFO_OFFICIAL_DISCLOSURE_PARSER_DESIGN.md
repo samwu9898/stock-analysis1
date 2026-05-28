@@ -26,6 +26,9 @@ accepted and is recorded in
 Latest accepted parser-stage verification results are quoted, not rerun in the
 documentation-only summary: targeted tests `298 passed`, full pytest latest
 `946 passed, 1 skipped`, and regression `passed=47 failed=0 total=47`.
+The independent business-composition table parser design is recorded in
+`docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_BUSINESS_COMPOSITION_TABLE_PARSER_DESIGN.md`.
+It is a later module, not part of the current minimal text parser.
 
 ## 1. Design Positioning
 
@@ -133,6 +136,9 @@ Required interpretation boundary:
   strategy-specific labels at parse time.
 - Missing period, classification type, denominator, or unit must be recorded as
   a caveat, not inferred silently.
+- Structured numeric business-composition extraction is delegated to the
+  independent future table parser design. The current text parser must remain
+  conservative.
 - The accepted real local TXT filing review only detects business-composition
   regions with caveats. It does not extract revenue, cost, gross margin,
   revenue ratio, YoY, or segment values from copied PDF text because row /
@@ -439,22 +445,28 @@ Accepted sequence:
    `output/official_disclosures/local_real_samples/600406_2025_semiannual_report_real.txt`.
 7. Ignored real local filing runtime artifact validation at
    `output/official_disclosures/20260528T125521Z/600406/official_disclosure_facts.json`.
+8. Official Disclosure Business Composition Table Parser Design recorded in
+   `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_BUSINESS_COMPOSITION_TABLE_PARSER_DESIGN.md`.
 
 Recommended next sequence:
 
-1. Official Disclosure Business Composition Table Parser Design.
-2. Do not extract numeric values from disordered TXT tables; design a separate
-   table parser that can prove table quality, source location, row / column
-   alignment, units, denominators, and total checks.
-3. Add L1 evidence tier handling only after a separate accepted integration
+1. Table schema / quality model implementation for the independent table
+   parser.
+2. DOCX / CSV / HTML local structured table reader design or implementation.
+3. One structured local table sample runtime review.
+4. Add table facts to `official_disclosure_facts.json` only after table
+   quality, source location, row / column alignment, units, denominators, and
+   total checks are explicit.
+5. Add L1 evidence tier handling only after a separate accepted integration
    design.
-4. Add candidate generator integration only after a separate accepted
+6. Add candidate generator integration only after a separate accepted
    integration design.
-5. Add Research Report V1 integration only after a separate accepted
+7. Add Research Report V1 integration only after a separate accepted
    integration design.
-6. Add freshness trigger integration only after separate policy acceptance.
-7. Later live CNInfo fetch design.
-8. Later management guidance tracker.
+8. Add freshness trigger integration only after separate policy acceptance.
+9. Later PDF table extraction design.
+10. Later live CNInfo fetch design.
+11. Later management guidance tracker.
 
 Implementation should start with local files only. Any live CNInfo fetch, MCP
 connector, token handling, provider use, fixture promotion, validator, report
@@ -475,6 +487,7 @@ Research Report V1 use.
 
 This design should be referenced by:
 
+- `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_BUSINESS_COMPOSITION_TABLE_PARSER_DESIGN.md`
 - `docs/FUNDAMENTAL_ACCEPTED_ARTIFACT_MANIFEST_FRESHNESS_DESIGN.md`
 - `docs/FUNDAMENTAL_RESEARCH_REPORT_V1_DESIGN.md`
 - `docs/PROJECT_CONTEXT_HANDOFF.md`
@@ -493,6 +506,8 @@ The current accepted runtime baseline remains unchanged:
   `output/research_reports/accepted_manifest.json`.
 - Default path remains offline local artifacts / no live provider / no token /
   no network / no MCP.
+- Business-composition table parser design is recorded, but implementation is
+  not accepted yet.
 - Live CNInfo is not implemented.
 - PDF table parser is not implemented.
 - Candidate generator integration is not implemented.
