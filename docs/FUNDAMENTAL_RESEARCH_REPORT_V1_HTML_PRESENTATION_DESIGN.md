@@ -2,16 +2,28 @@
 
 Date: 2026-05-28
 
-Stage: Fundamental Skill Research Report V1 HTML Presentation Layer Design.
+Stage: Fundamental Skill Research Report V1 HTML Presentation Layer Design and
+Three-Sample Acceptance.
 
-Status: documentation-only design. This stage does not write code, tests,
-fixtures, pipeline changes, scoring / readiness changes, P1.1 changes,
-regression expected files, provider-primary behavior, runtime output, default
-output, provider raw artifacts, evidence packs, candidate reports, or review
-decision artifacts. It does not run smoke tests, read `TUSHARE_TOKEN`, use the
-network, call Tushare or AkShare, connect MCP, promote fixture values,
-automatically merge providers, or output buy / sell advice, target prices,
-position sizing, portfolio weights, or technical trading signals.
+Status: design accepted, HTML renderer implementation accepted, and
+three-sample HTML acceptance complete for `600406`, `002371`, and `002050`.
+The HTML presentation layer baseline is frozen. The acceptance summary is
+recorded in
+`docs/FUNDAMENTAL_RESEARCH_REPORT_V1_HTML_ACCEPTANCE_SUMMARY.md`. This design
+boundary does not authorize code, tests, fixtures, pipeline changes, scoring /
+readiness changes, P1.1 changes, regression expected files, provider-primary
+behavior, default output, provider raw artifacts, evidence packs, candidate
+reports, or review decision artifacts. It does not run smoke tests, read
+`TUSHARE_TOKEN`, use the network, call Tushare or AkShare, connect MCP, promote
+fixture values, automatically merge providers, or output buy / sell advice,
+target prices, position sizing, portfolio weights, or technical trading
+signals.
+
+Accepted HTML runtime artifacts:
+
+- `output/research_reports/20260528T012952/600406/fundamental_research_report_v1.html`
+- `output/research_reports/20260528T090024/002371/fundamental_research_report_v1.html`
+- `output/research_reports/20260528T091133/002050/fundamental_research_report_v1.html`
 
 ## 1. HTML Layer Positioning
 
@@ -358,19 +370,22 @@ Suggested test coverage:
 
 ## 11. Roadmap
 
-Recommended sequence:
+Completed sequence:
 
 1. Complete this HTML design.
 2. Implement HTML renderer.
-3. Generate `600406` HTML.
-4. Generate `002371` HTML.
-5. Generate `002050` HTML.
-6. Run three-sample HTML readability / UI acceptance.
-7. Later evaluate Dashboard, batch reports, or live provider reports.
+3. Generate and accept `600406` HTML.
+4. Generate and accept `002371` HTML.
+5. Generate and accept `002050` HTML.
+6. Complete three-sample HTML readability / UI initial acceptance.
+7. Freeze the HTML presentation layer three-sample baseline.
+
+Next recommended work is not more single-target HTML generation. The product
+line can now evaluate Dashboard / batch report design or HTML visual refinement.
 
 Do not move promote rules, validator implementation, fixture promotion,
 official parser / CNInfo, live provider report, provider primary switch, or
-AkShare / Tushare automatic merge ahead of HTML presentation validation.
+AkShare / Tushare automatic merge ahead of a separately accepted future stage.
 
 ## 12. Acceptance Checklist For This Design Stage
 
@@ -394,3 +409,26 @@ This design stage is accepted only if the work remains documentation-only:
 - no buy / sell advice, target price, position sizing, portfolio weight, or
   technical trading signal.
 
+## 13. Three-Sample HTML Acceptance Addendum
+
+The HTML renderer implementation and the three accepted HTML samples have
+passed acceptance:
+
+- `600406` / `stable_growth_grid_equipment`: accepted.
+- `002371` / `semiconductor_equipment_cycle`: accepted.
+- `002050` / `advanced_manufacturing_thermal_management`: accepted.
+
+Acceptance confirmed artifact boundary, secret scan, external resource scan,
+HTML structure, content consistency, profile isolation, caveat visibility, and
+initial UI readability. HTML did not re-analyze the companies, did not change
+Markdown conclusions, did not change evidence labels, did not hide
+data-quality caveats, did not call providers, did not use the network, did not
+read tokens, did not connect MCP, and did not output investment-action
+recommendations, target prices, position sizing, portfolio weights, or
+technical trading signals.
+
+Latest accepted verification results are quoted, not rerun here: targeted tests
+`124 passed`; regression `passed=47 failed=0 total=47`.
+
+The HTML baseline is frozen at the documentation level. Runtime artifacts remain
+ignored output and must not be committed.

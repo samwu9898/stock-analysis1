@@ -3,20 +3,22 @@
 Date: 2026-05-28
 
 Stage: Fundamental Skill Research Report V1 Design, Cross-Industry Markdown
-Profile Acceptance, and HTML Presentation Layer Design.
+Profile Acceptance, HTML Presentation Layer Design, and Three-Sample HTML
+Acceptance.
 
 Status: design accepted, implementation accepted, Research Report V1 baseline
 frozen, cross-industry Markdown profile validation accepted for `600406`,
-`002371`, and `002050`, and HTML presentation layer design accepted. This
-document records the accepted design boundary; the
-implementation, baseline freeze, and profile acceptance do not modify tests,
-fixtures, pipeline, scoring / readiness, Research Intelligence P1.1, HTML /
-Dashboard, regression expected files, provider-primary behavior, default output,
-provider raw artifacts, evidence packs, candidate reports, or review decision
-artifacts. They do not run real smoke tests, read `TUSHARE_TOKEN`, use the
-network, call Tushare or AkShare, connect MCP, promote fixture values,
-automatically merge providers, or output buy / sell advice, target prices,
-position sizing, portfolio weights, or technical trading advice.
+`002371`, and `002050`, HTML renderer implementation accepted, and the
+three-sample HTML presentation baseline frozen. This document records the
+accepted design boundary; the implementation, baseline freeze, profile
+acceptance, and HTML acceptance do not modify tests, fixtures, pipeline,
+scoring / readiness, Research Intelligence P1.1, Dashboard, regression expected
+files, provider-primary behavior, default output, provider raw artifacts,
+evidence packs, candidate reports, or review decision artifacts. They do not
+run real smoke tests, read `TUSHARE_TOKEN`, use the network, call Tushare or
+AkShare, connect MCP, promote fixture values, automatically merge providers, or
+output buy / sell advice, target prices, position sizing, portfolio weights, or
+technical trading advice.
 
 Current design inputs reviewed:
 
@@ -38,12 +40,15 @@ It is an ignored runtime artifact and is not committed.
 
 The `600406`, `002371`, and `002050` Markdown runtime artifacts have since
 passed cross-industry Product Readability / Analyst Experience Review with
-their respective presentation profiles. HTML presentation layer design is
+their respective presentation profiles. The HTML presentation layer design is
 recorded in
-`docs/FUNDAMENTAL_RESEARCH_REPORT_V1_HTML_PRESENTATION_DESIGN.md`. The next
-recommended stage is HTML renderer implementation. It is not promote-rule
-design, validator implementation, fixture promotion, live provider report, or a
-Tushare primary switch.
+`docs/FUNDAMENTAL_RESEARCH_REPORT_V1_HTML_PRESENTATION_DESIGN.md`, and the
+three-sample HTML acceptance summary is recorded in
+`docs/FUNDAMENTAL_RESEARCH_REPORT_V1_HTML_ACCEPTANCE_SUMMARY.md`. The next
+recommended work is Dashboard / batch report design or HTML visual refinement,
+not more single-target HTML generation, promote-rule design, validator
+implementation, fixture promotion, live provider report, or a Tushare primary
+switch.
 
 ## 1. Goal Correction
 
@@ -662,23 +667,24 @@ Completed sequence:
 8. Presentation profile registry acceptance.
 9. `600406`, `002371`, and `002050` real-sample Markdown profile acceptance.
 10. Cross-industry Markdown validation.
+11. HTML renderer implementation acceptance.
+12. `600406`, `002371`, and `002050` HTML runtime artifact acceptance.
+13. HTML presentation layer three-sample baseline freeze.
 
 Next recommended sequence:
 
-1. HTML renderer implementation.
-2. Generate and review `600406`, `002371`, and `002050` HTML runtime artifacts
-   only after the renderer exists.
-3. Ensure HTML consumes Markdown / presentation-layer output or the Research
-   Report V1 structured payload without re-analysis or conclusion changes.
-4. Keep caveats, evidence labels, data-quality notes, rebuttal conditions, and
-   follow-up variables visible in the HTML layer.
-5. Later consider promote rules, validator, fixture promotion, and
-   primary-provider switch only after the report product experience is reviewed.
+1. Commit the HTML baseline documentation patch.
+2. Evaluate Dashboard / batch report design, or first do HTML visual refinement.
+3. Keep caveats, evidence labels, data-quality notes, rebuttal conditions, and
+   follow-up variables visible in any future display work.
+4. Later consider promote rules, validator, fixture promotion, live provider
+   report, official parser / CNInfo, and primary-provider switch only after the
+   report product experience is reviewed.
 
 Do not continue into promote-rule design, validator implementation, fixture
-promotion, or Tushare primary switch as the next step. The product line should
-now return from data-quality audit infrastructure to professional fundamental
-research output.
+promotion, live provider report, official parser / CNInfo, or Tushare primary
+switch as the next step. The product line should now move from single-report
+HTML generation into product experience design or focused visual refinement.
 
 ## 11. Presentation profile design addendum
 
@@ -737,25 +743,29 @@ rerun in the documentation-only acceptance-summary stage: targeted tests
 `86 passed`, full pytest `734 passed, 1 skipped`, and regression
 `passed=47 failed=0 total=47`.
 
-The HTML presentation layer design is now recorded in
-`docs/FUNDAMENTAL_RESEARCH_REPORT_V1_HTML_PRESENTATION_DESIGN.md`. HTML must
+The HTML presentation layer design is recorded in
+`docs/FUNDAMENTAL_RESEARCH_REPORT_V1_HTML_PRESENTATION_DESIGN.md`, and the
+three-sample HTML acceptance summary is recorded in
+`docs/FUNDAMENTAL_RESEARCH_REPORT_V1_HTML_ACCEPTANCE_SUMMARY.md`. HTML must
 consume Markdown / presentation-layer output or the Research Report V1
 structured payload, must not re-analyze or alter conclusions, must not hide
 caveats, and must not call providers, use the network, read tokens, connect
 MCP, or change promote rules, validators, fixtures, scoring, readiness, P1.1,
-or provider primary behavior. The next recommended stage is HTML renderer
-implementation.
+or provider primary behavior. The HTML presentation baseline is frozen; the
+next recommended stage is Dashboard / batch report design or HTML visual
+refinement.
 
-## 13. HTML presentation layer design addendum
+## 13. HTML presentation layer design and acceptance addendum
 
-The HTML presentation layer is accepted as a display-only design boundary.
-The future renderer should consume accepted Markdown as the preferred input and
-may consume `fundamental_research_report_v1.json` only to supplement display
-metadata, cards, evidence labels, source references, and data-quality caveats.
-It must not generate conclusions from raw provider artifacts or bypass the
-Markdown profile / professional voice gate.
+The HTML presentation layer is accepted as a display-only design boundary, the
+renderer implementation is accepted, and the three-sample baseline is frozen.
+The renderer consumes accepted Markdown as the preferred input and may consume
+`fundamental_research_report_v1.json` only to supplement display metadata,
+cards, evidence labels, source references, and data-quality caveats. It must
+not generate conclusions from raw provider artifacts or bypass the Markdown
+profile / professional voice gate.
 
-Future HTML runtime output should be written only when explicitly requested:
+HTML runtime output is written only when explicitly requested:
 
 ```text
 output/research_reports/<timestamp>/<code>/fundamental_research_report_v1.html
@@ -767,7 +777,21 @@ before writing. They must not contain tokens, MCP URLs, local secret paths,
 preserve `not_for_trading_advice`, evidence labels, data-quality caveats,
 evidence gaps, rebuttal conditions, and follow-up variables.
 
-Implementation remains future work. The suggested next module is
+Accepted HTML runtime artifacts:
+
+| code | company | profile | accepted runtime artifact |
+| --- | --- | --- | --- |
+| `600406` | 国电南瑞 | `stable_growth_grid_equipment` | `output/research_reports/20260528T012952/600406/fundamental_research_report_v1.html` |
+| `002371` | 北方华创 | `semiconductor_equipment_cycle` | `output/research_reports/20260528T090024/002371/fundamental_research_report_v1.html` |
+| `002050` | 三花智控 | `advanced_manufacturing_thermal_management` | `output/research_reports/20260528T091133/002050/fundamental_research_report_v1.html` |
+
+Acceptance confirmed artifact boundary, secret scan, external resource scan,
+HTML structure, content consistency, profile isolation, caveat visibility, and
+initial UI readability. Latest accepted verification results are quoted, not
+rerun here: targeted tests `124 passed`; regression
+`passed=47 failed=0 total=47`.
+
+The accepted renderer module is
 `src/fundamental_skill/research_report/research_report_v1_html.py` with a
 renderer shaped around:
 
@@ -776,3 +800,8 @@ render_research_report_v1_html(markdown: str, report: dict | None = None) -> str
 ```
 
 The writer should keep a strict output boundary under `output/research_reports/`.
+
+The next step is no longer more single-stock HTML generation. Dashboard / batch
+report design or HTML visual refinement can proceed as the next product-stage
+choice. Promote rules, validator, fixture promotion, live provider report,
+official parser / CNInfo, and Tushare primary remain later work.
