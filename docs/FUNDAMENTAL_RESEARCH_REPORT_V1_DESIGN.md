@@ -28,7 +28,9 @@ acceptance closeout is recorded in
 now also links the accepted artifact manifest / freshness design recorded in
 `docs/FUNDAMENTAL_ACCEPTED_ARTIFACT_MANIFEST_FRESHNESS_DESIGN.md` and the
 manifest locator runtime acceptance closeout recorded in
-`docs/FUNDAMENTAL_ACCEPTED_MANIFEST_LOCATOR_RUNTIME_ACCEPTANCE_SUMMARY.md`. This document
+`docs/FUNDAMENTAL_ACCEPTED_MANIFEST_LOCATOR_RUNTIME_ACCEPTANCE_SUMMARY.md`.
+Minimal CNInfo / official disclosure parser design is recorded in
+`docs/FUNDAMENTAL_MINIMAL_CNINFO_OFFICIAL_DISCLOSURE_PARSER_DESIGN.md`. This document
 records the accepted design boundary; the implementation, baseline freeze,
 profile acceptance, HTML acceptance, orchestration design, offline runtime
 acceptance, and CLI runtime acceptance do not modify tests, fixtures, pipeline,
@@ -718,21 +720,23 @@ Completed sequence:
 Next recommended sequence:
 
 1. Submit the manifest locator runtime acceptance summary documentation patch.
-2. Enter Minimal CNInfo / official disclosure parser design, or A-share
-   specific risk framework design.
-3. Start batch / dashboard design after manifest closeout, and make it depend
+2. Minimal CNInfo / official disclosure parser design.
+3. Parser schema / local-file reader implementation, or A-share specific risk
+   framework design.
+4. Start batch / dashboard design after manifest closeout, and make it depend
    on manifest-located artifacts.
-4. Keep caveats, evidence labels, data-quality notes, rebuttal conditions, and
+5. Keep caveats, evidence labels, data-quality notes, rebuttal conditions, and
    follow-up variables visible in any future display work.
-5. Later consider promote rules, validator, fixture promotion, live provider
+6. Later consider promote rules, validator, fixture promotion, live provider
    report, MCP, Tushare token work, and
    primary-provider switch only after a separately accepted stage.
 
 Do not continue into promote-rule design, validator implementation, fixture
 promotion, live provider report, MCP, Tushare token work, or Tushare primary
 switch as the next step. The product line should now move from accepted
-manifest locator runtime baseline into Minimal CNInfo / official disclosure
-parser design or A-share specific risk framework design.
+manifest locator runtime baseline and Minimal CNInfo / official disclosure
+parser design into parser schema / local-file reader implementation, or
+A-share specific risk framework design.
 
 ## 11. Presentation profile design addendum
 
@@ -891,8 +895,8 @@ The CLI runtime acceptance closeout is recorded in
 `docs/FUNDAMENTAL_SKILL_CLI_RUNTIME_ACCEPTANCE_SUMMARY.md`. Manifest locator
 runtime acceptance is recorded in
 `docs/FUNDAMENTAL_ACCEPTED_MANIFEST_LOCATOR_RUNTIME_ACCEPTANCE_SUMMARY.md`.
-Next recommended stage: Minimal CNInfo / official disclosure parser design, or
-A-share specific risk framework design.
+Next recommended stage: parser schema / local-file reader implementation for
+the official disclosure parser, or A-share specific risk framework design.
 
 ## 15. CLI runtime acceptance addendum
 
@@ -996,3 +1000,45 @@ tests with retained manifest `251 passed`, full pytest with retained manifest
 The manifest does not promote evidence labels, verify official facts, implement
 CNInfo parsing, act as a validator, or promote fixtures. Future runtime updates
 must pass acceptance before the manifest is updated.
+
+## 18. Minimal CNInfo / Official Disclosure Parser Addendum
+
+Minimal CNInfo / official disclosure parser design is recorded in
+`docs/FUNDAMENTAL_MINIMAL_CNINFO_OFFICIAL_DISCLOSURE_PARSER_DESIGN.md`.
+
+Research Report V1 relationship:
+
+- Research Report V1 remains an offline local-artifact report layer.
+- The official parser is not part of the current default runtime path.
+- Future `official_disclosure_facts.json` artifacts may strengthen
+  data-quality assessment by providing official main-business text, official
+  business-composition facts, management-guidance placeholders, and A-share
+  risk triggers.
+- Accepted L1 official facts may later be cited as stronger sources after a
+  separate candidate / review / acceptance integration.
+- The report must keep caveats visible when official parser confidence,
+  source location, denominator, period, classification type, or unit is weak.
+
+Evidence-tier relationship:
+
+- `L1_official_disclosure` means CNInfo / exchange / company official filing
+  text with source location and parser confidence.
+- `L2_multi_source_consistent` means multiple market data providers agree after
+  source and period review.
+- `L3_single_source_candidate` means one provider or unreviewed candidate.
+- `L4_unsupported_or_missing` means hypothesis or missing evidence.
+- Manifest / freshness status is not evidence tier.
+
+Boundaries:
+
+- Official parser output does not directly rewrite Research Report V1.
+- Official parser output does not automatically overwrite provider output.
+- Official parser output does not write fixtures, change scoring / readiness,
+  change P1.1, change regression expected files, or update the accepted
+  manifest.
+- Official parser triggers are not trading signals, target-price inputs, or
+  position-sizing inputs.
+
+Next recommended step after this design is parser schema / local-file reader
+implementation, followed by one local downloaded filing sample for
+`main_business` and `business_composition` extraction.

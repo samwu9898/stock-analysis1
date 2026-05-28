@@ -22,6 +22,8 @@ Latest accepted verification results are quoted, not rerun here:
 
 Manifest locator runtime acceptance closeout is recorded in
 `docs/FUNDAMENTAL_ACCEPTED_MANIFEST_LOCATOR_RUNTIME_ACCEPTANCE_SUMMARY.md`.
+Minimal CNInfo / official disclosure parser design is recorded in
+`docs/FUNDAMENTAL_MINIMAL_CNINFO_OFFICIAL_DISCLOSURE_PARSER_DESIGN.md`.
 The retained ignored runtime manifest is
 `output/research_reports/accepted_manifest.json` with SHA256
 `C1F97162A59DE113CD4C9F1A9531AEC3A915A3D6F09365098201234E6F5BEB7F`, size
@@ -361,11 +363,20 @@ Relationship:
 - CNInfo / official parser can later improve automatic staleness trigger
   detection.
 - Official source integration can later support L1 evidence tier.
+- Minimal CNInfo / official disclosure parser design is now documented in
+  `docs/FUNDAMENTAL_MINIMAL_CNINFO_OFFICIAL_DISCLOSURE_PARSER_DESIGN.md`.
+- The official parser may produce future `L1_official_disclosure` candidates
+  with source document, source section, source page / anchor, parser
+  confidence, and caveats.
 - Current V1 manifest only records accepted artifacts and freshness metadata.
 - Manifest is not a CNInfo parser.
 - Manifest is not a validator.
 - Manifest is not fixture promotion.
 - Manifest does not upgrade evidence labels.
+- Manifest / freshness status is not evidence tier.
+- Official parser trigger discovery does not automatically make an accepted
+  report stale; any manifest freshness update still requires accepted policy
+  judgment.
 
 ## 11. Relation To Batch / Dashboard
 
@@ -430,11 +441,16 @@ Completed sequence:
 Next recommended sequence:
 
 1. Submit the manifest locator runtime acceptance summary documentation patch.
-2. Enter Minimal CNInfo / official disclosure parser design, or A-share
-   specific risk framework design.
-3. Start batch / dashboard design only after manifest closeout, and make it
+2. Minimal CNInfo / official disclosure parser design.
+3. Parser schema / local-file reader implementation.
+4. One local downloaded filing sample for main-business and
+   business-composition extraction.
+5. Feed accepted official facts into candidate generator and evidence-tier
+   handling through a separate design / acceptance cycle.
+6. Start batch / dashboard design only after manifest closeout, and make it
    depend on manifest-located artifacts.
-4. Keep live Tushare provider, token, MCP, and smoke work later.
+7. Keep live Tushare provider, live CNInfo fetch, token, MCP, and smoke work
+   later.
 
 ## 15. Runtime acceptance summary addendum
 
@@ -463,3 +479,28 @@ Runtime-aware tests no longer require the real manifest to be absent. When the
 real manifest exists, tests assert that hash, mtime, and size remain unchanged;
 when it is absent, tests assert that they do not create it. The tests write
 only tmpdir and keep runtime output untracked.
+
+## 16. Minimal CNInfo / Official Disclosure Parser Addendum
+
+Minimal CNInfo / official disclosure parser design is recorded in
+`docs/FUNDAMENTAL_MINIMAL_CNINFO_OFFICIAL_DISCLOSURE_PARSER_DESIGN.md`.
+
+Design implications for the manifest / freshness model:
+
+- Future official parser output is a runtime candidate artifact at
+  `output/official_disclosures/<timestamp>/<code>/official_disclosure_facts.json`.
+- The artifact may help identify annual, semiannual, quarterly, earnings
+  preannouncement, earnings flash, management guidance, major contract,
+  shareholder reduction, regulatory inquiry / penalty, and auditor-opinion
+  triggers.
+- Trigger discovery is not the same thing as an automatic stale decision.
+- Official parser facts may become L1 evidence candidates only with source
+  document, source location, confidence, and caveats.
+- Official parser output must not directly update the accepted manifest.
+- Official parser output must not write fixtures, change scoring / readiness,
+  change P1.1, change regression expected files, change provider primary
+  behavior, or merge provider data.
+
+Next recommended step after this documentation patch is parser schema /
+local-file reader implementation, still local-file first and still no live
+CNInfo fetch unless a separate design / permission boundary is accepted.
