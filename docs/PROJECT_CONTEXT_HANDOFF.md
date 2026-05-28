@@ -35,7 +35,7 @@ report, official parser / CNInfo, MCP, Tushare token work, or another smoke.
 
 ## 1. One-Sentence Positioning
 
-This project is an A-share fundamental AI analysis Skill: it only performs fundamental analysis, does not provide trading advice, does not use technical analysis, and does not connect to trading accounts.
+This project is an A-share fundamental AI analysis Skill. The accepted current user-facing baseline is the Research Report V1 single-stock offline CLI, which reads local accepted artifacts and returns HTML / Markdown / JSON paths plus a short Chinese summary. It only performs fundamental research, does not provide trading advice, does not use technical analysis, does not connect to trading accounts, and by default does not use live providers, network access, tokens, or MCP.
 
 ## 2. Current Project Goal
 
@@ -57,6 +57,8 @@ natural-language Codex / GPT-5.5 request
   -> final HTML path + Markdown path + JSON path + short Chinese summary
   -> Dashboard v3 report reader / audit view
 ```
+
+For the accepted CLI baseline, the current default path begins at local report orchestration and `offline_local_artifacts`; live provider report, official parser / CNInfo, MCP, Tushare token work, and provider-primary changes remain later separately accepted stages.
 
 The system should let a user ask Codex / GPT-5.5 for a report in natural
 language, normalize that request into a structured local-only report request,

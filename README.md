@@ -13,6 +13,8 @@
 
 它不是交易系统，不是技术面系统，不连接交易账户，也不输出交易建议。系统输出的 `confidence` 表示对当前 `fundamental_view` 的证据置信度，不代表正向强度、上涨概率或投资吸引力。
 
+当前已验收的用户入口是 Research Report V1 single-stock offline CLI baseline。默认路径读取本地 accepted artifacts，返回 HTML / Markdown / JSON 路径、中文摘要、机会、风险、证据缺口和数据质量状态；默认不联网、不读 token、不调用 provider、不接 MCP。Batch、Dashboard、live provider report、official parser / CNInfo、MCP 和 Tushare token work 都属于 later work。
+
 ## 当前核心能力
 
 - `RealDataConnector v2.3a`：从公开数据源获取 A 股基础信息、财务指标、估值、主营构成、资产负债表字段、研发费用和 capex 等，并保留 source trace。
@@ -24,6 +26,7 @@
 - Fundamental HTML Report Generator v2.1：基于 evidence pack 生成结构化 `FundamentalHtmlReport` JSON 提示词，并把已生成的正式 JSON 渲染为纯基本面中文 HTML 研报。
 - HTML Report Visual Audit Tool v1：使用 Playwright / Chromium 对本地 HTML 研报进行 desktop、mobile 和 full-page 截图验收，输出视觉审计 manifest。
 - Dashboard v3：本地 Streamlit 基本面 AI 分析报告阅读器 / auditor，主视图中文化展示结论、证据、风险、缺口、must-track 指标、置信度拆解和数据质量；Evidence Pack、Source Trace、Raw JSON、Prompt 默认折叠为审计材料。
+- Research Report V1 CLI：当前已验收的 single-stock offline command wrapper，默认读取本地 artifacts，不走 live provider，不读 `TUSHARE_TOKEN`，不联网，不接 MCP；返回 HTML / Markdown / JSON 路径和中文摘要。
 - Industry Framework Workflow：用标准流程扩展行业框架，避免把单只股票、主题热度或 proxy 当成基本面事实。
 
 ## Research Intelligence P0
@@ -198,6 +201,17 @@ python scripts/visual_audit_html_report.py \
 
 ## 使用方式
 
+### 0. 当前已验收 single-stock offline CLI
+
+当前用户侧默认入口是 Research Report V1 CLI command wrapper：
+
+```bash
+python -m src.fundamental_skill.research_report.generate_report --code 600406 --format html --data-mode offline_local_artifacts
+python -m src.fundamental_skill.research_report.generate_report --company-name 北方华创 --format html
+```
+
+该路径复用或定位本地 accepted Research Report V1 artifacts，返回 HTML / Markdown / JSON 路径、中文摘要、机会、风险、证据缺口和数据质量状态。它不是 live data path，不读 `TUSHARE_TOKEN`，不联网，不调用 Tushare / AkShare / provider，不接 MCP，不自由生成报告，也不输出交易建议、目标价、仓位或技术面交易信号。
+
 ### 1. 创建环境
 
 ```bash
@@ -339,6 +353,7 @@ Out-of-Sample Audit
 - 新闻源仍可能失败，且新闻只能作为公开文本材料或低权重上下文。
 - 部分行业专属数据仍缺失，例如客户结构、项目验收、容量利用率、卫星剩余寿命、运营小时、飞行架次等。
 - AI report 当前以 `prompt_only` 为主；API 模式在 v1 中未实现，HTML report prompt 也不自动调用 API。
+- 当前已验收用户入口是 single-stock offline CLI；batch / Dashboard / live provider report 尚未作为默认用户路径实现。
 - 行业框架仍需逐步扩展，现有框架不应被当成所有 A 股公司的完整行业分类体系。
 - `output/`、`output/reports/`、`output/visual_audit/`、`data/`、`cache/` 等运行产物和缓存不应提交。
 
