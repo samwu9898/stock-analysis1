@@ -10,6 +10,8 @@ Local Artifact Index rows, or generate runtime artifacts.
 from __future__ import annotations
 
 from copy import deepcopy
+import json
+import os
 import re
 from typing import Any
 
@@ -19,6 +21,9 @@ from .safety import validate_payload_safety
 
 MANIFEST_LOCATOR_PAYLOAD_SCHEMA_VERSION = "manifest_locator_payload.v1"
 MANIFEST_ENTRY_ROW_SCHEMA_VERSION = "manifest_entry_row.v1"
+SYNTHETIC_MANIFEST_LOCATOR_INPUT_SCHEMA_VERSION = "synthetic_manifest_locator_input.v1"
+
+_SYNTHETIC_MANIFEST_PAYLOAD_PATH = "output/research_reports/synthetic_manifest_locator_input.json"
 
 MANIFEST_EXISTS_STATUSES = (
     "exists",
@@ -145,6 +150,18 @@ REQUIRED_MANIFEST_LOCATOR_PAYLOAD_FIELDS = (
 )
 
 _SIX_DIGIT_CODE_RE = re.compile(r"\d{6}")
+_WINDOWS_ABSOLUTE_RE = re.compile(r"^[A-Za-z]:[\\/]")
+_URI_RE = re.compile(r"^[a-z][a-z0-9+.-]*://", re.IGNORECASE)
+_SYNTHETIC_SECRET_SEGMENT_RE = re.compile(
+    r"(^|[._\-\s])("
+    r"token|tokens|secret|secrets|credential|credentials|password|passwd|key|keys|"
+    r"private[_\-\s]*key|secret[_\-\s]*key|api[_\-\s]*key|access[_\-\s]*token|"
+    r"tushare[_\-\s]*token|bearer|id_rsa|id_dsa|id_ed25519"
+    r")($|[._\-\s])",
+    re.IGNORECASE,
+)
+_SYNTHETIC_DOTENV_SEGMENT_RE = re.compile(r"^\.env($|[._-])", re.IGNORECASE)
+_SYNTHETIC_MCP_SEGMENT_RE = re.compile(r"(^|[._-])mcp($|[._-])", re.IGNORECASE)
 
 _FORBIDDEN_MARKERS = (
     "verified_fact",
@@ -321,6 +338,174 @@ def _validate_common_safety(payload: dict[str, Any], payload_name: str) -> None:
     validate_payload_safety(_mask_path_fields_for_payload_safety(payload))
 
 
+def _coerce_synthetic_manifest_path(path: Any) -> str:
+    try:
+        text = os.fspath(path)
+    except TypeError as exc:
+        raise ValueError("synthetic manifest path must be an explicit filesystem path") from exc
+    if not isinstance(text, str):
+        raise ValueError("synthetic manifest path must be a text filesystem path")
+    return text
+
+
+def _normalise_synthetic_manifest_path(path: str) -> str:
+    return path.strip().replace("\\", "/")
+
+
+def _is_absolute_synthetic_manifest_path(path: str) -> bool:
+    text = path.strip()
+    return bool(_WINDOWS_ABSOLUTE_RE.match(text)) or text.startswith("/")
+
+
+def _synthetic_manifest_path_safety_reason(path: str) -> str | None:
+    normalized = _normalise_synthetic_manifest_path(path)
+    if not normalized:
+        return "path is empty"
+    if "\x00" in normalized:
+        return "path contains a null byte"
+    if _URI_RE.match(normalized) or normalized.startswith("//"):
+        return "URI and UNC paths are not allowed"
+    if not _is_absolute_synthetic_manifest_path(path):
+        return "synthetic manifest path must be an explicit tmp_path file"
+    segments = [segment for segment in normalized.split("/") if segment]
+    lowered_segments = [segment.lower() for segment in segments]
+    if any(segment == ".." for segment in segments):
+        return "path traversal is not allowed"
+    if "output" in lowered_segments:
+        return "real output paths are not allowed"
+    if "fixtures" in lowered_segments or "fixture" in lowered_segments:
+        return "fixture paths are not allowed"
+    lowered = normalized.lower()
+    if lowered.endswith("/research_reports/accepted_manifest.json") or lowered.endswith(
+        "/output/research_reports/accepted_manifest.json"
+    ):
+        return "real accepted manifest path is not allowed"
+    if "tushare_token" in lowered or "access_token" in lowered or "api_key" in lowered:
+        return "token or API credential path is not allowed"
+    for index, segment in enumerate(segments):
+        if _SYNTHETIC_DOTENV_SEGMENT_RE.search(segment):
+            return ".env paths are not allowed"
+        if _SYNTHETIC_SECRET_SEGMENT_RE.search(segment):
+            return "token, secret, credential, or key paths are not allowed"
+        if _SYNTHETIC_MCP_SEGMENT_RE.search(segment) or (
+            segment.lower() == "config" and index + 1 < len(segments) and "mcp" in segments[index + 1].lower()
+        ):
+            return "MCP config paths are not allowed"
+    return None
+
+
+def _build_synthetic_manifest_failure_payload(
+    *,
+    stock_code: str,
+    company_name_hint: str,
+    manifest_exists_status: str,
+    manifest_schema_status: str,
+    unmatched_reason: str,
+    caveat: str,
+    manifest_entry_count: int = 0,
+) -> dict[str, Any]:
+    return build_manifest_locator_payload(
+        manifest_path=_SYNTHETIC_MANIFEST_PAYLOAD_PATH,
+        manifest_exists_status=manifest_exists_status,
+        manifest_schema_status=manifest_schema_status,
+        manifest_entry_count=manifest_entry_count,
+        matched_entries=[],
+        unmatched_reason=unmatched_reason,
+        stock_code=stock_code,
+        company_name=company_name_hint,
+        report_artifact_refs=[],
+        freshness_status="unknown",
+        lineage_refs=[],
+        caveats=[caveat],
+    )
+
+
+def _schema_mismatch_payload(
+    *,
+    stock_code: str,
+    company_name_hint: str,
+    caveat: str,
+    manifest_entry_count: int = 0,
+) -> dict[str, Any]:
+    return _build_synthetic_manifest_failure_payload(
+        stock_code=stock_code,
+        company_name_hint=company_name_hint,
+        manifest_exists_status="exists",
+        manifest_schema_status="schema_mismatch",
+        unmatched_reason="schema_mismatch",
+        manifest_entry_count=manifest_entry_count,
+        caveat=caveat,
+    )
+
+
+def _review_required_payload(
+    *,
+    stock_code: str,
+    company_name_hint: str,
+    caveat: str,
+    manifest_entry_count: int = 0,
+) -> dict[str, Any]:
+    return _build_synthetic_manifest_failure_payload(
+        stock_code=stock_code,
+        company_name_hint=company_name_hint,
+        manifest_exists_status="exists",
+        manifest_schema_status="review_required",
+        unmatched_reason="review_required",
+        manifest_entry_count=manifest_entry_count,
+        caveat=caveat,
+    )
+
+
+def _require_synthetic_manifest_dict(value: Any) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise ValueError("synthetic manifest must be a dict")
+    return value
+
+
+def _entry_artifacts(entry: dict[str, Any]) -> list[Any]:
+    has_artifacts = "artifacts" in entry
+    has_report_artifacts = "report_artifacts" in entry
+    if has_artifacts and has_report_artifacts:
+        raise ValueError("synthetic entry must not define both artifacts and report_artifacts")
+    if not has_artifacts and not has_report_artifacts:
+        raise ValueError("synthetic entry missing artifacts")
+    artifacts = entry["artifacts"] if has_artifacts else entry["report_artifacts"]
+    return _require_list(artifacts, "artifacts")
+
+
+def _invalid_artifact_payload(
+    *,
+    exc: ValueError,
+    stock_code: str,
+    company_name_hint: str,
+    manifest_entry_count: int,
+) -> dict[str, Any]:
+    message = str(exc)
+    if "unsafe artifact_path" in message:
+        return _build_synthetic_manifest_failure_payload(
+            stock_code=stock_code,
+            company_name_hint=company_name_hint,
+            manifest_exists_status="exists",
+            manifest_schema_status="review_required",
+            unmatched_reason="unsafe_path",
+            manifest_entry_count=manifest_entry_count,
+            caveat="Synthetic artifact path was unsafe; no rows emitted.",
+        )
+    if "safety violation" in message or "planning payload safety violation" in message:
+        return _review_required_payload(
+            stock_code=stock_code,
+            company_name_hint=company_name_hint,
+            manifest_entry_count=manifest_entry_count,
+            caveat="Synthetic manifest safety violation; no rows emitted.",
+        )
+    return _schema_mismatch_payload(
+        stock_code=stock_code,
+        company_name_hint=company_name_hint,
+        manifest_entry_count=manifest_entry_count,
+        caveat="Synthetic artifact schema was invalid; no rows emitted.",
+    )
+
+
 def build_manifest_entry_row(
     *,
     artifact_path: str,
@@ -467,3 +652,250 @@ def validate_manifest_locator_payload(payload: dict[str, Any]) -> dict[str, Any]
     _validate_common_safety(validated, "manifest locator payload")
 
     return validated
+
+
+def parse_synthetic_manifest_locator(
+    synthetic_manifest_path: Any,
+    *,
+    stock_code: str,
+    company_name_hint: str = "",
+) -> dict[str, Any]:
+    """Parse one explicitly provided tmp_path synthetic manifest JSON.
+
+    This parser is synthetic-only. It reads exactly the caller-provided
+    manifest JSON file, maps matching artifact references into
+    ``manifest_entry_row.v1`` rows, and returns a
+    ``manifest_locator_payload.v1`` payload. It never scans directories, never
+    falls back to retained accepted samples, never reads artifact paths, never
+    checks artifact existence, never hashes artifacts, and never writes files.
+    """
+
+    requested_stock_code = _validate_stock_code(stock_code, "stock_code")
+    requested_company_name = _require_string(company_name_hint, "company_name_hint")
+    manifest_path = _coerce_synthetic_manifest_path(synthetic_manifest_path)
+
+    path_safety_reason = _synthetic_manifest_path_safety_reason(manifest_path)
+    if path_safety_reason:
+        return _build_synthetic_manifest_failure_payload(
+            stock_code=requested_stock_code,
+            company_name_hint=requested_company_name,
+            manifest_exists_status="not_checked",
+            manifest_schema_status="review_required",
+            unmatched_reason="unsafe_path",
+            caveat="Synthetic manifest path was unsafe; no file was read.",
+        )
+
+    try:
+        with open(manifest_path, "r", encoding="utf-8") as manifest_file:
+            raw_manifest = json.load(manifest_file)
+    except FileNotFoundError:
+        return _build_synthetic_manifest_failure_payload(
+            stock_code=requested_stock_code,
+            company_name_hint=requested_company_name,
+            manifest_exists_status="missing",
+            manifest_schema_status="not_checked",
+            unmatched_reason="manifest_missing",
+            caveat="Synthetic manifest was missing; no fallback was attempted.",
+        )
+    except json.JSONDecodeError:
+        return _build_synthetic_manifest_failure_payload(
+            stock_code=requested_stock_code,
+            company_name_hint=requested_company_name,
+            manifest_exists_status="exists",
+            manifest_schema_status="invalid_json",
+            unmatched_reason="invalid_json",
+            caveat="Synthetic manifest JSON was invalid; no rows emitted.",
+        )
+    except OSError:
+        return _build_synthetic_manifest_failure_payload(
+            stock_code=requested_stock_code,
+            company_name_hint=requested_company_name,
+            manifest_exists_status="unreadable",
+            manifest_schema_status="unreadable",
+            unmatched_reason="manifest_unreadable",
+            caveat="Synthetic manifest was unreadable; no fallback was attempted.",
+        )
+
+    try:
+        manifest = _require_synthetic_manifest_dict(raw_manifest)
+        _validate_common_safety(manifest, "synthetic manifest")
+    except ValueError:
+        return _review_required_payload(
+            stock_code=requested_stock_code,
+            company_name_hint=requested_company_name,
+            caveat="Synthetic manifest safety violation; no rows emitted.",
+        )
+
+    if manifest.get("schema_version") != SYNTHETIC_MANIFEST_LOCATOR_INPUT_SCHEMA_VERSION:
+        return _schema_mismatch_payload(
+            stock_code=requested_stock_code,
+            company_name_hint=requested_company_name,
+            caveat="Synthetic manifest schema_version was invalid; no rows emitted.",
+        )
+    if not isinstance(manifest.get("generated_at"), str):
+        return _schema_mismatch_payload(
+            stock_code=requested_stock_code,
+            company_name_hint=requested_company_name,
+            caveat="Synthetic manifest generated_at was invalid; no rows emitted.",
+        )
+    if manifest.get("not_for_trading_advice") is not True:
+        return _schema_mismatch_payload(
+            stock_code=requested_stock_code,
+            company_name_hint=requested_company_name,
+            caveat="Synthetic manifest policy flag was false; no rows emitted.",
+        )
+    if "entries" not in manifest:
+        return _schema_mismatch_payload(
+            stock_code=requested_stock_code,
+            company_name_hint=requested_company_name,
+            caveat="Synthetic manifest entries were missing; no rows emitted.",
+        )
+    if not isinstance(manifest["entries"], list):
+        return _schema_mismatch_payload(
+            stock_code=requested_stock_code,
+            company_name_hint=requested_company_name,
+            caveat="Synthetic manifest entries must be a list; no rows emitted.",
+        )
+
+    entries = manifest["entries"]
+    manifest_entry_count = len(entries)
+    parsed_entries: list[dict[str, Any]] = []
+    try:
+        for index, entry in enumerate(entries):
+            if not isinstance(entry, dict):
+                raise ValueError(f"entries[{index}] must be a dict")
+            entry_stock_code = _validate_stock_code(entry.get("stock_code", ""), f"entries[{index}].stock_code")
+            entry_company_name = _require_string(entry.get("company_name", ""), f"entries[{index}].company_name")
+            if entry.get("not_for_trading_advice") is not True:
+                raise ValueError(f"entries[{index}].not_for_trading_advice must be true")
+            artifacts = _entry_artifacts(entry)
+            parsed_entries.append(
+                {
+                    "stock_code": entry_stock_code,
+                    "company_name": entry_company_name,
+                    "artifacts": artifacts,
+                }
+            )
+    except ValueError:
+        return _schema_mismatch_payload(
+            stock_code=requested_stock_code,
+            company_name_hint=requested_company_name,
+            manifest_entry_count=manifest_entry_count,
+            caveat="Synthetic manifest entries were invalid; no rows emitted.",
+        )
+
+    exact_matches = [entry for entry in parsed_entries if entry["stock_code"] == requested_stock_code]
+    if len(exact_matches) > 1:
+        return _build_synthetic_manifest_failure_payload(
+            stock_code=requested_stock_code,
+            company_name_hint=requested_company_name,
+            manifest_exists_status="exists",
+            manifest_schema_status="review_required",
+            unmatched_reason="duplicate_entries",
+            manifest_entry_count=manifest_entry_count,
+            caveat="Synthetic manifest had duplicate entries for the requested code; review required.",
+        )
+
+    if not exact_matches:
+        name_conflicts = [
+            entry
+            for entry in parsed_entries
+            if requested_company_name and entry["company_name"] == requested_company_name
+        ]
+        if name_conflicts:
+            return _build_synthetic_manifest_failure_payload(
+                stock_code=requested_stock_code,
+                company_name_hint=requested_company_name,
+                manifest_exists_status="exists",
+                manifest_schema_status="review_required",
+                unmatched_reason="conflict_open",
+                manifest_entry_count=manifest_entry_count,
+                caveat="Synthetic company-name hint matched a different code; review required.",
+            )
+        return _build_synthetic_manifest_failure_payload(
+            stock_code=requested_stock_code,
+            company_name_hint=requested_company_name,
+            manifest_exists_status="exists",
+            manifest_schema_status="valid",
+            unmatched_reason="data_collection_required",
+            manifest_entry_count=manifest_entry_count,
+            caveat="Unknown ticker requires data collection; no accepted-sample fallback.",
+        )
+
+    matched_entry = exact_matches[0]
+    matched_company_name = matched_entry["company_name"]
+    if requested_company_name and matched_company_name and matched_company_name != requested_company_name:
+        return _build_synthetic_manifest_failure_payload(
+            stock_code=requested_stock_code,
+            company_name_hint=requested_company_name,
+            manifest_exists_status="exists",
+            manifest_schema_status="review_required",
+            unmatched_reason="conflict_open",
+            manifest_entry_count=manifest_entry_count,
+            caveat="Synthetic manifest code and company-name hint conflicted; review required.",
+        )
+
+    matched_rows: list[dict[str, Any]] = []
+    for artifact in matched_entry["artifacts"]:
+        if not isinstance(artifact, dict):
+            return _schema_mismatch_payload(
+                stock_code=requested_stock_code,
+                company_name_hint=requested_company_name,
+                manifest_entry_count=manifest_entry_count,
+                caveat="Synthetic artifact entries were invalid; no rows emitted.",
+            )
+        try:
+            if artifact.get("not_for_trading_advice") is not True:
+                raise ValueError("artifact not_for_trading_advice must be true")
+            if "caveats" not in artifact:
+                raise ValueError("artifact caveats must be present")
+            artifact_caveats = _require_list(artifact["caveats"], "artifact.caveats")
+            row = build_manifest_entry_row(
+                stock_code=matched_entry["stock_code"],
+                company_name=matched_company_name,
+                artifact_path=artifact.get("artifact_path", ""),
+                artifact_kind=artifact.get("artifact_kind", ""),
+                artifact_format=artifact.get("artifact_format", ""),
+                accepted_status=artifact.get("accepted_status", ""),
+                freshness_status=artifact.get("freshness_status", ""),
+                hash_status=artifact.get("hash_status", ""),
+                source_status=artifact.get("source_status", ""),
+                caveats=artifact_caveats,
+                not_for_trading_advice=artifact.get("not_for_trading_advice"),
+            )
+        except ValueError as exc:
+            return _invalid_artifact_payload(
+                exc=exc,
+                stock_code=requested_stock_code,
+                company_name_hint=requested_company_name,
+                manifest_entry_count=manifest_entry_count,
+            )
+        matched_rows.append(row)
+
+    if not matched_rows:
+        return _build_synthetic_manifest_failure_payload(
+            stock_code=requested_stock_code,
+            company_name_hint=requested_company_name,
+            manifest_exists_status="exists",
+            manifest_schema_status="review_required",
+            unmatched_reason="missing",
+            manifest_entry_count=manifest_entry_count,
+            caveat="Synthetic manifest matched the requested code but contained no artifact rows.",
+        )
+
+    report_artifact_refs = [row["artifact_path"] for row in matched_rows]
+    freshness_status = matched_rows[0]["freshness_status"] if len({row["freshness_status"] for row in matched_rows}) == 1 else "unknown"
+    return build_manifest_locator_payload(
+        manifest_path=_SYNTHETIC_MANIFEST_PAYLOAD_PATH,
+        manifest_exists_status="exists",
+        manifest_schema_status="valid",
+        manifest_entry_count=manifest_entry_count,
+        matched_entries=matched_rows,
+        unmatched_reason="",
+        stock_code=requested_stock_code,
+        company_name=matched_company_name or requested_company_name,
+        report_artifact_refs=report_artifact_refs,
+        freshness_status=freshness_status,
+        lineage_refs=[],
+        caveats=["Synthetic manifest locator state only; report artifacts were not read."],
+    )
