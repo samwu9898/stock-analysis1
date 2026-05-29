@@ -733,3 +733,45 @@ Current recommended next stage:
 ```text
 Candidate Review Decisions Update Design For Bridge Sources
 ```
+
+## 20. Candidate Review Decisions Bridge Sources Addendum
+
+The bridge-sources review-decision design is now recorded in:
+
+```text
+docs/FUNDAMENTAL_CANDIDATE_REVIEW_DECISIONS_BRIDGE_SOURCES_DESIGN.md
+```
+
+The auto fact candidate generator boundary remains unchanged:
+
+- provider-centric `fact_candidates.json` remains the generator main output;
+- official disclosure candidates remain an independent
+  `official_disclosure_fact_candidates.v1` payload;
+- `candidate_source_bridge.v1` remains a source index, not a generator merge;
+- `candidate_review_decisions.json` can reference provider candidates,
+  official candidates, and bridge priorities by source refs;
+- review decisions do not mutate generator candidates;
+- review decisions do not create verified facts;
+- review decisions do not promote fixtures;
+- review decisions do not update accepted manifests;
+- review decisions do not change scoring / P1.1 / regression expected files.
+
+The accepted source records for the design remain:
+
+- provider candidates:
+  `output/ground_truth_candidates/20260527T155056/600406/fact_candidates.json`
+  with counts `1004 / 184 / 807`;
+- official candidates:
+  `output/official_disclosures/20260528T182057Z/600406/official_disclosure_candidates_review.json`
+  with `candidate_rows=7`, all L1 official disclosure and human-review /
+  caveated;
+- bridge:
+  `output/candidate_source_bridges/20260529T034024Z/600406/candidate_source_bridge_review.json`
+  with provider and official source entries, `review_priorities=8`, and no deep
+  cross-source conflict matching yet.
+
+Next recommended stage:
+
+```text
+Bridge-aware review decisions implementation
+```

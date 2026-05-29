@@ -1666,7 +1666,96 @@ Do not proceed directly to Research Report V1 integration, fixture promotion,
 validator work, live CNInfo, provider primary switch, Dashboard / Batch, or
 trading advice.
 
-## 28. New Codex Conversation Recovery Prompt
+## 28. Candidate Review Decisions Bridge Sources Design
+
+Treat
+`docs/FUNDAMENTAL_CANDIDATE_REVIEW_DECISIONS_BRIDGE_SOURCES_DESIGN.md`
+as the current documentation-only design source for bridge-aware
+`candidate_review_decisions.json`.
+
+Current design status:
+
+- Candidate Review Decisions Update Design For Bridge Sources is recorded.
+- No code was written.
+- No tests were modified.
+- No runtime output was generated.
+- No fixtures were written.
+- No accepted manifest was updated.
+- No orchestration / CLI changed.
+- No candidate generator main path changed.
+- No review decisions implementation changed.
+- No Research Report V1 integration happened.
+- No scoring / P1.1 / regression expected behavior changed.
+- No live CNInfo, provider call, token read, network, smoke, or MCP occurred.
+
+Design inputs remain:
+
+- provider candidates:
+  `output/ground_truth_candidates/20260527T155056/600406/fact_candidates.json`
+  with candidate count `1004`, manual review count `184`, and blocked count
+  `807`;
+- official candidates:
+  `output/official_disclosures/20260528T182057Z/600406/official_disclosure_candidates_review.json`
+  with `candidate_rows=7`, all L1 official disclosure, and all human-review /
+  caveated;
+- bridge:
+  `output/candidate_source_bridges/20260529T034024Z/600406/candidate_source_bridge_review.json`
+  with provider and official source entries, `review_priorities=8`, and no deep
+  cross-source conflict matching yet.
+
+Bridge-aware review decisions should preserve:
+
+- `source_type`;
+- `candidate_id`;
+- `artifact_ref`;
+- optional `bridge_ref`;
+- `field_path`;
+- `period`;
+- `unit`;
+- decision enum;
+- review status;
+- follow-up class;
+- caveats;
+- `not_for_trading_advice=true`.
+
+Allowed bridge-sources decision values:
+
+- `accepted_for_report_candidate`;
+- `manual_review_required`;
+- `blocked_by_caveat`;
+- `rejected`;
+- `needs_more_evidence`;
+- `conflict_requires_review`.
+
+Important boundaries:
+
+- `accepted_for_report_candidate` is not a verified fact.
+- Review decisions are not fixture promotion.
+- Review decisions do not update accepted manifests.
+- Review decisions do not change scoring / P1.1 / regression expected files.
+- Research Report V1 does not directly read review decisions as verified facts.
+- Review decisions can only provide evidence-readiness signals for a later
+  Research Report V1 L1 evidence integration design.
+- Provider / official conflicts must preserve both refs and enter manual
+  review.
+- `review_priorities` affect review order only.
+
+Latest accepted verification results are quoted, not rerun by this
+documentation-only stage: targeted tests `549 passed`, full pytest latest
+`1197 passed, 1 skipped`, and regression `passed=47 failed=0 total=47`.
+
+Next recommended stage:
+
+```text
+Bridge-aware review decisions implementation
+```
+
+Do not proceed directly to Research Report V1 integration, fixture promotion,
+validator work, live CNInfo, provider primary switch, Dashboard / Batch, token
+reads, MCP, provider calls, scoring / P1.1 changes, regression expected
+changes, or trading advice.
+
+## 29. New Codex Conversation Recovery Prompt
 
 Copy this into a new Codex / AI conversation:
 

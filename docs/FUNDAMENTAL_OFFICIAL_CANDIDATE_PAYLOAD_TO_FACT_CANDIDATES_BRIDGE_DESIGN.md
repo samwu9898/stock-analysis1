@@ -496,3 +496,38 @@ provider and official candidates by `source_type`, `candidate_id`, and
 `artifact_ref`. It should not promote fixtures, create verified facts, rewrite
 Research Report V1, switch provider primary behavior, call live CNInfo /
 providers, read tokens, connect MCP, or emit trading advice.
+
+## 14. Candidate Review Decisions Bridge Sources Design Sync
+
+The candidate review decisions bridge-sources design is now recorded in:
+
+```text
+docs/FUNDAMENTAL_CANDIDATE_REVIEW_DECISIONS_BRIDGE_SOURCES_DESIGN.md
+```
+
+This completes the documentation-only design step that follows the accepted
+`candidate_source_bridge.v1` runtime baseline. The review-decision design keeps
+the B + C bridge recommendation intact:
+
+- official candidates stay in independent
+  `official_disclosure_fact_candidates.v1` artifacts;
+- provider candidates stay in provider-centric `fact_candidates.json`;
+- the bridge artifact is referenced as a source index and review queue input;
+- review decisions reference sources by `source_type`, `candidate_id`,
+  `artifact_ref`, and optional `bridge_ref`;
+- official L1 evidence may receive review priority, but remains caveated until
+  reviewed;
+- provider / official agreement may become a multi-source support candidate,
+  but never automatic verification;
+- provider / official conflicts enter manual review and preserve both refs.
+
+This design does not append official rows to provider-centric
+`fact_candidates.json`, does not write fixtures, does not update accepted
+manifests, does not rewrite Research Report V1, does not switch provider
+primary behavior, and does not emit trading advice.
+
+Next recommended stage:
+
+```text
+Bridge-aware review decisions implementation
+```

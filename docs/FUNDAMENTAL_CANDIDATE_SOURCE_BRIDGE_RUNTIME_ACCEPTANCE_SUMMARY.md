@@ -238,3 +238,36 @@ Do not directly enter:
 - live CNInfo;
 - provider primary switch;
 - Dashboard / Batch.
+
+## 12. Review Decisions Bridge Sources Design Sync
+
+The bridge-aware candidate review decisions design is now recorded in:
+
+```text
+docs/FUNDAMENTAL_CANDIDATE_REVIEW_DECISIONS_BRIDGE_SOURCES_DESIGN.md
+```
+
+That design treats this accepted bridge artifact as review queue input only:
+
+- provider candidates remain referenced from
+  `output/ground_truth_candidates/20260527T155056/600406/fact_candidates.json`;
+- official disclosure candidates remain referenced from
+  `output/official_disclosures/20260528T182057Z/600406/official_disclosure_candidates_review.json`;
+- bridge priorities remain referenced from
+  `output/candidate_source_bridges/20260529T034024Z/600406/candidate_source_bridge_review.json`;
+- `review_priorities=8` affects review order, not factual truth;
+- `cross_source_conflicts=[]` is not proof of source agreement because deep
+  conflict matching is still blocked by schema mismatch;
+- review decisions must preserve `source_type`, `candidate_id`,
+  `artifact_ref`, caveats, and review status.
+
+The next recommended stage after this documentation-only design is:
+
+```text
+Bridge-aware review decisions implementation
+```
+
+It should still avoid fixture promotion, verified fact generation, accepted
+manifest updates, Research Report V1 integration, live CNInfo, provider calls,
+token reads, MCP, scoring / P1.1 changes, regression expected changes, and
+trading advice.

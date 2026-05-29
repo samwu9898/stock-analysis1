@@ -494,3 +494,53 @@ Current recommended next stage for official candidates:
 ```text
 Candidate Review Decisions Update Design For Bridge Sources
 ```
+
+## 15. Bridge Sources Review Decision Addendum
+
+The bridge-sources update design is now recorded in:
+
+```text
+docs/FUNDAMENTAL_CANDIDATE_REVIEW_DECISIONS_BRIDGE_SOURCES_DESIGN.md
+```
+
+It extends the V1 review-decision design boundary to support three source
+families without changing implementation in this documentation-only stage:
+
+- `provider_candidates`;
+- `official_disclosure_candidates`;
+- `bridge_review_priority`.
+
+Bridge-aware decision records should preserve:
+
+- `source_type`;
+- `candidate_id`;
+- `artifact_ref`;
+- optional `bridge_ref`;
+- `field_path`;
+- `period`;
+- `unit`;
+- decision enum;
+- review status;
+- follow-up class;
+- caveats;
+- `not_for_trading_advice=true`.
+
+The bridge-sources decision enum is:
+
+- `accepted_for_report_candidate`;
+- `manual_review_required`;
+- `blocked_by_caveat`;
+- `rejected`;
+- `needs_more_evidence`;
+- `conflict_requires_review`.
+
+`accepted_for_report_candidate` is only an evidence-readiness decision for a
+later Report V1 L1 evidence design. It is not a verified fact, not fixture
+promotion, not an accepted manifest update, not a scoring / P1.1 change, and
+not trading advice.
+
+The next recommended stage is:
+
+```text
+Bridge-aware review decisions implementation
+```

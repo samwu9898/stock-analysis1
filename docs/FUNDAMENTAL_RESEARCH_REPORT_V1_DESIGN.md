@@ -1585,3 +1585,40 @@ Current recommended official-disclosure stage:
 ```text
 Candidate Review Decisions Update Design For Bridge Sources
 ```
+
+## 29. Candidate Review Decisions Bridge Sources Boundary
+
+The bridge-sources review-decision design is now recorded in:
+
+```text
+docs/FUNDAMENTAL_CANDIDATE_REVIEW_DECISIONS_BRIDGE_SOURCES_DESIGN.md
+```
+
+Research Report V1 boundary remains unchanged:
+
+- Research Report V1 must not directly read review decisions as verified facts;
+- Research Report V1 must not directly read bridge priorities as report truth;
+- Research Report V1 must not automatically rewrite any report when review
+  decisions exist;
+- bridge-aware review decisions can only provide an evidence-readiness signal
+  for a later L1 evidence integration design;
+- later L1 evidence integration must separately define how reviewed official
+  L1 candidates, provider candidates, caveats, and conflicts enter report
+  evidence;
+- no buy / sell advice, target price, position sizing, portfolio weight, or
+  trading signal is introduced.
+
+The design records these source references for later evidence planning only:
+
+- provider candidates:
+  `output/ground_truth_candidates/20260527T155056/600406/fact_candidates.json`;
+- official disclosure candidates:
+  `output/official_disclosures/20260528T182057Z/600406/official_disclosure_candidates_review.json`;
+- bridge:
+  `output/candidate_source_bridges/20260529T034024Z/600406/candidate_source_bridge_review.json`.
+
+Next recommended stage outside Research Report V1:
+
+```text
+Bridge-aware review decisions implementation
+```
