@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import builtins
+import copy
+import glob
 import json
 import os
 from pathlib import Path
@@ -10,6 +12,8 @@ import pytest
 import src.fundamental_skill.research_planning.manifest_locator as manifest_locator_module
 from src.fundamental_skill.research_planning.local_artifact_index import (
     LOCAL_ARTIFACT_INDEX_ROW_SCHEMA_VERSION,
+    build_artifact_row,
+    validate_artifact_path_safety,
     validate_artifact_row,
 )
 from src.fundamental_skill.research_planning.manifest_locator import (
@@ -874,3 +878,315 @@ def test_parse_synthetic_manifest_no_directory_scan_report_read_or_file_write(tm
 
     assert payload["manifest_schema_status"] == "valid"
     assert payload["matched_entries"][0]["artifact_path"] == artifact_path
+
+
+def test_validate_artifact_path_safety_does_not_probe_filesystem(monkeypatch):
+    artifact_path = "output/research_reports/synthetic/688888/fundamental_research_report_v1.json"
+
+    def fail_open(*args, **kwargs):
+        raise AssertionError("path safety validation must not open files")
+
+    def fail_probe(*args, **kwargs):
+        raise AssertionError("path safety validation must not probe or scan files")
+
+    monkeypatch.setattr(builtins, "open", fail_open)
+    monkeypatch.setattr(Path, "exists", fail_probe)
+    monkeypatch.setattr(Path, "read_text", fail_probe)
+    monkeypatch.setattr(Path, "read_bytes", fail_probe)
+    monkeypatch.setattr(Path, "glob", fail_probe)
+    monkeypatch.setattr(Path, "rglob", fail_probe)
+    monkeypatch.setattr(os.path, "exists", fail_probe)
+    monkeypatch.setattr(os, "walk", fail_probe)
+    monkeypatch.setattr(glob, "glob", fail_probe)
+
+    assert validate_artifact_path_safety(artifact_path) == artifact_path
+
+
+def test_parse_synthetic_manifest_reads_only_explicit_tmp_manifest(tmp_path, monkeypatch):
+    artifact_path = "output/research_reports/synthetic/688888/fundamental_research_report_v1.json"
+    manifest_path = _write_synthetic_manifest(
+        tmp_path,
+        _synthetic_manifest(
+            entries=[
+                _synthetic_entry(
+                    stock_code="688888",
+                    company_name="Synthetic Only",
+                    artifacts=[_synthetic_artifact(artifact_path=artifact_path)],
+                )
+            ]
+        ),
+    )
+    allowed_manifest = os.path.normcase(os.path.abspath(os.fspath(manifest_path)))
+    original_open = builtins.open
+    original_read_text = Path.read_text
+    original_exists = Path.exists
+    original_os_path_exists = os.path.exists
+
+    def normalise_path(path):
+        return os.path.normcase(os.path.abspath(os.fspath(path)))
+
+    def guarded_open(file, mode="r", *args, **kwargs):
+        if any(flag in mode for flag in ("w", "a", "x", "+")):
+            raise AssertionError("synthetic parser must not write files")
+        if normalise_path(file) != allowed_manifest:
+            raise AssertionError(f"synthetic parser must read only the explicit tmp manifest: {file}")
+        return original_open(file, mode, *args, **kwargs)
+
+    def guarded_read_text(self, *args, **kwargs):
+        if normalise_path(self) != allowed_manifest:
+            raise AssertionError(f"synthetic parser must not read non-manifest paths: {self}")
+        return original_read_text(self, *args, **kwargs)
+
+    def guarded_exists(path, *args, **kwargs):
+        if normalise_path(path) != allowed_manifest:
+            raise AssertionError(f"synthetic parser must not check real artifact existence: {path}")
+        if isinstance(path, Path):
+            return original_exists(path, *args, **kwargs)
+        return original_os_path_exists(path)
+
+    def fail_write(*args, **kwargs):
+        raise AssertionError("synthetic parser must not write manifest/output/fixture/runtime artifacts")
+
+    def fail_scan(*args, **kwargs):
+        raise AssertionError("synthetic parser must not scan real output")
+
+    monkeypatch.setattr(builtins, "open", guarded_open)
+    monkeypatch.setattr(Path, "read_text", guarded_read_text)
+    monkeypatch.setattr(Path, "read_bytes", fail_scan)
+    monkeypatch.setattr(Path, "exists", guarded_exists)
+    monkeypatch.setattr(os.path, "exists", guarded_exists)
+    monkeypatch.setattr(Path, "write_text", fail_write)
+    monkeypatch.setattr(Path, "write_bytes", fail_write)
+    monkeypatch.setattr(manifest_locator_module.json, "dump", fail_write)
+    monkeypatch.setattr(Path, "glob", fail_scan)
+    monkeypatch.setattr(Path, "rglob", fail_scan)
+    monkeypatch.setattr(Path, "iterdir", fail_scan)
+    monkeypatch.setattr(os, "walk", fail_scan)
+    monkeypatch.setattr(glob, "glob", fail_scan)
+
+    payload = parse_synthetic_manifest_locator(manifest_path, stock_code="688888")
+
+    rendered = repr(payload)
+    assert payload["manifest_schema_status"] == "valid"
+    assert payload["matched_entries"][0]["artifact_path"] == artifact_path
+    assert "output/research_reports/accepted_manifest.json" not in rendered
+    assert "600406" not in rendered
+    assert "002371" not in rendered
+    assert "002050" not in rendered
+
+
+def test_parse_unknown_ticker_under_io_guards_does_not_fallback_to_samples(tmp_path, monkeypatch):
+    manifest_path = _write_synthetic_manifest(
+        tmp_path,
+        _synthetic_manifest(
+            entries=[
+                _synthetic_entry(
+                    stock_code="688888",
+                    company_name="Synthetic Only",
+                    artifacts=[
+                        _synthetic_artifact(
+                            artifact_path=(
+                                "output/research_reports/synthetic/688888/"
+                                "fundamental_research_report_v1.json"
+                            )
+                        )
+                    ],
+                )
+            ]
+        ),
+    )
+    allowed_manifest = os.path.normcase(os.path.abspath(os.fspath(manifest_path)))
+    original_open = builtins.open
+
+    def normalise_path(path):
+        return os.path.normcase(os.path.abspath(os.fspath(path)))
+
+    def guarded_open(file, mode="r", *args, **kwargs):
+        if normalise_path(file) != allowed_manifest:
+            raise AssertionError(f"unknown ticker must not fallback to real accepted samples: {file}")
+        return original_open(file, mode, *args, **kwargs)
+
+    def fail_scan(*args, **kwargs):
+        raise AssertionError("unknown ticker path must not scan output for fallback samples")
+
+    monkeypatch.setattr(builtins, "open", guarded_open)
+    monkeypatch.setattr(Path, "glob", fail_scan)
+    monkeypatch.setattr(Path, "rglob", fail_scan)
+    monkeypatch.setattr(os, "walk", fail_scan)
+    monkeypatch.setattr(glob, "glob", fail_scan)
+
+    payload = parse_synthetic_manifest_locator(manifest_path, stock_code="300475")
+
+    rendered = repr(payload)
+    assert payload["manifest_schema_status"] == "valid"
+    assert payload["unmatched_reason"] == "data_collection_required"
+    assert payload["matched_entries"] == []
+    assert "600406" not in rendered
+    assert "002371" not in rendered
+    assert "002050" not in rendered
+
+
+def test_manifest_entry_adapter_does_not_read_probe_hash_or_write_artifact(monkeypatch):
+    artifact_path = "output/research_reports/synthetic/688888/fundamental_research_report_v1.json"
+    row = _valid_entry(
+        stock_code="688888",
+        company_name="Synthetic Only",
+        artifact_path=artifact_path,
+        hash_status="match",
+    )
+
+    def fail_open(*args, **kwargs):
+        raise AssertionError("adapter must not open manifest or report artifact files")
+
+    def fail_filesystem_probe(*args, **kwargs):
+        raise AssertionError("adapter must not check artifact existence, read bytes, or scan output")
+
+    def fail_write(*args, **kwargs):
+        raise AssertionError("adapter must not write manifest/output/fixture/runtime artifacts")
+
+    monkeypatch.setattr(builtins, "open", fail_open)
+    monkeypatch.setattr(Path, "exists", fail_filesystem_probe)
+    monkeypatch.setattr(Path, "read_text", fail_filesystem_probe)
+    monkeypatch.setattr(Path, "read_bytes", fail_filesystem_probe)
+    monkeypatch.setattr(Path, "stat", fail_filesystem_probe)
+    monkeypatch.setattr(os.path, "exists", fail_filesystem_probe)
+    monkeypatch.setattr(Path, "glob", fail_filesystem_probe)
+    monkeypatch.setattr(Path, "rglob", fail_filesystem_probe)
+    monkeypatch.setattr(os, "walk", fail_filesystem_probe)
+    monkeypatch.setattr(glob, "glob", fail_filesystem_probe)
+    monkeypatch.setattr(Path, "write_text", fail_write)
+    monkeypatch.setattr(Path, "write_bytes", fail_write)
+    monkeypatch.setattr(manifest_locator_module.json, "dump", fail_write)
+
+    artifact_row = manifest_entry_to_artifact_row(row)
+
+    assert artifact_row["artifact_path"] == artifact_path
+    assert artifact_row["artifact_type"] == "report_artifact_state"
+    assert artifact_row["sha256"] == ""
+    assert artifact_row["file_size"] == 0
+    assert any("no real file hash was computed" in caveat for caveat in artifact_row["caveats"])
+
+
+def test_parse_synthetic_manifest_does_not_mutate_loaded_manifest_dict(tmp_path, monkeypatch):
+    manifest_path = _write_synthetic_manifest(tmp_path, _synthetic_manifest(entries=[]))
+    loaded_manifest = _synthetic_manifest(
+        entries=[
+            _synthetic_entry(
+                stock_code="688888",
+                company_name="Synthetic Only",
+                artifacts=[
+                    _synthetic_artifact(
+                        artifact_path="output/research_reports/synthetic/688888/fundamental_research_report_v1.json"
+                    )
+                ],
+            )
+        ]
+    )
+    before = copy.deepcopy(loaded_manifest)
+
+    def fake_json_load(_manifest_file):
+        return loaded_manifest
+
+    monkeypatch.setattr(manifest_locator_module.json, "load", fake_json_load)
+
+    payload = parse_synthetic_manifest_locator(manifest_path, stock_code="688888")
+
+    assert payload["manifest_schema_status"] == "valid"
+    assert loaded_manifest == before
+
+
+def test_adapter_and_validators_do_not_mutate_caller_owned_inputs():
+    row = _valid_entry(caveats=["Caller-owned caveat."])
+    row_before = copy.deepcopy(row)
+    lineage_refs = ["caller:lineage"]
+    lineage_before = copy.deepcopy(lineage_refs)
+
+    artifact_row = manifest_entry_to_artifact_row(row, lineage_refs=lineage_refs)
+
+    assert row == row_before
+    assert lineage_refs == lineage_before
+
+    artifact_row["caveats"].append("mutated returned caveat")
+    artifact_row["lineage_refs"].append("mutated returned lineage")
+    assert row == row_before
+    assert lineage_refs == lineage_before
+
+    validated_entry = validate_manifest_entry_row(row)
+    validated_entry["caveats"].append("mutated validated caveat")
+    assert row == row_before
+
+    payload = _valid_payload(
+        matched_entries=[row],
+        manifest_entry_count=1,
+        report_artifact_refs=[row["artifact_path"]],
+        lineage_refs=["payload:lineage"],
+        caveats=["payload caveat"],
+    )
+    payload_before = copy.deepcopy(payload)
+    validated_payload = validate_manifest_locator_payload(payload)
+    validated_payload["matched_entries"][0]["caveats"].append("mutated nested caveat")
+    validated_payload["lineage_refs"].append("mutated payload lineage")
+    validated_payload["report_artifact_refs"].append("mutated payload ref")
+    assert payload == payload_before
+
+    artifact_input = manifest_entry_to_artifact_row(row)
+    artifact_before = copy.deepcopy(artifact_input)
+    validated_artifact = validate_artifact_row(artifact_input)
+    validated_artifact["caveats"].append("mutated artifact caveat")
+    validated_artifact["lineage_refs"].append("mutated artifact lineage")
+    assert artifact_input == artifact_before
+
+
+def test_builders_and_adapter_do_not_share_mutable_caveats_or_lineage_defaults():
+    entry_a = build_manifest_entry_row(
+        artifact_path="output/research_reports/synthetic/688888/fundamental_research_report_v1.json"
+    )
+    entry_b = build_manifest_entry_row(
+        artifact_path="output/research_reports/synthetic/688888/fundamental_research_report_v1.json"
+    )
+    entry_a["caveats"].append("entry a only")
+    assert "entry a only" not in entry_b["caveats"]
+
+    payload_a = build_manifest_locator_payload()
+    payload_b = build_manifest_locator_payload()
+    payload_a["caveats"].append("payload a only")
+    payload_a["lineage_refs"].append("payload lineage a only")
+    payload_a["matched_entries"].append(entry_a)
+    payload_a["report_artifact_refs"].append(entry_a["artifact_path"])
+    assert "payload a only" not in payload_b["caveats"]
+    assert "payload lineage a only" not in payload_b["lineage_refs"]
+    assert payload_b["matched_entries"] == []
+    assert payload_b["report_artifact_refs"] == []
+
+    caveats = ["caller caveat"]
+    lineage_refs = ["caller lineage"]
+    direct_artifact = build_artifact_row(
+        artifact_type="report_artifact_state",
+        artifact_path="output/research_reports/synthetic/688888/fundamental_research_report_v1.json",
+        source_family="research_report_v1",
+        caveats=caveats,
+        lineage_refs=lineage_refs,
+    )
+    direct_artifact["caveats"].append("returned artifact caveat")
+    direct_artifact["lineage_refs"].append("returned artifact lineage")
+    assert caveats == ["caller caveat"]
+    assert lineage_refs == ["caller lineage"]
+
+    adapted_a = manifest_entry_to_artifact_row(
+        _valid_entry(
+            stock_code="688888",
+            artifact_path="output/research_reports/synthetic/688888/fundamental_research_report_v1.json",
+            caveats=[],
+        )
+    )
+    adapted_b = manifest_entry_to_artifact_row(
+        _valid_entry(
+            stock_code="688888",
+            artifact_path="output/research_reports/synthetic/688888/fundamental_research_report_v1.json",
+            caveats=[],
+        )
+    )
+    adapted_a["caveats"].append("adapted a only")
+    adapted_a["lineage_refs"].append("adapted lineage a only")
+    assert "adapted a only" not in adapted_b["caveats"]
+    assert "adapted lineage a only" not in adapted_b["lineage_refs"]
