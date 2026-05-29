@@ -551,8 +551,12 @@ docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_FACTS_TO_CANDIDATE_GENERATOR_INTEGRATION_DE
 ```
 
 This addendum extends the candidate generator design without changing
-implementation. Future official-disclosure ingestion should keep one unified
-`fact_candidates.json` and add official rows with:
+implementation. It describes the official fields that a future unified
+candidate schema would need to preserve. The later bridge design keeps this as
+a schema-v2 direction and does not directly append official rows to the
+current provider-centric `fact_candidates.json`.
+
+Future official-disclosure ingestion must preserve:
 
 - `source_type=official_disclosure`;
 - `evidence_tier=L1_official_disclosure`;
@@ -597,8 +601,8 @@ Rules:
 
 This addendum does not write code, generate `fact_candidates.json`, write
 fixtures, update accepted manifests, call providers, read tokens, connect MCP,
-change scoring / P1.1 / regression expected files, or integrate Research
-Report V1.
+change scoring / P1.1 / regression expected files, integrate Research Report
+V1, or choose the bridge artifact implementation.
 
 ## 17. Official Candidate Payload Runtime Acceptance Addendum
 
@@ -648,13 +652,40 @@ Known bridge problem:
 - the bridge must preserve official source trace, candidate caveats, and human
   review status without implying verified facts or report conclusions.
 
-Next recommended stage:
+Historical next recommended stage, now recorded in:
 
 ```text
-official candidate payload -> provider-centric fact_candidates bridge design
+docs/FUNDAMENTAL_OFFICIAL_CANDIDATE_PAYLOAD_TO_FACT_CANDIDATES_BRIDGE_DESIGN.md
 ```
 
 Do not proceed directly to Research Report V1 integration, fixture promotion,
 validator work, live CNInfo, Tushare primary switch, Dashboard / Batch, scoring
 / P1.1 changes, regression expected changes, provider calls, token reads, MCP,
 or trading advice.
+
+## 18. Official Candidate Bridge Design Addendum
+
+The bridge design recommends the conservative B + C path for V1:
+
+- keep the independent `official_disclosure_fact_candidates.v1` payload;
+- add a lightweight bridge / source-index artifact;
+- do not directly append official rows to provider-centric
+  `fact_candidates.json`;
+- let future review tooling read provider candidates and official candidates
+  side by side;
+- defer a unified candidate pool until candidate schema v2.
+
+The current auto fact candidate generator design remains provider-centric. The
+bridge artifact should reference provider candidate artifacts and official
+candidate artifacts without mutating either source artifact.
+
+Current recommended next stage:
+
+```text
+Bridge artifact implementation
+```
+
+This remains documentation-only sync. It does not implement generator code,
+write output, update fixtures, update accepted manifests, read tokens, use the
+network, call providers, connect MCP, change scoring / P1.1 / regression
+expected files, or integrate Research Report V1.

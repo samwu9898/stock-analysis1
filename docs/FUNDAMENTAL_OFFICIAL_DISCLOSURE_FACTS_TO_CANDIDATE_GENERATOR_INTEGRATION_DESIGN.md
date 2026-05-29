@@ -272,81 +272,86 @@ dropping it.
 
 ## 8. Output Artifact Design
 
-Three output artifact options are possible.
+Three bridge options are possible.
 
-### Option A: Add Official Candidates To Existing `fact_candidates.json`
+### Option A: Extend Unified `fact_candidates.json`
 
 Description:
 
 - keep one unified candidate report;
 - add `source_type=official_disclosure`;
 - add `evidence_tier`;
-- add official trace fields.
+- add official trace fields;
+- add an official namespace or subsection if needed.
 
 Pros:
 
 - one candidate-review queue;
 - easier conflict comparison with provider candidates;
-- consistent downstream audit surface;
-- no separate merge step for manual review.
+- consistent downstream audit surface.
 
 Cons:
 
-- expands candidate schema;
-- existing provider-focused consumers must tolerate official trace fields.
+- expands the main schema;
+- existing provider-focused consumers must tolerate official trace fields;
+- regression risk is higher because the current artifact is provider-centric.
 
-### Option B: Create `official_fact_candidates.json`
+### Option B: Keep A Parallel Official Candidate Artifact
 
 Description:
 
-- write a separate official-only candidate report;
+- keep the independent official-only candidate payload;
+- do not directly append official rows to provider-centric
+  `fact_candidates.json`;
 - merge or compare later.
 
 Pros:
 
 - clean isolation from provider candidates;
-- easier to keep experimental official parsing caveated.
+- avoids polluting the current schema;
+- preserves official parsing caveats and source trace.
 
 Cons:
 
 - creates a second review surface;
-- delays provider-official conflict detection;
-- increases artifact-selection complexity.
+- delays full provider-official conflict handling until orchestration exists.
 
-### Option C: Internal Candidate Generator Merge With Preserved Source Section
+### Option C: Add A Bridge Index Artifact
 
 Description:
 
-- candidate generator internally merges official facts and provider facts;
-- output may keep source sections but hide the input-source distinction.
+- add `candidate_source_bridge.json`, `candidate_source_index.json`, or
+  `candidate_inputs_manifest.json`;
+- record provider and official candidate artifact refs, counts, source types,
+  review queues, and conflict summaries.
 
 Pros:
 
-- potential long-term simplification after schema stabilizes.
+- does not break either existing artifact schema;
+- can scale to more source types later;
+- gives review tooling a single place to discover candidate inputs.
 
 Cons:
 
-- risky for V1 because source-specific caveats may be blurred;
-- harder to audit source lineage;
-- can accidentally imply merge or precedence before policy is accepted.
+- introduces one more intermediate artifact;
+- requires future orchestration support.
 
 ### V1 Recommendation
 
-Use Option A:
+Use Option B + Option C for the bridge stage:
 
-- keep unified `fact_candidates.json`;
-- add `source_type=official_disclosure`;
-- add `evidence_tier`;
-- add official trace fields;
-- preserve source document / section / table / row / column trace;
-- preserve caveats;
-- do not write fixtures;
-- do not write regression expected files.
+- keep `official_disclosure_fact_candidates.v1` independent;
+- design a lightweight bridge / source-index artifact;
+- do not directly append official rows to provider-centric
+  `fact_candidates.json`;
+- let later review tooling read provider candidates and official candidates
+  together;
+- defer a unified candidate pool until candidate schema v2.
 
-The candidate generator implementation can later decide whether official rows
-are emitted into the same `candidates[]` list or an `official_candidates[]`
-subsection inside the same artifact, but V1 should keep one candidate report
-for review.
+This updates the near-term output recommendation after the accepted official
+candidate payload runtime baseline. The official rows are still valid candidate
+inputs, but the current provider-centric schema should not be mutated by a
+direct append in V1.
 
 ## 9. Safety / Validation
 
@@ -466,10 +471,10 @@ Completed sequence:
    runtime review.
 4. Runtime acceptance summary and baseline freeze.
 
-Recommended next stage:
+Historical recommended next stage, now recorded in:
 
 ```text
-official candidate payload -> provider-centric fact_candidates bridge design
+docs/FUNDAMENTAL_OFFICIAL_CANDIDATE_PAYLOAD_TO_FACT_CANDIDATES_BRIDGE_DESIGN.md
 ```
 
 The bridge design should decide how an independent official candidate payload
@@ -479,3 +484,9 @@ without silently changing the existing provider-centric schema.
 Do not proceed directly to Research Report V1 integration, fixture promotion,
 validator work, live CNInfo, Tushare primary switch, Dashboard / Batch, scoring
 / P1.1 changes, regression expected changes, or trading advice.
+
+Current recommended next stage:
+
+```text
+Bridge artifact implementation
+```

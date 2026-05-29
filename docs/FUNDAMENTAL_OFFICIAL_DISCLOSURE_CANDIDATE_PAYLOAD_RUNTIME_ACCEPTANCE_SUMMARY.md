@@ -188,7 +188,7 @@ documentation-only stage:
 
 ## 13. Next Recommended Stage
 
-Recommended next stage:
+Historical recommended next stage, now recorded in the bridge design:
 
 ```text
 official candidate payload -> provider-centric fact_candidates bridge design
@@ -213,3 +213,32 @@ Do not directly enter:
 - live CNInfo;
 - Tushare primary switch;
 - Dashboard / Batch.
+
+## 14. Bridge Design Sync
+
+The bridge design is now recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_CANDIDATE_PAYLOAD_TO_FACT_CANDIDATES_BRIDGE_DESIGN.md
+```
+
+Design decision:
+
+- keep the retained official candidate payload independent;
+- do not directly append official rows to provider-centric
+  `fact_candidates.json`;
+- add a future lightweight bridge / source-index artifact first;
+- let later review tooling read provider candidates and official candidates
+  side by side;
+- defer a unified candidate pool until candidate schema v2.
+
+This sync does not change the frozen runtime baseline, generate output, update
+fixtures, update accepted manifests, modify the candidate generator main path,
+integrate Research Report V1, call providers, read tokens, connect MCP, change
+scoring / P1.1 / regression expected files, or emit trading advice.
+
+Current recommended next stage:
+
+```text
+Bridge artifact implementation
+```

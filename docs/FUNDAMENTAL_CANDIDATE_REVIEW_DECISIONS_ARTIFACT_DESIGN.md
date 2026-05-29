@@ -406,3 +406,43 @@ Recommended sequence:
 
 Do not skip directly from `fact_candidates.json` to fixture promotion. Do not
 write a validator before reviewed fixture fields exist.
+
+## 13. Official Candidate Bridge Relationship
+
+The official candidate payload -> provider-centric `fact_candidates.json`
+bridge design is recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_CANDIDATE_PAYLOAD_TO_FACT_CANDIDATES_BRIDGE_DESIGN.md
+```
+
+Future `candidate_review_decisions.json` artifacts may reference both provider
+candidates and official disclosure candidates. To avoid ambiguity, decision
+records should include:
+
+- `source_type`;
+- `candidate_id`;
+- `artifact_ref`;
+- optional `artifact_digest`;
+- `field_path`;
+- `period`;
+- `unit`.
+
+Review decisions remain an audit layer only:
+
+- an official candidate decision is not fixture promotion;
+- an official candidate decision is not a verified fact;
+- `fixture_write_allowed` remains `false` in V1;
+- official candidates do not overwrite provider candidates;
+- provider / official conflicts remain manual-review items;
+- promotion rules remain a later independent stage.
+
+Current recommended next stage for official candidates:
+
+```text
+Bridge artifact implementation
+```
+
+Do not proceed directly to Research Report V1 integration, fixture promotion,
+validator work, live CNInfo, provider calls, token reads, MCP, scoring / P1.1
+changes, regression expected changes, or trading advice.

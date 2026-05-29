@@ -1501,7 +1501,8 @@ Boundary and safety:
   live fetch, fixture promotion, accepted manifest update, scoring / P1.1
   change, regression expected change, or trading advice.
 
-Next recommended official-disclosure stage remains before Research Report V1:
+Historical next recommended official-disclosure stage, now recorded before
+Research Report V1:
 
 ```text
 official candidate payload -> provider-centric fact_candidates bridge design
@@ -1510,3 +1511,31 @@ official candidate payload -> provider-centric fact_candidates bridge design
 Do not directly enter Research Report V1 integration, fixture promotion,
 validator work, live CNInfo, Tushare primary switch, Dashboard / Batch, or
 trading advice.
+
+## 27. Official Candidate Bridge Boundary
+
+The official candidate payload -> provider-centric `fact_candidates.json`
+bridge design is now recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_CANDIDATE_PAYLOAD_TO_FACT_CANDIDATES_BRIDGE_DESIGN.md
+```
+
+Research Report V1 boundary remains unchanged:
+
+- Research Report V1 does not directly read
+  `official_disclosure_fact_candidates.v1`;
+- the bridge layer is a candidate-source discovery and review input layer, not
+  a report evidence layer;
+- official L1 candidates are stronger evidence candidates, but they are not
+  `verified_fact`;
+- no report artifact is automatically rewritten when a bridge artifact exists;
+- L1 evidence integration requires a later accepted Research Report V1 design;
+- trading advice, target prices, position sizing, portfolio weights, and
+  technical trading signals remain forbidden.
+
+Current recommended official-disclosure stage:
+
+```text
+Bridge artifact implementation
+```

@@ -68,19 +68,22 @@ in
 `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_FACTS_TO_CANDIDATE_GENERATOR_INTEGRATION_DESIGN.md`,
 and official candidate payload runtime acceptance is recorded in
 `docs/FUNDAMENTAL_OFFICIAL_DISCLOSURE_CANDIDATE_PAYLOAD_RUNTIME_ACCEPTANCE_SUMMARY.md`.
+Official candidate payload -> provider-centric `fact_candidates.json` bridge
+design is recorded in
+`docs/FUNDAMENTAL_OFFICIAL_CANDIDATE_PAYLOAD_TO_FACT_CANDIDATES_BRIDGE_DESIGN.md`.
 The retained ignored manifest is `output/research_reports/accepted_manifest.json`
 with SHA256
 `C1F97162A59DE113CD4C9F1A9531AEC3A915A3D6F09365098201234E6F5BEB7F`, size
 `7678`, mtime UTC `2026-05-28 10:17:55`, three `current` entries, and
 manifest-first runtime acceptance for `600406`, `002371`, and `002050`. The
-next recommended official-disclosure stage is
-`official candidate payload -> provider-centric fact_candidates bridge design`.
+next recommended official-disclosure stage is `Bridge artifact implementation`.
 The next step is
 not more ad hoc
 single-target HTML generation, more single-stock CLI runtime generation, CLI
 usage documentation, promote rules, validator, fixture promotion, Tushare
 primary, live CNInfo fetch, live provider report, MCP, Tushare token work,
-Research Report V1 integration, or another smoke.
+Research Report V1 integration, candidate generator main-path integration, or
+another smoke.
 
 ## 1. One-Sentence Positioning
 
@@ -143,16 +146,18 @@ Core modules:
   Structured Table Reader Design, Local Structured CSV runtime acceptance, CSV
   to table facts integration design, CSV table facts runtime acceptance, and
   table facts -> `official_disclosure_facts.json` integration design,
-  official disclosure facts with tables runtime acceptance, and official
-  disclosure facts -> candidate generator integration design are recorded, and
-  official candidate payload runtime acceptance is frozen. The next recommended
-  official-disclosure step is
-  `official candidate payload -> provider-centric fact_candidates bridge design`,
+  official disclosure facts with tables runtime acceptance, official
+  disclosure facts -> candidate generator integration design, and official
+  candidate payload -> provider-centric `fact_candidates.json` bridge design
+  are recorded, and official candidate payload runtime acceptance is frozen.
+  The next recommended official-disclosure step is `Bridge artifact
+  implementation`,
   not
   batch / Dashboard design, not more ad hoc single-target HTML generation, not
   fixture promotion, not validator implementation, not Tushare primary switch,
   not live CNInfo fetch, not live provider report, not MCP, not token work, not
-  Research Report V1 integration.
+  Research Report V1 integration, not candidate generator main-path
+  integration.
   Tushare must not become primary, AkShare / Tushare data must not be
   automatically merged, and regression expected files remain unchanged.
 - `ExternalCommodityPriceConnector`: adds configured commodity-price context for resource stocks.
@@ -1213,16 +1218,17 @@ runtime acceptance:
 official_disclosure_facts -> candidate generator integration implementation
 ```
 
+Historical next recommended stage, now recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_CANDIDATE_PAYLOAD_TO_FACT_CANDIDATES_BRIDGE_DESIGN.md
+```
+
 Current next recommended stage:
 
 ```text
-official candidate payload -> provider-centric fact_candidates bridge design
+Bridge artifact implementation
 ```
-
-The bridge design should use the retained official candidate payload baseline,
-remain fail-closed, and avoid live CNInfo, providers, tokens, network, MCP,
-fixtures, accepted manifests, Research Report V1, scoring / P1.1 changes,
-regression expected changes, and trading advice.
 
 Still do not enter live CNInfo, PDF extraction, DOCX / HTML / Excel reader,
 Research Report V1 integration, fixture
@@ -1333,18 +1339,22 @@ runtime acceptance:
 official_disclosure_facts -> candidate generator integration implementation
 ```
 
+Historical next recommended stage, now recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_CANDIDATE_PAYLOAD_TO_FACT_CANDIDATES_BRIDGE_DESIGN.md
+```
+
 Current next recommended stage:
 
 ```text
-official candidate payload -> provider-centric fact_candidates bridge design
+Bridge artifact implementation
 ```
 
-That stage should design how the independent official candidate payload can
-coexist with or be referenced by provider-centric `fact_candidates.json`. It
-should still not enter Research Report V1 integration, fixture promotion,
-accepted manifest updates, live CNInfo, PDF extraction, Dashboard, Batch,
-provider calls, token work, MCP, scoring / P1.1 changes, regression expected
-changes, or trading advice.
+That stage should still not enter Research Report V1 integration, fixture
+promotion, accepted manifest updates, live CNInfo, PDF extraction, Dashboard,
+Batch, provider calls, token work, MCP, scoring / P1.1 changes, regression
+expected changes, or trading advice.
 
 ## 24. Official Disclosure Facts To Candidate Generator Integration Design
 
@@ -1396,16 +1406,22 @@ runtime acceptance:
 official_disclosure_facts -> candidate generator integration implementation
 ```
 
+Historical next recommended stage, now recorded in:
+
+```text
+docs/FUNDAMENTAL_OFFICIAL_CANDIDATE_PAYLOAD_TO_FACT_CANDIDATES_BRIDGE_DESIGN.md
+```
+
 Current next recommended stage:
 
 ```text
-official candidate payload -> provider-centric fact_candidates bridge design
+Bridge artifact implementation
 ```
 
-The bridge design should remain documentation-only first and should not enter
-Research Report V1 integration, fixture promotion, validator work, live CNInfo,
-Tushare primary switch, Dashboard / Batch, scoring / P1.1 changes, regression
-expected changes, provider calls, token reads, MCP, or trading advice.
+Bridge artifact implementation should not enter Research Report V1
+integration, fixture promotion, validator work, live CNInfo, Tushare primary
+switch, Dashboard / Batch, scoring / P1.1 changes, regression expected
+changes, provider calls, token reads, MCP, or trading advice.
 
 ## 25. Official Candidate Payload Runtime Acceptance
 
@@ -1508,17 +1524,61 @@ Known limitations:
 - official candidates still require human review;
 - table facts currently cover revenue only, not cost / gross margin / YoY.
 
-Current next recommended stage:
+Historical next recommended stage, now recorded in:
 
 ```text
-official candidate payload -> provider-centric fact_candidates bridge design
+docs/FUNDAMENTAL_OFFICIAL_CANDIDATE_PAYLOAD_TO_FACT_CANDIDATES_BRIDGE_DESIGN.md
 ```
 
 Do not directly enter Research Report V1 integration, fixture promotion,
 validator work, live CNInfo, Tushare primary switch, Dashboard / Batch, or
 trading advice.
 
-## 26. New Codex Conversation Recovery Prompt
+## 26. Official Candidate Payload To Fact Candidates Bridge Design
+
+Treat
+`docs/FUNDAMENTAL_OFFICIAL_CANDIDATE_PAYLOAD_TO_FACT_CANDIDATES_BRIDGE_DESIGN.md`
+as the current design source for letting the independent official candidate
+payload coexist with provider-centric `fact_candidates.json`.
+
+Design decisions:
+
+- current provider-centric `fact_candidates.json` should not receive direct
+  appended official rows in V1;
+- retain independent `official_disclosure_fact_candidates.v1` artifacts;
+- add a lightweight bridge / source-index artifact first;
+- preserve `source_type=official_disclosure`,
+  `evidence_tier=L1_official_disclosure`, source document / table trace,
+  caveats, and human-review status;
+- official candidates remain candidates, not `verified_fact`;
+- official candidates do not automatically overwrite Tushare / AkShare
+  candidates;
+- conflicts remain high-priority manual-review items;
+- Research Report V1 does not directly read the official candidate payload.
+
+Current runtime baseline remains:
+
+- official candidate artifact:
+  `output/official_disclosures/20260528T182057Z/600406/official_disclosure_candidates_review.json`;
+- `candidate_rows=7`;
+- 1 main business candidate;
+- 6 revenue table candidates;
+- all rows are `L1_official_disclosure`;
+- all current candidates are human-review-required / caveated;
+- no provider-centric `fact_candidates.json` generated from official rows.
+
+Current recommended official-disclosure stage:
+
+```text
+Bridge artifact implementation
+```
+
+Do not proceed directly to candidate generator main-path integration, Research
+Report V1 integration, fixture promotion, validator work, live CNInfo, Tushare
+primary switch, Dashboard / Batch, provider calls, token reads, MCP, scoring /
+P1.1 changes, regression expected changes, or trading advice.
+
+## 27. New Codex Conversation Recovery Prompt
 
 Copy this into a new Codex / AI conversation:
 
