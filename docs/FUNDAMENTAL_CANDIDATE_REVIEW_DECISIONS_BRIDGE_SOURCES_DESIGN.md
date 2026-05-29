@@ -416,4 +416,4 @@ Recommended sequence:
 
 Do not skip directly to Research Report V1 integration, fixture promotion,
 validator work, live CNInfo, provider calls, token reads, MCP, scoring / P1.1
-changes, regression expected changes, or trading advice.
+changes, regression expected changes, Dashboard / Batch, or trading advice.
