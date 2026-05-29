@@ -7,6 +7,11 @@ from pathlib import Path
 
 import pytest
 
+import src.fundamental_skill.research_planning.manifest_locator as manifest_locator_module
+from src.fundamental_skill.research_planning.local_artifact_index import (
+    LOCAL_ARTIFACT_INDEX_ROW_SCHEMA_VERSION,
+    validate_artifact_row,
+)
 from src.fundamental_skill.research_planning.manifest_locator import (
     ACCEPTED_STATUSES,
     ARTIFACT_FORMATS,
@@ -22,6 +27,7 @@ from src.fundamental_skill.research_planning.manifest_locator import (
     UNMATCHED_REASONS,
     build_manifest_entry_row,
     build_manifest_locator_payload,
+    manifest_entry_to_artifact_row,
     parse_synthetic_manifest_locator,
     validate_manifest_entry_row,
     validate_manifest_locator_payload,
@@ -259,6 +265,10 @@ def test_artifact_path_unsafe_is_rejected():
     [
         "verified_fact",
         "auto_verified",
+        "evidence_fact",
+        "report_fact",
+        "accepted_report_fact",
+        "hypothesis",
         "accepted_manifest_update",
         "research_report_v1_update",
         "provider_primary_switch",
@@ -278,6 +288,10 @@ def test_forbidden_markers_are_rejected(marker):
     "marker",
     [
         "verified_fact",
+        "evidence_fact",
+        "report_fact",
+        "accepted_report_fact",
+        "hypothesis",
         "accepted_manifest_update",
         "research_report_v1_update",
         "provider_primary_switch",
@@ -365,6 +379,178 @@ def test_validators_do_not_use_file_io(monkeypatch):
 
     assert validate_manifest_entry_row(row)["stock_code"] == "600406"
     assert validate_manifest_locator_payload(payload)["manifest_entry_count"] == 1
+
+
+def test_manifest_entry_to_artifact_row_valid_report_artifact_state():
+    row = _valid_entry(caveats=["Original manifest caveat."])
+
+    artifact_row = manifest_entry_to_artifact_row(row)
+
+    assert artifact_row["schema_version"] == LOCAL_ARTIFACT_INDEX_ROW_SCHEMA_VERSION
+    assert artifact_row["artifact_type"] == "report_artifact_state"
+    assert artifact_row["source_family"] == "research_report_v1"
+    assert artifact_row["artifact_path"] == row["artifact_path"]
+    assert artifact_row["stock_code"] == "600406"
+    assert artifact_row["company_name"] == "NARI Technology"
+    assert artifact_row["source_status"] == "available"
+    assert artifact_row["review_status"] == "unknown"
+    assert artifact_row["freshness_status"] == "current"
+    assert artifact_row["sha256"] == ""
+    assert artifact_row["file_size"] == 0
+    assert artifact_row["not_for_trading_advice"] is True
+    assert validate_artifact_row(artifact_row) == artifact_row
+
+
+def test_manifest_entry_to_artifact_row_accepted_current_remains_artifact_state():
+    row = _valid_entry(accepted_status="accepted", freshness_status="current")
+
+    artifact_row = manifest_entry_to_artifact_row(row)
+
+    rendered = repr(artifact_row)
+    assert artifact_row["artifact_type"] == "report_artifact_state"
+    assert artifact_row["source_status"] == "available"
+    assert any("manifest locator state only" in caveat.lower() for caveat in artifact_row["caveats"])
+    assert any("not verified as fact" in caveat.lower() for caveat in artifact_row["caveats"])
+    assert "verified_fact" not in rendered
+    assert "evidence_fact" not in rendered
+    assert "report_fact" not in rendered
+    assert "hypothesis" not in rendered
+
+
+def test_manifest_entry_to_artifact_row_preserves_caveats_and_adds_lineage_refs():
+    row = _valid_entry(caveats=["Original manifest caveat."])
+
+    artifact_row = manifest_entry_to_artifact_row(row, lineage_refs=["manifest_locator:synthetic_source"])
+
+    assert "Original manifest caveat." in artifact_row["caveats"]
+    assert "manifest_locator:synthetic_source" in artifact_row["lineage_refs"]
+    assert "manifest_locator:manifest_entry_row.v1" in artifact_row["lineage_refs"]
+    assert "manifest_locator:artifact_path_field" in artifact_row["lineage_refs"]
+    assert "manifest_locator:artifact_kind=research_report_v1" in artifact_row["lineage_refs"]
+    assert "manifest_locator:artifact_format=json" in artifact_row["lineage_refs"]
+    assert "manifest_locator:accepted_status=accepted" in artifact_row["lineage_refs"]
+    assert "manifest_locator:freshness_status=current" in artifact_row["lineage_refs"]
+    assert "manifest_locator:hash_status=not_checked" in artifact_row["lineage_refs"]
+    assert "manifest_locator:source_status=available" in artifact_row["lineage_refs"]
+    assert any("artifact_format=json" in caveat for caveat in artifact_row["caveats"])
+    assert any("hash_status=not_checked" in caveat for caveat in artifact_row["caveats"])
+
+
+def test_manifest_entry_to_artifact_row_maps_statuses_conservatively():
+    row = _valid_entry(
+        accepted_status="superseded",
+        freshness_status="superseded",
+        source_status="available",
+    )
+
+    artifact_row = manifest_entry_to_artifact_row(row)
+
+    assert artifact_row["source_status"] == "stale"
+    assert artifact_row["review_status"] == "review_required"
+    assert artifact_row["freshness_status"] == "superseded"
+
+
+def test_manifest_entry_to_artifact_row_rejects_invalid_entry():
+    row = _valid_entry()
+    del row["schema_version"]
+
+    with pytest.raises(ValueError, match="manifest entry row"):
+        manifest_entry_to_artifact_row(row)
+
+
+def test_manifest_entry_to_artifact_row_rejects_raw_manifest_top_level_dict():
+    with pytest.raises(ValueError, match="manifest entry row"):
+        manifest_entry_to_artifact_row(_synthetic_manifest())
+
+
+def test_manifest_entry_to_artifact_row_rejects_unsafe_path():
+    row = _valid_entry(artifact_path="config/token.txt")
+
+    with pytest.raises(ValueError, match="unsafe artifact_path"):
+        manifest_entry_to_artifact_row(row)
+
+
+def test_manifest_entry_to_artifact_row_rejects_missing_artifact_path():
+    row = _valid_entry(artifact_path="")
+
+    with pytest.raises(ValueError, match="artifact_path"):
+        manifest_entry_to_artifact_row(row)
+
+
+def test_manifest_entry_to_artifact_row_rejects_unknown_artifact_kind():
+    row = _valid_entry(artifact_kind="unknown")
+
+    with pytest.raises(ValueError, match="artifact_kind"):
+        manifest_entry_to_artifact_row(row)
+
+
+@pytest.mark.parametrize(
+    "marker",
+    [
+        "verified_fact",
+        "auto_verified",
+        "evidence_fact",
+        "report_fact",
+        "accepted_report_fact",
+        "hypothesis",
+        "fixture_promotion",
+        "accepted_manifest_update",
+        "provider_primary_switch",
+        "research_report_v1_update",
+        "target_price",
+        "trading_signal",
+    ],
+)
+def test_manifest_entry_to_artifact_row_rejects_forbidden_marker(marker):
+    row = _valid_entry(caveats=[marker])
+
+    with pytest.raises(ValueError, match="safety violation"):
+        manifest_entry_to_artifact_row(row)
+
+
+def test_manifest_entry_to_artifact_row_rejects_not_for_trading_advice_false():
+    row = _valid_entry(not_for_trading_advice=False)
+
+    with pytest.raises(ValueError, match="not_for_trading_advice"):
+        manifest_entry_to_artifact_row(row)
+
+
+def test_manifest_entry_to_artifact_row_rejects_lineage_refs_type_error():
+    row = _valid_entry()
+
+    with pytest.raises(ValueError, match="lineage_refs"):
+        manifest_entry_to_artifact_row(row, lineage_refs={})
+
+
+def test_manifest_entry_to_artifact_row_propagates_artifact_row_validation_failure(monkeypatch):
+    row = _valid_entry()
+
+    def fail_validate_artifact_row(_row):
+        raise ValueError("phase 2a validation failed")
+
+    monkeypatch.setattr(manifest_locator_module, "validate_artifact_row", fail_validate_artifact_row)
+
+    with pytest.raises(ValueError, match="phase 2a validation failed"):
+        manifest_entry_to_artifact_row(row)
+
+
+def test_manifest_entry_to_artifact_row_no_file_io_report_read_or_write(monkeypatch):
+    def fail_open(*args, **kwargs):
+        raise AssertionError("manifest entry adapter must not open files")
+
+    def fail_filesystem_probe(*args, **kwargs):
+        raise AssertionError("manifest entry adapter must not scan or stat filesystem paths")
+
+    monkeypatch.setattr(builtins, "open", fail_open)
+    monkeypatch.setattr(os, "listdir", fail_filesystem_probe)
+    monkeypatch.setattr(Path, "iterdir", fail_filesystem_probe)
+    monkeypatch.setattr(Path, "glob", fail_filesystem_probe)
+    monkeypatch.setattr(Path, "rglob", fail_filesystem_probe)
+
+    artifact_row = manifest_entry_to_artifact_row(_valid_entry())
+
+    assert artifact_row["artifact_type"] == "report_artifact_state"
+    assert artifact_row["sha256"] == ""
 
 
 def test_parse_valid_synthetic_manifest(tmp_path):

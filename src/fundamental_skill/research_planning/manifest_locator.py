@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
-"""Schema and pure validators for read-only manifest locator rows.
+"""Schema, validators, and adapters for read-only manifest locator rows.
 
 Phase 2B-1 is intentionally side-effect free. The helpers in this module only
 validate dictionary shape and path strings. They do not read manifests, inspect
 report artifacts, scan directories, compute file hashes, call providers, create
-Local Artifact Index rows, or generate runtime artifacts.
+facts, or generate runtime artifacts. The Phase 2B-3 adapter converts one
+validated manifest entry into one Local Artifact Index row as artifact state
+only; it still does not read manifests, artifact contents, or filesystem
+metadata.
 """
 
 from __future__ import annotations
@@ -15,7 +18,7 @@ import os
 import re
 from typing import Any
 
-from .local_artifact_index import validate_artifact_path_safety
+from .local_artifact_index import build_artifact_row, validate_artifact_path_safety, validate_artifact_row
 from .safety import validate_payload_safety
 
 
@@ -24,6 +27,13 @@ MANIFEST_ENTRY_ROW_SCHEMA_VERSION = "manifest_entry_row.v1"
 SYNTHETIC_MANIFEST_LOCATOR_INPUT_SCHEMA_VERSION = "synthetic_manifest_locator_input.v1"
 
 _SYNTHETIC_MANIFEST_PAYLOAD_PATH = "output/research_reports/synthetic_manifest_locator_input.json"
+
+_MANIFEST_ARTIFACT_KIND_TO_LOCAL_ARTIFACT = {
+    "accepted_manifest": ("accepted_manifest", "accepted_manifest"),
+    "research_report_v1": ("report_artifact_state", "research_report_v1"),
+    "superseded_report_artifact": ("report_artifact_state", "research_report_v1"),
+    "lineage_artifact": ("existing_local_report_artifact", "existing_local_reports"),
+}
 
 MANIFEST_EXISTS_STATUSES = (
     "exists",
@@ -168,6 +178,19 @@ _FORBIDDEN_MARKERS = (
     "verified fact",
     "auto_verified",
     "auto verified",
+    "evidence_fact",
+    "evidence fact",
+    "accepted_evidence_fact",
+    "accepted evidence fact",
+    "report_fact",
+    "report fact",
+    "accepted_report_fact",
+    "accepted report fact",
+    "hypothesis",
+    "hypothesis_generator",
+    "hypothesis generator",
+    "generate_hypothesis",
+    "generate hypothesis",
     "fixture_promotion",
     "fixture promotion",
     "promote_fixture",
@@ -572,6 +595,120 @@ def validate_manifest_entry_row(row: dict[str, Any]) -> dict[str, Any]:
     _validate_common_safety(validated, "manifest entry row")
 
     return validated
+
+
+def _manifest_entry_artifact_target(entry: dict[str, Any]) -> tuple[str, str]:
+    artifact_kind = entry["artifact_kind"]
+    if artifact_kind not in _MANIFEST_ARTIFACT_KIND_TO_LOCAL_ARTIFACT:
+        raise ValueError("artifact_kind cannot be adapted into a Local Artifact Index row")
+    return _MANIFEST_ARTIFACT_KIND_TO_LOCAL_ARTIFACT[artifact_kind]
+
+
+def _map_manifest_entry_source_status(entry: dict[str, Any]) -> str:
+    accepted_status = entry["accepted_status"]
+    source_status = entry["source_status"]
+
+    if accepted_status == "conflict_open" or source_status == "conflict_open":
+        return "conflict_open"
+    if accepted_status == "invalidated" or source_status == "invalidated":
+        return "invalidated"
+    if accepted_status == "missing" or source_status == "missing":
+        return "missing"
+    if accepted_status in {"stale", "superseded"} or source_status == "stale":
+        return "stale"
+    if source_status in {"unreadable", "ignored", "partial", "candidate_only", "review_required"}:
+        return source_status
+    if accepted_status == "accepted" and source_status == "available":
+        return "available"
+    return "review_required"
+
+
+def _map_manifest_entry_review_status(entry: dict[str, Any], source_status: str) -> str:
+    if source_status == "conflict_open":
+        return "conflict_open"
+    if source_status == "invalidated":
+        return "invalidated"
+    if source_status == "available" and entry["accepted_status"] == "accepted":
+        return "unknown"
+    return "review_required"
+
+
+def _manifest_entry_adapter_caveats(entry: dict[str, Any]) -> list[Any]:
+    caveats = list(entry["caveats"])
+    caveats.extend(
+        [
+            "Manifest locator state only; not verified as fact.",
+            "Manifest artifact path state only; report artifact content was not read.",
+            f"Manifest artifact_format={entry['artifact_format']} preserved as locator metadata only.",
+            (
+                f"Manifest accepted_status={entry['accepted_status']}, "
+                f"source_status={entry['source_status']}, and hash_status={entry['hash_status']} "
+                "preserved as artifact state only; no real file hash was computed."
+            ),
+        ]
+    )
+    return caveats
+
+
+def _manifest_entry_adapter_lineage_refs(
+    entry: dict[str, Any],
+    lineage_refs: list[Any] | None,
+) -> list[str]:
+    refs: list[str] = []
+    if lineage_refs is not None:
+        for index, ref in enumerate(_require_list(lineage_refs, "lineage_refs")):
+            refs.append(_require_string(ref, f"lineage_refs[{index}]"))
+    refs.extend(
+        [
+            "manifest_locator:manifest_entry_row.v1",
+            "manifest_locator:artifact_path_field",
+            f"manifest_locator:artifact_kind={entry['artifact_kind']}",
+            f"manifest_locator:artifact_format={entry['artifact_format']}",
+            f"manifest_locator:accepted_status={entry['accepted_status']}",
+            f"manifest_locator:freshness_status={entry['freshness_status']}",
+            f"manifest_locator:hash_status={entry['hash_status']}",
+            f"manifest_locator:source_status={entry['source_status']}",
+        ]
+    )
+    return refs
+
+
+def manifest_entry_to_artifact_row(
+    manifest_entry: dict[str, Any],
+    *,
+    lineage_refs: list[Any] | None = None,
+) -> dict[str, Any]:
+    """Convert one manifest entry row into one Local Artifact Index row.
+
+    The adapter accepts only ``manifest_entry_row.v1`` dictionaries and
+    defensively re-validates the input before mapping it. It records manifest
+    locator state as artifact inventory only. It does not read manifests, check
+    artifact existence, read report artifacts, compute real file hashes, write
+    files, emit evidence facts, generate hypotheses, or enter report
+    integration.
+    """
+
+    entry = validate_manifest_entry_row(manifest_entry)
+    if not entry["artifact_path"].strip():
+        raise ValueError("artifact_path is required for manifest entry adapter")
+
+    artifact_type, source_family = _manifest_entry_artifact_target(entry)
+    source_status = _map_manifest_entry_source_status(entry)
+    review_status = _map_manifest_entry_review_status(entry, source_status)
+    row = build_artifact_row(
+        artifact_type=artifact_type,
+        artifact_path=entry["artifact_path"],
+        source_family=source_family,
+        stock_code=entry["stock_code"],
+        company_name=entry["company_name"],
+        source_status=source_status,
+        review_status=review_status,
+        freshness_status=entry["freshness_status"],
+        caveats=_manifest_entry_adapter_caveats(entry),
+        lineage_refs=_manifest_entry_adapter_lineage_refs(entry, lineage_refs),
+        not_for_trading_advice=True,
+    )
+    return validate_artifact_row(row)
 
 
 def build_manifest_locator_payload(
