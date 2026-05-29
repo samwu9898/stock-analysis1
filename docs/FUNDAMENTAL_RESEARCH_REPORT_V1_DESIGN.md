@@ -1537,5 +1537,51 @@ Research Report V1 boundary remains unchanged:
 Current recommended official-disclosure stage:
 
 ```text
-Bridge artifact implementation
+Candidate Review Decisions Update Design For Bridge Sources
+```
+
+## 28. Candidate Source Bridge Runtime Acceptance Boundary
+
+The `candidate_source_bridge.v1` implementation and retained `600406` bridge
+runtime baseline are accepted and frozen in:
+
+```text
+docs/FUNDAMENTAL_CANDIDATE_SOURCE_BRIDGE_RUNTIME_ACCEPTANCE_SUMMARY.md
+```
+
+Research Report V1 boundary remains unchanged:
+
+- Research Report V1 does not directly read the bridge artifact;
+- Research Report V1 does not directly read
+  `official_disclosure_fact_candidates.v1`;
+- bridge source entries are review inputs, not report evidence;
+- `review_priorities` are review signals, not fixture promotion;
+- bridge conflicts are review signals, not verified facts;
+- no automatic report rewrite occurs when a bridge artifact exists;
+- no target prices, position sizing, portfolio weights, buy / sell advice, or
+  trading signals are introduced.
+
+Accepted bridge runtime baseline:
+
+- old corrupted bridge artifact with `company_name="????"` was deleted after
+  validation of the UTF-8-correct replacement;
+- new baseline artifact:
+  `output/candidate_source_bridges/20260529T034024Z/600406/candidate_source_bridge_review.json`;
+- new SHA256:
+  `49A683E178F85E101B0D3C63E75E0D2E4CC5741A09FD61088F22174070B91FBF`;
+- `company_name="国电南瑞"` with codepoints
+  `[22269, 30005, 21335, 29790]`;
+- provider source counts `1004 / 184 / 807`;
+- official source counts `7 / 7 / 0`;
+- `cross_source_conflicts=[]`;
+- `review_priorities=8`;
+- no provider-centric `fact_candidates.json` mutation;
+- no candidate generator main-path integration;
+- no accepted manifest, fixture, scoring / P1.1, regression expected, or
+  report artifact update.
+
+Current recommended official-disclosure stage:
+
+```text
+Candidate Review Decisions Update Design For Bridge Sources
 ```

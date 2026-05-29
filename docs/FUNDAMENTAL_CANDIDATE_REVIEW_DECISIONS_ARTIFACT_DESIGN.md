@@ -440,9 +440,57 @@ Review decisions remain an audit layer only:
 Current recommended next stage for official candidates:
 
 ```text
-Bridge artifact implementation
+Candidate Review Decisions Update Design For Bridge Sources
 ```
 
 Do not proceed directly to Research Report V1 integration, fixture promotion,
 validator work, live CNInfo, provider calls, token reads, MCP, scoring / P1.1
 changes, regression expected changes, or trading advice.
+
+## 14. Candidate Source Bridge Runtime Acceptance Sync
+
+The `candidate_source_bridge.v1` implementation and retained `600406` runtime
+baseline are accepted and frozen in:
+
+```text
+docs/FUNDAMENTAL_CANDIDATE_SOURCE_BRIDGE_RUNTIME_ACCEPTANCE_SUMMARY.md
+```
+
+The accepted bridge baseline indexes:
+
+- provider candidates from
+  `output/ground_truth_candidates/20260527T155056/600406/fact_candidates.json`
+  with counts `1004 / 184 / 807`;
+- official disclosure candidates from
+  `output/official_disclosures/20260528T182057Z/600406/official_disclosure_candidates_review.json`
+  with counts `7 / 7 / 0`;
+- the new UTF-8-correct bridge artifact at
+  `output/candidate_source_bridges/20260529T034024Z/600406/candidate_source_bridge_review.json`;
+- `company_name="国电南瑞"` with codepoints
+  `[22269, 30005, 21335, 29790]`;
+- `cross_source_conflicts=[]`;
+- `review_priorities=8`, including the schema-mismatch caveat
+  `cross_source_conflict_detection_not_performed_schema_mismatch`.
+
+Next review-decision design work should define how
+`candidate_review_decisions.json` references both source families using:
+
+- `source_type`;
+- `candidate_id`;
+- `artifact_ref`;
+- optional `artifact_digest`;
+- `field_path`;
+- `period`;
+- `unit`;
+- review outcome and caveat status.
+
+This update remains a design boundary only. Review decisions are not fixture
+promotion, are not verified facts, do not overwrite provider candidates, do not
+rewrite official candidate payloads, and do not enter Research Report V1.
+Promotion rules remain later.
+
+Current recommended next stage for official candidates:
+
+```text
+Candidate Review Decisions Update Design For Bridge Sources
+```

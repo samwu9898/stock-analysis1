@@ -443,7 +443,7 @@ Recommended sequence:
 1. Bridge design.
 2. Bridge artifact implementation.
 3. Retained 600406 bridge runtime review.
-4. Review decisions update design.
+4. Candidate Review Decisions Update Design For Bridge Sources.
 5. Candidate schema v2 design.
 6. Research Report V1 L1 evidence integration design.
 7. Later fixture promotion / validator.
@@ -452,3 +452,47 @@ Recommended sequence:
 Do not skip directly to Research Report V1 integration, fixture promotion,
 validator work, live CNInfo, provider calls, token reads, MCP, Dashboard /
 Batch, scoring / P1.1 changes, regression expected changes, or trading advice.
+
+## 13. Runtime Acceptance Summary Sync
+
+The `candidate_source_bridge.v1` implementation and retained `600406` runtime
+review are accepted and frozen in:
+
+```text
+docs/FUNDAMENTAL_CANDIDATE_SOURCE_BRIDGE_RUNTIME_ACCEPTANCE_SUMMARY.md
+```
+
+Accepted runtime baseline:
+
+- old corrupted bridge artifact
+  `output/candidate_source_bridges/20260529T032922Z/600406/candidate_source_bridge_review.json`
+  had `company_name="????"` with codepoints `[63, 63, 63, 63]`, SHA256
+  `A1F2D55A3497E5BF3399B064EB2D54F2E372F402BD865F7D834AAC97AF61548F`, was
+  not accepted, and was deleted after the fix;
+- new baseline bridge artifact is
+  `output/candidate_source_bridges/20260529T034024Z/600406/candidate_source_bridge_review.json`;
+- new SHA256 is
+  `49A683E178F85E101B0D3C63E75E0D2E4CC5741A09FD61088F22174070B91FBF`;
+- `company_name="国电南瑞"` with codepoints
+  `[22269, 30005, 21335, 29790]`;
+- provider source counts are `1004 / 184 / 807`;
+- official source counts are `7 / 7 / 0`;
+- `cross_source_conflicts=[]`;
+- `review_priorities=8`;
+- the bridge includes
+  `cross_source_conflict_detection_not_performed_schema_mismatch`;
+- no provider-centric `fact_candidates.json` mutation occurred;
+- no candidate generator main-path change occurred;
+- no Research Report V1 integration occurred.
+
+The current recommended next stage is:
+
+```text
+Candidate Review Decisions Update Design For Bridge Sources
+```
+
+That stage should design how `candidate_review_decisions.json` references
+provider and official candidates by `source_type`, `candidate_id`, and
+`artifact_ref`. It should not promote fixtures, create verified facts, rewrite
+Research Report V1, switch provider primary behavior, call live CNInfo /
+providers, read tokens, connect MCP, or emit trading advice.

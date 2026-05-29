@@ -71,12 +71,15 @@ and official candidate payload runtime acceptance is recorded in
 Official candidate payload -> provider-centric `fact_candidates.json` bridge
 design is recorded in
 `docs/FUNDAMENTAL_OFFICIAL_CANDIDATE_PAYLOAD_TO_FACT_CANDIDATES_BRIDGE_DESIGN.md`.
+Candidate source bridge runtime acceptance is recorded in
+`docs/FUNDAMENTAL_CANDIDATE_SOURCE_BRIDGE_RUNTIME_ACCEPTANCE_SUMMARY.md`.
 The retained ignored manifest is `output/research_reports/accepted_manifest.json`
 with SHA256
 `C1F97162A59DE113CD4C9F1A9531AEC3A915A3D6F09365098201234E6F5BEB7F`, size
 `7678`, mtime UTC `2026-05-28 10:17:55`, three `current` entries, and
 manifest-first runtime acceptance for `600406`, `002371`, and `002050`. The
-next recommended official-disclosure stage is `Bridge artifact implementation`.
+next recommended official-disclosure stage is `Candidate Review Decisions
+Update Design For Bridge Sources`.
 The next step is
 not more ad hoc
 single-target HTML generation, more single-stock CLI runtime generation, CLI
@@ -149,9 +152,10 @@ Core modules:
   official disclosure facts with tables runtime acceptance, official
   disclosure facts -> candidate generator integration design, and official
   candidate payload -> provider-centric `fact_candidates.json` bridge design
-  are recorded, and official candidate payload runtime acceptance is frozen.
-  The next recommended official-disclosure step is `Bridge artifact
-  implementation`,
+  are recorded, official candidate payload runtime acceptance is frozen, and
+  candidate source bridge runtime acceptance is frozen.
+  The next recommended official-disclosure step is `Candidate Review Decisions
+  Update Design For Bridge Sources`,
   not
   batch / Dashboard design, not more ad hoc single-target HTML generation, not
   fixture promotion, not validator implementation, not Tushare primary switch,
@@ -1227,7 +1231,7 @@ docs/FUNDAMENTAL_OFFICIAL_CANDIDATE_PAYLOAD_TO_FACT_CANDIDATES_BRIDGE_DESIGN.md
 Current next recommended stage:
 
 ```text
-Bridge artifact implementation
+Candidate Review Decisions Update Design For Bridge Sources
 ```
 
 Still do not enter live CNInfo, PDF extraction, DOCX / HTML / Excel reader,
@@ -1348,7 +1352,7 @@ docs/FUNDAMENTAL_OFFICIAL_CANDIDATE_PAYLOAD_TO_FACT_CANDIDATES_BRIDGE_DESIGN.md
 Current next recommended stage:
 
 ```text
-Bridge artifact implementation
+Candidate Review Decisions Update Design For Bridge Sources
 ```
 
 That stage should still not enter Research Report V1 integration, fixture
@@ -1415,10 +1419,10 @@ docs/FUNDAMENTAL_OFFICIAL_CANDIDATE_PAYLOAD_TO_FACT_CANDIDATES_BRIDGE_DESIGN.md
 Current next recommended stage:
 
 ```text
-Bridge artifact implementation
+Candidate Review Decisions Update Design For Bridge Sources
 ```
 
-Bridge artifact implementation should not enter Research Report V1
+Candidate Review Decisions Update Design For Bridge Sources should not enter Research Report V1
 integration, fixture promotion, validator work, live CNInfo, Tushare primary
 switch, Dashboard / Batch, scoring / P1.1 changes, regression expected
 changes, provider calls, token reads, MCP, or trading advice.
@@ -1570,7 +1574,7 @@ Current runtime baseline remains:
 Current recommended official-disclosure stage:
 
 ```text
-Bridge artifact implementation
+Candidate Review Decisions Update Design For Bridge Sources
 ```
 
 Do not proceed directly to candidate generator main-path integration, Research
@@ -1578,7 +1582,91 @@ Report V1 integration, fixture promotion, validator work, live CNInfo, Tushare
 primary switch, Dashboard / Batch, provider calls, token reads, MCP, scoring /
 P1.1 changes, regression expected changes, or trading advice.
 
-## 27. New Codex Conversation Recovery Prompt
+## 27. Candidate Source Bridge Runtime Acceptance
+
+Treat
+`docs/FUNDAMENTAL_CANDIDATE_SOURCE_BRIDGE_RUNTIME_ACCEPTANCE_SUMMARY.md`
+as the current documentation-only closeout for the retained `600406`
+`candidate_source_bridge.v1` runtime baseline.
+
+Current accepted status:
+
+- `candidate_source_bridge.v1` implementation accepted;
+- retained `600406` bridge runtime review accepted;
+- encoding bug fixed by regenerating the runtime bridge artifact;
+- retained `600406` candidate source bridge runtime baseline frozen;
+- no provider-centric `fact_candidates.json` mutation;
+- no candidate generator main path change;
+- no Research Report V1 integration;
+- no fixture promotion;
+- no accepted manifest update;
+- no live CNInfo.
+
+Runtime records:
+
+- old corrupted artifact:
+  `output/candidate_source_bridges/20260529T032922Z/600406/candidate_source_bridge_review.json`;
+- old SHA256:
+  `A1F2D55A3497E5BF3399B064EB2D54F2E372F402BD865F7D834AAC97AF61548F`;
+- old bug: `company_name="????"` with codepoints `[63, 63, 63, 63]`;
+- old artifact was not accepted as baseline and was deleted after validation
+  of the replacement;
+- new baseline artifact:
+  `output/candidate_source_bridges/20260529T034024Z/600406/candidate_source_bridge_review.json`;
+- new SHA256:
+  `49A683E178F85E101B0D3C63E75E0D2E4CC5741A09FD61088F22174070B91FBF`;
+- new `company_name="国电南瑞"` with codepoints
+  `[22269, 30005, 21335, 29790]`;
+- provider source counts `1004 / 184 / 807`;
+- official source counts `7 / 7 / 0`;
+- `cross_source_conflicts=[]`;
+- `review_priorities=8`;
+- includes `cross_source_conflict_detection_not_performed_schema_mismatch`.
+
+Input artifact records:
+
+- provider candidate artifact:
+  `output/ground_truth_candidates/20260527T155056/600406/fact_candidates.json`;
+- provider SHA256 unchanged:
+  `9A94D2DBF1D28AA260E51CBA17B1E0A0BFFD20D3B7DD08C49581E8365AC0CC47`;
+- official candidate artifact:
+  `output/official_disclosures/20260528T182057Z/600406/official_disclosure_candidates_review.json`;
+- official SHA256 unchanged:
+  `514464210CB49DC31BA0D63BBC895FB66B23C2FF8A713AAD723351E6E0733BFA`;
+- official payload has `candidate_rows=7`, 1 main business candidate,
+  6 revenue table candidates, all `L1_official_disclosure`, all
+  human-review / caveated, and no verified fact.
+
+Boundary and safety:
+
+- bridge artifact is a source index, not a merge;
+- official rows are not appended to provider-centric `fact_candidates.json`;
+- provider candidates remain provider-centric;
+- official candidates remain independent;
+- review priorities are not fixture promotion;
+- review priorities are not verified facts;
+- no automatic report rewrite;
+- token / secret / provider scan passed;
+- no `TUSHARE_TOKEN` read, network, CNInfo / Tushare / AkShare / provider
+  call, MCP, fixture promotion, accepted manifest update, Research Report V1
+  integration, candidate generator main-path integration, scoring / P1.1
+  change, regression expected change, or trading advice.
+
+Latest accepted verification results are quoted, not rerun by this
+documentation-only stage: targeted tests `549 passed`, full pytest latest
+`1197 passed, 1 skipped`, and regression `passed=47 failed=0 total=47`.
+
+Current recommended official-disclosure stage:
+
+```text
+Candidate Review Decisions Update Design For Bridge Sources
+```
+
+Do not proceed directly to Research Report V1 integration, fixture promotion,
+validator work, live CNInfo, provider primary switch, Dashboard / Batch, or
+trading advice.
+
+## 28. New Codex Conversation Recovery Prompt
 
 Copy this into a new Codex / AI conversation:
 

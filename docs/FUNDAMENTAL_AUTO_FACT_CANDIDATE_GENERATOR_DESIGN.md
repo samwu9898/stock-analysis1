@@ -682,10 +682,54 @@ candidate artifacts without mutating either source artifact.
 Current recommended next stage:
 
 ```text
-Bridge artifact implementation
+Candidate Review Decisions Update Design For Bridge Sources
 ```
 
 This remains documentation-only sync. It does not implement generator code,
 write output, update fixtures, update accepted manifests, read tokens, use the
 network, call providers, connect MCP, change scoring / P1.1 / regression
 expected files, or integrate Research Report V1.
+
+## 19. Candidate Source Bridge Runtime Acceptance Addendum
+
+The `candidate_source_bridge.v1` implementation and retained `600406` bridge
+runtime review are now accepted and frozen. The closeout is recorded in:
+
+```text
+docs/FUNDAMENTAL_CANDIDATE_SOURCE_BRIDGE_RUNTIME_ACCEPTANCE_SUMMARY.md
+```
+
+Accepted bridge records:
+
+- old corrupted artifact:
+  `output/candidate_source_bridges/20260529T032922Z/600406/candidate_source_bridge_review.json`;
+- old bug: `company_name="????"` with codepoints `[63, 63, 63, 63]`;
+- old SHA256:
+  `A1F2D55A3497E5BF3399B064EB2D54F2E372F402BD865F7D834AAC97AF61548F`;
+- old artifact deleted after replacement validation;
+- new baseline artifact:
+  `output/candidate_source_bridges/20260529T034024Z/600406/candidate_source_bridge_review.json`;
+- new SHA256:
+  `49A683E178F85E101B0D3C63E75E0D2E4CC5741A09FD61088F22174070B91FBF`;
+- `company_name="国电南瑞"` with codepoints
+  `[22269, 30005, 21335, 29790]`;
+- provider source counts `1004 / 184 / 807`;
+- official source counts `7 / 7 / 0`;
+- `cross_source_conflicts=[]`;
+- `review_priorities=8`.
+
+Generator boundary remains unchanged:
+
+- provider-centric `fact_candidates.json` remains unchanged;
+- official disclosure candidates remain an independent payload;
+- the bridge artifact is a source index, not a merge;
+- no provider primary switch;
+- no auto verification;
+- no Research Report V1 integration;
+- no fixture promotion or accepted manifest update.
+
+Current recommended next stage:
+
+```text
+Candidate Review Decisions Update Design For Bridge Sources
+```

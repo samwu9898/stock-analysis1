@@ -240,5 +240,46 @@ scoring / P1.1 / regression expected files, or emit trading advice.
 Current recommended next stage:
 
 ```text
-Bridge artifact implementation
+Candidate Review Decisions Update Design For Bridge Sources
+```
+
+## 15. Candidate Source Bridge Runtime Acceptance Sync
+
+The bridge artifact implementation, retained `600406` bridge runtime review,
+and UTF-8 encoding fix are now accepted and frozen in:
+
+```text
+docs/FUNDAMENTAL_CANDIDATE_SOURCE_BRIDGE_RUNTIME_ACCEPTANCE_SUMMARY.md
+```
+
+Bridge runtime baseline:
+
+- old corrupted bridge artifact
+  `output/candidate_source_bridges/20260529T032922Z/600406/candidate_source_bridge_review.json`
+  had `company_name="????"` with codepoints `[63, 63, 63, 63]`, SHA256
+  `A1F2D55A3497E5BF3399B064EB2D54F2E372F402BD865F7D834AAC97AF61548F`, and
+  was deleted after validation of the replacement artifact;
+- new retained baseline artifact:
+  `output/candidate_source_bridges/20260529T034024Z/600406/candidate_source_bridge_review.json`;
+- new SHA256:
+  `49A683E178F85E101B0D3C63E75E0D2E4CC5741A09FD61088F22174070B91FBF`;
+- `company_name="国电南瑞"` with codepoints
+  `[22269, 30005, 21335, 29790]`;
+- provider input SHA256 remained
+  `9A94D2DBF1D28AA260E51CBA17B1E0A0BFFD20D3B7DD08C49581E8365AC0CC47`;
+- official input SHA256 remained
+  `514464210CB49DC31BA0D63BBC895FB66B23C2FF8A713AAD723351E6E0733BFA`;
+- provider source counts are `1004 / 184 / 807`;
+- official source counts are `7 / 7 / 0`;
+- `cross_source_conflicts=[]`;
+- `review_priorities=8`;
+- no official rows were appended to provider-centric `fact_candidates.json`;
+- no candidate generator main path, Research Report V1, fixture, accepted
+  manifest, regression expected, scoring / P1.1, provider, token, MCP, or live
+  CNInfo behavior changed.
+
+Current recommended next stage:
+
+```text
+Candidate Review Decisions Update Design For Bridge Sources
 ```
