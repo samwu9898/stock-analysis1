@@ -13,6 +13,33 @@ runtime artifact，不 promote fixture，不更新 accepted manifest，不 commi
 - `docs/FUNDAMENTAL_AUTONOMOUS_TICKER_RESEARCH_PLANNING_READINESS_GATE_DESIGN.md`
 - design commit: `cb1748a2d0d194de5346b2e3e4deb4647bb86ca6`
 
+## 0. Product Shape: Codex Skill + Research Pack
+
+最终产品形态是 Codex Skill + Research Pack，不是 dashboard-first，不是 standalone web app，
+不是手工行业模板库，也不是纯 deterministic local artifact checker。
+
+用户用一句话 prompt 输入一个 A 股标的后，Codex 以 `fundamental_skill` 方式调用本项目能力：
+使用最新模型分析能力和本项目代码工具链，自动完成 identity resolution、本地证据发现、
+研究规划、宏观 / 行业 / 公司推理、readiness gate，并在证据允许范围内生成专业基本面
+Research Pack。
+
+Research Pack 至少包括：
+
+- Professional Research Report：给用户阅读的专业基本面报告。
+- Evidence Panel：展示关键判断背后的 evidence refs、candidate / review status、confidence、
+  caveats。
+- Readiness Card：展示 accepted / experimental / fail-closed 判断。
+- Data Gap Plan：展示缺什么数据、为什么缺、需要从哪里获取、是否阻断正式报告。
+- Audit Manifest：展示生成过程、artifact lineage、安全边界和 `not_for_trading_advice`。
+
+代码职责是 deterministic evidence scaffolding：schema、validators、local artifact index、
+evidence inventory、safety checks、readiness gate、fail-closed。代码不应把所有投研判断
+写死成 Python 规则或行业模板。
+
+大模型职责是 bounded research reasoning：生成 industry / supply-chain / macro hypotheses。
+每个 hypothesis 必须有 evidence_refs、confidence、caveats、required_follow_up_data 和
+allowed_downstream_use。hypothesis 不能成为 verified fact，也不能直接进入 Research Report V1。
+
 ## 1. 总边界
 
 本计划把 `autonomous_ticker_research_planning_gate.v1` 的后续实现拆成可回滚、
@@ -275,6 +302,26 @@ tests/fixtures/autonomous_ticker_research/provider_official_conflict.json
 ### Phase 1: schema + validators
 
 目标：建立输出契约和 safety rails，不接 artifact discovery，不接 pipeline。
+Phase 1 只能实现 schema + validators，严禁引入任何运行时、模型调用、artifact scanning
+或报告生成能力。
+
+Phase 1 明确禁止：
+
+- 无 LLM / model call。
+- 无 prompt orchestration。
+- 无 artifact scanning。
+- 无 accepted manifest read。
+- 无 provider fetch。
+- 无 live CNInfo。
+- 无 live Tushare。
+- 无 token read。
+- 无 network。
+- 无 MCP。
+- 无 runtime / output / report artifact generation。
+- 无 fixture promotion。
+- 无 Dashboard / Batch。
+- 无 PDF / DOCX / HTML / Excel parsing。
+- 无买卖建议、目标价、仓位、交易信号。
 
 Expected files:
 
