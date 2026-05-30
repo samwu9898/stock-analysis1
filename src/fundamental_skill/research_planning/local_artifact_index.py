@@ -18,6 +18,22 @@ from .safety import validate_payload_safety
 
 
 LOCAL_ARTIFACT_INDEX_ROW_SCHEMA_VERSION = "local_artifact_index_row.v1"
+TICKER_LOCAL_ARTIFACT_INVENTORY_SCHEMA_VERSION = "ticker_local_artifact_inventory.v1"
+
+IDENTITY_RESOLUTION_STATUSES = (
+    "resolved",
+    "ambiguous",
+    "not_found",
+    "conflict_requires_review",
+    "blocked",
+)
+
+INVENTORY_GROUPS = (
+    "available",
+    "missing",
+    "ignored",
+    "conflict",
+)
 
 ARTIFACT_TYPES = (
     "accepted_manifest",
@@ -105,6 +121,21 @@ REQUIRED_ARTIFACT_ROW_FIELDS = (
     "not_for_trading_advice",
 )
 
+REQUIRED_TICKER_LOCAL_ARTIFACT_INVENTORY_FIELDS = (
+    "schema_version",
+    "stock_code",
+    "company_name",
+    "identity_resolution_status",
+    "artifact_rows",
+    "available_data_artifacts",
+    "missing_data_artifacts",
+    "ignored_artifacts",
+    "conflict_artifacts",
+    "caveats",
+    "lineage_refs",
+    "not_for_trading_advice",
+)
+
 _SIX_DIGIT_CODE_RE = re.compile(r"\d{6}")
 _SHA256_RE = re.compile(r"[0-9a-f]{64}", re.IGNORECASE)
 _WINDOWS_ABSOLUTE_RE = re.compile(r"^[A-Za-z]:[\\/]")
@@ -132,6 +163,26 @@ _TRADING_ADVICE_ROW_MARKERS = (
     "technical_signal",
     "trading_signal",
     "trade_signal",
+)
+
+_FORBIDDEN_ARTIFACT_STATE_MARKERS = _TRADING_ADVICE_ROW_MARKERS + (
+    "verified_fact",
+    "auto_verified",
+    "evidence_fact",
+    "accepted_evidence_fact",
+    "report_fact",
+    "accepted_report_fact",
+    "hypothesis",
+    "hypothesis_generator",
+    "generate_hypothesis",
+    "report_section",
+    "research_report_v1_section",
+    "research_report_v1_section_payload",
+    "raw_real_manifest_dict",
+    "raw_output_scan_result",
+    "output_scan_result",
+    "report_artifact_content",
+    "parsed_report_section",
 )
 
 
@@ -167,10 +218,15 @@ def _iter_text_values(value: Any) -> list[str]:
 
 
 def _validate_artifact_row_marker_safety(row: dict[str, Any]) -> None:
+    forbidden_markers = tuple(_normalise_marker(marker) for marker in _FORBIDDEN_ARTIFACT_STATE_MARKERS)
     for text in _iter_text_values(row):
         normalised = _normalise_marker(text)
-        if any(_normalise_marker(marker) in normalised for marker in _TRADING_ADVICE_ROW_MARKERS):
-            raise ValueError("artifact row safety violation: trading advice marker is not allowed")
+        for marker in forbidden_markers:
+            if not marker or marker not in normalised:
+                continue
+            if marker == "report_artifact_content" and "not_read" in normalised:
+                continue
+            raise ValueError("artifact row safety violation: forbidden downstream marker is not allowed")
 
 
 def _path_segments(path: str) -> list[str]:
@@ -314,7 +370,7 @@ _PATH_CLASSIFIERS: tuple[tuple[re.Pattern[str], dict[str, str]], ...] = (
             "source_status": "candidate_only",
             "review_status": "not_reviewed",
             "freshness_status": "unknown",
-            "caveat": "Provider candidate artifact only; not a verified fact.",
+            "caveat": "Provider candidate artifact only; no fact promotion.",
         },
     ),
     (
@@ -606,5 +662,388 @@ def validate_artifact_row(row: dict[str, Any]) -> dict[str, Any]:
 
     _require_list(validated["caveats"], "caveats")
     _require_list(validated["lineage_refs"], "lineage_refs")
+
+    return validated
+
+
+def _validate_required_stock_code(value: Any, path: str) -> str:
+    text = _require_string(value, path)
+    if not _SIX_DIGIT_CODE_RE.fullmatch(text):
+        raise ValueError(f"{path} must be a six-digit ticker code")
+    return text
+
+
+def _require_string_list(value: Any, path: str) -> list[str]:
+    values = _require_list(value, path)
+    strings: list[str] = []
+    for index, item in enumerate(values):
+        strings.append(_require_string(item, f"{path}[{index}]"))
+    return strings
+
+
+def _optional_list(value: Any, path: str) -> list[Any]:
+    if value is None:
+        return []
+    return list(_require_list(value, path))
+
+
+def _validate_inventory_artifact_row(row: dict[str, Any], path: str) -> dict[str, Any]:
+    validated = validate_artifact_row(row)
+    extra_fields = sorted(set(validated) - set(REQUIRED_ARTIFACT_ROW_FIELDS))
+    if extra_fields:
+        raise ValueError(f"{path} contains unsupported artifact row fields: {extra_fields}")
+    return validated
+
+
+def _append_lineage_ref(row: dict[str, Any], lineage_ref: str) -> dict[str, Any]:
+    updated = _validate_inventory_artifact_row(row, "artifact row")
+    updated["lineage_refs"] = list(updated["lineage_refs"]) + [lineage_ref]
+    return validate_artifact_row(updated)
+
+
+def _make_conflict_row(row: dict[str, Any], caveats: list[str]) -> dict[str, Any]:
+    updated = deepcopy(row)
+    updated["source_status"] = "conflict_open"
+    updated["review_status"] = "conflict_open"
+    updated["caveats"] = list(updated["caveats"]) + list(caveats)
+    return validate_artifact_row(updated)
+
+
+def _build_row_from_explicit_path(path: str, stock_code: str, index: int) -> dict[str, Any]:
+    classification = classify_artifact_path(path)
+    classification_path = classification["artifact_path"] or "ignored_artifact_path"
+    classification_stock_code = classification["stock_code"] or stock_code
+    caveats = list(classification["caveats"])
+    if classification["stock_code"] == "" and classification["artifact_type"] != "ignored":
+        caveats.append("Path has no ticker marker; scoped only by explicit stock_code input.")
+
+    row = build_artifact_row(
+        artifact_type=classification["artifact_type"],
+        artifact_path=classification_path,
+        source_family=classification["source_family"],
+        stock_code=classification_stock_code,
+        company_name="",
+        source_status=classification["source_status"],
+        review_status=classification["review_status"],
+        freshness_status=classification["freshness_status"],
+        caveats=caveats,
+        lineage_refs=[f"explicit_artifact_paths[{index}]"],
+        not_for_trading_advice=True,
+    )
+    return validate_artifact_row(row)
+
+
+def _rows_from_manifest_locator_payload(payload: dict[str, Any]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    from .manifest_locator import manifest_entry_to_artifact_row, validate_manifest_locator_payload
+
+    validated_payload = validate_manifest_locator_payload(payload)
+    rows: list[dict[str, Any]] = []
+    for index, entry in enumerate(validated_payload["matched_entries"]):
+        row = manifest_entry_to_artifact_row(
+            entry,
+            lineage_refs=[
+                "ticker_inventory:manifest_locator_payload.v1",
+                f"ticker_inventory:manifest_locator_payload.matched_entries[{index}]",
+            ],
+        )
+        rows.append(validate_artifact_row(row))
+    return rows, validated_payload
+
+
+def _rows_from_manifest_entries(entries: list[Any]) -> list[dict[str, Any]]:
+    from .manifest_locator import manifest_entry_to_artifact_row, validate_manifest_entry_row
+
+    rows: list[dict[str, Any]] = []
+    for index, entry in enumerate(entries):
+        validated_entry = validate_manifest_entry_row(entry)
+        row = manifest_entry_to_artifact_row(
+            validated_entry,
+            lineage_refs=[f"ticker_inventory:manifest_entries[{index}]"],
+        )
+        rows.append(validate_artifact_row(row))
+    return rows
+
+
+def _rows_from_prebuilt_artifact_rows(rows: list[Any]) -> list[dict[str, Any]]:
+    validated_rows: list[dict[str, Any]] = []
+    for index, row in enumerate(rows):
+        validated_rows.append(_append_lineage_ref(row, f"ticker_inventory:artifact_rows[{index}]"))
+    return validated_rows
+
+
+def _inventory_conflict_caveats(
+    rows: list[dict[str, Any]],
+    *,
+    stock_code: str,
+    company_name: str,
+) -> tuple[list[dict[str, Any]], list[str]]:
+    conflict_caveats_by_index: dict[int, list[str]] = {index: [] for index in range(len(rows))}
+    inventory_caveats: list[str] = []
+
+    for index, row in enumerate(rows):
+        row_stock_code = row["stock_code"]
+        if row_stock_code and row_stock_code != stock_code:
+            conflict_caveats_by_index[index].append("Ticker mismatch requires review; no fallback was attempted.")
+        if company_name and row["company_name"] and row["company_name"] != company_name:
+            conflict_caveats_by_index[index].append("Company-name hint conflicts with artifact row; review required.")
+
+    row_company_names = {row["company_name"] for row in rows if row["company_name"]}
+    if company_name:
+        row_company_names.add(company_name)
+    if len(row_company_names) > 1:
+        inventory_caveats.append("Multiple company-name values were supplied; identity requires review.")
+        for index, row in enumerate(rows):
+            if row["company_name"]:
+                conflict_caveats_by_index[index].append("Company-name conflict across explicit inputs.")
+
+    artifact_id_to_indexes: dict[str, list[int]] = {}
+    artifact_path_to_indexes: dict[str, list[int]] = {}
+    for index, row in enumerate(rows):
+        artifact_id_to_indexes.setdefault(row["artifact_id"], []).append(index)
+        artifact_path_to_indexes.setdefault(row["artifact_path"], []).append(index)
+
+    for indexes in artifact_id_to_indexes.values():
+        if len(indexes) <= 1:
+            continue
+        for index in indexes:
+            conflict_caveats_by_index[index].append("Duplicate artifact_id detected in explicit inputs.")
+
+    for indexes in artifact_path_to_indexes.values():
+        if len(indexes) <= 1:
+            continue
+        for index in indexes:
+            conflict_caveats_by_index[index].append("Duplicate artifact_path detected in explicit inputs.")
+
+    resolved_rows: list[dict[str, Any]] = []
+    for index, row in enumerate(rows):
+        conflict_caveats = conflict_caveats_by_index[index]
+        if row["source_status"] in {"conflict_open", "invalidated"} or row["review_status"] == "conflict_open":
+            conflict_caveats = ["Source status requires conflict review."] + conflict_caveats
+        if conflict_caveats:
+            resolved_rows.append(_make_conflict_row(row, conflict_caveats))
+        else:
+            resolved_rows.append(validate_artifact_row(row))
+
+    return resolved_rows, inventory_caveats
+
+
+def _group_inventory_rows(
+    rows: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+    available: list[dict[str, Any]] = []
+    missing: list[dict[str, Any]] = []
+    ignored: list[dict[str, Any]] = []
+    conflict: list[dict[str, Any]] = []
+
+    for row in rows:
+        if row["source_status"] == "conflict_open" or row["review_status"] == "conflict_open":
+            conflict.append(row)
+        elif row["source_status"] in {"missing", "unreadable"}:
+            missing.append(row)
+        elif row["source_status"] == "ignored" or row["artifact_type"] == "ignored":
+            ignored.append(row)
+        else:
+            available.append(row)
+
+    return available, missing, ignored, conflict
+
+
+def _identity_resolution_status(
+    *,
+    available: list[dict[str, Any]],
+    missing: list[dict[str, Any]],
+    ignored: list[dict[str, Any]],
+    conflict: list[dict[str, Any]],
+) -> str:
+    if conflict:
+        return "conflict_requires_review"
+    if available:
+        return "resolved"
+    if missing or ignored:
+        return "not_found"
+    return "not_found"
+
+
+def build_ticker_local_artifact_inventory(
+    *,
+    stock_code: str,
+    company_name: str = "",
+    explicit_artifact_paths: list[str] | None = None,
+    manifest_locator_payload: dict[str, Any] | None = None,
+    manifest_entries: list[dict[str, Any]] | None = None,
+    artifact_rows: list[dict[str, Any]] | None = None,
+    not_for_trading_advice: bool = True,
+) -> dict[str, Any]:
+    """Build a ticker-scoped local artifact inventory from explicit inputs only.
+
+    The builder is deliberately side-effect free. It does not scan directories,
+    read accepted manifests, read artifact contents, check path existence,
+    compute file hashes, write files, call providers, generate hypotheses, or
+    enter report integration.
+    """
+
+    if not_for_trading_advice is not True:
+        raise ValueError("not_for_trading_advice must be true")
+
+    requested_stock_code = _validate_required_stock_code(stock_code, "stock_code")
+    requested_company_name = _require_string(company_name, "company_name")
+    paths = _require_string_list(
+        [] if explicit_artifact_paths is None else explicit_artifact_paths,
+        "explicit_artifact_paths",
+    )
+    explicit_manifest_entries = _optional_list(manifest_entries, "manifest_entries")
+    explicit_artifact_rows = _optional_list(artifact_rows, "artifact_rows")
+
+    rows: list[dict[str, Any]] = []
+    caveats: list[str] = [
+        "Ticker local artifact inventory is artifact-state only; no downstream report payload is produced."
+    ]
+    lineage_refs: list[str] = ["ticker_inventory:explicit_input_builder.v1"]
+
+    for index, path in enumerate(paths):
+        rows.append(_build_row_from_explicit_path(path, requested_stock_code, index))
+
+    if manifest_locator_payload is not None:
+        payload_rows, validated_payload = _rows_from_manifest_locator_payload(manifest_locator_payload)
+        rows.extend(payload_rows)
+        lineage_refs.append("ticker_inventory:manifest_locator_payload.v1")
+        for ref in validated_payload["lineage_refs"]:
+            lineage_refs.append(_require_string(ref, "manifest_locator_payload.lineage_refs[]"))
+        if validated_payload["stock_code"] and validated_payload["stock_code"] != requested_stock_code:
+            caveats.append("Manifest locator payload ticker differs from requested stock_code; rows require review.")
+        if not validated_payload["matched_entries"]:
+            caveats.append("Manifest locator payload had no matched entries; no fallback was attempted.")
+
+    if explicit_manifest_entries:
+        rows.extend(_rows_from_manifest_entries(explicit_manifest_entries))
+        lineage_refs.append("ticker_inventory:manifest_entries")
+
+    if explicit_artifact_rows:
+        rows.extend(_rows_from_prebuilt_artifact_rows(explicit_artifact_rows))
+        lineage_refs.append("ticker_inventory:artifact_rows")
+
+    rows, conflict_caveats = _inventory_conflict_caveats(
+        rows,
+        stock_code=requested_stock_code,
+        company_name=requested_company_name,
+    )
+    caveats.extend(conflict_caveats)
+
+    available, missing, ignored, conflict = _group_inventory_rows(rows)
+    if conflict:
+        caveats.append("Conflict artifacts require review before downstream planning use.")
+    if ignored:
+        caveats.append("Some explicit artifacts were ignored by path or schema policy.")
+    if not available:
+        caveats.append("No available artifacts were supplied explicitly; no discovery fallback was attempted.")
+
+    inventory = {
+        "schema_version": TICKER_LOCAL_ARTIFACT_INVENTORY_SCHEMA_VERSION,
+        "stock_code": requested_stock_code,
+        "company_name": requested_company_name,
+        "identity_resolution_status": _identity_resolution_status(
+            available=available,
+            missing=missing,
+            ignored=ignored,
+            conflict=conflict,
+        ),
+        "artifact_rows": rows,
+        "available_data_artifacts": available,
+        "missing_data_artifacts": missing,
+        "ignored_artifacts": ignored,
+        "conflict_artifacts": conflict,
+        "caveats": caveats,
+        "lineage_refs": lineage_refs,
+        "not_for_trading_advice": True,
+    }
+    return validate_ticker_local_artifact_inventory(inventory)
+
+
+def _validate_inventory_marker_safety(inventory: dict[str, Any]) -> None:
+    forbidden_markers = tuple(_normalise_marker(marker) for marker in _FORBIDDEN_ARTIFACT_STATE_MARKERS)
+    for text in _iter_text_values(inventory):
+        normalised = _normalise_marker(text)
+        for marker in forbidden_markers:
+            if not marker or marker not in normalised:
+                continue
+            if marker == "report_artifact_content" and "not_read" in normalised:
+                continue
+            raise ValueError("ticker local artifact inventory safety violation: forbidden downstream marker")
+
+
+def _mask_inventory_payload_for_safety(value: Any) -> Any:
+    if isinstance(value, dict):
+        masked: dict[str, Any] = {}
+        for key, child in value.items():
+            if key == "artifact_path":
+                masked[key] = "<artifact_path>"
+            elif key == "sha256" and child:
+                masked[key] = "<sha256>"
+            else:
+                masked[key] = _mask_inventory_payload_for_safety(child)
+        return masked
+    if isinstance(value, list):
+        return [_mask_inventory_payload_for_safety(child) for child in value]
+    return value
+
+
+def _validate_inventory_row_list(value: Any, path: str) -> list[dict[str, Any]]:
+    rows = _require_list(value, path)
+    validated_rows: list[dict[str, Any]] = []
+    for index, row in enumerate(rows):
+        try:
+            validated_rows.append(_validate_inventory_artifact_row(row, f"{path}[{index}]"))
+        except ValueError as exc:
+            raise ValueError(f"{path}[{index}] is invalid: {exc}") from exc
+    return validated_rows
+
+
+def validate_ticker_local_artifact_inventory(inventory: dict[str, Any]) -> dict[str, Any]:
+    """Validate a ticker-scoped local artifact inventory and return a copy."""
+
+    if not isinstance(inventory, dict):
+        raise ValueError("ticker local artifact inventory must be a dict")
+    missing = [field for field in REQUIRED_TICKER_LOCAL_ARTIFACT_INVENTORY_FIELDS if field not in inventory]
+    if missing:
+        raise ValueError(f"ticker local artifact inventory missing required fields: {missing}")
+
+    validated = deepcopy(inventory)
+    if validated["not_for_trading_advice"] is not True:
+        raise ValueError("not_for_trading_advice must be true")
+
+    schema_version = _require_string(validated["schema_version"], "schema_version")
+    if schema_version != TICKER_LOCAL_ARTIFACT_INVENTORY_SCHEMA_VERSION:
+        raise ValueError(f"schema_version must be {TICKER_LOCAL_ARTIFACT_INVENTORY_SCHEMA_VERSION}")
+
+    _validate_required_stock_code(validated["stock_code"], "stock_code")
+    _require_string(validated["company_name"], "company_name")
+    _require_enum(
+        validated["identity_resolution_status"],
+        IDENTITY_RESOLUTION_STATUSES,
+        "identity_resolution_status",
+    )
+
+    validated["artifact_rows"] = _validate_inventory_row_list(validated["artifact_rows"], "artifact_rows")
+    validated["available_data_artifacts"] = _validate_inventory_row_list(
+        validated["available_data_artifacts"],
+        "available_data_artifacts",
+    )
+    validated["missing_data_artifacts"] = _validate_inventory_row_list(
+        validated["missing_data_artifacts"],
+        "missing_data_artifacts",
+    )
+    validated["ignored_artifacts"] = _validate_inventory_row_list(
+        validated["ignored_artifacts"],
+        "ignored_artifacts",
+    )
+    validated["conflict_artifacts"] = _validate_inventory_row_list(
+        validated["conflict_artifacts"],
+        "conflict_artifacts",
+    )
+    validated["caveats"] = _require_string_list(validated["caveats"], "caveats")
+    validated["lineage_refs"] = _require_string_list(validated["lineage_refs"], "lineage_refs")
+
+    _validate_inventory_marker_safety(validated)
+    validate_payload_safety(_mask_inventory_payload_for_safety(validated))
 
     return validated
