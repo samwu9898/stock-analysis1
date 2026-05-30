@@ -77,8 +77,6 @@ Allowed inputs:
 - a validated `deterministic_evidence_inventory.v1` payload;
 - a validated `readiness_skeleton.v1` payload;
 - optional `stock_code` and `company_name` hints supplied by the caller;
-- optional bounded model reasoning context supplied by the caller as inert
-  planning context, not as a data source;
 - required `not_for_trading_advice=true`.
 
 Planned request shape:
@@ -94,9 +92,6 @@ Planned request shape:
   "readiness_skeleton": {
     "schema_version": "readiness_skeleton.v1"
   },
-  "bounded_reasoning_context": {
-    "purpose": "optional planning-only context"
-  },
   "not_for_trading_advice": true
 }
 ```
@@ -111,11 +106,26 @@ Input field rules:
   inventory.
 - `readiness_skeleton`: required validated Phase 3 readiness skeleton for the
   same ticker and lineage.
-- `bounded_reasoning_context`: optional planning-only context. It may shape
-  wording or prioritization, but cannot introduce unreferenced evidence,
-  verified facts, provider data, target prices, recommendations, or report
-  content.
+- bounded reasoning context: not accepted in Phase 4 v1. Phase 4 v1 may use
+  only validated `deterministic_evidence_inventory.v1` and validated
+  `readiness_skeleton.v1`. If future context is required, it must be designed
+  as a separate Phase 4.x context contract. This prevents unvalidated external
+  facts, another ticker profile, LLM-generated content, industry labels,
+  financial data, target prices, trading advice, or report content from
+  bypassing Phase 3 evidence references.
 - `not_for_trading_advice`: required and must be `true`.
+
+Input re-validation rules:
+
+- Before any hypothesis generation, the future implementation must call
+  `validate_deterministic_evidence_inventory(...)` on the supplied
+  deterministic evidence inventory.
+- Before any hypothesis generation, the future implementation must call
+  `validate_readiness_skeleton(...)` on the supplied readiness skeleton.
+- Phase 4 must not trust caller-provided raw dictionaries merely because they
+  claim a Phase 3 schema version.
+- Phase 4 must not accept manually edited Phase 3 payloads unless they are
+  re-validated at the Phase 4 boundary.
 
 Rejected input sources:
 
@@ -128,6 +138,7 @@ Rejected input sources:
 - official disclosure raw text;
 - unvalidated artifact rows;
 - Research Report V1 section payloads;
+- bounded reasoning context payloads;
 - trading prompts;
 - target price prompts;
 - buy-sell prompts;
@@ -177,7 +188,8 @@ Required output fields:
 - `stock_code`: exact six-digit ticker copied from validated Phase 3 payloads.
 - `company_name`: conservative name copied from Phase 3 payloads or caller hint
   when non-conflicting.
-- `source_readiness_level`: copied from `readiness_skeleton.v1`.
+- `source_readiness_level`: copied directly from
+  `readiness_skeleton.v1.readiness_level`.
 - `industry_hypotheses`: bounded industry hypotheses.
 - `supply_chain_position_hypotheses`: bounded supply-chain or value-chain
   position hypotheses.
@@ -194,6 +206,14 @@ Required output fields:
 - `lineage_refs`: references to Phase 3 payload lineage, not copied report
   content or verified facts.
 - `not_for_trading_advice`: always `true`.
+
+`source_readiness_level` mapping rules:
+
+- The value must equal `readiness_skeleton.v1.readiness_level`.
+- Phase 4 must not recompute readiness.
+- Phase 4 must not let hypothesis quality, model reasoning, user prompt text,
+  or context alter the readiness value.
+- Phase 4 must not introduce a new readiness enum.
 
 Forbidden output fields and equivalents:
 
@@ -250,6 +270,54 @@ Required hypothesis fields:
 - `allowed_downstream_use`: constrained downstream-use marker.
 - `not_for_trading_advice`: always `true`.
 
+Blocked Hypothesis Item Schema:
+
+Blocked hypotheses must be represented explicitly when a candidate idea cannot
+pass the fail-closed rules but the blocked state is useful for planning.
+
+```json
+{
+  "hypothesis_id": "blocked-001",
+  "hypothesis_type": "data_gap",
+  "hypothesis_text": "Planning-only blocked hypothesis text.",
+  "block_reason": "missing_required_evidence",
+  "evidence_refs": [],
+  "evidence_state_refs": [
+    "readiness_skeleton.v1:readiness_level:blocked"
+  ],
+  "required_follow_up_data": [],
+  "caveats": [],
+  "not_for_trading_advice": true
+}
+```
+
+Required blocked hypothesis fields:
+
+- `hypothesis_id`;
+- `hypothesis_type`;
+- `hypothesis_text`;
+- `block_reason`;
+- `evidence_state_refs`;
+- `required_follow_up_data`;
+- `caveats`;
+- `not_for_trading_advice`, always `true`.
+
+Blocked hypothesis rules:
+
+- A blocked hypothesis may omit artifact-derived `evidence_refs`.
+- `evidence_state_refs` must not be empty.
+- `evidence_state_refs` must point to a blocking state, such as
+  `readiness_skeleton.v1:readiness_level:blocked`,
+  `readiness_skeleton.v1:conflict_artifacts:non_empty`,
+  `deterministic_evidence_inventory.v1:missing_data_artifacts:official_business`,
+  or
+  `deterministic_evidence_inventory.v1:missing_data_artifacts:critical_financial`.
+- `block_reason` must be from a bounded enum or finite set, initially:
+  `unresolved_identity`, `blocked_readiness`, `evidence_conflict`,
+  `missing_required_evidence`, `candidate_only_evidence`,
+  `review_required_evidence`, `forbidden_marker`,
+  `not_for_trading_advice_violation`, or `other`.
+
 Supported hypothesis types should reuse Phase 1 constants where they already
 fit and add only the minimum Phase 4-specific surface needed:
 
@@ -276,6 +344,15 @@ Hypothesis text rules:
   references.
 - Do not mix tickers or hard-code one company's profile into another company's
   hypothesis.
+
+Cross-ticker evidence rules:
+
+- `evidence_refs` and `evidence_state_refs` must not reference artifact-state
+  from another `stock_code`.
+- If a reference does not match the current `stock_code`, the hypothesis must
+  be rejected or marked `blocked_until_review`.
+- This prevents applying another ticker profile, such as `002371`, to the
+  current ticker, such as `300475`.
 
 ## 5. Allowed Downstream Use Boundary
 
@@ -316,6 +393,38 @@ Downstream-use rules:
 - `not_allowed_downstream` is required when safety, identity, conflict,
   missing-evidence, or unsupported-reasoning rules block the hypothesis.
 
+Most-restrictive evidence ceiling rules:
+
+- When a hypothesis references multiple `evidence_refs` or
+  `evidence_state_refs`, it must use the strictest downstream ceiling from any
+  referenced evidence state.
+- If any referenced evidence is `candidate_only`, `allowed_downstream_use` may
+  be at most `planning_only` or `blocked_until_review`.
+- If any referenced evidence is `review_required`, `allowed_downstream_use` may
+  be at most `planning_only` or `blocked_until_review`.
+- If any referenced evidence is `conflict_open`, `allowed_downstream_use` must
+  be `blocked_until_review` or `not_allowed_downstream`.
+- If the readiness skeleton is `blocked`, is
+  `evidence_conflict_review_required`, or has identity state other than
+  `resolved`, Phase 4 must not generate a downstream-allowed hypothesis.
+- Available, accepted, or current artifact states must not override
+  candidate-only, review-required, or conflict-open limits on other referenced
+  evidence.
+- The strictest evidence-state rule takes priority over the aggregate
+  `source_readiness_level` ceiling.
+
+Product Shape Guard for `experimental_report_context_candidate`:
+
+- It does not grant report generation permission.
+- It does not allocate a report template slot.
+- It does not generate dashboard payloads.
+- It does not allow direct entry into Research Report V1.
+- It must not be treated downstream as a report-ready fact.
+- Any future Report V1 phase must separately perform L1 Evidence Integration
+  and fact verification.
+- Phase 4 output must not contain paragraphs or conclusions that can be copied
+  directly into a report.
+
 ## 6. Hypothesis Fail-Closed Rules
 
 The future generator and validators must fail closed.
@@ -334,10 +443,17 @@ Required fail-closed rules:
   hypotheses must not be generated.
 - When critical financial artifacts are missing, financial-quality hypotheses
   must not be generated.
+- When a hypothesis combines multiple evidence references, the strictest
+  evidence-state ceiling must win.
 - Candidate-only evidence may support only `planning_only` or
   `blocked_until_review`.
 - Review-required evidence may support only `planning_only` or
   `blocked_until_review`.
+- Conflict-open evidence requires `blocked_until_review` or
+  `not_allowed_downstream`.
+- Evidence references and evidence-state references must not point to
+  artifact-state from another `stock_code`; mismatches must be rejected or
+  blocked until review.
 - Artifact states such as accepted/current must not be treated as verified
   facts.
 - Macro hypotheses must state a transmission path from macro factor to
@@ -399,13 +515,17 @@ Business-model hypotheses:
 Macro factor hypotheses:
 
 - must derive from an industry or business mechanism;
+- must include `transmission_path` or `transmission_path_summary`;
 - must state a transmission path, such as macro factor -> industry demand,
   cost, financing, regulation, capex, FX, commodity input, or customer budget ->
-  company exposure to be researched;
+  company artifact-state linkage or company exposure to be researched;
+- must explain the chain from macro factor to industry or business mechanism
+  to company artifact-state linkage;
 - must not produce broad macro essays;
 - must not assert macro sensitivity as fact without evidence;
-- must be blocked when no plausible mechanism can be stated from the validated
-  Phase 3 artifact-state inputs.
+- must be `blocked_until_review` or `not_allowed_downstream` when no
+  transmission path can be stated from the validated Phase 3 artifact-state
+  inputs.
 
 Manual category labels may help organize review output in a future
 implementation, but manual industry template libraries must not be used as a
@@ -440,6 +560,13 @@ Phase 4 planning and future implementation must preserve these constraints:
 Safety scanning should apply to in-memory request and response payloads only.
 It must not scan the real repository, real `output/`, or artifact paths.
 
+The same forbidden marker and prohibited key scan must apply to
+`hypothesis_text`, `key_research_questions`, and `required_follow_up_data`.
+Those fields must not contain buy/sell language, target prices, portfolio
+weights, trading signals, investment recommendations, `verified_fact`,
+`accepted_report_fact`, `report_fact`, report sections, dashboard payloads, or
+template payloads.
+
 Suggested forbidden marker scan for returned payloads:
 
 ```text
@@ -451,11 +578,20 @@ report_sections
 recommendation
 trading_advice
 investment_advice
+investment_recommendation
 target_price
 position_size
 portfolio_weight
 technical_signal
 buy_sell_decision
+buy_recommendation
+sell_recommendation
+buy_signal
+sell_signal
+trading_signal
+report_section
+dashboard_payload
+template_payload
 provider_payload
 accepted_manifest
 output_scan
@@ -510,6 +646,20 @@ Required future test scenarios:
 - conflict readiness blocks downstream hypothesis;
 - candidate-only evidence limits downstream use;
 - review-required evidence limits downstream use;
+- mixed evidence refs available plus `candidate_only` apply a ceiling of
+  `planning_only` or `blocked_until_review`;
+- mixed evidence refs available plus `review_required` apply a ceiling of
+  `planning_only` or `blocked_until_review`;
+- conflict evidence refs apply `blocked_until_review` or
+  `not_allowed_downstream`;
+- blocked hypothesis with no artifact evidence but `evidence_state_refs`
+  pointing to readiness skeleton blocked state is valid;
+- blocked hypothesis with empty `evidence_state_refs` is rejected;
+- context input is not accepted in Phase 4 v1;
+- Phase 3 inputs are re-validated before generation;
+- `source_readiness_level` equals `readiness_skeleton.v1.readiness_level`;
+- `key_research_questions` and `required_follow_up_data` forbidden markers are
+  rejected;
 - missing official/business evidence blocks formal company and industry
   hypotheses;
 - missing critical financial artifacts blocks financial-quality hypotheses;
@@ -522,7 +672,14 @@ Required future test scenarios:
 - no verified fact promotion;
 - no accepted/current artifact-state promotion to verified fact;
 - macro hypothesis without transmission path blocked;
+- macro hypothesis without `transmission_path` or `transmission_path_summary`
+  rejected or blocked;
 - ticker/profile mismatch blocked;
+- cross-ticker `evidence_refs` rejected;
+- `experimental_report_context_candidate` does not produce report section,
+  template slot, or dashboard payload;
+- output contains no report-ready paragraph, investment conclusion, target
+  price, or trading advice;
 - no input mutation;
 - no file IO;
 - no provider access;
