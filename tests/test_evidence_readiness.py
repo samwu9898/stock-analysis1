@@ -3,9 +3,11 @@
 import builtins
 from copy import deepcopy
 import glob
+import http.client
 import os
 from pathlib import Path
 import socket
+import urllib.request
 
 import pytest
 
@@ -32,6 +34,7 @@ def _row(
     source_family: str,
     source_status: str = "available",
     review_status: str = "unknown",
+    freshness_status: str = "unknown",
     artifact_path: str | None = None,
 ) -> dict:
     return build_artifact_row(
@@ -45,7 +48,7 @@ def _row(
         file_size=100,
         source_status=source_status,
         review_status=review_status,
-        freshness_status="unknown",
+        freshness_status=freshness_status,
         caveats=["Artifact state only."],
         lineage_refs=[f"test:{artifact_id}"],
         not_for_trading_advice=True,
@@ -121,9 +124,66 @@ def _collect_keys(payload) -> set[str]:
     return keys
 
 
-def test_accepted_positive_path_builds_inventory_and_skeleton():
-    skeleton = build_readiness_skeleton(ticker_local_artifact_inventory=_accepted_inventory())
+DOWNSTREAM_OUTPUT_KEYS = {
+    "report_section",
+    "report_sections",
+    "report_content",
+    "research_report",
+    "research_report_v1_section",
+    "research_report_v1_integration_permission",
+    "report_generation_permission",
+    "recommendation",
+    "target_price",
+    "price_target",
+    "trading_advice",
+    "investment_advice",
+    "position_size",
+    "position_sizing",
+    "portfolio_action",
+    "portfolio_weight",
+    "hypothesis",
+    "hypotheses",
+    "provider_payload",
+    "verified_fact",
+    "verified_facts",
+    "evidence_fact",
+    "evidence_facts",
+    "report_fact",
+    "report_facts",
+}
 
+
+def _assert_output_purity(payload: dict) -> None:
+    assert DOWNSTREAM_OUTPUT_KEYS.isdisjoint(_collect_keys(payload))
+
+
+def _assert_artifact_state_boundary(payload: dict) -> None:
+    caveat_text = " ".join(payload["caveats"]).lower()
+    assert "artifact-state" in caveat_text or "artifact state" in caveat_text
+    assert "not fact verification" in caveat_text
+    assert payload["not_for_trading_advice"] is True
+    _assert_output_purity(payload)
+
+
+def _assert_synthetic_readiness_contract(skeleton: dict) -> None:
+    assert isinstance(skeleton["readiness_level"], str)
+    assert isinstance(skeleton["can_generate_accepted_report"], bool)
+    assert isinstance(skeleton["can_generate_experimental_report"], bool)
+    assert isinstance(skeleton["fail_closed_reason"], str)
+    assert isinstance(skeleton["caveats"], list)
+    assert isinstance(skeleton["lineage_refs"], list)
+    _assert_artifact_state_boundary(skeleton)
+
+
+def test_accepted_positive_path_builds_inventory_and_skeleton():
+    evidence_inventory = build_deterministic_evidence_inventory(
+        ticker_local_artifact_inventory=_accepted_inventory()
+    )
+    skeleton = build_readiness_skeleton(deterministic_evidence_inventory=evidence_inventory)
+
+    assert evidence_inventory["schema_version"] == DETERMINISTIC_EVIDENCE_INVENTORY_SCHEMA_VERSION
+    assert validate_deterministic_evidence_inventory(evidence_inventory) == evidence_inventory
+    _assert_artifact_state_boundary(evidence_inventory)
     assert skeleton["schema_version"] == READINESS_SKELETON_SCHEMA_VERSION
     assert skeleton["readiness_level"] == "accepted_report_ready"
     assert skeleton["can_generate_accepted_report"] is True
@@ -131,6 +191,7 @@ def test_accepted_positive_path_builds_inventory_and_skeleton():
     assert skeleton["readiness_evidence_categories"][OFFICIAL_BUSINESS_EVIDENCE_CATEGORY]["formal_ready"] is True
     assert skeleton["readiness_evidence_categories"][CRITICAL_FINANCIAL_ARTIFACT_CATEGORY]["formal_ready"] is True
     assert validate_readiness_skeleton(skeleton) == skeleton
+    _assert_synthetic_readiness_contract(skeleton)
 
 
 def test_experimental_positive_path_requires_evidence_no_conflict_and_resolved_identity():
@@ -149,6 +210,9 @@ def test_experimental_positive_path_requires_evidence_no_conflict_and_resolved_i
     assert skeleton["can_generate_experimental_report"] is True
     critical = skeleton["readiness_evidence_categories"][CRITICAL_FINANCIAL_ARTIFACT_CATEGORY]
     assert "critical_financial_review" in critical["blocked_artifact_ids"]
+    assert skeleton["available_data_artifacts"]
+    assert skeleton["fail_closed_reason"] == ""
+    _assert_synthetic_readiness_contract(skeleton)
 
 
 def test_conflict_plus_good_artifacts_sets_both_flags_false():
@@ -165,6 +229,8 @@ def test_conflict_plus_good_artifacts_sets_both_flags_false():
     assert skeleton["readiness_level"] == "evidence_conflict_review_required"
     assert skeleton["can_generate_accepted_report"] is False
     assert skeleton["can_generate_experimental_report"] is False
+    assert skeleton["fail_closed_reason"]
+    _assert_synthetic_readiness_contract(skeleton)
 
 
 @pytest.mark.parametrize("identity_status", ["ambiguous", "not_found", "conflict_requires_review", "blocked"])
@@ -178,6 +244,8 @@ def test_identity_non_resolved_sets_both_flags_false(identity_status):
 
     assert skeleton["can_generate_accepted_report"] is False
     assert skeleton["can_generate_experimental_report"] is False
+    assert skeleton["readiness_level"] not in {"accepted_report_ready", "experimental_report_ready"}
+    assert skeleton["fail_closed_reason"]
 
 
 def test_missing_official_business_evidence_sets_both_flags_false():
@@ -278,27 +346,73 @@ def test_forbidden_markers_are_rejected():
 def test_output_contains_no_report_section_recommendation_or_trading_keys():
     skeleton = build_readiness_skeleton(ticker_local_artifact_inventory=_accepted_inventory())
 
-    forbidden = {
-        "report_section",
-        "recommendation",
-        "target_price",
-        "price_target",
-        "trading_advice",
-        "trading_signal",
-        "research_report_v1_section",
-        "research_report_v1_integration_permission",
-    }
-    assert forbidden.isdisjoint(_collect_keys(skeleton))
+    _assert_output_purity(skeleton)
+
+
+def test_accepted_current_artifact_state_is_not_verified_fact_state():
+    inventory = _inventory(
+        [
+            _official_row(
+                artifact_id="official_current_accepted_state",
+                review_status="accepted_for_report_candidate",
+                freshness_status="current",
+                artifact_path="output/official_disclosures/20260530T000000Z/600406/current_facts.json",
+            ),
+            _financial_row(
+                artifact_id="financial_current_accepted_state",
+                review_status="accepted_for_report_candidate",
+                freshness_status="current",
+                artifact_path="output/fundamental_600406_current.json",
+            ),
+        ]
+    )
+
+    evidence_inventory = build_deterministic_evidence_inventory(ticker_local_artifact_inventory=inventory)
+    skeleton = build_readiness_skeleton(deterministic_evidence_inventory=evidence_inventory)
+
+    assert skeleton["readiness_level"] == "accepted_report_ready"
+    assert skeleton["evidence_inventory"][0]["review_status"] == "accepted_for_report_candidate"
+    assert skeleton["evidence_inventory"][0]["freshness_status"] == "current"
+    _assert_artifact_state_boundary(evidence_inventory)
+    _assert_synthetic_readiness_contract(skeleton)
 
 
 def test_builders_do_not_use_file_io_provider_or_network(monkeypatch):
+    # Pre-build synthetic inputs before installing fail-fast IO/network guards.
+    # The guarded section below is the Phase 3R dry-run boundary under test.
+    from src.fundamental_skill.research_planning import autonomous_ticker_research_schema
+
+    assert autonomous_ticker_research_schema.READINESS_LEVELS
+    inventory = _inventory(
+        [
+            _official_row(),
+            _financial_row(),
+            _row(
+                artifact_id="accepted_manifest_path_state",
+                artifact_type="accepted_manifest",
+                source_family="accepted_manifest",
+                artifact_path="output/research_reports/accepted_manifest.json",
+            ),
+            _row(
+                artifact_id="report_artifact_path_state",
+                artifact_type="report_artifact_state",
+                source_family="research_report_v1",
+                artifact_path="output/research_reports/synthetic/600406/fundamental_research_report_v1.json",
+            ),
+        ]
+    )
+
     def fail(*args, **kwargs):
         raise AssertionError("evidence readiness must not perform IO, provider calls, or network access")
 
     monkeypatch.setattr(glob, "glob", fail)
+    monkeypatch.setattr(glob, "iglob", fail)
     monkeypatch.setattr(Path, "glob", fail)
     monkeypatch.setattr(Path, "rglob", fail)
+    monkeypatch.setattr(Path, "iterdir", fail)
+    monkeypatch.setattr(Path, "open", fail)
     monkeypatch.setattr(os, "walk", fail)
+    monkeypatch.setattr(os, "scandir", fail)
     monkeypatch.setattr(Path, "exists", fail)
     monkeypatch.setattr(Path, "stat", fail)
     monkeypatch.setattr(Path, "read_text", fail)
@@ -306,12 +420,19 @@ def test_builders_do_not_use_file_io_provider_or_network(monkeypatch):
     monkeypatch.setattr(Path, "write_text", fail)
     monkeypatch.setattr(Path, "write_bytes", fail)
     monkeypatch.setattr(builtins, "open", fail)
+    monkeypatch.setattr(urllib.request, "urlopen", fail)
+    monkeypatch.setattr(http.client.HTTPConnection, "connect", fail)
+    monkeypatch.setattr(http.client.HTTPSConnection, "connect", fail)
+    monkeypatch.setattr(socket, "getaddrinfo", fail)
     monkeypatch.setattr(socket, "create_connection", fail)
     monkeypatch.setattr(socket, "socket", fail)
 
-    skeleton = build_readiness_skeleton(ticker_local_artifact_inventory=_accepted_inventory())
+    evidence_inventory = build_deterministic_evidence_inventory(ticker_local_artifact_inventory=inventory)
+    skeleton = build_readiness_skeleton(deterministic_evidence_inventory=evidence_inventory)
 
     assert skeleton["readiness_level"] == "accepted_report_ready"
+    assert validate_deterministic_evidence_inventory(evidence_inventory) == evidence_inventory
+    assert validate_readiness_skeleton(skeleton) == skeleton
 
 
 def test_builders_do_not_mutate_inputs():
@@ -323,6 +444,27 @@ def test_builders_do_not_mutate_inputs():
 
     assert inventory == snapshot
     assert skeleton["stock_code"] == "600406"
+
+
+def test_returned_caveats_and_lineage_refs_do_not_share_mutable_input_or_sibling_state():
+    inventory = _accepted_inventory()
+    snapshot = deepcopy(inventory)
+
+    evidence_inventory = build_deterministic_evidence_inventory(ticker_local_artifact_inventory=inventory)
+    skeleton = build_readiness_skeleton(deterministic_evidence_inventory=evidence_inventory)
+
+    evidence_inventory["evidence_inventory"][0]["caveats"].append("caller mutation")
+    evidence_inventory["evidence_inventory"][0]["lineage_refs"].append("caller mutation")
+    skeleton["available_data_artifacts"][0]["caveats"].append("skeleton caller mutation")
+    skeleton["lineage_refs"].append("skeleton caller mutation")
+
+    assert inventory == snapshot
+    assert "caller mutation" not in evidence_inventory["evidence_inventory"][1]["caveats"]
+    assert "caller mutation" not in evidence_inventory["evidence_inventory"][1]["lineage_refs"]
+
+    fresh_skeleton = build_readiness_skeleton(ticker_local_artifact_inventory=inventory)
+    assert "skeleton caller mutation" not in fresh_skeleton["lineage_refs"]
+    assert "skeleton caller mutation" not in fresh_skeleton["available_data_artifacts"][0]["caveats"]
 
 
 def test_validators_return_defensive_copies():
