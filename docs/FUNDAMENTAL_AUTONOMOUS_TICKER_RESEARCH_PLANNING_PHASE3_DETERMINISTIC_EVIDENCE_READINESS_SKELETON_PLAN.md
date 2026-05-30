@@ -268,6 +268,91 @@ Planned meanings:
 | `evidence_conflict_review_required` | Conflict rows, identity conflicts, duplicate conflicts, or conflicting artifact-state signals are present. |
 | `blocked` | Safety violation, invalid input, `not_for_trading_advice=false`, forbidden marker, or structurally unusable inventory blocks planning. |
 
+### 4.1 Identity Resolution Status Alignment
+
+Phase 3 should reuse the Phase 1 identity resolution enum by default:
+
+```text
+resolved
+ambiguous
+not_found
+conflict_requires_review
+blocked
+```
+
+Phase 3 must not introduce new identity enum values such as `resolved_exact` or
+`resolved_fuzzy` unless a separate schema design adds and validates them first.
+If a future phase needs exact, fuzzy, alias, historical-name, or
+company-name-only identity distinctions, that distinction must be designed
+separately and must not be invented inside the Phase 3 implementation.
+
+Identity readiness rules:
+
+- `accepted_report_ready` is allowed only when
+  `identity_resolution_status == "resolved"`.
+- `experimental_report_ready` is allowed only when
+  `identity_resolution_status == "resolved"`.
+- `ambiguous`, `not_found`, `conflict_requires_review`, and `blocked` must set
+  `can_generate_accepted_report=false`.
+- `ambiguous`, `not_found`, `conflict_requires_review`, and `blocked` must set
+  `can_generate_experimental_report=false`.
+
+### 4.2 Readiness Evidence Categories
+
+Phase 3 may derive deterministic readiness categories from artifact-state rows.
+These categories are readiness roles only. They are not verified facts,
+investment conclusions, or report claims.
+
+#### 4.2.1 `official_business_evidence_artifact_state`
+
+This category means the inventory contains artifact state that can play the
+official/business evidence role for readiness. It is not verified official or
+business fact.
+
+The category may be determined only from deterministic artifact-state fields,
+such as:
+
+- `artifact_type`;
+- `source_family`;
+- `source_status`;
+- `review_status`;
+- `caveats`.
+
+Rules:
+
+- `candidate_only`, `review_required`, and `conflict_open` rows cannot satisfy
+  `accepted_report_ready`.
+- Missing official/business evidence must set
+  `can_generate_accepted_report=false`.
+- Missing official/business evidence defaults to
+  `can_generate_experimental_report=false`; the current Phase 3 does not allow
+  data-gap-only experimental readiness.
+- If a future policy wants data-gap-only experimental artifacts, it must be
+  designed separately before implementation.
+
+#### 4.2.2 `critical_financial_artifact_state`
+
+This category means the inventory contains artifact state that can play the
+critical financial data role for readiness. It is not verified financial fact.
+
+The category may be mapped only from artifact-state rows, such as normalized
+fundamentals, provider-separated fundamentals, financial summary artifacts,
+accepted/current report artifact state, or another explicitly allowed financial
+artifact-state family. The mapping must not read artifact content.
+
+Rules:
+
+- `candidate_only`, `review_required`, and `conflict_open` rows cannot satisfy
+  `accepted_report_ready`.
+- Missing critical financial artifacts must set
+  `can_generate_accepted_report=false`.
+- Missing critical financial artifacts must set
+  `can_generate_experimental_report=false`.
+- Missing critical financial artifacts should produce
+  `readiness_level=data_collection_required`, unless safety violations,
+  forbidden markers, or conflict states require `blocked` or
+  `evidence_conflict_review_required`.
+
 ## 5. Deterministic Rules
 
 The future implementation must apply deterministic rules only. No model call,
@@ -287,8 +372,18 @@ Required fail-closed rules:
 - If any `conflict_artifacts` exist, readiness must be
   `evidence_conflict_review_required` or `blocked`, and
   both report-generation flags must be `false`.
+- When `conflict_artifacts` is non-empty, Phase 3 must actively set
+  `can_generate_accepted_report=false` and
+  `can_generate_experimental_report=false`; it must not rely on a downstream
+  validator to catch the conflict.
 - If only ignored artifacts exist, readiness must be
   `data_collection_required` or `blocked`.
+- If only ignored artifacts exist and a safety violation or forbidden marker is
+  present, readiness must be `blocked`.
+- If only ignored artifacts exist and no safety violation or forbidden marker
+  is present, readiness must be `data_collection_required`.
+- If only ignored artifacts exist, both report-generation flags must be
+  `false`.
 - If no artifacts exist, readiness must be `data_collection_required` or
   `blocked`.
 - `candidate_only_artifacts` must never become accepted evidence.
@@ -317,6 +412,72 @@ Required fail-closed rules:
   conflict, or safety blockers.
 - `can_generate_accepted_report=true` is allowed only for
   `accepted_report_ready`.
+
+### 5.1 Positive Entry Conditions For `accepted_report_ready`
+
+`accepted_report_ready` is allowed only when all of the following conditions are
+true:
+
+- `identity_resolution_status == "resolved"`;
+- no safety violation exists;
+- `conflict_artifacts` is empty;
+- `not_for_trading_advice == true`;
+- `official_business_evidence_artifact_state` is present and usable for formal
+  readiness;
+- `critical_financial_artifact_state` is present and usable for formal
+  readiness;
+- no `candidate_only`, `review_required`, or `conflict_open` artifact blocks
+  critical readiness;
+- no forbidden marker is present;
+- no manifest, output scan, report artifact content, or provider-content
+  assumption is used.
+
+When `accepted_report_ready` is assigned:
+
+- `can_generate_accepted_report=true`;
+- `can_generate_experimental_report` may be `true` or `false`, but either value
+  is still only readiness state and must not trigger report generation.
+
+### 5.2 Positive Entry Conditions For `experimental_report_ready`
+
+`experimental_report_ready` is allowed only when all of the following
+conditions are true:
+
+- `identity_resolution_status == "resolved"`;
+- no safety violation exists;
+- `conflict_artifacts` is empty;
+- `not_for_trading_advice == true`;
+- at least one available non-ignored artifact-state row exists;
+- `official_business_evidence_artifact_state` is present;
+- `critical_financial_artifact_state` is present;
+- no forbidden marker is present;
+- `accepted_report_ready` conditions are not fully satisfied, but enough
+  artifact-state support exists for caveated experimental readiness.
+
+When `experimental_report_ready` is assigned:
+
+- `can_generate_accepted_report=false`;
+- `can_generate_experimental_report=true`.
+
+If official/business evidence or critical financial artifacts are missing,
+Phase 3 must not assign `experimental_report_ready`; it should return
+`data_collection_required` or a stricter state.
+
+### 5.3 Readiness Flag Product Boundary
+
+`can_generate_accepted_report` and `can_generate_experimental_report` are
+readiness-level indicators only.
+
+They do not:
+
+- trigger report generation;
+- contain report content;
+- constitute investment advice;
+- grant Research Report V1 integration permission;
+- authorize any downstream report phase by themselves.
+
+Any downstream report phase must go through a separate L1 Evidence Integration
+and report-generation design before report content can be produced.
 
 Recommended artifact-family minimums for accepted readiness:
 
@@ -418,16 +579,39 @@ Required future coverage:
 - candidate-only artifacts alone cannot produce accepted readiness;
 - review-required artifacts alone cannot produce accepted readiness;
 - conflict artifacts produce `evidence_conflict_review_required` or `blocked`;
+- conflict artifacts plus otherwise good available artifacts still set
+  `can_generate_accepted_report=false` and
+  `can_generate_experimental_report=false`;
+- identity `ambiguous`, `not_found`, `conflict_requires_review`, and `blocked`
+  all set both report-generation flags to `false`;
 - missing official/business evidence prevents accepted readiness;
+- missing official/business evidence prevents experimental readiness in current
+  Phase 3 policy;
 - missing critical financial artifacts prevents accepted readiness;
+- missing critical financial artifacts prevents experimental readiness;
 - accepted/current artifact state is not treated as verified fact;
 - manifest-derived artifact rows remain artifact-state only;
 - safety marker violations are rejected or blocked;
 - `not_for_trading_advice=false` is rejected;
 - experimental readiness cannot bypass identity, conflict, or safety blockers;
+- experimental readiness positive path requires resolved identity, no conflict,
+  no safety violation, official/business evidence, and critical financial
+  artifacts;
 - identity mismatch fails closed;
 - company-name-only matching is not allowed;
 - no fallback to retained sample tickers;
+- only ignored artifacts with a safety violation returns `blocked` and both
+  report-generation flags `false`;
+- only ignored artifacts without a safety violation returns
+  `data_collection_required` and both report-generation flags `false`;
+- candidate-only artifacts alone cannot produce accepted or experimental
+  readiness;
+- review-required artifacts alone cannot produce accepted or experimental
+  readiness;
+- readiness flags do not imply report generation or Research Report V1
+  integration;
+- output contains no report section, recommendation, target price, trading
+  advice, or report-generation permission keys;
 - no input mutation;
 - no shared mutable `caveats` or `lineage_refs`;
 - no file IO;
@@ -543,14 +727,20 @@ Future Phase 3 implementation acceptance, only after explicit approval:
 - [ ] Preserve `not_for_trading_advice=true`.
 - [ ] Identity unresolved or conflicted fails closed.
 - [ ] Conflict artifacts block accepted report readiness.
+- [ ] Conflict artifacts also block experimental report readiness.
 - [ ] Candidate-only artifacts never become accepted evidence.
 - [ ] Review-required artifacts never become accepted evidence.
 - [ ] Accepted/current artifact state never becomes verified fact state.
 - [ ] Missing official/business evidence blocks accepted readiness.
+- [ ] Missing official/business evidence blocks experimental readiness under
+  current Phase 3 policy.
 - [ ] Missing critical financial artifacts blocks accepted readiness.
+- [ ] Missing critical financial artifacts blocks experimental readiness.
 - [ ] Safety violations block readiness.
 - [ ] Experimental readiness cannot bypass identity, conflict, or safety
   blockers.
+- [ ] Readiness flags are indicators only and do not trigger report generation
+  or Research Report V1 integration.
 - [ ] No real manifest read.
 - [ ] No output scan.
 - [ ] No report artifact read.
