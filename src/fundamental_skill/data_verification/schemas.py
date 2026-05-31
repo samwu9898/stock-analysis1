@@ -13,6 +13,7 @@ OFFICIAL_VERIFICATION_RUN_SUMMARY_VERSION = "official_verification_run_summary.v
 BLOCKED_UNTIL_REVIEW_ITEM_VERSION = "blocked_until_review_item.v1"
 OFFICIAL_SOURCE_REGISTRY_ENTRY_VERSION = "official_source_registry_entry.v1"
 OFFICIAL_DISCLOSURE_LOCATOR_RESULT_VERSION = "official_disclosure_locator_result.v1"
+OFFICIAL_DISCLOSURE_DISCOVERY_CANDIDATE_VERSION = "official_disclosure_discovery_candidate.v1"
 
 
 class SourceType(str, Enum):
@@ -133,6 +134,30 @@ class OfficialDisclosureLocatorStatus(str, Enum):
     BLOCKED_UNTIL_REVIEW = "blocked_until_review"
 
 
+class OfficialDisclosureDiscoveryMethod(str, Enum):
+    CNINFO_SEARCH_RESULT = "cninfo_search_result"
+    SSE_ANNOUNCEMENT_LIST = "sse_announcement_list"
+    EXCHANGE_ANNOUNCEMENT_LIST = "exchange_announcement_list"
+    MANUAL_METADATA_INPUT = "manual_metadata_input"
+
+
+class OfficialDisclosureDiscoveryRejectionReason(str, Enum):
+    NONE = ""
+    UNSUPPORTED_SCHEMA_VERSION = "unsupported_schema_version"
+    MISSING_REQUIRED_METADATA = "missing_required_metadata"
+    MISSING_OFFICIAL_URL = "missing_official_url"
+    MISSING_SOURCE_TITLE = "missing_source_title"
+    MISSING_DISCLOSURE_DATE = "missing_disclosure_date"
+    MISSING_SOURCE_DOMAIN = "missing_source_domain"
+    INVALID_SOURCE_DOMAIN = "invalid_source_domain"
+    UNKNOWN_SOURCE_TYPE = "unknown_source_type"
+    MIRROR_SOURCE_NOT_OFFICIAL = "mirror_source_not_official"
+    PROVIDER_SOURCE_NOT_OFFICIAL = "provider_source_not_official"
+    LOCAL_CACHE_INERT = "local_cache_inert"
+    NOT_FOR_TRADING_ADVICE_REQUIRED = "not_for_trading_advice_required"
+    FORBIDDEN_MARKER = "forbidden_marker"
+
+
 class SourceRefreshPolicy(str, Enum):
     MANUAL_REVIEW_ONLY = "manual_review_only"
     EXPLICIT_METADATA_REFRESH = "explicit_metadata_refresh"
@@ -214,6 +239,25 @@ OFFICIAL_DISCLOSURE_PROVIDER_SOURCE_TYPES = {
     OfficialDisclosureSourceType.PROVIDER_SOURCE_CANDIDATE.value,
 }
 
+OFFICIAL_DISCLOSURE_DISCOVERY_CANDIDATE_OFFICIAL_SOURCE_TYPES = {
+    OfficialDisclosureSourceType.CNINFO_OFFICIAL_PDF.value,
+    OfficialDisclosureSourceType.SSE_EXCHANGE_ANNOUNCEMENT.value,
+    OfficialDisclosureSourceType.EXCHANGE_OFFICIAL_PDF.value,
+}
+
+OFFICIAL_DISCLOSURE_DISCOVERY_CANDIDATE_DISCOVERY_ONLY_SOURCE_TYPES = {
+    OfficialDisclosureSourceType.MIRROR_SOURCE_CANDIDATE.value,
+    OfficialDisclosureSourceType.UNKNOWN_SOURCE_CANDIDATE.value,
+}
+
+OFFICIAL_DISCLOSURE_DISCOVERY_CANDIDATE_PROVIDER_SOURCE_TYPES = {
+    OfficialDisclosureSourceType.PROVIDER_SOURCE_CANDIDATE.value,
+}
+
+OFFICIAL_DISCLOSURE_DISCOVERY_CANDIDATE_LOCAL_CACHE_SOURCE_TYPES = {
+    OfficialDisclosureSourceType.LOCAL_OFFICIAL_CACHE.value,
+}
+
 OFFICIAL_DISCLOSURE_SELECTABLE_SOURCE_STATUSES = {
     OfficialDisclosureSourceStatus.OFFICIAL_CANDIDATE.value,
     OfficialDisclosureSourceStatus.OFFICIAL_CACHED.value,
@@ -286,6 +330,41 @@ OFFICIAL_DISCLOSURE_LOCATOR_RESULT_REQUIRED_KEYS = (
     "blocked_reason",
     "caveats",
     "not_for_trading_advice",
+)
+
+OFFICIAL_DISCLOSURE_DISCOVERY_CANDIDATE_REQUIRED_KEYS = (
+    "schema_version",
+    "discovery_candidate_id",
+    "stock_code",
+    "company_name",
+    "exchange",
+    "period_key",
+    "period_end_date",
+    "announcement_type",
+    "source_type",
+    "discovered_at_utc",
+    "discovery_method",
+    "not_for_trading_advice",
+)
+
+OFFICIAL_DISCLOSURE_DISCOVERY_CANDIDATE_OPTIONAL_KEYS = (
+    "raw_candidate_metadata",
+    "normalized_candidate_metadata",
+    "caveats",
+)
+
+OFFICIAL_DISCLOSURE_DISCOVERY_CANDIDATE_CONDITIONAL_KEYS = (
+    "source_url",
+    "source_title",
+    "disclosure_date",
+    "source_domain",
+    "rejection_reason",
+)
+
+OFFICIAL_DISCLOSURE_DISCOVERY_CANDIDATE_SCHEMA_KEYS = (
+    *OFFICIAL_DISCLOSURE_DISCOVERY_CANDIDATE_REQUIRED_KEYS,
+    *OFFICIAL_DISCLOSURE_DISCOVERY_CANDIDATE_CONDITIONAL_KEYS,
+    *OFFICIAL_DISCLOSURE_DISCOVERY_CANDIDATE_OPTIONAL_KEYS,
 )
 
 OFFICIAL_METRIC_FACT_REQUIRED_KEYS = (

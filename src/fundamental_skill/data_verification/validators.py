@@ -456,6 +456,16 @@ def validate_official_disclosure_locator_result(result: Mapping[str, Any]) -> No
         _require_blocked_reason_or_caveat(result)
 
 
+def validate_official_disclosure_discovery_candidate(candidate: Mapping[str, Any]) -> None:
+    """Validate `official_disclosure_discovery_candidate.v1` without importing IO-capable code."""
+
+    from .official_disclosure_discovery_candidate import (
+        validate_official_disclosure_discovery_candidate as _validate_discovery_candidate,
+    )
+
+    _validate_discovery_candidate(candidate)
+
+
 def validate_official_metric_fact(fact: Mapping[str, Any]) -> None:
     """Validate `official_metric_fact.v1` and verification lane policy."""
 

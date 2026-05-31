@@ -12,8 +12,20 @@ from .conflict_gate import (
     classify_provider_official_match,
     validate_promotion_gate,
 )
+from .official_disclosure_discovery_candidate import (
+    build_discovery_candidate_id,
+    build_discovery_rejection_reason,
+    can_handoff_to_registry,
+    derive_source_domain_from_url,
+    is_discovery_only_source_type,
+    is_official_discovery_source_type,
+    is_provider_discovery_source_type,
+    normalize_official_disclosure_discovery_candidate,
+    validate_official_disclosure_discovery_candidate,
+)
 from .schemas import (
     BLOCKED_UNTIL_REVIEW_ITEM_VERSION,
+    OFFICIAL_DISCLOSURE_DISCOVERY_CANDIDATE_VERSION,
     OFFICIAL_METRIC_FACT_VERSION,
     OFFICIAL_SOURCE_CANDIDATE_VERSION,
     OFFICIAL_VERIFICATION_RUN_SUMMARY_VERSION,
@@ -40,6 +52,7 @@ from .validators import (
 
 __all__ = [
     "BLOCKED_UNTIL_REVIEW_ITEM_VERSION",
+    "OFFICIAL_DISCLOSURE_DISCOVERY_CANDIDATE_VERSION",
     "OFFICIAL_METRIC_FACT_VERSION",
     "OFFICIAL_SOURCE_CANDIDATE_VERSION",
     "OFFICIAL_VERIFICATION_RUN_SUMMARY_VERSION",
@@ -56,8 +69,17 @@ __all__ = [
     "VerificationStatus",
     "build_blocked_until_review_item",
     "build_conflict_record",
+    "build_discovery_candidate_id",
+    "build_discovery_rejection_reason",
     "can_promote_to_verified",
+    "can_handoff_to_registry",
     "classify_provider_official_match",
+    "derive_source_domain_from_url",
+    "is_discovery_only_source_type",
+    "is_official_discovery_source_type",
+    "is_provider_discovery_source_type",
+    "normalize_official_disclosure_discovery_candidate",
+    "validate_official_disclosure_discovery_candidate",
     "validate_blocked_until_review_item",
     "validate_official_metric_fact",
     "validate_official_source_candidate",
