@@ -2,7 +2,10 @@
 
 from copy import deepcopy
 import builtins
+import glob
+import os
 from pathlib import Path
+import socket
 
 import pytest
 
@@ -193,6 +196,43 @@ def _collect_keys_and_strings(payload) -> tuple[set[str], list[str]]:
     return keys, strings
 
 
+def _assert_planning_result_has_no_product_boundary_content(result: dict) -> None:
+    keys, strings = _collect_keys_and_strings(result)
+    normalised_strings = " ".join(strings).lower()
+    forbidden_keys = {
+        "report_sections",
+        "report_section",
+        "research_report",
+        "professional_research_report",
+        "investment_conclusion",
+        "investment_recommendation",
+        "trading_advice",
+        "target_price",
+        "dashboard_payload",
+        "template_payload",
+        "provider_payload",
+        "accepted_manifest",
+        "output_scan",
+        "artifact_content",
+        "verified_facts",
+        "accepted_report_facts",
+        "hypothesis_text",
+        "generated_report",
+        "report_generation",
+        "report_generator",
+        "render_dashboard",
+        "dashboard_rendering",
+    }
+
+    assert keys.isdisjoint(forbidden_keys)
+    assert "investment conclusion" not in normalised_strings
+    assert "investment advice" not in normalised_strings
+    assert "target price" not in normalised_strings
+    assert "trading advice" not in normalised_strings
+    assert "dashboard payload" not in normalised_strings
+    assert "template payload" not in normalised_strings
+
+
 def test_valid_full_planning_result_uses_internal_schema_and_caveat():
     result = _build_result()
 
@@ -206,6 +246,7 @@ def test_valid_full_planning_result_uses_internal_schema_and_caveat():
     assert READINESS_FLAGS_PLANNING_ONLY_CAVEAT in result["caveats"]
     assert result["not_for_trading_advice"] is True
     assert validate_autonomous_ticker_research_planning_result(result) == result
+    _assert_planning_result_has_no_product_boundary_content(result)
 
 
 @pytest.mark.parametrize(
@@ -490,6 +531,27 @@ def test_downstream_use_is_not_promoted_and_output_has_no_report_or_trading_cont
     assert "target_price" not in normalised
     assert "trading advice" not in normalised
     assert "verified_fact" not in normalised
+    _assert_planning_result_has_no_product_boundary_content(result)
+
+
+def test_readiness_flags_do_not_trigger_report_generation_or_dashboard_rendering():
+    result = _build_result()
+    keys, strings = _collect_keys_and_strings(result)
+    normalised = " ".join(strings).lower()
+
+    assert result["can_generate_accepted_report"] is True
+    assert result["can_generate_experimental_report"] is False
+    assert "generated_report" not in keys
+    assert "report_generator" not in keys
+    assert "report_generation" not in keys
+    assert "render_dashboard" not in keys
+    assert "dashboard_rendering" not in keys
+    assert "report_generation_triggered" not in keys
+    assert "dashboard_rendering_triggered" not in keys
+    assert "rendered_dashboard" not in keys
+    assert "report generated" not in normalised
+    assert "dashboard rendered" not in normalised
+    _assert_planning_result_has_no_product_boundary_content(result)
 
 
 def test_data_gap_plan_uses_required_follow_up_data_without_investment_advice():
@@ -516,10 +578,24 @@ def test_no_file_io_provider_network_or_parser_touch(monkeypatch):
     ticker, evidence, skeleton, bounded = _phase_inputs(industry_hypotheses=[_hypothesis()])
 
     def blocked_io(*args, **kwargs):
-        raise AssertionError("Phase 5 must not perform IO")
+        raise AssertionError("Phase 5R synthetic dry-run must not perform IO, provider, or network access")
 
     monkeypatch.setattr(builtins, "open", blocked_io)
     monkeypatch.setattr(Path, "open", blocked_io)
+    monkeypatch.setattr(Path, "read_text", blocked_io)
+    monkeypatch.setattr(Path, "read_bytes", blocked_io)
+    monkeypatch.setattr(Path, "write_text", blocked_io)
+    monkeypatch.setattr(Path, "write_bytes", blocked_io)
+    monkeypatch.setattr(Path, "mkdir", blocked_io)
+    monkeypatch.setattr(Path, "exists", blocked_io)
+    monkeypatch.setattr(Path, "stat", blocked_io)
+    monkeypatch.setattr(Path, "glob", blocked_io)
+    monkeypatch.setattr(Path, "rglob", blocked_io)
+    monkeypatch.setattr(glob, "glob", blocked_io)
+    monkeypatch.setattr(glob, "iglob", blocked_io)
+    monkeypatch.setattr(os, "walk", blocked_io)
+    monkeypatch.setattr(socket, "create_connection", blocked_io)
+    monkeypatch.setattr(socket, "socket", blocked_io)
 
     result = build_autonomous_ticker_research_planning_result(
         ticker_local_artifact_inventory=ticker,
@@ -529,6 +605,7 @@ def test_no_file_io_provider_network_or_parser_touch(monkeypatch):
     )
 
     assert result["schema_version"] == AUTONOMOUS_TICKER_RESEARCH_PLANNING_RESULT_SCHEMA_VERSION
+    _assert_planning_result_has_no_product_boundary_content(result)
 
 
 def test_no_input_mutation():
@@ -566,6 +643,31 @@ def test_validators_return_defensive_copies():
     validated_result = validate_autonomous_ticker_research_planning_result(result)
     validated_result["caveats"].append("Mutated copy only.")
     assert "Mutated copy only." not in result["caveats"]
+
+
+def test_returned_caveats_and_lineage_refs_do_not_pollute_fresh_rebuild():
+    first = _build_result()
+    first["caveats"].append("Mutated returned caveat.")
+    first["lineage_refs"].append("mutated-returned-lineage")
+    first["data_gap_plan"].append(
+        {
+            "gap_id": "data_gap_999",
+            "gap_type": "other",
+            "description": "Mutated returned gap.",
+            "source_phase": "phase5_assembly",
+            "source_ref": "test",
+            "priority": "low",
+            "required_follow_up_data": ["Mutated returned data need."],
+            "caveats": [],
+            "not_for_trading_advice": True,
+        }
+    )
+
+    rebuilt = _build_result()
+
+    assert "Mutated returned caveat." not in rebuilt["caveats"]
+    assert "mutated-returned-lineage" not in rebuilt["lineage_refs"]
+    assert all(gap["gap_id"] != "data_gap_999" for gap in rebuilt["data_gap_plan"])
 
 
 def test_invalid_schema_version_is_rejected():
