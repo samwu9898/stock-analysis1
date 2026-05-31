@@ -11,6 +11,8 @@ PROVIDER_OFFICIAL_CONFLICT_VERSION = "provider_official_conflict.v1"
 OFFICIAL_SOURCE_CANDIDATE_VERSION = "official_source_candidate.v1"
 OFFICIAL_VERIFICATION_RUN_SUMMARY_VERSION = "official_verification_run_summary.v1"
 BLOCKED_UNTIL_REVIEW_ITEM_VERSION = "blocked_until_review_item.v1"
+OFFICIAL_SOURCE_REGISTRY_ENTRY_VERSION = "official_source_registry_entry.v1"
+OFFICIAL_DISCLOSURE_LOCATOR_RESULT_VERSION = "official_disclosure_locator_result.v1"
 
 
 class SourceType(str, Enum):
@@ -102,6 +104,51 @@ class SourceStatus(str, Enum):
     BLOCKED = "blocked"
 
 
+class OfficialDisclosureSourceType(str, Enum):
+    CNINFO_OFFICIAL_PDF = "cninfo_official_pdf"
+    SSE_EXCHANGE_ANNOUNCEMENT = "sse_exchange_announcement"
+    EXCHANGE_OFFICIAL_PDF = "exchange_official_pdf"
+    LOCAL_OFFICIAL_CACHE = "local_official_cache"
+    MIRROR_SOURCE_CANDIDATE = "mirror_source_candidate"
+    PROVIDER_SOURCE_CANDIDATE = "provider_source_candidate"
+    UNKNOWN_SOURCE_CANDIDATE = "unknown_source_candidate"
+
+
+class OfficialDisclosureSourceStatus(str, Enum):
+    OFFICIAL_CANDIDATE = "official_candidate"
+    OFFICIAL_CACHED = "official_cached"
+    REJECTED_MIRROR = "rejected_mirror"
+    REJECTED_PROVIDER_ENDPOINT = "rejected_provider_endpoint"
+    MISSING_SHA256 = "missing_sha256"
+    MISSING_REQUIRED_METADATA = "missing_required_metadata"
+    SOURCE_CONFLICT = "source_conflict"
+    BLOCKED_UNTIL_REVIEW = "blocked_until_review"
+
+
+class OfficialDisclosureLocatorStatus(str, Enum):
+    FOUND_SINGLE_OFFICIAL_CANDIDATE = "found_single_official_candidate"
+    FOUND_MULTIPLE_CANDIDATES_REVIEW_REQUIRED = "found_multiple_candidates_review_required"
+    NO_OFFICIAL_SOURCE_FOUND = "no_official_source_found"
+    REJECTED_ALL_CANDIDATES = "rejected_all_candidates"
+    BLOCKED_UNTIL_REVIEW = "blocked_until_review"
+
+
+class SourceRefreshPolicy(str, Enum):
+    MANUAL_REVIEW_ONLY = "manual_review_only"
+    EXPLICIT_METADATA_REFRESH = "explicit_metadata_refresh"
+    EXPLICIT_FILE_REHASH = "explicit_file_rehash"
+    EXPLICIT_REGISTRY_REFRESH_ONLY = "explicit_registry_refresh_only"
+    CORRECTED_FILING_REVIEW_REQUIRED = "corrected_filing_review_required"
+    IMMUTABLE_CACHE_RECORD = "immutable_cache_record"
+
+
+class SourceVersion(str, Enum):
+    ORIGINAL = "original"
+    CORRECTED = "corrected"
+    UPDATED = "updated"
+    MANUAL_REVIEWED = "manual_reviewed"
+
+
 class ResolutionStatus(str, Enum):
     UNRESOLVED = "unresolved"
     RESOLVED = "resolved"
@@ -148,6 +195,30 @@ PROVIDER_SOURCE_TYPES = {
     SourceType.PROVIDER_ENDPOINT.value,
 }
 
+OFFICIAL_DISCLOSURE_OFFICIAL_SOURCE_TYPES = {
+    OfficialDisclosureSourceType.CNINFO_OFFICIAL_PDF.value,
+    OfficialDisclosureSourceType.SSE_EXCHANGE_ANNOUNCEMENT.value,
+    OfficialDisclosureSourceType.EXCHANGE_OFFICIAL_PDF.value,
+}
+
+OFFICIAL_DISCLOSURE_CACHE_SOURCE_TYPES = {
+    OfficialDisclosureSourceType.LOCAL_OFFICIAL_CACHE.value,
+}
+
+OFFICIAL_DISCLOSURE_DISCOVERY_ONLY_SOURCE_TYPES = {
+    OfficialDisclosureSourceType.MIRROR_SOURCE_CANDIDATE.value,
+    OfficialDisclosureSourceType.UNKNOWN_SOURCE_CANDIDATE.value,
+}
+
+OFFICIAL_DISCLOSURE_PROVIDER_SOURCE_TYPES = {
+    OfficialDisclosureSourceType.PROVIDER_SOURCE_CANDIDATE.value,
+}
+
+OFFICIAL_DISCLOSURE_SELECTABLE_SOURCE_STATUSES = {
+    OfficialDisclosureSourceStatus.OFFICIAL_CANDIDATE.value,
+    OfficialDisclosureSourceStatus.OFFICIAL_CACHED.value,
+}
+
 OFFICIAL_SOURCE_REQUIRED_FIELDS = (
     "candidate_title",
     "disclosure_date",
@@ -174,6 +245,46 @@ OFFICIAL_SOURCE_CANDIDATE_REQUIRED_KEYS = (
     "local_cache_path",
     "source_refresh_policy",
     "registry_version",
+    "not_for_trading_advice",
+)
+
+OFFICIAL_SOURCE_REGISTRY_ENTRY_REQUIRED_KEYS = (
+    "schema_version",
+    "source_id",
+    "stock_code",
+    "company_name",
+    "period_key",
+    "period_end_date",
+    "announcement_type",
+    "source_type",
+    "source_url",
+    "source_title",
+    "disclosure_date",
+    "local_cache_path",
+    "file_sha256",
+    "retrieved_at_utc",
+    "source_status",
+    "source_refresh_policy",
+    "registry_version",
+    "source_version",
+    "rejection_reason",
+    "caveats",
+    "not_for_trading_advice",
+)
+
+OFFICIAL_DISCLOSURE_LOCATOR_RESULT_REQUIRED_KEYS = (
+    "schema_version",
+    "stock_code",
+    "company_name",
+    "query_period",
+    "requested_announcement_type",
+    "candidates",
+    "selected_official_source_id",
+    "rejected_candidates",
+    "source_conflicts",
+    "locator_status",
+    "blocked_reason",
+    "caveats",
     "not_for_trading_advice",
 )
 
