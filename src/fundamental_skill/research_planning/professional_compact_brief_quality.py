@@ -601,12 +601,12 @@ def build_industry_macro_signal_context(
 def render_professional_compact_brief_from_context(
     context: Mapping[str, Any],
     *,
-    analyst_renderer: AnalystRenderer | None = None,
+    analyst_renderer: AnalystRenderer | str | None = None,
 ) -> dict[str, Any]:
     """Render a professional compact brief from sanitized analyst context."""
 
     validated_context = validate_professional_analyst_context(context)
-    renderer = analyst_renderer or default_deterministic_analyst_renderer
+    renderer = _resolve_analyst_renderer(analyst_renderer)
     renderer_context = _sanitized_context_for_renderer(validated_context)
     renderer_output = validate_professional_analyst_renderer_output(
         renderer(deepcopy(renderer_context))
@@ -659,6 +659,23 @@ def render_professional_compact_brief_from_context(
         "not_for_trading_advice": True,
     }
     return _validate_professional_brief(brief)
+
+
+def render_professional_compact_brief_with_llm_handoff(
+    context: Mapping[str, Any],
+    *,
+    renderer: str = "fake",
+) -> dict[str, Any]:
+    """Render a professional compact brief through the fake LLM handoff."""
+
+    if renderer not in {"fake", "fake_llm"}:
+        raise ProfessionalCompactBriefQualityError(
+            "llm handoff renderer must be fake"
+        )
+    return render_professional_compact_brief_from_context(
+        context,
+        analyst_renderer="fake_llm",
+    )
 
 
 def default_deterministic_analyst_renderer(
@@ -716,6 +733,28 @@ def default_deterministic_analyst_renderer(
         "not_for_trading_advice": True,
     }
     return validate_professional_analyst_renderer_output(output)
+
+
+def _resolve_analyst_renderer(
+    analyst_renderer: AnalystRenderer | str | None,
+) -> AnalystRenderer:
+    if analyst_renderer is None:
+        return default_deterministic_analyst_renderer
+    if analyst_renderer == "fake_llm":
+        from .llm_analyst_renderer_handoff import (
+            fake_llm_professional_analyst_renderer,
+        )
+
+        return fake_llm_professional_analyst_renderer
+    if isinstance(analyst_renderer, str):
+        raise ProfessionalCompactBriefQualityError(
+            f"unsupported analyst_renderer: {analyst_renderer}"
+        )
+    if not callable(analyst_renderer):
+        raise ProfessionalCompactBriefQualityError(
+            "analyst_renderer must be callable, fake_llm, or null"
+        )
+    return analyst_renderer
 
 
 def validate_professional_analyst_context(
@@ -1572,6 +1611,7 @@ __all__ = [
     "build_operating_quality_signal_context",
     "build_professional_analyst_context",
     "default_deterministic_analyst_renderer",
+    "render_professional_compact_brief_with_llm_handoff",
     "render_professional_compact_brief_from_context",
     "validate_professional_analyst_context",
     "validate_professional_analyst_renderer_output",

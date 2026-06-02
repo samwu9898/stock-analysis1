@@ -19,6 +19,7 @@ from src.fundamental_skill.research_planning.professional_compact_brief_quality 
     build_operating_quality_signal_context,
     build_professional_analyst_context,
     default_deterministic_analyst_renderer,
+    render_professional_compact_brief_with_llm_handoff,
     render_professional_compact_brief_from_context,
 )
 from tests.test_controlled_real_tushare_professional_compact_brief_pilot import (
@@ -252,6 +253,72 @@ def test_integration_builds_professional_compact_brief_from_existing_pilot_path(
         result["professional_compact_brief"],
         ensure_ascii=False,
     )
+
+
+def test_fake_llm_handoff_integration_builds_professional_compact_brief():
+    context = build_professional_analyst_context(
+        _bundle(),
+        internal_analysis_brief=_internal_brief(),
+    )
+
+    brief = render_professional_compact_brief_with_llm_handoff(context)
+
+    assert brief["schema_version"] == PROFESSIONAL_ANALYST_COMPACT_BRIEF_SCHEMA_VERSION
+    assert brief["overall_view"]["view"]
+    assert "基本面分析重心" in brief["overall_view"]["view"]
+
+
+def test_fake_llm_output_differs_from_deterministic_but_satisfies_contract():
+    context = build_professional_analyst_context(
+        _bundle(),
+        internal_analysis_brief=_internal_brief(),
+    )
+
+    deterministic = render_professional_compact_brief_from_context(context)
+    fake_llm = render_professional_compact_brief_from_context(
+        context,
+        analyst_renderer="fake_llm",
+    )
+
+    assert fake_llm["schema_version"] == PROFESSIONAL_ANALYST_COMPACT_BRIEF_SCHEMA_VERSION
+    assert deterministic["schema_version"] == fake_llm["schema_version"]
+    assert deterministic["overall_view"]["view"] != fake_llm["overall_view"]["view"]
+    assert fake_llm["not_for_trading_advice"] is True
+
+
+def test_fake_llm_route_hides_engineering_labels_and_trading_advice():
+    context = build_professional_analyst_context(_bundle())
+
+    brief = render_professional_compact_brief_from_context(
+        context,
+        analyst_renderer="fake_llm",
+    )
+    text = json.dumps(brief, ensure_ascii=False).casefold()
+
+    assert_no_user_visible_engineering_labels(brief)
+    for forbidden in (
+        "provider_candidate",
+        "pending_official_verification",
+        "待核验",
+        "数据缺口",
+        "推理",
+        "buy",
+        "sell",
+        "hold",
+        "target price",
+        "portfolio",
+        "position",
+        "technical signal",
+        "trading advice",
+        "买入",
+        "卖出",
+        "持有",
+        "目标价",
+        "仓位",
+        "技术信号",
+        "投资建议",
+    ):
+        assert forbidden.casefold() not in text
 
 
 def test_no_engineering_labels_in_professional_output():
