@@ -29,6 +29,10 @@ from .live_evidence_research_pack_orchestration_entry import (
     REQUESTED_OUTPUT_VERTICAL_SLICE_AND_MARKDOWN_PREVIEW,
     build_live_evidence_research_pack_orchestration_result,
 )
+from .professional_compact_brief_quality import (
+    build_professional_analyst_context,
+    render_professional_compact_brief_from_context,
+)
 from .ticker_research_context_skeleton import build_ticker_research_context_skeleton
 
 
@@ -811,92 +815,19 @@ def build_professional_analyst_compact_brief(
     provider_candidate_bundle: Mapping[str, Any],
     *,
     internal_analysis_brief: Mapping[str, Any] | None = None,
+    analyst_renderer: Any | None = None,
 ) -> dict[str, Any]:
     """Build the user-facing professional analyst compact brief."""
 
-    del internal_analysis_brief
     bundle = _validate_provider_candidate_bundle(provider_candidate_bundle)
-    metrics = _latest_metric_map(bundle)
-    company = bundle["company_name_hint"] or bundle["stock_code"] or "该公司"
-    revenue = metrics.get("revenue")
-    profit = metrics.get("n_income_attr_p")
-    cashflow = metrics.get("n_cashflow_act")
-    receivables = metrics.get("accounts_receiv")
-    margin = metrics.get("grossprofit_margin")
-
-    overall = (
-        f"从当前财务观察看，{company}的基本面判断应围绕收入、利润和现金流的匹配度展开；"
-        "收入与利润若能同步改善，同时现金流保持跟进，经营韧性会更强。"
+    context = build_professional_analyst_context(
+        bundle,
+        internal_analysis_brief=internal_analysis_brief,
     )
-    business = (
-        "业务逻辑判断的重点不在单一财务科目，而在主营构成、订单交付、客户回款与利润表现是否能相互印证。"
-        "如果经营活动能够稳定转化为收入和现金流，公司质量判断会更扎实。"
+    brief = render_professional_compact_brief_from_context(
+        context,
+        analyst_renderer=analyst_renderer,
     )
-    financial = _financial_view(revenue=revenue, profit=profit, margin=margin)
-    operating = _operating_quality_view(
-        profit=profit,
-        cashflow=cashflow,
-        receivables=receivables,
-    )
-    industry = (
-        "行业和宏观变量对公司基本面的传导，需要落到订单、招标、交付、回款和盈利能力这些经营变量上；"
-        "外部环境改善不能直接等同为公司质量改善。"
-    )
-    risk = (
-        "核心风险在于收入增长、利润率、现金流和应收变化之间出现背离；"
-        "若利润表现强于现金流或回款压力上升，经营质量判断需要打折。"
-    )
-    key_variables = [
-        "收入与利润的同步性",
-        "经营现金流与利润的匹配度",
-        "应收账款和存货变化",
-        "主营构成、订单交付和回款节奏",
-        "利润率和资产负债结构的稳定性",
-    ]
-    boundary = (
-        "本简报聚焦基本面质量、经营韧性和风险边界，不讨论估值区间或操作层面的动作。"
-    )
-    brief = {
-        "schema_version": PROFESSIONAL_ANALYST_COMPACT_BRIEF_SCHEMA_VERSION,
-        "stock_code": bundle["stock_code"],
-        "ts_code": bundle["ts_code"],
-        "company_name_hint": bundle["company_name_hint"],
-        "title": f"{company}基本面专业简报",
-        "overall_view": build_professional_section(
-            "overall_view",
-            "总体基本面判断",
-            overall,
-        ),
-        "business_view": build_professional_section(
-            "business_view",
-            "公司业务逻辑判断",
-            business,
-        ),
-        "financial_view": build_professional_section(
-            "financial_view",
-            "财务表现判断",
-            financial,
-        ),
-        "operating_quality_view": build_professional_section(
-            "operating_quality_view",
-            "经营质量判断",
-            operating,
-        ),
-        "industry_macro_view": build_professional_section(
-            "industry_macro_view",
-            "行业和宏观传导判断",
-            industry,
-        ),
-        "risk_view": build_professional_section(
-            "risk_view",
-            "核心风险判断",
-            risk,
-        ),
-        "key_variables": key_variables,
-        "conclusion_boundary": boundary,
-        "source_note": "数据来源：Tushare。",
-        "not_for_trading_advice": True,
-    }
     return _validate_professional_brief(brief)
 
 

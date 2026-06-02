@@ -7,6 +7,7 @@ import json
 
 import pytest
 
+import src.fundamental_skill.research_planning.controlled_real_tushare_professional_compact_brief_pilot as pilot_module
 from src.fundamental_skill.research_planning.controlled_real_tushare_professional_compact_brief_pilot import (
     CONTROLLED_REAL_TUSHARE_PROFESSIONAL_COMPACT_BRIEF_REQUEST_SCHEMA_VERSION,
     CONTROLLED_REAL_TUSHARE_PROFESSIONAL_COMPACT_BRIEF_RESULT_SCHEMA_VERSION,
@@ -24,6 +25,7 @@ from src.fundamental_skill.research_planning.controlled_real_tushare_professiona
     TUSHARE_CLIENT_MODE_INJECTED,
     ControlledRealTushareProfessionalCompactBriefPilotError,
     build_controlled_real_tushare_professional_compact_brief_result,
+    build_professional_section,
 )
 
 
@@ -279,7 +281,86 @@ def test_professional_compact_brief_gives_analysis_view_not_empty_status():
     assert "利润" in text
     assert "现金流" in text
     assert "经营质量" in text
+    assert "现金流对利润形成支撑" in text
+    assert "应收扩张会削弱利润质量判断" in text
+    assert "资产负债结构" in text
+    assert "关键变量" not in text or "key_variables" in text
     assert len(text) > 600
+
+
+def test_professional_compact_brief_is_wired_through_quality_module(monkeypatch):
+    calls = []
+    bundle = _build()["provider_candidate_bundle"]
+
+    def fake_context(provider_candidate_bundle, *, internal_analysis_brief=None):
+        calls.append(("context", provider_candidate_bundle, internal_analysis_brief))
+        return {"sentinel": "context"}
+
+    def fake_render(context, *, analyst_renderer=None):
+        calls.append(("render", context, analyst_renderer))
+        return {
+            "schema_version": PROFESSIONAL_ANALYST_COMPACT_BRIEF_SCHEMA_VERSION,
+            "stock_code": "600406",
+            "ts_code": "600406.SH",
+            "company_name_hint": "Guodian NARI",
+            "title": "Guodian NARI基本面专业简报",
+            "overall_view": build_professional_section(
+                "overall_view",
+                "总体基本面判断",
+                "质量模块输出聚焦收入、利润、现金流、应收和资产结构之间的匹配关系。",
+            ),
+            "business_view": build_professional_section(
+                "business_view",
+                "公司业务逻辑判断",
+                "质量模块输出聚焦主营构成、订单交付、回款节奏和利润率结构之间的闭环。",
+            ),
+            "financial_view": build_professional_section(
+                "financial_view",
+                "财务表现判断",
+                "质量模块输出聚焦收入利润同步性、盈利能力和资产负债结构之间的关系。",
+            ),
+            "operating_quality_view": build_professional_section(
+                "operating_quality_view",
+                "经营质量判断",
+                "质量模块输出聚焦现金流对利润的支撑、应收账款和存货周转效率。",
+            ),
+            "industry_macro_view": build_professional_section(
+                "industry_macro_view",
+                "行业和宏观传导判断",
+                "质量模块输出聚焦行业变量向订单、交付、回款和利润率的传导效果。",
+            ),
+            "risk_view": build_professional_section(
+                "risk_view",
+                "核心风险判断",
+                "质量模块输出聚焦收入、利润、现金流、应收和存货之间出现背离的风险。",
+            ),
+            "key_variables": [
+                "收入与利润同步性",
+                "经营现金流与利润匹配度",
+                "应收账款回款效率",
+                "利润率结构",
+                "资产负债结构",
+            ],
+            "conclusion_boundary": "结论边界聚焦基本面质量和经营韧性，不展开估值区间或操作动作。",
+            "source_note": "数据来源：Tushare。",
+            "not_for_trading_advice": True,
+        }
+
+    monkeypatch.setattr(pilot_module, "build_professional_analyst_context", fake_context)
+    monkeypatch.setattr(
+        pilot_module,
+        "render_professional_compact_brief_from_context",
+        fake_render,
+    )
+
+    brief = pilot_module.build_professional_analyst_compact_brief(
+        bundle,
+        internal_analysis_brief={"schema_version": "internal.v1"},
+    )
+
+    assert [call[0] for call in calls] == ["context", "render"]
+    assert calls[1][1] == {"sentinel": "context"}
+    assert brief["source_note"] == "数据来源：Tushare。"
 
 
 def test_professional_compact_brief_excludes_engineering_labels():
