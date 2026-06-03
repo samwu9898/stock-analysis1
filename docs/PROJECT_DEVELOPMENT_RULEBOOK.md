@@ -16,7 +16,7 @@
 * 行业与宏观如何传导；
 * 核心风险在哪里；
 * 哪些判断较可靠；
-* 哪些仍待核验；
+* 哪些判断边界需要说明；
 * 后续应该重点跟踪什么。
 
 用户默认不关心：
@@ -56,7 +56,7 @@
 * 风险判断；
 * 跟踪指标；
 * 结论边界；
-* 数据缺口；
+* 通过专业语言表达的数据边界；
 * 用户可读的分析简报。
 
 后台证据能力不等于用户价值。
@@ -280,12 +280,12 @@ Claude 曾经批评项目风险：
 * “sha256=xxxx”；
 * “source_domain=static.cninfo.com.cn”。
 
-默认用户报告应该写：
+默认用户报告不应展示 evidence locator 的页码、snippet、sha256 或验证状态。
+如需表达数据来源或判断边界，应转化为专业分析语言，例如：
 
-* `[待核验] 已有官方公告和 PDF artifact 支撑，但尚未完成官方指标核验。`
-* `[数据缺口] 当前还缺少正式业务分部抽取，不能判断主营结构变化。`
-* `[推理] 行业/宏观传导需要结合订单、招标、投资节奏进一步确认。`
-
+- 财务层面应重点观察收入、利润与现金流的匹配度，若利润增长无法转化为经营现金流，经营质量判断需要打折。
+- 业务层面应关注主营构成、订单交付与回款节奏是否能共同支撑收入和利润表现。
+- 行业与宏观变量不能直接等同于公司受益，必须落到订单、交付、回款和利润率等经营变量上。
 ---
 
 ## 7. 后续阶段选择规则
@@ -322,73 +322,113 @@ Claude 曾经批评项目风险：
 * Research Report V1 / HTML Reuse Audit + Bridge Integration Reassessment；
 * Analysis Brief → Report V1 Compatibility Adapter Planning；
 * Analysis Brief → Report V1 Compatibility Adapter Minimal Implementation；
-* Public API / Skill Callable Wrapper Thin Slice。
+* Public API / Skill Callable Wrapper Thin Slice；
+* Controlled Real Tushare → Professional Analyst Compact Brief E2E Pilot；
+* Professional Compact Brief Quality / Model Analysis Boundary Thin Slice；
+* LLM Analyst Renderer Handoff Contract + Fake Renderer Integration Thin Slice；
+* Ticker-only Professional Brief Wrapper Integration Thin Slice。
 
-这些能力证明项目已不是纯空转。
+这些能力证明项目已经从后台证据链，推进到受控 ticker-only callable entry。
 
 当前已经具备的前台 / wrapper 能力：
 
 * 已有 `user_facing_analysis_brief.v1`；
 * 已有 `analysis_brief_report_v1_compatibility_payload.v1`；
+* 已有 `professional_analyst_context.v1`；
+* 已有 `llm_analyst_handoff_context.v1`；
+* 已有 fake LLM analyst renderer handoff；
 * 已有最小 callable wrapper；
 * wrapper 支持 `input_mode=analysis_brief`；
 * wrapper 支持 `input_mode=orchestration_result`；
+* wrapper 支持 `input_mode=ticker_only_professional_brief`；
 * wrapper 支持 `output_mode=compact_brief`；
 * wrapper 支持 `output_mode=compact_brief_and_report_v1_compatibility_payload`；
-* ticker-only request 目前会 blocked，reason 是 `validated_analysis_input_required`。
+* wrapper 支持 `output_mode=professional_compact_brief`；
+* wrapper 支持 `output_mode=professional_compact_brief_and_internal_payload`；
+* ticker-only request 可以通过受控 wrapper 路径进入 professional compact brief 链路；
+* ticker-only wrapper 默认不返回 provider_candidate_bundle、candidate_items 或 backend trace；
+* env_live 仍只允许在 `input_mode=ticker_only_professional_brief`、`tushare_client_mode=env_live`、`allow_network=true` 的窄路径下使用。
+
+注意：
+
+* 当前 ticker-only wrapper 已经接通，但仍是受控 thin slice；
+* 当前仍不是 full autonomous agent；
+* 当前仍不是 true LLM analyst；
+* 当前仍不是 Report V1 / HTML；
+* 当前仍不是 official metric verification；
+* 当前仍不是 provider-vs-official reconciliation；
+* 当前仍不包含交易建议。
 
 ---
 
 ## 9. 当前仍未完成
 
-当前状态应明确区分“前台 analysis brief bridge draft 已完成”和“真实 ticker 自动分析尚未完成”。
+当前状态应明确区分“ticker-only callable entry 已完成”和“最终完整自动分析产品尚未完成”。
 
 已经完成：
 
 * 用户前台 analysis brief bridge draft；
-* 最小 callable wrapper。
+* 最小 callable wrapper；
+* Controlled Real Tushare → Professional Analyst Compact Brief E2E Pilot；
+* Professional Compact Brief Quality / Model Analysis Boundary；
+* LLM Analyst Renderer Handoff Contract + Fake Renderer Integration；
+* ticker-only professional brief wrapper integration。
 
 仍未完成：
 
-* ticker-only live orchestration；
-* Controlled Real Tushare → Compact Brief E2E Pilot；
+* ticker-only professional brief 的可重复质量评估基线；
+* ticker-only fake LLM renderer mode wiring；
+* controlled real LLM local/manual smoke；
+* true LLM analyst integration；
 * official_metric_fact；
 * official metric verification；
 * provider-vs-official reconciliation；
 * formal Report V1 integration；
 * HTML / formal report rendering with new evidence chain；
-* one-command fully autonomous skill。
+* one-command fully autonomous skill；
+* production-grade multi-ticker batch / UI / dashboard。
+
+当前最真实的产品缺口不是“没有入口”，而是：
+
+> ticker-only wrapper 已能生成 professional brief，但还没有系统性证明这些 brief 在不同样本场景下足够专业、稳定、可回归。
 
 ---
 
 ## 10. Callable Wrapper 当前边界
 
-当前 wrapper 是最小 callable entry，不是 full autonomous agent。
+当前 wrapper 是受控 callable entry，不是 full autonomous agent。
 
-它只接受 explicit validated inputs：
+它支持的输入模式：
 
 * `input_mode=analysis_brief`
 * `input_mode=orchestration_result`
+* `input_mode=ticker_only_professional_brief`
 
-它支持的输出边界是：
+它支持的输出边界：
 
 * `compact_response`
-* 可选的 Report V1 compatibility payload
+* 可选的 Report V1 compatibility payload；
+* `professional_compact_brief`
+* 可选的 sanitized `professional_internal_payload`
 
-它当前不会：
+`ticker_only_professional_brief` 的边界：
 
-* live 拉数据；
-* 读取 token；
-* 写 output；
-* 生成 Report V1；
-* 生成 HTML；
-* 把 ticker-only request 自动升级成真实数据编排。
+* 可以接收 `stock_code` / `ts_code`；
+* 必须显式声明 `tushare_client_mode`；
+* tests 默认 fake / injected，不走真实网络；
+* `env_live` 只允许在 `allow_network=true` 下使用；
+* 不读取 `tushare_token.txt`；
+* 不读取 `.env`；
+* 不输出 token；
+* 不写 output / fixtures / manifest；
+* 不生成 Report V1；
+* 不生成 HTML；
+* 不生成 official_metric_fact；
+* 不做 provider-vs-official reconciliation；
+* 不输出买入 / 卖出 / 持有、目标价、仓位或技术信号；
+* 不默认返回 provider_candidate_bundle、candidate_items、backend trace 或 evidence locator 细节。
 
-ticker-only request 当前必须 blocked，并明确 reason：
-
-* `validated_analysis_input_required`
-
-真实 ticker 自动分析属于后续 Controlled Real Tushare → Compact Brief E2E Pilot，不应在 wrapper 阶段暗中扩展。
+当前 wrapper 仍不应被描述为 full autonomous agent。它只是让 ticker-only 请求进入受控 professional brief 链路。
 
 ---
 
@@ -418,6 +458,13 @@ ticker-only request 当前必须 blocked，并明确 reason：
 
 ## 12. 下一阶段重新裁定
 
+当前已经完成：
+
+* Controlled Real Tushare → Professional Analyst Compact Brief E2E Pilot；
+* Professional Compact Brief Quality / Model Analysis Boundary；
+* LLM Analyst Renderer Handoff Contract + Fake Renderer Integration；
+* Ticker-only Professional Brief Wrapper Integration。
+
 下一阶段不应做：
 
 * locator result user-facing display；
@@ -429,17 +476,35 @@ ticker-only request 当前必须 blocked，并明确 reason：
 * provider-vs-official reconciliation；
 * Report V1；
 * HTML rendering；
-* trading advice。
+* trading advice；
+* unbounded full autonomous agent；
+* true LLM API integration without prior planning and smoke boundary。
 
-下一阶段应做：
+下一阶段应优先做：
 
-> Controlled Real Tushare → Compact Brief E2E Pilot
+> Ticker-only Professional Brief E2E Quality Evaluation Harness Thin Slice
 
-也可命名为：
+目标是建立可重复的前台质量评估基线，评估 wrapper ticker-only 路径生成的 `professional_compact_brief` 是否真的满足专业分析师前台输出要求。
 
-> Controlled Real Tushare → Compact Brief Pilot
+该阶段应：
 
-目标是让 ticker-only request 从 blocked 进入可控真实数据 pilot，同时继续保持 provider candidate / pending official verification 边界。
+* 调用 wrapper 的 `input_mode=ticker_only_professional_brief`；
+* 使用 fake / injected client，不联网；
+* 生成 in-memory professional brief 样本；
+* 对用户前台 `professional_compact_brief` 做 rubric-based quality evaluation；
+* 覆盖 baseline、非 600406、现金流支撑利润、利润强于现金流、应收压力、资产负债压力、指标缺失等场景；
+* 生成 in-memory evaluation result；
+* 不写 output / fixtures / manifest；
+* 不输出 raw provider bundle / candidate_items / backend trace；
+* 不输出交易建议。
+
+只有在质量评估基线建立后，才应继续评估：
+
+1. ticker-only fake LLM renderer mode wiring；
+2. controlled real LLM local/manual smoke planning；
+3. professional brief human review；
+4. Report V1 integration planning；
+5. official metric extraction / reconciliation。
 
 ---
 
@@ -476,7 +541,7 @@ User-facing Analysis Brief Draft Thin Slice 已完成。它的定位仍然是把
 * `backend_grounding_summary` 默认不是用户主 section；
 * 可以作为模型用字段；
 * 可以作为 audit/debug/查看依据字段；
-* 用户主视图只展示必要的可信度标签。
+* 用户主视图默认不展示工程标签或置信度标签；置信度、证据状态和分析边界应通过专业分析语言体现。标签只用于内部、审计/debug 或查看依据模式。
 
 Analysis Brief / Report V1 bridge 仍禁止：
 
@@ -495,11 +560,11 @@ Analysis Brief / Report V1 bridge 仍禁止：
 
 允许：
 
-* 分析层标签；
+* 分析层内部标签；
 * 明确结论边界；
 * 受控推理；
-* 数据缺口；
-* 后续跟踪清单；
+* 通过专业语言表达的数据边界；
+* 影响判断的关键变量；
 * 对财务候选趋势做谨慎解读；
 * 对行业/宏观传导提出分析框架，但不能硬下结论。
 
@@ -507,14 +572,18 @@ Analysis Brief / Report V1 bridge 仍禁止：
 
 ## 14. 推荐的后续路线
 
-新的路线顺序为：
+新的推荐路线顺序为：
 
-1. `Controlled Real Tushare → Compact Brief E2E Pilot`
-2. `Report V1 Integration Planning`
-3. `Very Small Metric Evidence Extraction`
-4. `Provider-vs-Official Reconciliation`
-5. `Full Evidence-aware Research Pack / Report V1 Integration`
-6. `HTML / Formal Report Rendering`
+1. `Ticker-only Professional Brief E2E Quality Evaluation Harness Thin Slice`
+2. `Ticker-only Fake LLM Renderer Mode Wiring Thin Slice`
+3. `Controlled Real LLM Local/Manual Smoke Planning`
+4. `Controlled Real LLM Local/Manual Smoke`
+5. `Professional Brief Human Review / Sample Output Evaluation`
+6. `Report V1 Integration Planning`
+7. `Very Small Metric Evidence Extraction`
+8. `Provider-vs-Official Reconciliation`
+9. `Full Evidence-aware Research Pack / Report V1 Integration`
+10. `HTML / Formal Report Rendering`
 
 不应直接跳到 Report V1。
 不应直接进入 Report V1 artifact generation。
@@ -523,8 +592,15 @@ Analysis Brief / Report V1 bridge 仍禁止：
 不应先继续做更多 locator / cache / manifest / validator。
 不应把 evidence locator 接入用户主视图。
 不应继续无目的扩后台基础设施。
+不应在未建立 ticker-only quality evaluation baseline 前，急于扩大 renderer / LLM / report 能力。
 
-rulebook commit 后，下一主开发建议是 Controlled Real Tushare → Compact Brief E2E Pilot。
+下一主开发建议是：
+
+> Ticker-only Professional Brief E2E Quality Evaluation Harness Thin Slice
+
+一句话原则：
+
+> 入口已经接通，下一步先建立“好简报”的可重复工程评估标准，再升级 renderer 或进入真实 LLM。
 
 ---
 
@@ -540,12 +616,18 @@ rulebook commit 后，下一主开发建议是 Controlled Real Tushare → Compa
 * 这一步是否仍然遵守 no trading advice？
 * 这一步是否避免硬编码 600406？
 * 这一步是否避免把 provider candidate / anchor / artifact / locator 升级为 official_verified？
-* 这一步是否会让 ticker-only request 从 blocked 变成可控真实数据 pilot？
 * 这一步是否显式区分 fake tests 和 real local smoke？
 * 这一步是否遵守 `TUSHARE_TOKEN` 环境变量规则？
 * 这一步是否避免把 provider candidate 当 official fact？
 * 这一步是否避免把 wrapper 扩成 full autonomous agent？
 * 这一步是否避免直接进入 Report V1？
+* 这一步是否默认隐藏 provider_candidate / pending verification / evidence trace / backend trace？
+* 这一步是否保持 professional front-end output，而不是工程状态汇报？
+* 这一步是否避免“用户自行判断 / 自行跟踪 / 需要用户结合”等责任转移表达？
+* 若是质量评估阶段：是否评估的是用户前台 `professional_compact_brief`，而不是后台数据结构？
+* 若是质量评估阶段：是否形成可重复 harness，而不是一次性人工 summary？
+* 若是 renderer 阶段：是否已有质量基线说明为什么要切换或升级 renderer？
+* 若是 LLM 阶段：是否已有 model-facing context sanitizer、prompt/output contract、token/key 边界和 no-output-write 边界？
 
 若任何一项不通过，必须 reassess，不得推进。
 
