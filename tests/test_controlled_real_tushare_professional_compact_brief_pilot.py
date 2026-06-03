@@ -20,6 +20,8 @@ from src.fundamental_skill.research_planning.controlled_real_tushare_professiona
     OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF_AND_INTERNAL_PAYLOAD,
     PROFESSIONAL_ANALYST_COMPACT_BRIEF_SCHEMA_VERSION,
     PROFESSIONAL_BRIEF_SECTION_KEYS,
+    RENDERER_MODE_DETERMINISTIC,
+    RENDERER_MODE_FAKE_LLM,
     TUSHARE_CLIENT_MODE_ENV_LIVE,
     TUSHARE_CLIENT_MODE_FAKE,
     TUSHARE_CLIENT_MODE_INJECTED,
@@ -136,10 +138,44 @@ def test_valid_request_with_injected_fake_tushare_client_returns_ready_result():
         CONTROLLED_REAL_TUSHARE_PROFESSIONAL_COMPACT_BRIEF_RESULT_SCHEMA_VERSION
     )
     assert result["readiness"]["status"] == E2E_READINESS_READY
+    assert result["request_summary"]["renderer_mode"] == RENDERER_MODE_DETERMINISTIC
+    assert result["readiness"]["renderer_mode"] == RENDERER_MODE_DETERMINISTIC
     assert result["professional_compact_brief"]["schema_version"] == (
         PROFESSIONAL_ANALYST_COMPACT_BRIEF_SCHEMA_VERSION
     )
     assert result["not_for_trading_advice"] is True
+
+
+def test_controlled_pilot_accepts_renderer_mode_fake_llm():
+    result = _build(renderer_mode=RENDERER_MODE_FAKE_LLM)
+
+    assert result["readiness"]["status"] == E2E_READINESS_READY
+    assert result["request_summary"]["renderer_mode"] == RENDERER_MODE_FAKE_LLM
+    assert result["readiness"]["renderer_mode"] == RENDERER_MODE_FAKE_LLM
+    assert result["professional_compact_brief"]["not_for_trading_advice"] is True
+
+
+def test_controlled_pilot_accepts_renderer_mode_deterministic():
+    result = _build(renderer_mode=RENDERER_MODE_DETERMINISTIC)
+
+    assert result["readiness"]["status"] == E2E_READINESS_READY
+    assert result["request_summary"]["renderer_mode"] == RENDERER_MODE_DETERMINISTIC
+    assert result["readiness"]["renderer_mode"] == RENDERER_MODE_DETERMINISTIC
+    assert result["professional_compact_brief"]["not_for_trading_advice"] is True
+
+
+def test_controlled_pilot_fake_llm_output_differs_from_deterministic():
+    deterministic = _build(renderer_mode=RENDERER_MODE_DETERMINISTIC)
+    fake_llm = _build(renderer_mode=RENDERER_MODE_FAKE_LLM)
+
+    assert deterministic["readiness"]["status"] == E2E_READINESS_READY
+    assert fake_llm["readiness"]["status"] == E2E_READINESS_READY
+    assert deterministic["professional_compact_brief"]["schema_version"] == (
+        fake_llm["professional_compact_brief"]["schema_version"]
+    )
+    assert deterministic["professional_compact_brief"]["overall_view"]["view"] != (
+        fake_llm["professional_compact_brief"]["overall_view"]["view"]
+    )
 
 
 def test_allow_network_false_uses_fake_or_injected_only():
@@ -363,6 +399,26 @@ def test_professional_compact_brief_is_wired_through_quality_module(monkeypatch)
     assert brief["source_note"] == "数据来源：Tushare。"
 
 
+def test_controlled_pilot_fake_llm_passes_renderer_to_quality_module(monkeypatch):
+    captured = []
+    original_render = pilot_module.render_professional_compact_brief_from_context
+
+    def capture_render(context, *, analyst_renderer=None):
+        captured.append(analyst_renderer)
+        return original_render(context, analyst_renderer=analyst_renderer)
+
+    monkeypatch.setattr(
+        pilot_module,
+        "render_professional_compact_brief_from_context",
+        capture_render,
+    )
+
+    result = _build(renderer_mode=RENDERER_MODE_FAKE_LLM)
+
+    assert result["readiness"]["status"] == E2E_READINESS_READY
+    assert captured == [RENDERER_MODE_FAKE_LLM]
+
+
 def test_professional_compact_brief_excludes_engineering_labels():
     text = _professional_text(_build())
 
@@ -399,6 +455,16 @@ def test_output_mode_professional_compact_brief_and_internal_payload_returns_pay
         "controlled_real_tushare_professional_internal_payload.v1"
     )
     assert result["internal_payload"]["provider_candidate_count"] > 0
+    assert result["internal_payload"]["renderer_mode"] == RENDERER_MODE_DETERMINISTIC
+
+
+def test_fake_llm_internal_payload_records_renderer_mode():
+    result = _build(
+        output_mode=OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF_AND_INTERNAL_PAYLOAD,
+        renderer_mode=RENDERER_MODE_FAKE_LLM,
+    )
+
+    assert result["internal_payload"]["renderer_mode"] == RENDERER_MODE_FAKE_LLM
 
 
 def test_professional_compact_brief_has_no_backend_trace():
@@ -431,9 +497,43 @@ def test_professional_compact_brief_has_no_trading_advice():
         assert forbidden.casefold() not in text
 
 
+def test_fake_llm_professional_compact_brief_excludes_engineering_labels():
+    text = _professional_text(_build(renderer_mode=RENDERER_MODE_FAKE_LLM)).casefold()
+
+    for forbidden in (
+        "provider_candidate",
+        "provider candidate",
+        "pending_official_verification",
+        "official verification",
+        "official_verified_count",
+        "provider",
+        "data gap",
+        "backend trace",
+        "candidate_items",
+    ):
+        assert forbidden.casefold() not in text
+
+
+def test_fake_llm_professional_compact_brief_has_no_trading_advice():
+    text = _professional_text(_build(renderer_mode=RENDERER_MODE_FAKE_LLM)).casefold()
+
+    for forbidden in (
+        "buy",
+        "sell",
+        "hold",
+        "target price",
+        "portfolio",
+        "position",
+        "technical signal",
+        "trading advice",
+    ):
+        assert forbidden.casefold() not in text
+
+
 def test_input_request_not_mutated():
     request = _request(
-        output_mode=OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF_AND_INTERNAL_PAYLOAD
+        output_mode=OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF_AND_INTERNAL_PAYLOAD,
+        renderer_mode=RENDERER_MODE_FAKE_LLM,
     )
     before = copy.deepcopy(request)
 
@@ -451,6 +551,7 @@ def test_non_600406_fake_sample_passes():
         stock_code="000001",
         ts_code="000001.SZ",
         company_name_hint="Sample Company",
+        renderer_mode=RENDERER_MODE_FAKE_LLM,
     )
 
     assert result["readiness"]["status"] == E2E_READINESS_READY
@@ -461,7 +562,7 @@ def test_non_600406_fake_sample_passes():
 def test_no_output_fixtures_or_manifest_write(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
 
-    result = _build()
+    result = _build(renderer_mode=RENDERER_MODE_FAKE_LLM)
 
     assert result["readiness"]["status"] == E2E_READINESS_READY
     assert not (tmp_path / "output").exists()

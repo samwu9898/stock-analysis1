@@ -21,6 +21,8 @@ from src.fundamental_skill.research_planning.a_share_fundamental_skill_wrapper i
     OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF,
     OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF_AND_INTERNAL_PAYLOAD,
     PROFESSIONAL_BRIEF_SECTION_KEYS,
+    RENDERER_MODE_DETERMINISTIC,
+    RENDERER_MODE_FAKE_LLM,
     SKILL_READINESS_BLOCKED,
     SKILL_READINESS_READY,
     TUSHARE_CLIENT_MODE_ENV_LIVE,
@@ -223,6 +225,43 @@ def test_ticker_only_professional_brief_with_injected_fake_client_returns_ready(
     assert response["professional_compact_brief"]["stock_code"] == "600406"
 
 
+def test_ticker_only_professional_brief_supports_explicit_fake_llm_renderer_mode():
+    response = _ticker_build(renderer_mode=RENDERER_MODE_FAKE_LLM)
+
+    assert response["readiness"]["status"] == SKILL_READINESS_READY
+    assert response["request_summary"]["renderer_mode"] == RENDERER_MODE_FAKE_LLM
+    assert response["readiness"]["renderer_mode"] == RENDERER_MODE_FAKE_LLM
+    assert response["professional_compact_brief"]["not_for_trading_advice"] is True
+
+
+def test_ticker_only_professional_brief_supports_explicit_deterministic_renderer_mode():
+    response = _ticker_build(renderer_mode=RENDERER_MODE_DETERMINISTIC)
+
+    assert response["readiness"]["status"] == SKILL_READINESS_READY
+    assert response["request_summary"]["renderer_mode"] == RENDERER_MODE_DETERMINISTIC
+    assert response["readiness"]["renderer_mode"] == RENDERER_MODE_DETERMINISTIC
+    assert response["professional_compact_brief"]["not_for_trading_advice"] is True
+
+
+def test_ticker_only_fake_llm_output_differs_from_deterministic_contract_holds():
+    deterministic = _ticker_build(renderer_mode=RENDERER_MODE_DETERMINISTIC)
+    fake_llm = _ticker_build(renderer_mode=RENDERER_MODE_FAKE_LLM)
+
+    assert deterministic["readiness"]["status"] == SKILL_READINESS_READY
+    assert fake_llm["readiness"]["status"] == SKILL_READINESS_READY
+    assert deterministic["professional_compact_brief"]["schema_version"] == (
+        fake_llm["professional_compact_brief"]["schema_version"]
+    )
+    assert deterministic["professional_compact_brief"]["overall_view"]["view"] != (
+        fake_llm["professional_compact_brief"]["overall_view"]["view"]
+    )
+    for response in (deterministic, fake_llm):
+        brief = response["professional_compact_brief"]
+        for key in PROFESSIONAL_BRIEF_SECTION_KEYS:
+            assert key in brief
+        assert brief["not_for_trading_advice"] is True
+
+
 def test_ticker_only_professional_brief_returns_required_professional_sections():
     brief = _ticker_build()["professional_compact_brief"]
 
@@ -240,7 +279,7 @@ def test_ticker_only_professional_brief_returns_required_professional_sections()
 
 
 def test_ticker_only_professional_brief_does_not_return_provider_bundle_by_default():
-    response = _ticker_build()
+    response = _ticker_build(renderer_mode=RENDERER_MODE_FAKE_LLM)
     serialized = json.dumps(response, ensure_ascii=False)
 
     assert "provider_candidate_bundle" not in response
@@ -256,9 +295,26 @@ def test_ticker_only_internal_payload_output_returns_sanitized_payload():
     assert response["readiness"]["status"] == SKILL_READINESS_READY
     assert response["readiness"]["has_professional_internal_payload"] is True
     assert response["professional_internal_payload"]["provider_candidate_count"] > 0
+    assert (
+        response["professional_internal_payload"]["renderer_mode"]
+        == RENDERER_MODE_DETERMINISTIC
+    )
     assert "candidate_items" not in json.dumps(
         response["professional_internal_payload"],
         ensure_ascii=False,
+    )
+
+
+def test_ticker_only_fake_llm_internal_payload_records_renderer_mode():
+    response = _ticker_build(
+        output_mode=OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF_AND_INTERNAL_PAYLOAD,
+        renderer_mode=RENDERER_MODE_FAKE_LLM,
+    )
+
+    assert response["readiness"]["status"] == SKILL_READINESS_READY
+    assert (
+        response["professional_internal_payload"]["renderer_mode"]
+        == RENDERER_MODE_FAKE_LLM
     )
 
 
@@ -306,6 +362,21 @@ def test_ticker_only_fake_mode_without_injected_client_returns_ready_without_net
     assert response["readiness"]["status"] == SKILL_READINESS_READY
     assert response["request_summary"]["allow_network"] is False
     assert response["professional_compact_brief"]["source_note"] == "数据来源：Tushare。"
+
+
+def test_ticker_only_fake_llm_with_injected_fake_client_does_not_call_network():
+    client = _FakeFinancialClient()
+
+    response = _ticker_build(client, renderer_mode=RENDERER_MODE_FAKE_LLM)
+
+    assert response["readiness"]["status"] == SKILL_READINESS_READY
+    assert response["request_summary"]["allow_network"] is False
+    assert [call["endpoint"] for call in client.calls] == [
+        "income",
+        "balancesheet",
+        "cashflow",
+        "fina_indicator",
+    ]
 
 
 def test_ticker_only_env_live_with_allow_network_false_returns_blocked():
@@ -369,6 +440,33 @@ def test_unsupported_output_mode_rejected():
         build_a_share_fundamental_skill_response(_request(output_mode="html_artifact"))
 
 
+def test_old_analysis_brief_path_rejects_renderer_mode():
+    with pytest.raises(AShareFundamentalSkillWrapperError, match="renderer_mode"):
+        build_a_share_fundamental_skill_response(
+            _request(renderer_mode=RENDERER_MODE_FAKE_LLM)
+        )
+
+
+def test_old_orchestration_result_path_rejects_renderer_mode():
+    with pytest.raises(AShareFundamentalSkillWrapperError, match="renderer_mode"):
+        build_a_share_fundamental_skill_response(
+            _request(
+                input_mode=INPUT_MODE_ORCHESTRATION_RESULT,
+                user_facing_analysis_brief=None,
+                orchestration_result=_sample_orchestration_result(),
+                renderer_mode=RENDERER_MODE_FAKE_LLM,
+            )
+        )
+
+
+def test_ticker_only_unsupported_renderer_mode_rejected():
+    with pytest.raises(AShareFundamentalSkillWrapperError, match="renderer_mode"):
+        build_a_share_fundamental_skill_response(
+            _ticker_request(renderer_mode="real_llm"),
+            tushare_client=_FakeFinancialClient(),
+        )
+
+
 @pytest.mark.parametrize(
     ("key", "value"),
     [
@@ -412,7 +510,7 @@ def test_no_output_fixture_or_manifest_write(monkeypatch, tmp_path):
 def test_ticker_only_no_output_fixture_or_manifest_write(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
 
-    response = _ticker_build()
+    response = _ticker_build(renderer_mode=RENDERER_MODE_FAKE_LLM)
 
     assert response["readiness"]["status"] == SKILL_READINESS_READY
     assert not (tmp_path / "output").exists()
@@ -433,7 +531,8 @@ def test_input_request_not_mutated():
 
 def test_ticker_only_input_request_not_mutated():
     request = _ticker_request(
-        output_mode=OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF_AND_INTERNAL_PAYLOAD
+        output_mode=OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF_AND_INTERNAL_PAYLOAD,
+        renderer_mode=RENDERER_MODE_FAKE_LLM,
     )
     before = copy.deepcopy(request)
 
@@ -471,6 +570,7 @@ def test_non_600406_ticker_only_sample_passes_with_injected_fake_client():
         stock_code="000001",
         ts_code="000001.SZ",
         company_name_hint="Ping An Bank",
+        renderer_mode=RENDERER_MODE_FAKE_LLM,
     )
 
     assert response["readiness"]["status"] == SKILL_READINESS_READY

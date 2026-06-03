@@ -11,6 +11,7 @@ from src.fundamental_skill.research_planning.a_share_fundamental_skill_wrapper i
     A_SHARE_FUNDAMENTAL_SKILL_REQUEST_SCHEMA_VERSION,
     INPUT_MODE_TICKER_ONLY_PROFESSIONAL_BRIEF,
     OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF,
+    RENDERER_MODE_FAKE_LLM,
     TUSHARE_CLIENT_MODE_ENV_LIVE,
     TUSHARE_CLIENT_MODE_INJECTED,
     INPUT_MODE_ORCHESTRATION_RESULT,
@@ -396,6 +397,118 @@ def test_professional_compact_brief_has_no_trading_signal_or_action():
         "投资建议",
     ):
         assert forbidden.casefold() not in text
+
+
+def test_fake_llm_professional_compact_brief_does_not_expose_engineering_labels():
+    text = json.dumps(
+        _ticker_build(renderer_mode=RENDERER_MODE_FAKE_LLM)["professional_compact_brief"],
+        ensure_ascii=False,
+    ).casefold()
+
+    for forbidden in (
+        "provider_candidate",
+        "pending_official_verification",
+        "official verification",
+        "official_verified_count",
+        "provider",
+        "data gap",
+        "evidence locator",
+        "reconciliation",
+    ):
+        assert forbidden.casefold() not in text
+
+
+def test_fake_llm_professional_compact_brief_does_not_expose_backend_trace():
+    text = json.dumps(
+        _ticker_build(renderer_mode=RENDERER_MODE_FAKE_LLM)["professional_compact_brief"],
+        ensure_ascii=False,
+    ).casefold()
+
+    for forbidden in (
+        "backend trace",
+        "backend_grounding_summary",
+        "page_number",
+        "snippet",
+        "source_url",
+        "sha256",
+        "cache_path",
+        "candidate_items",
+    ):
+        assert forbidden.casefold() not in text
+
+
+def test_fake_llm_professional_compact_brief_does_not_shift_judgment_or_trade():
+    text = json.dumps(
+        _ticker_build(renderer_mode=RENDERER_MODE_FAKE_LLM)["professional_compact_brief"],
+        ensure_ascii=False,
+    ).casefold()
+
+    for forbidden in (
+        "user should decide",
+        "decide for yourself",
+        "needs user",
+        "buy",
+        "sell",
+        "hold",
+        "target price",
+        "portfolio",
+        "position",
+        "technical signal",
+        "trading advice",
+    ):
+        assert forbidden.casefold() not in text
+
+
+@pytest.mark.parametrize("renderer_mode", ["real_llm", "fake-llm", "custom"])
+def test_renderer_mode_cannot_be_arbitrary_string(renderer_mode):
+    with pytest.raises(AShareFundamentalSkillWrapperError, match="renderer_mode"):
+        build_a_share_fundamental_skill_response(
+            _ticker_request(renderer_mode=renderer_mode),
+            tushare_client=_FakeFinancialClient(),
+        )
+
+
+def test_renderer_mode_cannot_be_callable_like_marker():
+    with pytest.raises(AShareFundamentalSkillWrapperError, match="renderer_mode"):
+        build_a_share_fundamental_skill_response(
+            _ticker_request(renderer_mode=lambda context: context),
+            tushare_client=_FakeFinancialClient(),
+        )
+
+
+@pytest.mark.parametrize(
+    "renderer_mode",
+    [
+        "../fake_llm.py",
+        "C:\\tmp\\fake_llm.py",
+        "https://example.invalid/fake_llm",
+        "raw_provider_queue",
+    ],
+)
+def test_renderer_mode_cannot_be_path_like_or_raw_like_string(renderer_mode):
+    with pytest.raises(
+        AShareFundamentalSkillWrapperError,
+        match="renderer_mode|forbidden",
+    ):
+        build_a_share_fundamental_skill_response(
+            _ticker_request(renderer_mode=renderer_mode),
+            tushare_client=_FakeFinancialClient(),
+        )
+
+
+@pytest.mark.parametrize(
+    "renderer_mode",
+    ["sk-TestRendererMode12345678", "Bearer abcdefghijk"],
+)
+def test_renderer_mode_cannot_contain_token_like_string(renderer_mode):
+    with pytest.raises(
+        AShareFundamentalSkillWrapperError,
+        match="token_like_string|forbidden|renderer_mode",
+    ):
+        build_a_share_fundamental_skill_response(
+            _ticker_request(renderer_mode=renderer_mode),
+            tushare_client=_FakeFinancialClient(),
+        )
 
 
 def test_no_token_appears_in_result_or_captured_output(capsys):

@@ -93,6 +93,13 @@ SUPPORTED_TUSHARE_CLIENT_MODES = (
     TUSHARE_CLIENT_MODE_ENV_LIVE,
 )
 
+RENDERER_MODE_DETERMINISTIC = "deterministic"
+RENDERER_MODE_FAKE_LLM = "fake_llm"
+SUPPORTED_RENDERER_MODES = (
+    RENDERER_MODE_DETERMINISTIC,
+    RENDERER_MODE_FAKE_LLM,
+)
+
 PROFESSIONAL_ANALYST_COMPACT_BRIEF_SCHEMA_VERSION = (
     "professional_analyst_compact_brief.v1"
 )
@@ -128,6 +135,7 @@ _REQUEST_FIELDS = {
     "input_mode",
     "output_mode",
     "tushare_client_mode",
+    "renderer_mode",
     "user_facing_analysis_brief",
     "orchestration_result",
     "locator_result",
@@ -145,6 +153,7 @@ _REQUEST_SUMMARY_FIELDS = {
     "input_mode",
     "output_mode",
     "tushare_client_mode",
+    "renderer_mode",
     "allow_network",
     "allow_file_writes",
     "has_user_facing_analysis_brief",
@@ -173,6 +182,7 @@ _READINESS_FIELDS = {
     "status",
     "input_mode",
     "output_mode",
+    "renderer_mode",
     "required_inputs_present",
     "missing_required_inputs",
     "validation_errors",
@@ -233,6 +243,7 @@ _PROFESSIONAL_INTERNAL_PAYLOAD_FIELDS = {
     "internal_analysis_brief_schema_version",
     "wrapper_response_schema_version",
     "wrapper_readiness_status",
+    "renderer_mode",
     "not_official_verified",
     "not_for_trading_advice",
 }
@@ -541,6 +552,26 @@ def validate_a_share_fundamental_skill_request(
                 "tushare_client_mode requires ticker-only professional brief input_mode"
             )
 
+    renderer_mode = source.get("renderer_mode")
+    if (
+        renderer_mode is not None
+        and input_mode != INPUT_MODE_TICKER_ONLY_PROFESSIONAL_BRIEF
+    ):
+        raise AShareFundamentalSkillWrapperError(
+            "renderer_mode requires ticker-only professional brief input_mode"
+        )
+    if renderer_mode is None:
+        renderer_mode = (
+            RENDERER_MODE_DETERMINISTIC
+            if input_mode == INPUT_MODE_TICKER_ONLY_PROFESSIONAL_BRIEF
+            else None
+        )
+    else:
+        renderer_mode = _validate_renderer_mode(
+            renderer_mode,
+            "renderer_mode",
+        )
+
     allow_network = source.get("allow_network", False)
     if not isinstance(allow_network, bool):
         raise AShareFundamentalSkillWrapperError("allow_network must be bool")
@@ -579,6 +610,7 @@ def validate_a_share_fundamental_skill_request(
         "input_mode": input_mode,
         "output_mode": output_mode,
         "tushare_client_mode": tushare_client_mode,
+        "renderer_mode": renderer_mode,
         "user_facing_analysis_brief": deepcopy(
             source.get("user_facing_analysis_brief")
         ),
@@ -707,6 +739,7 @@ def build_request_summary(request: Mapping[str, Any]) -> dict[str, Any]:
         "input_mode": validated_request["input_mode"],
         "output_mode": validated_request["output_mode"],
         "tushare_client_mode": validated_request["tushare_client_mode"],
+        "renderer_mode": validated_request["renderer_mode"],
         "allow_network": validated_request["allow_network"],
         "allow_file_writes": False,
         "has_user_facing_analysis_brief": (
@@ -787,6 +820,7 @@ def build_skill_readiness(
         "status": status,
         "input_mode": validated_request["input_mode"],
         "output_mode": validated_request["output_mode"],
+        "renderer_mode": validated_request["renderer_mode"],
         "required_inputs_present": required_inputs_present,
         "missing_required_inputs": missing_inputs,
         "validation_errors": validation_errors,
@@ -870,6 +904,7 @@ def _build_ticker_only_professional_brief_response(
             "periods": deepcopy(request["periods"]),
             "allow_network": request["allow_network"],
             "tushare_client_mode": request["tushare_client_mode"],
+            "renderer_mode": request["renderer_mode"],
             "output_mode": request["output_mode"],
             "not_for_trading_advice": True,
         },
@@ -1100,6 +1135,11 @@ def _validate_request_summary(value: Any) -> dict[str, Any]:
         raise AShareFundamentalSkillWrapperError("request_summary input_mode invalid")
     if result["output_mode"] not in SUPPORTED_OUTPUT_MODES:
         raise AShareFundamentalSkillWrapperError("request_summary output_mode invalid")
+    _validate_optional_renderer_mode_for_input(
+        result["renderer_mode"],
+        result["input_mode"],
+        "request_summary.renderer_mode",
+    )
     _require_optional_string_list(result["periods"], "request_summary.periods")
     if result["tushare_client_mode"] is not None and (
         result["tushare_client_mode"] not in SUPPORTED_TUSHARE_CLIENT_MODES
@@ -1159,6 +1199,11 @@ def _validate_readiness(value: Any) -> dict[str, Any]:
         raise AShareFundamentalSkillWrapperError("readiness.input_mode invalid")
     if result["output_mode"] not in SUPPORTED_OUTPUT_MODES:
         raise AShareFundamentalSkillWrapperError("readiness.output_mode invalid")
+    _validate_optional_renderer_mode_for_input(
+        result["renderer_mode"],
+        result["input_mode"],
+        "readiness.renderer_mode",
+    )
     _require_bool(
         result["required_inputs_present"],
         "readiness.required_inputs_present",
@@ -1422,6 +1467,10 @@ def _validate_professional_internal_payload(value: Any) -> dict[str, Any]:
         "wrapper_readiness_status",
     ):
         _require_non_empty_string(result[key], f"professional_internal_payload.{key}")
+    _validate_renderer_mode(
+        result["renderer_mode"],
+        "professional_internal_payload.renderer_mode",
+    )
     _require_true(
         result["not_official_verified"],
         "professional_internal_payload.not_official_verified",
@@ -1732,6 +1781,30 @@ def _require_optional_string_list(value: Any, path: str) -> None:
     _require_string_list(value, path)
 
 
+def _validate_renderer_mode(value: Any, path: str) -> str:
+    if not isinstance(value, str):
+        raise AShareFundamentalSkillWrapperError(f"{path} must be string")
+    if value not in SUPPORTED_RENDERER_MODES:
+        raise AShareFundamentalSkillWrapperError(
+            f"unsupported renderer_mode: {value}"
+        )
+    return value
+
+
+def _validate_optional_renderer_mode_for_input(
+    value: Any,
+    input_mode: str,
+    path: str,
+) -> None:
+    if input_mode == INPUT_MODE_TICKER_ONLY_PROFESSIONAL_BRIEF:
+        _validate_renderer_mode(value, path)
+        return
+    if value is not None:
+        raise AShareFundamentalSkillWrapperError(
+            f"{path} requires ticker-only professional brief input_mode"
+        )
+
+
 def _require_non_empty_string(value: Any, path: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise AShareFundamentalSkillWrapperError(
@@ -1796,11 +1869,14 @@ __all__ = [
     "OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF_AND_INTERNAL_PAYLOAD",
     "PROFESSIONAL_ANALYST_COMPACT_BRIEF_SCHEMA_VERSION",
     "PROFESSIONAL_BRIEF_SECTION_KEYS",
+    "RENDERER_MODE_DETERMINISTIC",
+    "RENDERER_MODE_FAKE_LLM",
     "SKILL_READINESS_BLOCKED",
     "SKILL_READINESS_READY",
     "SKILL_READINESS_SKIPPED",
     "SUPPORTED_INPUT_MODES",
     "SUPPORTED_OUTPUT_MODES",
+    "SUPPORTED_RENDERER_MODES",
     "SUPPORTED_TUSHARE_CLIENT_MODES",
     "TUSHARE_CLIENT_MODE_ENV_LIVE",
     "TUSHARE_CLIENT_MODE_FAKE",

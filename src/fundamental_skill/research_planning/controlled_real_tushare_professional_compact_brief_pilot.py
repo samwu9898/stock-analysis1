@@ -75,6 +75,13 @@ SUPPORTED_TUSHARE_CLIENT_MODES = (
     TUSHARE_CLIENT_MODE_ENV_LIVE,
 )
 
+RENDERER_MODE_DETERMINISTIC = "deterministic"
+RENDERER_MODE_FAKE_LLM = "fake_llm"
+SUPPORTED_RENDERER_MODES = (
+    RENDERER_MODE_DETERMINISTIC,
+    RENDERER_MODE_FAKE_LLM,
+)
+
 OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF = "professional_compact_brief"
 OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF_AND_INTERNAL_PAYLOAD = (
     "professional_compact_brief_and_internal_payload"
@@ -113,6 +120,7 @@ _REQUEST_FIELDS = {
     "periods",
     "allow_network",
     "tushare_client_mode",
+    "renderer_mode",
     "output_mode",
     "not_for_trading_advice",
 }
@@ -140,6 +148,7 @@ _REQUEST_SUMMARY_FIELDS = {
     "periods",
     "allow_network",
     "tushare_client_mode",
+    "renderer_mode",
     "output_mode",
     "not_for_trading_advice",
 }
@@ -156,6 +165,7 @@ _READINESS_FIELDS = {
     "blocked_reasons",
     "allow_network",
     "tushare_client_mode",
+    "renderer_mode",
     "not_official_verified",
     "not_for_trading_advice",
 }
@@ -223,6 +233,7 @@ _INTERNAL_PAYLOAD_FIELDS = {
     "internal_analysis_brief_schema_version",
     "wrapper_response_schema_version",
     "wrapper_readiness_status",
+    "renderer_mode",
     "not_official_verified",
     "not_for_trading_advice",
 }
@@ -603,6 +614,11 @@ def build_controlled_real_tushare_professional_compact_brief_result(
     professional_brief = build_professional_analyst_compact_brief(
         provider_candidate_bundle,
         internal_analysis_brief=wrapper_response["user_facing_analysis_brief"],
+        analyst_renderer=(
+            RENDERER_MODE_FAKE_LLM
+            if validated_request["renderer_mode"] == RENDERER_MODE_FAKE_LLM
+            else None
+        ),
     )
     internal_payload = None
     if (
@@ -612,6 +628,7 @@ def build_controlled_real_tushare_professional_compact_brief_result(
         internal_payload = _build_internal_payload(
             provider_candidate_bundle,
             wrapper_response,
+            renderer_mode=validated_request["renderer_mode"],
         )
 
     result = {
@@ -676,6 +693,10 @@ def validate_controlled_real_tushare_professional_compact_brief_request(
         raise ControlledRealTushareProfessionalCompactBriefPilotError(
             "output_mode unsupported"
         )
+    renderer_mode = _validate_renderer_mode(
+        source.get("renderer_mode", RENDERER_MODE_DETERMINISTIC),
+        "renderer_mode",
+    )
     if source.get("not_for_trading_advice", True) is not True:
         raise ControlledRealTushareProfessionalCompactBriefPilotError(
             "not_for_trading_advice must be true"
@@ -715,6 +736,7 @@ def validate_controlled_real_tushare_professional_compact_brief_request(
         "periods": _periods(source.get("periods")),
         "allow_network": allow_network,
         "tushare_client_mode": client_mode,
+        "renderer_mode": renderer_mode,
         "output_mode": output_mode,
         "not_for_trading_advice": True,
     }
@@ -862,6 +884,7 @@ def build_request_summary(request: Mapping[str, Any]) -> dict[str, Any]:
         "periods": list(validated["periods"]),
         "allow_network": validated["allow_network"],
         "tushare_client_mode": validated["tushare_client_mode"],
+        "renderer_mode": validated["renderer_mode"],
         "output_mode": validated["output_mode"],
         "not_for_trading_advice": True,
     }
@@ -916,6 +939,7 @@ def build_e2e_readiness(
         "blocked_reasons": reasons,
         "allow_network": validated["allow_network"],
         "tushare_client_mode": validated["tushare_client_mode"],
+        "renderer_mode": validated["renderer_mode"],
         "not_official_verified": True,
         "not_for_trading_advice": True,
     }
@@ -1192,6 +1216,8 @@ def _blocked_result(
 def _build_internal_payload(
     provider_candidate_bundle: Mapping[str, Any],
     wrapper_response: Mapping[str, Any],
+    *,
+    renderer_mode: str,
 ) -> dict[str, Any]:
     payload = {
         "schema_version": CONTROLLED_REAL_TUSHARE_PROFESSIONAL_INTERNAL_PAYLOAD_SCHEMA_VERSION,
@@ -1201,6 +1227,7 @@ def _build_internal_payload(
         ]["schema_version"],
         "wrapper_response_schema_version": wrapper_response["schema_version"],
         "wrapper_readiness_status": wrapper_response["readiness"]["status"],
+        "renderer_mode": renderer_mode,
         "not_official_verified": True,
         "not_for_trading_advice": True,
     }
@@ -1625,6 +1652,7 @@ def _validate_internal_payload(value: Any) -> dict[str, Any]:
         "wrapper_readiness_status",
     ):
         _require_non_empty_string(result[key], f"internal_payload.{key}")
+    _validate_renderer_mode(result["renderer_mode"], "internal_payload.renderer_mode")
     _require_true(result["not_official_verified"], "internal_payload.not_official_verified")
     _require_true(result["not_for_trading_advice"], "internal_payload.not_for_trading_advice")
     _assert_no_secret_like_anywhere(result)
@@ -1658,6 +1686,10 @@ def _validate_request_summary(value: Any) -> dict[str, Any]:
         raise ControlledRealTushareProfessionalCompactBriefPilotError(
             "request_summary tushare_client_mode invalid"
         )
+    _validate_renderer_mode(
+        result["renderer_mode"],
+        "request_summary.renderer_mode",
+    )
     if result["output_mode"] not in SUPPORTED_OUTPUT_MODES:
         raise ControlledRealTushareProfessionalCompactBriefPilotError(
             "request_summary output_mode invalid"
@@ -1711,6 +1743,7 @@ def _validate_readiness(value: Any) -> dict[str, Any]:
         raise ControlledRealTushareProfessionalCompactBriefPilotError(
             "readiness tushare_client_mode invalid"
         )
+    _validate_renderer_mode(result["renderer_mode"], "readiness.renderer_mode")
     _require_true(result["not_official_verified"], "readiness.not_official_verified")
     _require_true(result["not_for_trading_advice"], "readiness.not_for_trading_advice")
     _assert_no_secret_like_anywhere(result)
@@ -2034,6 +2067,18 @@ def _require_bool(value: Any, path: str) -> None:
         )
 
 
+def _validate_renderer_mode(value: Any, path: str) -> str:
+    if not isinstance(value, str):
+        raise ControlledRealTushareProfessionalCompactBriefPilotError(
+            f"{path} must be string"
+        )
+    if value not in SUPPORTED_RENDERER_MODES:
+        raise ControlledRealTushareProfessionalCompactBriefPilotError(
+            f"unsupported renderer_mode: {value}"
+        )
+    return value
+
+
 def _require_true(value: Any, path: str) -> None:
     if value is not True:
         raise ControlledRealTushareProfessionalCompactBriefPilotError(
@@ -2065,7 +2110,10 @@ __all__ = [
     "OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF",
     "OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF_AND_INTERNAL_PAYLOAD",
     "PROFESSIONAL_BRIEF_SECTION_KEYS",
+    "RENDERER_MODE_DETERMINISTIC",
+    "RENDERER_MODE_FAKE_LLM",
     "SUPPORTED_OUTPUT_MODES",
+    "SUPPORTED_RENDERER_MODES",
     "SUPPORTED_TUSHARE_CLIENT_MODES",
     "TUSHARE_CLIENT_MODE_ENV_LIVE",
     "TUSHARE_CLIENT_MODE_FAKE",

@@ -8,6 +8,7 @@ import pytest
 
 from src.fundamental_skill.research_planning.controlled_real_tushare_professional_compact_brief_pilot import (
     ControlledRealTushareProfessionalCompactBriefPilotError,
+    RENDERER_MODE_FAKE_LLM,
     assert_no_controlled_real_tushare_professional_brief_forbidden_markers,
     assert_no_user_visible_engineering_labels,
     build_controlled_real_tushare_professional_compact_brief_result,
@@ -229,6 +230,89 @@ def test_raw_file_or_backend_trace_request_fields_rejected():
                 request,
                 tushare_client=_FakeFinancialClient(),
             )
+
+
+@pytest.mark.parametrize("renderer_mode", ["real_llm", "fake-llm", "custom"])
+def test_unsupported_renderer_mode_rejected(renderer_mode):
+    with pytest.raises(
+        ControlledRealTushareProfessionalCompactBriefPilotError,
+        match="renderer_mode",
+    ):
+        build_controlled_real_tushare_professional_compact_brief_result(
+            _request(renderer_mode=renderer_mode),
+            tushare_client=_FakeFinancialClient(),
+        )
+
+
+@pytest.mark.parametrize(
+    "renderer_mode",
+    ["sk-TestRendererMode12345678", "Bearer abcdefghijk"],
+)
+def test_renderer_mode_token_like_string_rejected(renderer_mode):
+    with pytest.raises(
+        ControlledRealTushareProfessionalCompactBriefPilotError,
+        match="secret_like_string|renderer_mode",
+    ):
+        build_controlled_real_tushare_professional_compact_brief_result(
+            _request(renderer_mode=renderer_mode),
+            tushare_client=_FakeFinancialClient(),
+        )
+
+
+@pytest.mark.parametrize(
+    "renderer_mode",
+    [
+        "../fake_llm.py",
+        "C:\\tmp\\fake_llm.py",
+        "https://example.invalid/fake_llm",
+        "raw_provider_queue",
+    ],
+)
+def test_renderer_mode_path_like_or_raw_like_strings_rejected(renderer_mode):
+    with pytest.raises(
+        ControlledRealTushareProfessionalCompactBriefPilotError,
+        match="renderer_mode|forbidden",
+    ):
+        build_controlled_real_tushare_professional_compact_brief_result(
+            _request(renderer_mode=renderer_mode),
+            tushare_client=_FakeFinancialClient(),
+        )
+
+
+def test_fake_llm_route_cannot_leak_backend_trace():
+    result = _build(renderer_mode=RENDERER_MODE_FAKE_LLM)
+    serialized = json.dumps(result["professional_compact_brief"], ensure_ascii=False)
+
+    for forbidden in (
+        "backend_grounding_summary",
+        "page_number",
+        "snippet",
+        "source_url",
+        "sha256",
+        "cache_path",
+        "candidate_items",
+    ):
+        assert forbidden not in serialized
+
+
+def test_fake_llm_route_cannot_output_trading_advice():
+    result = _build(renderer_mode=RENDERER_MODE_FAKE_LLM)
+    serialized = json.dumps(
+        result["professional_compact_brief"],
+        ensure_ascii=False,
+    ).casefold()
+
+    for forbidden in (
+        "buy",
+        "sell",
+        "hold",
+        "target price",
+        "portfolio",
+        "position",
+        "technical signal",
+        "trading advice",
+    ):
+        assert forbidden.casefold() not in serialized
 
 
 def test_internal_candidate_statuses_are_not_promoted_to_official_fact():
