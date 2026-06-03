@@ -11,10 +11,12 @@ import pytest
 import src.fundamental_skill.research_planning.ticker_only_professional_brief_quality_evaluation as evaluation_module
 from src.fundamental_skill.research_planning.ticker_only_professional_brief_quality_evaluation import (
     QUALITY_SAMPLE_IDS,
+    QUALITY_STATUS_FAIL,
     QUALITY_STATUS_PASS,
     QUALITY_STATUS_WARNING,
     RUBRIC_DIMENSION_IDS,
     TICKER_ONLY_PROFESSIONAL_BRIEF_QUALITY_EVALUATION_REQUEST_SCHEMA_VERSION,
+    build_fake_llm_frontstage_quality_comparison,
     build_default_quality_rubric,
     build_quality_sample_requests,
     build_ticker_only_professional_brief_quality_evaluation,
@@ -22,6 +24,8 @@ from src.fundamental_skill.research_planning.ticker_only_professional_brief_qual
 
 
 _BASE_RESULT = None
+_FAKE_LLM_RESULT = None
+_BASELINE_COMPARISON = None
 
 
 def _request(**overrides):
@@ -35,20 +39,51 @@ def _request(**overrides):
     return request
 
 
-def _result():
-    global _BASE_RESULT
-    if _BASE_RESULT is None:
-        _BASE_RESULT = build_ticker_only_professional_brief_quality_evaluation(
-            _request()
+def _result(renderer_mode="deterministic"):
+    global _BASE_RESULT, _FAKE_LLM_RESULT
+    if renderer_mode == "deterministic":
+        if _BASE_RESULT is None:
+            _BASE_RESULT = build_ticker_only_professional_brief_quality_evaluation(
+                _request(renderer_mode=renderer_mode)
+            )
+        return copy.deepcopy(_BASE_RESULT)
+    if renderer_mode == "fake_llm":
+        if _FAKE_LLM_RESULT is None:
+            _FAKE_LLM_RESULT = build_ticker_only_professional_brief_quality_evaluation(
+                _request(renderer_mode=renderer_mode)
+            )
+        return copy.deepcopy(_FAKE_LLM_RESULT)
+    return build_ticker_only_professional_brief_quality_evaluation(
+        _request(renderer_mode=renderer_mode)
+    )
+
+
+def _comparison():
+    global _BASELINE_COMPARISON
+    if _BASELINE_COMPARISON is None:
+        _BASELINE_COMPARISON = build_fake_llm_frontstage_quality_comparison(
+            _request(sample_ids=["baseline_600406_like"])
         )
-    return copy.deepcopy(_BASE_RESULT)
+    return copy.deepcopy(_BASELINE_COMPARISON)
 
 
-def _sample_result(sample_id):
-    for sample in _result()["sample_results"]:
+def _sample_result(sample_id, renderer_mode="deterministic"):
+    for sample in _result(renderer_mode)["sample_results"]:
         if sample["sample_id"] == sample_id:
             return sample
     raise AssertionError(f"missing sample result: {sample_id}")
+
+
+def _sample_ids(result):
+    return [sample["sample_id"] for sample in result["sample_results"]]
+
+
+def _changed_preview_differences(comparison):
+    return [
+        difference
+        for difference in comparison["preview_differences"]
+        if difference["changed"]
+    ]
 
 
 def _issue_ids(sample):
@@ -123,7 +158,28 @@ def test_valid_evaluation_request_returns_result():
     assert result["schema_version"].endswith("_result.v1")
     assert result["sample_count"] == len(QUALITY_SAMPLE_IDS)
     assert result["overall_status"] == QUALITY_STATUS_WARNING
+    assert result["renderer_mode"] == "deterministic"
     assert result["not_for_trading_advice"] is True
+
+
+def test_default_evaluation_request_uses_deterministic_renderer_mode():
+    request = evaluation_module.validate_quality_evaluation_request(_request())
+
+    assert request["renderer_mode"] == "deterministic"
+
+
+@pytest.mark.parametrize("renderer_mode", ["deterministic", "fake_llm"])
+def test_explicit_renderer_mode_returns_valid_result(renderer_mode):
+    result = build_ticker_only_professional_brief_quality_evaluation(
+        _request(
+            sample_ids=["baseline_600406_like"],
+            renderer_mode=renderer_mode,
+        )
+    )
+
+    assert result["renderer_mode"] == renderer_mode
+    assert result["sample_count"] == 1
+    assert result["sample_results"][0]["renderer_mode"] == renderer_mode
 
 
 def test_evaluation_uses_wrapper_ticker_only_professional_brief_path(monkeypatch):
@@ -147,15 +203,17 @@ def test_evaluation_uses_wrapper_ticker_only_professional_brief_path(monkeypatch
     )
 
     result = build_ticker_only_professional_brief_quality_evaluation(
-        _request(sample_ids=["baseline_600406_like"])
+        _request(sample_ids=["baseline_600406_like"], renderer_mode="fake_llm")
     )
 
     assert result["sample_count"] == 1
+    assert result["renderer_mode"] == "fake_llm"
     assert calls
     wrapper_request, injected_client = calls[0]
     assert wrapper_request["input_mode"] == "ticker_only_professional_brief"
     assert wrapper_request["output_mode"] == "professional_compact_brief"
     assert wrapper_request["tushare_client_mode"] == "injected"
+    assert wrapper_request["renderer_mode"] == "fake_llm"
     assert wrapper_request["allow_network"] is False
     assert wrapper_request["allow_file_writes"] is False
     assert injected_client is not None
@@ -168,10 +226,26 @@ def test_sample_set_includes_required_scenarios(sample_id):
     assert sample_id in {sample["sample_id"] for sample in samples}
 
 
+def test_build_quality_sample_requests_passes_renderer_mode_to_wrapper_request():
+    samples = build_quality_sample_requests(
+        sample_ids=["baseline_600406_like"],
+        renderer_mode="fake_llm",
+    )
+
+    assert samples[0]["renderer_mode"] == "fake_llm"
+    assert samples[0]["wrapper_request"]["renderer_mode"] == "fake_llm"
+
+
 def test_all_generated_samples_have_professional_compact_brief_preview():
     for sample in _result()["sample_results"]:
         assert sample["professional_compact_brief_preview"]
         assert sample["brief_section_keys"]
+
+
+def test_sample_result_records_renderer_mode():
+    sample = _sample_result("baseline_600406_like", renderer_mode="fake_llm")
+
+    assert sample["renderer_mode"] == "fake_llm"
 
 
 def test_scorecard_contains_required_rubric_dimensions():
@@ -211,6 +285,67 @@ def test_aggregate_issues_are_deterministic():
         "receivables_working_capital_pressure",
         "sparse_metrics_professional_boundary",
     ]
+
+
+def test_deterministic_and_fake_llm_results_have_same_samples():
+    deterministic = _result("deterministic")
+    fake_llm = _result("fake_llm")
+
+    assert _sample_ids(deterministic) == _sample_ids(fake_llm)
+    assert deterministic["sample_count"] == fake_llm["sample_count"]
+
+
+def test_fake_llm_preview_differs_from_deterministic_in_core_section():
+    deterministic = _sample_result("baseline_600406_like", "deterministic")
+    fake_llm = _sample_result("baseline_600406_like", "fake_llm")
+
+    deterministic_preview = deterministic["professional_compact_brief_preview"]
+    fake_llm_preview = fake_llm["professional_compact_brief_preview"]
+
+    assert any(
+        deterministic_preview[section_id]["view"]
+        != fake_llm_preview[section_id]["view"]
+        for section_id in (
+            "overall_view",
+            "business_view",
+            "financial_view",
+            "operating_quality_view",
+            "industry_macro_view",
+            "risk_view",
+        )
+    )
+
+
+def test_fake_llm_result_has_no_unexpected_fail_count():
+    fake_llm = _result("fake_llm")
+
+    assert fake_llm["fail_count"] == 0
+    assert all(
+        sample["overall_status"] != QUALITY_STATUS_FAIL
+        for sample in fake_llm["sample_results"]
+    )
+
+
+def test_fake_llm_aggregate_issues_are_deterministic():
+    first = build_ticker_only_professional_brief_quality_evaluation(
+        _request(renderer_mode="fake_llm")
+    )
+    second = build_ticker_only_professional_brief_quality_evaluation(
+        _request(renderer_mode="fake_llm")
+    )
+
+    assert first["aggregate_issues"] == second["aggregate_issues"]
+
+
+def test_fake_llm_covers_all_required_sample_scenarios():
+    samples = build_quality_sample_requests(renderer_mode="fake_llm")
+
+    assert [sample["sample_id"] for sample in samples] == list(QUALITY_SAMPLE_IDS)
+    assert all(sample["renderer_mode"] == "fake_llm" for sample in samples)
+    assert all(
+        sample["wrapper_request"]["renderer_mode"] == "fake_llm"
+        for sample in samples
+    )
 
 
 def test_cashflow_supports_profit_sample_passes_cashflow_profit_judgment():
@@ -261,11 +396,74 @@ def test_non_600406_sample_passes():
     assert sample["ts_code"] == "000001.SZ"
 
 
+def test_fake_llm_sparse_or_missing_metrics_warns_without_engineering_labels():
+    sample = _sample_result("sparse_or_missing_metrics", renderer_mode="fake_llm")
+    serialized = json.dumps(sample, ensure_ascii=False)
+
+    assert sample["overall_status"] == QUALITY_STATUS_WARNING
+    assert "sparse_metrics_professional_boundary" in _issue_ids(sample)
+    for forbidden in (
+        "provider_candidate",
+        "pending_official_verification",
+        "pending verification",
+    ):
+        assert forbidden not in serialized
+
+
+def test_fake_llm_non_600406_sample_passes():
+    sample = _sample_result("non_600406_sample", renderer_mode="fake_llm")
+
+    assert sample["overall_status"] == QUALITY_STATUS_PASS
+    assert sample["stock_code"] == "000001"
+    assert sample["ts_code"] == "000001.SZ"
+
+
+def test_comparison_helper_returns_status_and_counts():
+    comparison = _comparison()
+
+    assert comparison["sample_count"] == 1
+    assert comparison["sample_ids"] == ["baseline_600406_like"]
+    assert comparison["deterministic_overall_status"] == QUALITY_STATUS_PASS
+    assert comparison["fake_llm_overall_status"] in (
+        QUALITY_STATUS_PASS,
+        QUALITY_STATUS_WARNING,
+    )
+    assert isinstance(comparison["deterministic_warning_count"], int)
+    assert isinstance(comparison["fake_llm_warning_count"], int)
+    assert comparison["deterministic_fail_count"] == 0
+    assert comparison["fake_llm_fail_count"] == 0
+    assert comparison["not_for_trading_advice"] is True
+
+
+def test_comparison_helper_detects_frontstage_preview_differences():
+    comparison = _comparison()
+    changed = _changed_preview_differences(comparison)
+
+    assert changed
+    assert {
+        "sample_id",
+        "section_id",
+        "deterministic_excerpt",
+        "fake_llm_excerpt",
+        "changed",
+    } == set(changed[0])
+    assert comparison["fake_llm_regression_detected"] is False
+
+
 def test_input_request_not_mutated():
-    request = _request(sample_ids=["baseline_600406_like"])
+    request = _request(sample_ids=["baseline_600406_like"], renderer_mode="fake_llm")
     before = copy.deepcopy(request)
 
     build_ticker_only_professional_brief_quality_evaluation(request)
+
+    assert request == before
+
+
+def test_comparison_helper_does_not_mutate_input_request():
+    request = _request(sample_ids=["baseline_600406_like"], renderer_mode="fake_llm")
+    before = copy.deepcopy(request)
+
+    build_fake_llm_frontstage_quality_comparison(request)
 
     assert request == before
 
@@ -283,6 +481,22 @@ def test_no_output_fixtures_or_manifest_write(monkeypatch, tmp_path):
     assert not (tmp_path / "accepted_manifest.json").exists()
 
 
+def test_comparison_helper_does_not_write_output_fixtures_or_manifest(
+    monkeypatch,
+    tmp_path,
+):
+    monkeypatch.chdir(tmp_path)
+
+    comparison = build_fake_llm_frontstage_quality_comparison(
+        _request(sample_ids=["baseline_600406_like"])
+    )
+
+    assert comparison["sample_count"] == 1
+    assert not (tmp_path / "output").exists()
+    assert not (tmp_path / "fixtures").exists()
+    assert not (tmp_path / "accepted_manifest.json").exists()
+
+
 def test_no_network_call(monkeypatch):
     def fail_network(*_args, **_kwargs):
         raise AssertionError("network should not be called")
@@ -290,7 +504,7 @@ def test_no_network_call(monkeypatch):
     monkeypatch.setattr(socket, "create_connection", fail_network)
 
     result = build_ticker_only_professional_brief_quality_evaluation(
-        _request(sample_ids=["baseline_600406_like"])
+        _request(sample_ids=["baseline_600406_like"], renderer_mode="fake_llm")
     )
 
     assert result["sample_count"] == 1
@@ -298,6 +512,18 @@ def test_no_network_call(monkeypatch):
 
 def test_result_does_not_include_raw_provider_bundle_or_candidate_items():
     serialized = json.dumps(_result(), ensure_ascii=False)
+
+    for forbidden in (
+        "raw_provider_bundle",
+        "provider_candidate_bundle",
+        "candidate_items",
+        "raw_provider_queue",
+    ):
+        assert forbidden not in serialized
+
+
+def test_fake_llm_result_does_not_include_raw_provider_bundle_or_candidate_items():
+    serialized = json.dumps(_result("fake_llm"), ensure_ascii=False)
 
     for forbidden in (
         "raw_provider_bundle",

@@ -21,6 +21,8 @@ from .a_share_fundamental_skill_wrapper import (
     INPUT_MODE_TICKER_ONLY_PROFESSIONAL_BRIEF,
     OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF,
     PROFESSIONAL_BRIEF_SECTION_KEYS,
+    RENDERER_MODE_DETERMINISTIC,
+    RENDERER_MODE_FAKE_LLM,
     SKILL_READINESS_READY,
     TUSHARE_CLIENT_MODE_INJECTED,
     build_a_share_fundamental_skill_response,
@@ -45,6 +47,14 @@ TICKER_ONLY_PROFESSIONAL_BRIEF_QUALITY_SCORECARD_SCHEMA_VERSION = (
 TICKER_ONLY_PROFESSIONAL_BRIEF_QUALITY_ISSUE_SCHEMA_VERSION = (
     "ticker_only_professional_brief_quality_issue.v1"
 )
+TICKER_ONLY_PROFESSIONAL_BRIEF_FRONTSTAGE_QUALITY_COMPARISON_SCHEMA_VERSION = (
+    "ticker_only_professional_brief_frontstage_quality_comparison.v1"
+)
+
+SUPPORTED_QUALITY_EVALUATION_RENDERER_MODES = (
+    RENDERER_MODE_DETERMINISTIC,
+    RENDERER_MODE_FAKE_LLM,
+)
 
 QUALITY_STATUS_PASS = "pass"
 QUALITY_STATUS_WARNING = "warning"
@@ -54,6 +64,11 @@ QUALITY_STATUSES = (
     QUALITY_STATUS_WARNING,
     QUALITY_STATUS_FAIL,
 )
+_QUALITY_STATUS_RANK = {
+    QUALITY_STATUS_PASS: 0,
+    QUALITY_STATUS_WARNING: 1,
+    QUALITY_STATUS_FAIL: 2,
+}
 
 QUALITY_SAMPLE_IDS = (
     "baseline_600406_like",
@@ -93,6 +108,7 @@ _REQUEST_FIELDS = {
     "schema_version",
     "sample_ids",
     "include_professional_compact_brief_preview",
+    "renderer_mode",
     "not_for_trading_advice",
 }
 
@@ -103,6 +119,7 @@ _RESULT_FIELDS = {
     "pass_count",
     "warning_count",
     "fail_count",
+    "renderer_mode",
     "sample_results",
     "aggregate_issues",
     "not_for_trading_advice",
@@ -113,6 +130,7 @@ _SAMPLE_RESULT_FIELDS = {
     "stock_code",
     "ts_code",
     "scenario",
+    "renderer_mode",
     "overall_status",
     "readiness_status",
     "brief_section_keys",
@@ -482,6 +500,7 @@ def build_ticker_only_professional_brief_quality_evaluation(
     rubric = build_default_quality_rubric()
     samples = build_quality_sample_requests(
         sample_ids=validated_request["sample_ids"],
+        renderer_mode=validated_request["renderer_mode"],
     )
     sample_results = []
     for sample in samples:
@@ -522,6 +541,7 @@ def build_ticker_only_professional_brief_quality_evaluation(
         "pass_count": status_counter[QUALITY_STATUS_PASS],
         "warning_count": status_counter[QUALITY_STATUS_WARNING],
         "fail_count": status_counter[QUALITY_STATUS_FAIL],
+        "renderer_mode": validated_request["renderer_mode"],
         "sample_results": sample_results,
         "aggregate_issues": aggregate_issues,
         "not_for_trading_advice": True,
@@ -529,13 +549,121 @@ def build_ticker_only_professional_brief_quality_evaluation(
     return validate_quality_evaluation_result(result)
 
 
+def build_fake_llm_frontstage_quality_comparison(
+    request: Mapping[str, Any],
+    *,
+    tushare_client_factory: TushareClientFactory | None = None,
+) -> dict[str, Any]:
+    """Compare deterministic and fake LLM frontstage professional previews."""
+
+    validated_request = validate_quality_evaluation_request(request)
+    base_request = {
+        "schema_version": validated_request["schema_version"],
+        "sample_ids": list(validated_request["sample_ids"]),
+        "include_professional_compact_brief_preview": True,
+        "not_for_trading_advice": True,
+    }
+    deterministic_result = build_ticker_only_professional_brief_quality_evaluation(
+        {
+            **base_request,
+            "renderer_mode": RENDERER_MODE_DETERMINISTIC,
+        },
+        tushare_client_factory=tushare_client_factory,
+    )
+    fake_llm_result = build_ticker_only_professional_brief_quality_evaluation(
+        {
+            **base_request,
+            "renderer_mode": RENDERER_MODE_FAKE_LLM,
+        },
+        tushare_client_factory=tushare_client_factory,
+    )
+
+    sample_ids = list(validated_request["sample_ids"])
+    _require_matching_sample_ids(deterministic_result, sample_ids, "deterministic")
+    _require_matching_sample_ids(fake_llm_result, sample_ids, "fake_llm")
+
+    deterministic_samples = {
+        sample["sample_id"]: sample
+        for sample in deterministic_result["sample_results"]
+    }
+    fake_llm_samples = {
+        sample["sample_id"]: sample
+        for sample in fake_llm_result["sample_results"]
+    }
+    preview_differences = []
+    has_changed_preview = False
+    for sample_id in sample_ids:
+        deterministic_preview = deterministic_samples[sample_id].get(
+            "professional_compact_brief_preview"
+        ) or {}
+        fake_llm_preview = fake_llm_samples[sample_id].get(
+            "professional_compact_brief_preview"
+        ) or {}
+        assert_no_quality_evaluation_forbidden_markers(deterministic_preview)
+        assert_no_quality_evaluation_forbidden_markers(fake_llm_preview)
+        assert_no_frontstage_engineering_labels(deterministic_preview)
+        assert_no_frontstage_engineering_labels(fake_llm_preview)
+        for section_id in _SECTION_VIEW_KEYS:
+            deterministic_excerpt = _frontstage_section_excerpt(
+                deterministic_preview,
+                section_id,
+            )
+            fake_llm_excerpt = _frontstage_section_excerpt(
+                fake_llm_preview,
+                section_id,
+            )
+            changed = deterministic_excerpt != fake_llm_excerpt
+            has_changed_preview = has_changed_preview or changed
+            preview_differences.append(
+                {
+                    "sample_id": sample_id,
+                    "section_id": section_id,
+                    "deterministic_excerpt": deterministic_excerpt,
+                    "fake_llm_excerpt": fake_llm_excerpt,
+                    "changed": changed,
+                }
+            )
+
+    fake_llm_regression_detected = _fake_llm_regression_detected(
+        deterministic_result,
+        fake_llm_result,
+    )
+    comparison = {
+        "schema_version": (
+            TICKER_ONLY_PROFESSIONAL_BRIEF_FRONTSTAGE_QUALITY_COMPARISON_SCHEMA_VERSION
+        ),
+        "sample_count": len(sample_ids),
+        "sample_ids": sample_ids,
+        "deterministic_overall_status": deterministic_result["overall_status"],
+        "fake_llm_overall_status": fake_llm_result["overall_status"],
+        "deterministic_warning_count": deterministic_result["warning_count"],
+        "fake_llm_warning_count": fake_llm_result["warning_count"],
+        "deterministic_fail_count": deterministic_result["fail_count"],
+        "fake_llm_fail_count": fake_llm_result["fail_count"],
+        "preview_differences": preview_differences,
+        "fake_llm_regression_detected": fake_llm_regression_detected,
+        "conclusion": _frontstage_comparison_conclusion(
+            has_changed_preview=has_changed_preview,
+            fake_llm_regression_detected=fake_llm_regression_detected,
+            deterministic_warning_count=deterministic_result["warning_count"],
+            fake_llm_warning_count=fake_llm_result["warning_count"],
+        ),
+        "not_for_trading_advice": True,
+    }
+    assert_no_quality_evaluation_forbidden_markers(comparison)
+    assert_no_frontstage_engineering_labels(comparison["preview_differences"])
+    return comparison
+
+
 def build_quality_sample_requests(
     *,
     sample_ids: Iterable[str] | None = None,
+    renderer_mode: str = RENDERER_MODE_DETERMINISTIC,
 ) -> list[dict[str, Any]]:
     """Build deterministic in-memory wrapper requests for quality samples."""
 
     selected_sample_ids = _normalise_sample_ids(sample_ids)
+    selected_renderer_mode = _validate_renderer_mode(renderer_mode, "renderer_mode")
     samples = []
     for sample_id in selected_sample_ids:
         identity = _SAMPLE_IDENTITY[sample_id]
@@ -548,6 +676,7 @@ def build_quality_sample_requests(
             "input_mode": INPUT_MODE_TICKER_ONLY_PROFESSIONAL_BRIEF,
             "output_mode": OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF,
             "tushare_client_mode": TUSHARE_CLIENT_MODE_INJECTED,
+            "renderer_mode": selected_renderer_mode,
             "allow_network": False,
             "allow_file_writes": False,
             "not_for_trading_advice": True,
@@ -562,6 +691,7 @@ def build_quality_sample_requests(
                 "ts_code": identity["ts_code"],
                 "company_name_hint": identity["company_name_hint"],
                 "scenario": identity["scenario"],
+                "renderer_mode": selected_renderer_mode,
                 "periods": list(_DEFAULT_PERIODS),
                 "wrapper_request": wrapper_request,
                 "not_for_trading_advice": True,
@@ -757,10 +887,15 @@ def validate_quality_evaluation_request(
         raise TickerOnlyProfessionalBriefQualityEvaluationError(
             "include_professional_compact_brief_preview must be bool"
         )
+    renderer_mode = _validate_renderer_mode(
+        source.get("renderer_mode", RENDERER_MODE_DETERMINISTIC),
+        "request.renderer_mode",
+    )
     result = {
         "schema_version": source["schema_version"],
         "sample_ids": _normalise_sample_ids(source.get("sample_ids")),
         "include_professional_compact_brief_preview": include_preview,
+        "renderer_mode": renderer_mode,
         "not_for_trading_advice": True,
     }
     assert_no_quality_evaluation_forbidden_markers(result)
@@ -791,6 +926,10 @@ def validate_quality_evaluation_result(
         raise TickerOnlyProfessionalBriefQualityEvaluationError(
             "result.overall_status invalid"
         )
+    result_renderer_mode = _validate_renderer_mode(
+        copied["renderer_mode"],
+        "result.renderer_mode",
+    )
     _require_true(copied["not_for_trading_advice"], "result.not_for_trading_advice")
     sample_results = _require_list(copied["sample_results"], "result.sample_results")
     copied["sample_results"] = [
@@ -810,6 +949,13 @@ def validate_quality_evaluation_result(
     if sample_count != len(copied["sample_results"]):
         raise TickerOnlyProfessionalBriefQualityEvaluationError(
             "result.sample_count mismatch"
+        )
+    if any(
+        item["renderer_mode"] != result_renderer_mode
+        for item in copied["sample_results"]
+    ):
+        raise TickerOnlyProfessionalBriefQualityEvaluationError(
+            "result.renderer_mode sample mismatch"
         )
     status_counter = Counter(item["overall_status"] for item in copied["sample_results"])
     for key, status in (
@@ -1001,6 +1147,7 @@ def _build_sample_result(
             "stock_code": sample["stock_code"],
             "ts_code": sample["ts_code"],
             "scenario": sample["scenario"],
+            "renderer_mode": sample["renderer_mode"],
             "overall_status": QUALITY_STATUS_FAIL,
             "readiness_status": str(readiness_status),
             "brief_section_keys": [],
@@ -1027,6 +1174,7 @@ def _build_sample_result(
         "stock_code": sample["stock_code"],
         "ts_code": sample["ts_code"],
         "scenario": sample["scenario"],
+        "renderer_mode": sample["renderer_mode"],
         "overall_status": scorecard["overall_status"],
         "readiness_status": str(readiness_status),
         "brief_section_keys": _brief_section_keys(brief),
@@ -1241,6 +1389,64 @@ def _professional_compact_brief_preview(brief: Mapping[str, Any]) -> dict[str, A
     return preview
 
 
+def _frontstage_section_excerpt(
+    preview: Mapping[str, Any],
+    section_id: str,
+    *,
+    max_length: int = 240,
+) -> str:
+    preview_mapping = _require_mapping(preview, "professional_preview")
+    text = re.sub(r"\s+", " ", _section_text(preview_mapping, section_id)).strip()
+    if len(text) > max_length:
+        text = f"{text[: max_length - 3].rstrip()}..."
+    assert_no_quality_evaluation_forbidden_markers(text)
+    assert_no_frontstage_engineering_labels(text)
+    return text
+
+
+def _require_matching_sample_ids(
+    evaluation_result: Mapping[str, Any],
+    expected_sample_ids: list[str],
+    label: str,
+) -> None:
+    actual_sample_ids = [
+        sample["sample_id"]
+        for sample in evaluation_result["sample_results"]
+    ]
+    if actual_sample_ids != expected_sample_ids:
+        raise TickerOnlyProfessionalBriefQualityEvaluationError(
+            f"{label} sample_ids mismatch"
+        )
+
+
+def _fake_llm_regression_detected(
+    deterministic_result: Mapping[str, Any],
+    fake_llm_result: Mapping[str, Any],
+) -> bool:
+    if fake_llm_result["fail_count"] > deterministic_result["fail_count"]:
+        return True
+    return (
+        _QUALITY_STATUS_RANK[fake_llm_result["overall_status"]]
+        > _QUALITY_STATUS_RANK[deterministic_result["overall_status"]]
+    )
+
+
+def _frontstage_comparison_conclusion(
+    *,
+    has_changed_preview: bool,
+    fake_llm_regression_detected: bool,
+    deterministic_warning_count: int,
+    fake_llm_warning_count: int,
+) -> str:
+    if fake_llm_regression_detected:
+        return "fake_llm regression detected"
+    if not has_changed_preview:
+        return "fake_llm does not improve enough"
+    if fake_llm_warning_count != deterministic_warning_count:
+        return "fake_llm differs but warning distribution changed"
+    return "fake_llm differs and no regression detected"
+
+
 def _aggregate_issues(
     sample_results: Iterable[Mapping[str, Any]],
 ) -> list[dict[str, Any]]:
@@ -1415,6 +1621,10 @@ def _validate_sample_result(value: Any, path: str) -> dict[str, Any]:
     _require_sample_id(result["sample_id"])
     for key in ("stock_code", "ts_code", "scenario", "readiness_status"):
         _require_non_empty_string(result[key], f"{path}.{key}")
+    result["renderer_mode"] = _validate_renderer_mode(
+        result["renderer_mode"],
+        f"{path}.renderer_mode",
+    )
     if result["overall_status"] not in QUALITY_STATUSES:
         raise TickerOnlyProfessionalBriefQualityEvaluationError(
             f"{path}.overall_status invalid"
@@ -1558,6 +1768,61 @@ def _normalise_sample_ids(sample_ids: Iterable[str] | None) -> list[str]:
             "sample_ids cannot be empty"
         )
     return result
+
+
+def _validate_renderer_mode(value: Any, path: str) -> str:
+    if not isinstance(value, str):
+        raise TickerOnlyProfessionalBriefQualityEvaluationError(
+            f"{path} must be string"
+        )
+    if value != value.strip() or not value:
+        raise TickerOnlyProfessionalBriefQualityEvaluationError(
+            f"{path} invalid"
+        )
+    if value in SUPPORTED_QUALITY_EVALUATION_RENDERER_MODES:
+        return value
+    if _renderer_mode_looks_like_escape(value):
+        raise TickerOnlyProfessionalBriefQualityEvaluationError(
+            "unsupported renderer_mode"
+        )
+    raise TickerOnlyProfessionalBriefQualityEvaluationError(
+        "unsupported renderer_mode"
+    )
+
+
+def _renderer_mode_looks_like_escape(value: str) -> bool:
+    lowered = value.casefold()
+    if any(pattern.search(value) for pattern in _SECRET_LIKE_PATTERNS):
+        return True
+    if _contains_any(
+        value,
+        (
+            "token",
+            ".env",
+            "tushare_token",
+            "api_key",
+            "authorization",
+        ),
+    ):
+        return True
+    return any(
+        marker in lowered
+        for marker in (
+            "://",
+            "/",
+            "\\",
+            "(",
+            ")",
+            "=>",
+            "lambda",
+            "callable",
+            "__",
+            "import",
+            "os.",
+            "subprocess",
+            ":",
+        )
+    )
 
 
 def _require_sample_id(value: Any) -> str:
@@ -1807,6 +2072,7 @@ __all__ = [
     "RUBRIC_DIMENSION_IDS",
     "TICKER_ONLY_PROFESSIONAL_BRIEF_QUALITY_EVALUATION_REQUEST_SCHEMA_VERSION",
     "TICKER_ONLY_PROFESSIONAL_BRIEF_QUALITY_EVALUATION_RESULT_SCHEMA_VERSION",
+    "TICKER_ONLY_PROFESSIONAL_BRIEF_FRONTSTAGE_QUALITY_COMPARISON_SCHEMA_VERSION",
     "TICKER_ONLY_PROFESSIONAL_BRIEF_QUALITY_ISSUE_SCHEMA_VERSION",
     "TICKER_ONLY_PROFESSIONAL_BRIEF_QUALITY_RUBRIC_SCHEMA_VERSION",
     "TICKER_ONLY_PROFESSIONAL_BRIEF_QUALITY_SAMPLE_SCHEMA_VERSION",
@@ -1814,6 +2080,7 @@ __all__ = [
     "TickerOnlyProfessionalBriefQualityEvaluationError",
     "assert_no_frontstage_engineering_labels",
     "assert_no_quality_evaluation_forbidden_markers",
+    "build_fake_llm_frontstage_quality_comparison",
     "build_default_quality_rubric",
     "build_quality_sample_requests",
     "build_ticker_only_professional_brief_quality_evaluation",

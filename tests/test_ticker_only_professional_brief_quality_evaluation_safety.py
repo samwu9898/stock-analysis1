@@ -11,6 +11,7 @@ from src.fundamental_skill.research_planning.ticker_only_professional_brief_qual
     TickerOnlyProfessionalBriefQualityEvaluationError,
     assert_no_frontstage_engineering_labels,
     assert_no_quality_evaluation_forbidden_markers,
+    build_fake_llm_frontstage_quality_comparison,
     build_ticker_only_professional_brief_quality_evaluation,
 )
 
@@ -25,6 +26,58 @@ def _request(**overrides):
     }
     request.update(overrides)
     return request
+
+
+@pytest.mark.parametrize("renderer_mode", ["unsupported", "real_llm", "custom"])
+def test_unsupported_renderer_mode_rejected(renderer_mode):
+    with pytest.raises(TickerOnlyProfessionalBriefQualityEvaluationError):
+        build_ticker_only_professional_brief_quality_evaluation(
+            _request(renderer_mode=renderer_mode)
+        )
+
+
+@pytest.mark.parametrize(
+    "renderer_mode",
+    ["lambda x: x", "callable()", "__import__('os')", "module:function"],
+)
+def test_renderer_mode_callable_like_rejected(renderer_mode):
+    with pytest.raises(TickerOnlyProfessionalBriefQualityEvaluationError):
+        build_ticker_only_professional_brief_quality_evaluation(
+            _request(renderer_mode=renderer_mode)
+        )
+
+
+@pytest.mark.parametrize(
+    "renderer_mode",
+    [
+        "https://example.test/renderer",
+        "file:///tmp/renderer.py",
+        "../renderer.py",
+        r"C:\tmp\renderer.py",
+        "renderer/path",
+    ],
+)
+def test_renderer_mode_url_or_path_like_rejected(renderer_mode):
+    with pytest.raises(TickerOnlyProfessionalBriefQualityEvaluationError):
+        build_ticker_only_professional_brief_quality_evaluation(
+            _request(renderer_mode=renderer_mode)
+        )
+
+
+@pytest.mark.parametrize(
+    "renderer_mode",
+    [
+        "token",
+        "tushare_token",
+        "sk-1234567890abcdef",
+        "Bearer abcdefghijklmnop",
+    ],
+)
+def test_renderer_mode_token_like_string_rejected(renderer_mode):
+    with pytest.raises(TickerOnlyProfessionalBriefQualityEvaluationError):
+        build_ticker_only_professional_brief_quality_evaluation(
+            _request(renderer_mode=renderer_mode)
+        )
 
 
 @pytest.mark.parametrize(
@@ -192,11 +245,83 @@ def test_report_v1_and_html_artifacts_rejected(value):
         assert_no_quality_evaluation_forbidden_markers(value)
 
 
+def test_fake_llm_result_contains_no_forbidden_runtime_markers():
+    result = build_ticker_only_professional_brief_quality_evaluation(
+        _request(renderer_mode="fake_llm")
+    )
+    serialized = json.dumps(result, ensure_ascii=False)
+
+    for forbidden in (
+        "token",
+        ".env",
+        "tushare_token",
+        "raw_provider_rows",
+        "raw_provider_queue",
+        "raw_provider_bundle",
+        "candidate_items",
+        "source_url",
+        "page_number",
+        "snippet",
+        "sha256",
+        "cache_path",
+        "provider_candidate",
+        "pending_official_verification",
+        "pending verification",
+        "user should decide",
+        "decide by yourself",
+        "track by yourself",
+        "buy",
+        "sell",
+        "hold",
+        "target price",
+        "portfolio",
+        "position",
+        "technical signal",
+        '"backend_trace"',
+        "backend trace",
+        "backend_grounding_summary",
+    ):
+        assert forbidden not in serialized
+
+
+def test_comparison_summary_contains_no_token_backend_trace_or_candidate_items():
+    comparison = build_fake_llm_frontstage_quality_comparison(
+        _request(sample_ids=["baseline_600406_like"])
+    )
+    serialized = json.dumps(comparison, ensure_ascii=False)
+
+    for forbidden in (
+        "token",
+        ".env",
+        "tushare_token",
+        "backend_trace",
+        "backend trace",
+        "raw_provider_bundle",
+        "raw_provider_rows",
+        "candidate_items",
+        "source_url",
+        "page_number",
+        "snippet",
+        "sha256",
+        "cache_path",
+        "buy",
+        "sell",
+        "hold",
+        "target price",
+        "portfolio",
+        "position",
+        "technical signal",
+    ):
+        assert forbidden not in serialized
+
+
 def test_no_token_appears_in_result_or_captured_output(monkeypatch, capsys):
     secret = "S3cr3tValueThatShouldStayHidden123456789"
     monkeypatch.setenv("TUSHARE_" + "TOKEN", secret)
 
-    result = build_ticker_only_professional_brief_quality_evaluation(_request())
+    result = build_ticker_only_professional_brief_quality_evaluation(
+        _request(renderer_mode="fake_llm")
+    )
     captured = capsys.readouterr()
     serialized = json.dumps(result, ensure_ascii=False)
 
@@ -206,7 +331,9 @@ def test_no_token_appears_in_result_or_captured_output(monkeypatch, capsys):
 
 
 def test_no_backend_trace_appears_in_professional_preview():
-    result = build_ticker_only_professional_brief_quality_evaluation(_request())
+    result = build_ticker_only_professional_brief_quality_evaluation(
+        _request(renderer_mode="fake_llm")
+    )
     preview = result["sample_results"][0]["professional_compact_brief_preview"]
     serialized = json.dumps(preview, ensure_ascii=False)
 
