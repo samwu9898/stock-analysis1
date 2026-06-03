@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
 """Callable A-share fundamental skill wrapper thin slice.
 
-This module is a small in-memory entry point around the existing Analysis Brief
-chain. It accepts only explicit validated inputs, never fetches live data, never
-writes artifacts, and never builds report or HTML outputs.
+This module is a small callable entry point around the existing Analysis Brief
+and controlled professional brief chains. Legacy analysis_brief and
+orchestration_result modes remain in-memory and do not fetch live data.
+ticker_only_professional_brief may call the controlled Tushare professional
+brief pilot only through the narrow env_live + allow_network=true path. The
+wrapper never writes artifacts, never reads local credential files, never builds
+Report V1 or HTML outputs, and never provides trading advice.
 """
 
 from __future__ import annotations
@@ -41,9 +45,11 @@ A_SHARE_FUNDAMENTAL_COMPACT_RESPONSE_SCHEMA_VERSION = (
 
 INPUT_MODE_ANALYSIS_BRIEF = "analysis_brief"
 INPUT_MODE_ORCHESTRATION_RESULT = "orchestration_result"
+INPUT_MODE_TICKER_ONLY_PROFESSIONAL_BRIEF = "ticker_only_professional_brief"
 SUPPORTED_INPUT_MODES = (
     INPUT_MODE_ANALYSIS_BRIEF,
     INPUT_MODE_ORCHESTRATION_RESULT,
+    INPUT_MODE_TICKER_ONLY_PROFESSIONAL_BRIEF,
 )
 UNSUPPORTED_INPUT_MODES = (
     "ticker_only_live",
@@ -57,9 +63,15 @@ OUTPUT_MODE_COMPACT_BRIEF = "compact_brief"
 OUTPUT_MODE_COMPACT_BRIEF_AND_REPORT_V1_COMPATIBILITY_PAYLOAD = (
     "compact_brief_and_report_v1_compatibility_payload"
 )
+OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF = "professional_compact_brief"
+OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF_AND_INTERNAL_PAYLOAD = (
+    "professional_compact_brief_and_internal_payload"
+)
 SUPPORTED_OUTPUT_MODES = (
     OUTPUT_MODE_COMPACT_BRIEF,
     OUTPUT_MODE_COMPACT_BRIEF_AND_REPORT_V1_COMPATIBILITY_PAYLOAD,
+    OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF,
+    OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF_AND_INTERNAL_PAYLOAD,
 )
 UNSUPPORTED_OUTPUT_MODES = (
     "report_v1_artifact",
@@ -70,6 +82,34 @@ UNSUPPORTED_OUTPUT_MODES = (
 
 SKILL_READINESS_READY = "ready"
 SKILL_READINESS_BLOCKED = "blocked"
+SKILL_READINESS_SKIPPED = "skipped"
+
+TUSHARE_CLIENT_MODE_FAKE = "fake"
+TUSHARE_CLIENT_MODE_INJECTED = "injected"
+TUSHARE_CLIENT_MODE_ENV_LIVE = "env_live"
+SUPPORTED_TUSHARE_CLIENT_MODES = (
+    TUSHARE_CLIENT_MODE_FAKE,
+    TUSHARE_CLIENT_MODE_INJECTED,
+    TUSHARE_CLIENT_MODE_ENV_LIVE,
+)
+
+PROFESSIONAL_ANALYST_COMPACT_BRIEF_SCHEMA_VERSION = (
+    "professional_analyst_compact_brief.v1"
+)
+PROFESSIONAL_ANALYST_COMPACT_BRIEF_SECTION_SCHEMA_VERSION = (
+    "professional_analyst_compact_brief_section.v1"
+)
+PROFESSIONAL_BRIEF_SECTION_KEYS = (
+    "overall_view",
+    "business_view",
+    "financial_view",
+    "operating_quality_view",
+    "industry_macro_view",
+    "risk_view",
+    "key_variables",
+    "conclusion_boundary",
+    "source_note",
+)
 
 BLOCKED_REASON_VALIDATED_ANALYSIS_INPUT_REQUIRED = (
     "validated_analysis_input_required"
@@ -84,8 +124,10 @@ _REQUEST_FIELDS = {
     "stock_code",
     "ts_code",
     "company_name_hint",
+    "periods",
     "input_mode",
     "output_mode",
+    "tushare_client_mode",
     "user_facing_analysis_brief",
     "orchestration_result",
     "locator_result",
@@ -99,8 +141,10 @@ _REQUEST_SUMMARY_FIELDS = {
     "stock_code",
     "ts_code",
     "company_name_hint",
+    "periods",
     "input_mode",
     "output_mode",
+    "tushare_client_mode",
     "allow_network",
     "allow_file_writes",
     "has_user_facing_analysis_brief",
@@ -116,6 +160,8 @@ _RESPONSE_FIELDS = {
     "compact_response",
     "user_facing_analysis_brief",
     "report_v1_compatibility_payload",
+    "professional_compact_brief",
+    "professional_internal_payload",
     "blocked_reasons",
     "caveats",
     "not_official_verified",
@@ -133,6 +179,8 @@ _READINESS_FIELDS = {
     "has_compact_response",
     "has_user_facing_analysis_brief",
     "has_report_v1_compatibility_payload",
+    "has_professional_compact_brief",
+    "has_professional_internal_payload",
     "has_report_v1_artifact",
     "has_html_artifact",
     "has_trading_advice",
@@ -159,6 +207,34 @@ _COMPACT_SECTION_SUMMARY_FIELDS = {
     "section_title",
     "analysis_label",
     "summary_points",
+}
+
+_PROFESSIONAL_BRIEF_FIELDS = {
+    "schema_version",
+    "stock_code",
+    "ts_code",
+    "company_name_hint",
+    "title",
+    *PROFESSIONAL_BRIEF_SECTION_KEYS,
+    "not_for_trading_advice",
+}
+
+_PROFESSIONAL_SECTION_FIELDS = {
+    "schema_version",
+    "section_id",
+    "title",
+    "view",
+    "not_for_trading_advice",
+}
+
+_PROFESSIONAL_INTERNAL_PAYLOAD_FIELDS = {
+    "schema_version",
+    "provider_candidate_count",
+    "internal_analysis_brief_schema_version",
+    "wrapper_response_schema_version",
+    "wrapper_readiness_status",
+    "not_official_verified",
+    "not_for_trading_advice",
 }
 
 _RAW_INPUT_KEYS = {
@@ -198,6 +274,41 @@ _COMPACT_FORBIDDEN_OUTPUT_MARKERS = (
     "official metadata",
     "Report V1 artifact path",
     "HTML artifact path",
+)
+
+_PROFESSIONAL_FRONTSTAGE_FORBIDDEN_MARKERS = (
+    "provider_candidate",
+    "provider candidate",
+    "pending_official_verification",
+    "pending verification",
+    "official verification",
+    "official_verified_count",
+    "data gap",
+    "evidence locator",
+    "anchor map",
+    "artifact cached",
+    "reconciliation",
+    "provider vs official",
+    "provider",
+    "page_number",
+    "snippet",
+    "source_url",
+    "sha256",
+    "cache_path",
+    "\u5f85\u6838\u9a8c",
+    "\u6570\u636e\u7f3a\u53e3",
+    "\u63a8\u7406",
+    "\u5b98\u65b9\u6838\u9a8c",
+    "\u5c1a\u672a\u5b8c\u6210\u5b98\u65b9\u6838\u9a8c",
+    "\u5019\u9009\u6570\u636e",
+    "\u8bc1\u636e\u72b6\u6001",
+    "\u53e3\u5f84\u4e00\u81f4\u6027",
+    "\u7528\u6237\u81ea\u884c",
+    "\u81ea\u884c\u5224\u65ad",
+    "\u81ea\u884c\u8ddf\u8e2a",
+    "\u9700\u8981\u7528\u6237",
+    "\u5efa\u8bae\u7528\u6237",
+    "\u8bf7\u7ed3\u5408",
 )
 
 _ALLOWED_EXACT_TEXTS = {
@@ -301,10 +412,18 @@ class AShareFundamentalSkillWrapperError(ValueError):
 
 def build_a_share_fundamental_skill_response(
     request: Mapping[str, Any],
+    *,
+    tushare_client: Any | None = None,
 ) -> dict[str, Any]:
     """Build the compact skill response from explicit validated inputs."""
 
     validated_request = validate_a_share_fundamental_skill_request(request)
+    if validated_request["input_mode"] == INPUT_MODE_TICKER_ONLY_PROFESSIONAL_BRIEF:
+        return _build_ticker_only_professional_brief_response(
+            validated_request,
+            tushare_client=tushare_client,
+        )
+
     missing_inputs = _missing_required_inputs(validated_request)
     if missing_inputs:
         blocked_reasons = [_validated_analysis_input_required_reason()]
@@ -318,6 +437,8 @@ def build_a_share_fundamental_skill_response(
             "compact_response": None,
             "user_facing_analysis_brief": None,
             "report_v1_compatibility_payload": None,
+            "professional_compact_brief": None,
+            "professional_internal_payload": None,
             "blocked_reasons": blocked_reasons,
             "caveats": _response_caveats(),
             "not_official_verified": True,
@@ -347,6 +468,8 @@ def build_a_share_fundamental_skill_response(
         "compact_response": compact_response,
         "user_facing_analysis_brief": brief,
         "report_v1_compatibility_payload": compatibility_payload,
+        "professional_compact_brief": None,
+        "professional_internal_payload": None,
         "blocked_reasons": [],
         "caveats": _response_caveats(),
         "not_official_verified": True,
@@ -379,19 +502,55 @@ def validate_a_share_fundamental_skill_request(
             f"unsupported input_mode: {input_mode}"
         )
 
-    output_mode = source.get("output_mode", OUTPUT_MODE_COMPACT_BRIEF)
+    output_mode = source.get(
+        "output_mode",
+        (
+            OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF
+            if input_mode == INPUT_MODE_TICKER_ONLY_PROFESSIONAL_BRIEF
+            else OUTPUT_MODE_COMPACT_BRIEF
+        ),
+    )
     if output_mode not in SUPPORTED_OUTPUT_MODES:
         raise AShareFundamentalSkillWrapperError(
             f"unsupported output_mode: {output_mode}"
         )
+    if input_mode == INPUT_MODE_TICKER_ONLY_PROFESSIONAL_BRIEF:
+        if output_mode not in {
+            OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF,
+            OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF_AND_INTERNAL_PAYLOAD,
+        }:
+            raise AShareFundamentalSkillWrapperError(
+                "ticker-only professional brief requires professional output_mode"
+            )
+    elif output_mode in {
+        OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF,
+        OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF_AND_INTERNAL_PAYLOAD,
+    }:
+        raise AShareFundamentalSkillWrapperError(
+            "professional output_mode requires ticker-only professional brief input_mode"
+        )
+
+    tushare_client_mode = source.get("tushare_client_mode")
+    if tushare_client_mode is not None:
+        if tushare_client_mode not in SUPPORTED_TUSHARE_CLIENT_MODES:
+            raise AShareFundamentalSkillWrapperError(
+                f"unsupported tushare_client_mode: {tushare_client_mode}"
+            )
+        if input_mode != INPUT_MODE_TICKER_ONLY_PROFESSIONAL_BRIEF:
+            raise AShareFundamentalSkillWrapperError(
+                "tushare_client_mode requires ticker-only professional brief input_mode"
+            )
 
     allow_network = source.get("allow_network", False)
-    if allow_network is True:
-        raise AShareFundamentalSkillWrapperError(
-            "allow_network=true is not allowed"
-        )
     if not isinstance(allow_network, bool):
         raise AShareFundamentalSkillWrapperError("allow_network must be bool")
+    if allow_network is True and not (
+        input_mode == INPUT_MODE_TICKER_ONLY_PROFESSIONAL_BRIEF
+        and tushare_client_mode == TUSHARE_CLIENT_MODE_ENV_LIVE
+    ):
+        raise AShareFundamentalSkillWrapperError(
+            "allow_network=true is only allowed for ticker-only professional brief env_live mode"
+        )
 
     allow_file_writes = source.get("allow_file_writes", False)
     if allow_file_writes is True:
@@ -416,14 +575,16 @@ def validate_a_share_fundamental_skill_request(
             source.get("company_name_hint"),
             "company_name_hint",
         ),
+        "periods": _optional_string_list(source.get("periods"), "periods"),
         "input_mode": input_mode,
         "output_mode": output_mode,
+        "tushare_client_mode": tushare_client_mode,
         "user_facing_analysis_brief": deepcopy(
             source.get("user_facing_analysis_brief")
         ),
         "orchestration_result": deepcopy(source.get("orchestration_result")),
         "locator_result": deepcopy(source.get("locator_result")),
-        "allow_network": False,
+        "allow_network": allow_network,
         "allow_file_writes": False,
         "not_for_trading_advice": True,
     }
@@ -473,6 +634,18 @@ def validate_a_share_fundamental_skill_response(
             validate_analysis_brief_report_v1_compatibility_payload(
                 compatibility_payload
             )
+        )
+
+    professional_brief = result["professional_compact_brief"]
+    if professional_brief is not None:
+        result["professional_compact_brief"] = _validate_professional_compact_brief(
+            professional_brief
+        )
+
+    internal_payload = result["professional_internal_payload"]
+    if internal_payload is not None:
+        result["professional_internal_payload"] = _validate_professional_internal_payload(
+            internal_payload
         )
 
     _assert_response_consistency(result)
@@ -530,9 +703,11 @@ def build_request_summary(request: Mapping[str, Any]) -> dict[str, Any]:
         "stock_code": validated_request["stock_code"],
         "ts_code": validated_request["ts_code"],
         "company_name_hint": validated_request["company_name_hint"],
+        "periods": deepcopy(validated_request["periods"]),
         "input_mode": validated_request["input_mode"],
         "output_mode": validated_request["output_mode"],
-        "allow_network": False,
+        "tushare_client_mode": validated_request["tushare_client_mode"],
+        "allow_network": validated_request["allow_network"],
         "allow_file_writes": False,
         "has_user_facing_analysis_brief": (
             validated_request.get("user_facing_analysis_brief") is not None
@@ -551,7 +726,10 @@ def build_skill_readiness(
     *,
     brief: Mapping[str, Any] | None = None,
     compatibility_payload: Mapping[str, Any] | None = None,
+    professional_compact_brief: Mapping[str, Any] | None = None,
+    professional_internal_payload: Mapping[str, Any] | None = None,
     blocked_reasons: Iterable[Mapping[str, str]] | None = None,
+    status_override: str | None = None,
 ) -> dict[str, Any]:
     """Build readiness without fetching data or constructing artifacts."""
 
@@ -563,21 +741,47 @@ def build_skill_readiness(
         validated_request["output_mode"]
         == OUTPUT_MODE_COMPACT_BRIEF_AND_REPORT_V1_COMPATIBILITY_PAYLOAD
     )
+    requires_professional_internal_payload = (
+        validated_request["output_mode"]
+        == OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF_AND_INTERNAL_PAYLOAD
+    )
+    is_ticker_only_professional = (
+        validated_request["input_mode"] == INPUT_MODE_TICKER_ONLY_PROFESSIONAL_BRIEF
+    )
     has_brief = brief is not None
     has_payload = compatibility_payload is not None
-    has_compact_response = has_brief and not reason_list
-    required_inputs_present = not missing_inputs
-    status = (
-        SKILL_READINESS_READY
-        if (
-            required_inputs_present
-            and not validation_errors
-            and has_compact_response
-            and has_brief
-            and (has_payload if requires_compatibility else True)
-        )
-        else SKILL_READINESS_BLOCKED
+    has_professional_brief = professional_compact_brief is not None
+    has_professional_internal_payload = professional_internal_payload is not None
+    has_compact_response = (
+        has_brief and not reason_list and not is_ticker_only_professional
     )
+    required_inputs_present = not missing_inputs
+    ready = (
+        required_inputs_present
+        and not validation_errors
+        and (
+            (
+                has_professional_brief
+                and (
+                    has_professional_internal_payload
+                    if requires_professional_internal_payload
+                    else True
+                )
+            )
+            if is_ticker_only_professional
+            else (
+                has_compact_response
+                and has_brief
+                and (has_payload if requires_compatibility else True)
+            )
+        )
+    )
+    if ready:
+        status = SKILL_READINESS_READY
+    elif status_override == SKILL_READINESS_SKIPPED:
+        status = SKILL_READINESS_SKIPPED
+    else:
+        status = SKILL_READINESS_BLOCKED
     readiness = {
         "schema_version": A_SHARE_FUNDAMENTAL_SKILL_READINESS_SCHEMA_VERSION,
         "status": status,
@@ -589,6 +793,8 @@ def build_skill_readiness(
         "has_compact_response": has_compact_response,
         "has_user_facing_analysis_brief": has_brief,
         "has_report_v1_compatibility_payload": has_payload,
+        "has_professional_compact_brief": has_professional_brief,
+        "has_professional_internal_payload": has_professional_internal_payload,
         "has_report_v1_artifact": False,
         "has_html_artifact": False,
         "has_trading_advice": False,
@@ -619,6 +825,159 @@ def _assert_no_request_forbidden_markers(value: Any) -> None:
         )
 
 
+def _build_ticker_only_professional_brief_response(
+    request: Mapping[str, Any],
+    *,
+    tushare_client: Any | None,
+) -> dict[str, Any]:
+    missing_inputs = _missing_required_inputs(request)
+    if missing_inputs:
+        return _blocked_ticker_only_professional_brief_response(
+            request,
+            _missing_ticker_only_blocked_reasons(missing_inputs),
+        )
+    if (
+        request["tushare_client_mode"] == TUSHARE_CLIENT_MODE_INJECTED
+        and tushare_client is None
+    ):
+        return _blocked_ticker_only_professional_brief_response(
+            request,
+            [
+                {
+                    "reason": "injected_tushare_client_required",
+                    "message": (
+                        "ticker-only professional brief injected mode requires "
+                        "an injected Tushare client"
+                    ),
+                }
+            ],
+        )
+
+    from .controlled_real_tushare_professional_compact_brief_pilot import (
+        CONTROLLED_REAL_TUSHARE_PROFESSIONAL_COMPACT_BRIEF_REQUEST_SCHEMA_VERSION,
+        E2E_READINESS_SKIPPED,
+        build_controlled_real_tushare_professional_compact_brief_result,
+    )
+
+    pilot_result = build_controlled_real_tushare_professional_compact_brief_result(
+        {
+            "schema_version": (
+                CONTROLLED_REAL_TUSHARE_PROFESSIONAL_COMPACT_BRIEF_REQUEST_SCHEMA_VERSION
+            ),
+            "stock_code": request["stock_code"],
+            "ts_code": request["ts_code"],
+            "company_name_hint": request["company_name_hint"],
+            "periods": deepcopy(request["periods"]),
+            "allow_network": request["allow_network"],
+            "tushare_client_mode": request["tushare_client_mode"],
+            "output_mode": request["output_mode"],
+            "not_for_trading_advice": True,
+        },
+        tushare_client=tushare_client,
+    )
+
+    professional_brief = pilot_result["professional_compact_brief"]
+    internal_payload = pilot_result["internal_payload"]
+    blocked_reasons = _professional_blocked_reasons(pilot_result)
+    status_override = (
+        SKILL_READINESS_SKIPPED
+        if pilot_result["readiness"]["status"] == E2E_READINESS_SKIPPED
+        else None
+    )
+    response = {
+        "schema_version": A_SHARE_FUNDAMENTAL_SKILL_RESPONSE_SCHEMA_VERSION,
+        "readiness": build_skill_readiness(
+            request,
+            professional_compact_brief=professional_brief,
+            professional_internal_payload=internal_payload,
+            blocked_reasons=blocked_reasons,
+            status_override=status_override,
+        ),
+        "request_summary": build_request_summary(request),
+        "compact_response": None,
+        "user_facing_analysis_brief": None,
+        "report_v1_compatibility_payload": None,
+        "professional_compact_brief": professional_brief,
+        "professional_internal_payload": internal_payload,
+        "blocked_reasons": blocked_reasons,
+        "caveats": _professional_response_caveats(),
+        "not_official_verified": True,
+        "not_for_trading_advice": True,
+    }
+    return validate_a_share_fundamental_skill_response(response)
+
+
+def _blocked_ticker_only_professional_brief_response(
+    request: Mapping[str, Any],
+    blocked_reasons: Iterable[Mapping[str, str]],
+) -> dict[str, Any]:
+    reason_list = _validate_blocked_reasons(list(blocked_reasons))
+    response = {
+        "schema_version": A_SHARE_FUNDAMENTAL_SKILL_RESPONSE_SCHEMA_VERSION,
+        "readiness": build_skill_readiness(
+            request,
+            blocked_reasons=reason_list,
+        ),
+        "request_summary": build_request_summary(request),
+        "compact_response": None,
+        "user_facing_analysis_brief": None,
+        "report_v1_compatibility_payload": None,
+        "professional_compact_brief": None,
+        "professional_internal_payload": None,
+        "blocked_reasons": reason_list,
+        "caveats": _professional_response_caveats(),
+        "not_official_verified": True,
+        "not_for_trading_advice": True,
+    }
+    return validate_a_share_fundamental_skill_response(response)
+
+
+def _missing_ticker_only_blocked_reasons(
+    missing_inputs: Iterable[str],
+) -> list[dict[str, str]]:
+    reasons = []
+    for missing_input in missing_inputs:
+        if missing_input == "stock_code_or_ts_code":
+            reasons.append(
+                {
+                    "reason": "ticker_identity_required",
+                    "message": (
+                        "ticker-only professional brief requires stock_code or ts_code"
+                    ),
+                }
+            )
+        elif missing_input == "tushare_client_mode":
+            reasons.append(
+                {
+                    "reason": "tushare_client_mode_required",
+                    "message": (
+                        "ticker-only professional brief requires explicit "
+                        "tushare_client_mode"
+                    ),
+                }
+            )
+        else:
+            reasons.append(
+                {
+                    "reason": f"{missing_input}_required",
+                    "message": f"ticker-only professional brief requires {missing_input}",
+                }
+            )
+    return reasons
+
+
+def _professional_blocked_reasons(
+    pilot_result: Mapping[str, Any],
+) -> list[dict[str, str]]:
+    return [
+        {
+            "reason": str(reason),
+            "message": f"ticker-only professional brief blocked: {reason}",
+        }
+        for reason in pilot_result["blocked_reasons"]
+    ]
+
+
 def _build_or_validate_brief(request: Mapping[str, Any]) -> dict[str, Any]:
     if request["input_mode"] == INPUT_MODE_ANALYSIS_BRIEF:
         return validate_user_facing_analysis_brief(
@@ -639,6 +998,13 @@ def _missing_required_inputs(request: Mapping[str, Any]) -> list[str]:
         if request.get("user_facing_analysis_brief") is None:
             return ["user_facing_analysis_brief"]
         return []
+    if request["input_mode"] == INPUT_MODE_TICKER_ONLY_PROFESSIONAL_BRIEF:
+        missing = []
+        if request.get("stock_code") is None and request.get("ts_code") is None:
+            missing.append("stock_code_or_ts_code")
+        if request.get("tushare_client_mode") is None:
+            missing.append("tushare_client_mode")
+        return missing
     if request.get("orchestration_result") is None:
         return ["orchestration_result"]
     return []
@@ -656,6 +1022,14 @@ def _response_caveats() -> list[str]:
         "Wrapper accepts explicit validated analysis inputs only.",
         "No external data call or artifact write is performed.",
         "Compact response is derived from user-visible brief sections only.",
+    ]
+
+
+def _professional_response_caveats() -> list[str]:
+    return [
+        "Wrapper accepts ticker-only professional brief requests only in this mode.",
+        "No report, HTML, fixture, or output artifact is written.",
+        "Professional compact brief is the user-facing view.",
     ]
 
 
@@ -726,13 +1100,27 @@ def _validate_request_summary(value: Any) -> dict[str, Any]:
         raise AShareFundamentalSkillWrapperError("request_summary input_mode invalid")
     if result["output_mode"] not in SUPPORTED_OUTPUT_MODES:
         raise AShareFundamentalSkillWrapperError("request_summary output_mode invalid")
+    _require_optional_string_list(result["periods"], "request_summary.periods")
+    if result["tushare_client_mode"] is not None and (
+        result["tushare_client_mode"] not in SUPPORTED_TUSHARE_CLIENT_MODES
+    ):
+        raise AShareFundamentalSkillWrapperError(
+            "request_summary tushare_client_mode invalid"
+        )
     _require_optional_string(result["stock_code"], "request_summary.stock_code")
     _require_optional_string(result["ts_code"], "request_summary.ts_code")
     _require_optional_string(
         result["company_name_hint"],
         "request_summary.company_name_hint",
     )
-    _require_false(result["allow_network"], "request_summary.allow_network")
+    _require_bool(result["allow_network"], "request_summary.allow_network")
+    if result["allow_network"] is True and not (
+        result["input_mode"] == INPUT_MODE_TICKER_ONLY_PROFESSIONAL_BRIEF
+        and result["tushare_client_mode"] == TUSHARE_CLIENT_MODE_ENV_LIVE
+    ):
+        raise AShareFundamentalSkillWrapperError(
+            "request_summary allow_network true outside env_live professional path"
+        )
     _require_false(
         result["allow_file_writes"],
         "request_summary.allow_file_writes",
@@ -761,7 +1149,11 @@ def _validate_readiness(value: Any) -> dict[str, Any]:
     result = deepcopy(dict(readiness))
     if result["schema_version"] != A_SHARE_FUNDAMENTAL_SKILL_READINESS_SCHEMA_VERSION:
         raise AShareFundamentalSkillWrapperError("invalid readiness schema_version")
-    if result["status"] not in {SKILL_READINESS_READY, SKILL_READINESS_BLOCKED}:
+    if result["status"] not in {
+        SKILL_READINESS_READY,
+        SKILL_READINESS_BLOCKED,
+        SKILL_READINESS_SKIPPED,
+    }:
         raise AShareFundamentalSkillWrapperError("readiness.status invalid")
     if result["input_mode"] not in SUPPORTED_INPUT_MODES:
         raise AShareFundamentalSkillWrapperError("readiness.input_mode invalid")
@@ -780,6 +1172,8 @@ def _validate_readiness(value: Any) -> dict[str, Any]:
         "has_compact_response",
         "has_user_facing_analysis_brief",
         "has_report_v1_compatibility_payload",
+        "has_professional_compact_brief",
+        "has_professional_internal_payload",
         "has_report_v1_artifact",
         "has_html_artifact",
         "has_trading_advice",
@@ -790,6 +1184,9 @@ def _validate_readiness(value: Any) -> dict[str, Any]:
     _require_false(result["has_trading_advice"], "has_trading_advice")
     _require_true(result["not_for_trading_advice"], "not_for_trading_advice")
     if result["status"] == SKILL_READINESS_READY:
+        is_ticker_only_professional = (
+            result["input_mode"] == INPUT_MODE_TICKER_ONLY_PROFESSIONAL_BRIEF
+        )
         if not result["required_inputs_present"]:
             raise AShareFundamentalSkillWrapperError(
                 "ready readiness requires required inputs"
@@ -798,6 +1195,24 @@ def _validate_readiness(value: Any) -> dict[str, Any]:
             raise AShareFundamentalSkillWrapperError(
                 "ready readiness cannot include missing inputs or errors"
             )
+        if is_ticker_only_professional:
+            if not result["has_professional_compact_brief"]:
+                raise AShareFundamentalSkillWrapperError(
+                    "ready professional readiness requires professional brief"
+                )
+            if result["has_compact_response"] or result["has_user_facing_analysis_brief"]:
+                raise AShareFundamentalSkillWrapperError(
+                    "ready professional readiness must not expose compact response"
+                )
+            if (
+                result["output_mode"]
+                == OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF_AND_INTERNAL_PAYLOAD
+                and not result["has_professional_internal_payload"]
+            ):
+                raise AShareFundamentalSkillWrapperError(
+                    "professional internal payload output mode requires payload"
+                )
+            return result
         if not result["has_compact_response"]:
             raise AShareFundamentalSkillWrapperError(
                 "ready readiness requires compact response"
@@ -897,6 +1312,127 @@ def _validate_compact_section_summary(value: Any, path: str) -> dict[str, Any]:
     return result
 
 
+def _validate_professional_compact_brief(value: Any) -> dict[str, Any]:
+    brief = _require_mapping(value, "professional_compact_brief")
+    unsupported = sorted(set(brief) - _PROFESSIONAL_BRIEF_FIELDS)
+    if unsupported:
+        raise AShareFundamentalSkillWrapperError(
+            f"professional_compact_brief contains unsupported keys: {unsupported}"
+        )
+    _require_fields(
+        brief,
+        tuple(sorted(_PROFESSIONAL_BRIEF_FIELDS)),
+        "professional_compact_brief",
+    )
+    result = deepcopy(dict(brief))
+    if result["schema_version"] != PROFESSIONAL_ANALYST_COMPACT_BRIEF_SCHEMA_VERSION:
+        raise AShareFundamentalSkillWrapperError(
+            "professional_compact_brief schema_version invalid"
+        )
+    _require_optional_string(
+        result["stock_code"],
+        "professional_compact_brief.stock_code",
+    )
+    _require_optional_string(result["ts_code"], "professional_compact_brief.ts_code")
+    _require_optional_string(
+        result["company_name_hint"],
+        "professional_compact_brief.company_name_hint",
+    )
+    _require_non_empty_string(result["title"], "professional_compact_brief.title")
+    for key in PROFESSIONAL_BRIEF_SECTION_KEYS[:6]:
+        result[key] = _validate_professional_section(
+            result[key],
+            f"professional_compact_brief.{key}",
+        )
+    _require_string_list(
+        result["key_variables"],
+        "professional_compact_brief.key_variables",
+    )
+    if not result["key_variables"]:
+        raise AShareFundamentalSkillWrapperError(
+            "professional_compact_brief.key_variables cannot be empty"
+        )
+    _require_non_empty_string(
+        result["conclusion_boundary"],
+        "professional_compact_brief.conclusion_boundary",
+    )
+    if result["source_note"] != "\u6570\u636e\u6765\u6e90\uff1aTushare\u3002":
+        raise AShareFundamentalSkillWrapperError(
+            "professional_compact_brief.source_note must be Tushare"
+        )
+    _require_true(
+        result["not_for_trading_advice"],
+        "professional_compact_brief.not_for_trading_advice",
+    )
+    _assert_no_professional_frontstage_leak(result)
+    assert_no_a_share_fundamental_skill_wrapper_forbidden_markers(result)
+    return result
+
+
+def _validate_professional_section(value: Any, path: str) -> dict[str, Any]:
+    section = _require_mapping(value, path)
+    unsupported = sorted(set(section) - _PROFESSIONAL_SECTION_FIELDS)
+    if unsupported:
+        raise AShareFundamentalSkillWrapperError(
+            f"{path} contains unsupported keys: {unsupported}"
+        )
+    _require_fields(section, tuple(sorted(_PROFESSIONAL_SECTION_FIELDS)), path)
+    result = deepcopy(dict(section))
+    if result["schema_version"] != (
+        PROFESSIONAL_ANALYST_COMPACT_BRIEF_SECTION_SCHEMA_VERSION
+    ):
+        raise AShareFundamentalSkillWrapperError(f"{path}.schema_version invalid")
+    _require_non_empty_string(result["section_id"], f"{path}.section_id")
+    _require_non_empty_string(result["title"], f"{path}.title")
+    view = _require_non_empty_string(result["view"], f"{path}.view")
+    if len(view) < 24:
+        raise AShareFundamentalSkillWrapperError(f"{path}.view is too thin")
+    _require_true(result["not_for_trading_advice"], f"{path}.not_for_trading_advice")
+    _assert_no_professional_frontstage_leak(result)
+    assert_no_a_share_fundamental_skill_wrapper_forbidden_markers(result)
+    return result
+
+
+def _validate_professional_internal_payload(value: Any) -> dict[str, Any]:
+    payload = _require_mapping(value, "professional_internal_payload")
+    unsupported = sorted(set(payload) - _PROFESSIONAL_INTERNAL_PAYLOAD_FIELDS)
+    if unsupported:
+        raise AShareFundamentalSkillWrapperError(
+            f"professional_internal_payload contains unsupported keys: {unsupported}"
+        )
+    _require_fields(
+        payload,
+        tuple(sorted(_PROFESSIONAL_INTERNAL_PAYLOAD_FIELDS)),
+        "professional_internal_payload",
+    )
+    result = deepcopy(dict(payload))
+    if result["schema_version"] != (
+        "controlled_real_tushare_professional_internal_payload.v1"
+    ):
+        raise AShareFundamentalSkillWrapperError(
+            "professional_internal_payload schema_version invalid"
+        )
+    _require_non_negative_int(
+        result["provider_candidate_count"],
+        "professional_internal_payload.provider_candidate_count",
+    )
+    for key in (
+        "internal_analysis_brief_schema_version",
+        "wrapper_response_schema_version",
+        "wrapper_readiness_status",
+    ):
+        _require_non_empty_string(result[key], f"professional_internal_payload.{key}")
+    _require_true(
+        result["not_official_verified"],
+        "professional_internal_payload.not_official_verified",
+    )
+    _require_true(
+        result["not_for_trading_advice"],
+        "professional_internal_payload.not_for_trading_advice",
+    )
+    return result
+
+
 def _validate_blocked_reasons(value: Any) -> list[dict[str, str]]:
     reasons = _require_list(value, "blocked_reasons")
     result = []
@@ -923,6 +1459,8 @@ def _assert_response_consistency(response: Mapping[str, Any]) -> None:
     compact_response = response["compact_response"]
     brief = response["user_facing_analysis_brief"]
     compatibility_payload = response["report_v1_compatibility_payload"]
+    professional_brief = response["professional_compact_brief"]
+    professional_internal_payload = response["professional_internal_payload"]
     blocked_reasons = response["blocked_reasons"]
     if readiness["has_compact_response"] != (compact_response is not None):
         raise AShareFundamentalSkillWrapperError(
@@ -934,11 +1472,43 @@ def _assert_response_consistency(response: Mapping[str, Any]) -> None:
         compatibility_payload is not None
     ):
         raise AShareFundamentalSkillWrapperError("readiness payload flag mismatch")
+    if readiness["has_professional_compact_brief"] != (professional_brief is not None):
+        raise AShareFundamentalSkillWrapperError(
+            "readiness professional brief flag mismatch"
+        )
+    if readiness["has_professional_internal_payload"] != (
+        professional_internal_payload is not None
+    ):
+        raise AShareFundamentalSkillWrapperError(
+            "readiness professional internal payload flag mismatch"
+        )
     if readiness["status"] == SKILL_READINESS_READY:
         if blocked_reasons:
             raise AShareFundamentalSkillWrapperError(
                 "ready response cannot include blocked_reasons"
             )
+        if readiness["input_mode"] == INPUT_MODE_TICKER_ONLY_PROFESSIONAL_BRIEF:
+            if professional_brief is None:
+                raise AShareFundamentalSkillWrapperError(
+                    "ready professional response requires professional brief"
+                )
+            if compact_response is not None or brief is not None:
+                raise AShareFundamentalSkillWrapperError(
+                    "ready professional response must not include legacy compact fields"
+                )
+            if compatibility_payload is not None:
+                raise AShareFundamentalSkillWrapperError(
+                    "ready professional response must not include report payload"
+                )
+            if (
+                readiness["output_mode"]
+                == OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF_AND_INTERNAL_PAYLOAD
+                and professional_internal_payload is None
+            ):
+                raise AShareFundamentalSkillWrapperError(
+                    "professional internal payload output mode requires payload"
+                )
+            return
         if compact_response is None or brief is None:
             raise AShareFundamentalSkillWrapperError(
                 "ready response requires compact response and brief"
@@ -956,6 +1526,10 @@ def _assert_response_consistency(response: Mapping[str, Any]) -> None:
             raise AShareFundamentalSkillWrapperError(
                 "blocked response requires blocked reason or missing input"
             )
+        if professional_brief is not None or professional_internal_payload is not None:
+            raise AShareFundamentalSkillWrapperError(
+                "blocked response must not include professional outputs"
+            )
 
 
 def _assert_no_compact_backend_trace_leak(value: Mapping[str, Any]) -> None:
@@ -966,6 +1540,30 @@ def _assert_no_compact_backend_trace_leak(value: Mapping[str, Any]) -> None:
             raise AShareFundamentalSkillWrapperError(
                 "compact_response contains backend trace marker"
             )
+
+
+def _assert_no_professional_frontstage_leak(value: Mapping[str, Any]) -> None:
+    serialized = json.dumps(value, ensure_ascii=False)
+    normalized = serialized.casefold()
+    separator_normalized = _normalize_separator_text(serialized)
+    marker_normalized_text = _normalise_marker(serialized)
+    for marker in _PROFESSIONAL_FRONTSTAGE_FORBIDDEN_MARKERS:
+        marker_lower = marker.casefold()
+        marker_separator = _normalize_separator_text(marker)
+        marker_normalized = _normalise_marker(marker)
+        if (
+            marker_lower in normalized
+            or marker_separator in separator_normalized
+            or (marker_normalized and marker_normalized in marker_normalized_text)
+        ):
+            raise AShareFundamentalSkillWrapperError(
+                "professional_compact_brief contains frontstage forbidden marker"
+            )
+    finding = _find_forbidden_marker(value)
+    if finding:
+        raise AShareFundamentalSkillWrapperError(
+            "professional_compact_brief contains wrapper-forbidden marker"
+        )
 
 
 def _reject_raw_inputs(value: Any, path: str) -> None:
@@ -1094,6 +1692,21 @@ def _optional_string(value: Any, path: str) -> str | None:
     return value
 
 
+def _optional_string_list(value: Any, path: str) -> list[str] | None:
+    if value is None:
+        return None
+    if not isinstance(value, list):
+        raise AShareFundamentalSkillWrapperError(f"{path} must be a list or null")
+    result = []
+    for index, item in enumerate(value):
+        if not isinstance(item, str):
+            raise AShareFundamentalSkillWrapperError(
+                f"{path}[{index}] must be string"
+            )
+        result.append(item)
+    return result
+
+
 def _require_mapping(value: Any, field: str) -> Mapping[str, Any]:
     if not isinstance(value, Mapping):
         raise AShareFundamentalSkillWrapperError(f"{field} must be a mapping")
@@ -1111,6 +1724,12 @@ def _require_fields(value: Mapping[str, Any], fields: tuple[str, ...], path: str
 def _require_optional_string(value: Any, path: str) -> None:
     if value is not None and not isinstance(value, str):
         raise AShareFundamentalSkillWrapperError(f"{path} must be string or null")
+
+
+def _require_optional_string_list(value: Any, path: str) -> None:
+    if value is None:
+        return
+    _require_string_list(value, path)
 
 
 def _require_non_empty_string(value: Any, path: str) -> str:
@@ -1153,6 +1772,14 @@ def _require_bool(value: Any, path: str) -> None:
         raise AShareFundamentalSkillWrapperError(f"{path} must be bool")
 
 
+def _require_non_negative_int(value: Any, path: str) -> int:
+    if not isinstance(value, int) or value < 0:
+        raise AShareFundamentalSkillWrapperError(
+            f"{path} must be a non-negative int"
+        )
+    return value
+
+
 __all__ = [
     "A_SHARE_FUNDAMENTAL_COMPACT_RESPONSE_SCHEMA_VERSION",
     "A_SHARE_FUNDAMENTAL_SKILL_READINESS_SCHEMA_VERSION",
@@ -1162,12 +1789,22 @@ __all__ = [
     "BLOCKED_REASON_VALIDATED_ANALYSIS_INPUT_REQUIRED",
     "INPUT_MODE_ANALYSIS_BRIEF",
     "INPUT_MODE_ORCHESTRATION_RESULT",
+    "INPUT_MODE_TICKER_ONLY_PROFESSIONAL_BRIEF",
     "OUTPUT_MODE_COMPACT_BRIEF",
     "OUTPUT_MODE_COMPACT_BRIEF_AND_REPORT_V1_COMPATIBILITY_PAYLOAD",
+    "OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF",
+    "OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF_AND_INTERNAL_PAYLOAD",
+    "PROFESSIONAL_ANALYST_COMPACT_BRIEF_SCHEMA_VERSION",
+    "PROFESSIONAL_BRIEF_SECTION_KEYS",
     "SKILL_READINESS_BLOCKED",
     "SKILL_READINESS_READY",
+    "SKILL_READINESS_SKIPPED",
     "SUPPORTED_INPUT_MODES",
     "SUPPORTED_OUTPUT_MODES",
+    "SUPPORTED_TUSHARE_CLIENT_MODES",
+    "TUSHARE_CLIENT_MODE_ENV_LIVE",
+    "TUSHARE_CLIENT_MODE_FAKE",
+    "TUSHARE_CLIENT_MODE_INJECTED",
     "UNSUPPORTED_INPUT_MODES",
     "UNSUPPORTED_OUTPUT_MODES",
     "AShareFundamentalSkillWrapperError",

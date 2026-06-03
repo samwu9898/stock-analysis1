@@ -9,10 +9,17 @@ import pytest
 
 from src.fundamental_skill.research_planning.a_share_fundamental_skill_wrapper import (
     A_SHARE_FUNDAMENTAL_SKILL_REQUEST_SCHEMA_VERSION,
+    INPUT_MODE_TICKER_ONLY_PROFESSIONAL_BRIEF,
+    OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF,
+    TUSHARE_CLIENT_MODE_ENV_LIVE,
+    TUSHARE_CLIENT_MODE_INJECTED,
     INPUT_MODE_ORCHESTRATION_RESULT,
     AShareFundamentalSkillWrapperError,
     assert_no_a_share_fundamental_skill_wrapper_forbidden_markers,
     build_a_share_fundamental_skill_response,
+)
+from tests.test_controlled_real_tushare_professional_compact_brief_pilot import (
+    _FakeFinancialClient,
 )
 from tests.test_user_facing_analysis_brief import (
     _brief,
@@ -47,6 +54,32 @@ def _sample_locator_result():
     return copy.deepcopy(_SAMPLE_LOCATOR_RESULT)
 
 
+def _ticker_request(**overrides):
+    request = {
+        "schema_version": A_SHARE_FUNDAMENTAL_SKILL_REQUEST_SCHEMA_VERSION,
+        "stock_code": "600406",
+        "ts_code": "600406.SH",
+        "company_name_hint": "Guodian NARI",
+        "periods": ["20251231"],
+        "input_mode": INPUT_MODE_TICKER_ONLY_PROFESSIONAL_BRIEF,
+        "output_mode": OUTPUT_MODE_PROFESSIONAL_COMPACT_BRIEF,
+        "tushare_client_mode": TUSHARE_CLIENT_MODE_INJECTED,
+        "allow_network": False,
+        "allow_file_writes": False,
+        "not_for_trading_advice": True,
+    }
+    request.update(overrides)
+    return request
+
+
+def _ticker_build(**overrides):
+    request = _ticker_request(**overrides)
+    return build_a_share_fundamental_skill_response(
+        request,
+        tushare_client=_FakeFinancialClient(ts_code=request["ts_code"]),
+    )
+
+
 @pytest.mark.parametrize("marker", ["token", "api_token", "Bearer abcdefghijk"])
 def test_token_marker_rejected(marker):
     with pytest.raises(AShareFundamentalSkillWrapperError, match="forbidden|token"):
@@ -66,6 +99,55 @@ def test_tushare_token_marker_rejected():
     with pytest.raises(AShareFundamentalSkillWrapperError, match="forbidden"):
         assert_no_a_share_fundamental_skill_wrapper_forbidden_markers(
             {"marker": "tushare_token"}
+        )
+
+
+def test_token_field_rejected_in_ticker_only_request():
+    request = _ticker_request()
+    request["token"] = "not-allowed"
+
+    with pytest.raises(AShareFundamentalSkillWrapperError, match="unsupported|token"):
+        build_a_share_fundamental_skill_response(
+            request,
+            tushare_client=_FakeFinancialClient(),
+        )
+
+
+def test_token_like_string_rejected_in_ticker_only_request():
+    with pytest.raises(
+        AShareFundamentalSkillWrapperError,
+        match="token_like_string|forbidden",
+    ):
+        build_a_share_fundamental_skill_response(
+            _ticker_request(company_name_hint="Bearer abcdefghijk"),
+            tushare_client=_FakeFinancialClient(),
+        )
+
+
+@pytest.mark.parametrize(
+    ("key", "value"),
+    [
+        ("tushare_token", "not-allowed"),
+        ("env_file", ".env"),
+        ("raw_provider_queue", [{"metric": "x"}]),
+        ("raw_tushare_provider_result", {"rows": []}),
+        ("pdf_bytes", b"%PDF-1.7"),
+        ("output_artifact_path", "output/report.json"),
+        ("fixture_path", "fixtures/sample.json"),
+        ("accepted_manifest_path", "accepted_manifest.json"),
+    ],
+)
+def test_raw_secret_file_and_manifest_inputs_rejected_in_ticker_only_request(key, value):
+    request = _ticker_request()
+    request[key] = value
+
+    with pytest.raises(
+        AShareFundamentalSkillWrapperError,
+        match="raw|unsupported|forbidden",
+    ):
+        build_a_share_fundamental_skill_response(
+            request,
+            tushare_client=_FakeFinancialClient(),
         )
 
 
@@ -239,6 +321,83 @@ def test_backend_trace_cannot_leak_into_compact_response():
         assert forbidden not in serialized
 
 
+def test_professional_compact_brief_does_not_expose_engineering_labels():
+    text = json.dumps(
+        _ticker_build()["professional_compact_brief"],
+        ensure_ascii=False,
+    )
+
+    for forbidden in (
+        "provider_candidate",
+        "pending_official_verification",
+        "official verification",
+        "official_verified_count",
+        "provider",
+        "候选数据",
+        "证据状态",
+        "待核验",
+        "数据缺口",
+        "推理",
+        "官方核验",
+    ):
+        assert forbidden not in text
+
+
+def test_professional_compact_brief_does_not_expose_backend_trace():
+    text = json.dumps(
+        _ticker_build()["professional_compact_brief"],
+        ensure_ascii=False,
+    )
+
+    for forbidden in (
+        "page_number",
+        "snippet",
+        "source_url",
+        "sha256",
+        "cache_path",
+        "backend trace",
+        "anchor map",
+        "candidate_items",
+    ):
+        assert forbidden not in text
+
+
+def test_professional_compact_brief_does_not_shift_judgment_to_user():
+    text = json.dumps(
+        _ticker_build()["professional_compact_brief"],
+        ensure_ascii=False,
+    )
+
+    for forbidden in ("用户自行", "自行判断", "自行跟踪", "需要用户", "建议用户", "请结合"):
+        assert forbidden not in text
+
+
+def test_professional_compact_brief_has_no_trading_signal_or_action():
+    text = json.dumps(
+        _ticker_build()["professional_compact_brief"],
+        ensure_ascii=False,
+    ).casefold()
+
+    for forbidden in (
+        "buy",
+        "sell",
+        "hold",
+        "target price",
+        "portfolio",
+        "position",
+        "technical signal",
+        "trading advice",
+        "买入",
+        "卖出",
+        "持有",
+        "目标价",
+        "仓位",
+        "技术信号",
+        "投资建议",
+    ):
+        assert forbidden.casefold() not in text
+
+
 def test_no_token_appears_in_result_or_captured_output(capsys):
     request = {
         "schema_version": A_SHARE_FUNDAMENTAL_SKILL_REQUEST_SCHEMA_VERSION,
@@ -258,3 +417,24 @@ def test_no_token_appears_in_result_or_captured_output(capsys):
     assert "token" not in captured.out.casefold()
     assert "token" not in captured.err.casefold()
     assert "token" not in serialized
+
+
+def test_env_live_blocked_result_does_not_print_or_return_token(monkeypatch, capsys):
+    secret = "S3cr3tValueThatShouldStayHidden123456789"
+    monkeypatch.setenv("TUSHARE_" + "TOKEN", secret)
+
+    response = build_a_share_fundamental_skill_response(
+        _ticker_request(
+            tushare_client_mode=TUSHARE_CLIENT_MODE_ENV_LIVE,
+            allow_network=False,
+        )
+    )
+    captured = capsys.readouterr()
+    serialized = json.dumps(response, ensure_ascii=False)
+
+    assert response["readiness"]["status"] in {"blocked", "skipped"}
+    assert secret not in captured.out
+    assert secret not in captured.err
+    assert secret not in serialized
+    assert "token" not in captured.out.casefold()
+    assert "token" not in captured.err.casefold()
